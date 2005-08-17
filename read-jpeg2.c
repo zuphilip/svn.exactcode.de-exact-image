@@ -14,6 +14,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * Include file for users of JPEG library.
@@ -31,7 +33,6 @@
  */
 
 #include <setjmp.h>
-
 
 
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
@@ -136,7 +137,7 @@ my_error_exit (j_common_ptr cinfo)
  */
 
 
-GLOBAL(int)
+void
 read_JPEG_file (char * filename)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
@@ -152,7 +153,9 @@ read_JPEG_file (char * filename)
   FILE * infile;		/* source file */
   JSAMPARRAY buffer;		/* Output row buffer */
   int row_stride;		/* physical row width in output buffer */
-
+  
+  unsigned char* data = 0;
+  
   /* In this example we want to open the input file before doing anything else,
    * so that the setjmp() error recovery below can assume the file is open.
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
@@ -161,7 +164,7 @@ read_JPEG_file (char * filename)
 
   if ((infile = fopen(filename, "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", filename);
-    return 0;
+    return;
   }
 
   /* Step 1: allocate and initialize JPEG decompression object */
@@ -176,7 +179,7 @@ read_JPEG_file (char * filename)
      */
     jpeg_destroy_decompress(&cinfo);
     fclose(infile);
-    return 0;
+    return;
   }
   /* Now we can initialize the JPEG decompression object. */
   jpeg_create_decompress(&cinfo);
@@ -215,6 +218,11 @@ read_JPEG_file (char * filename)
    */ 
   /* JSAMPLEs per row in output buffer */
   row_stride = cinfo.output_width * cinfo.output_components;
+
+  printf ("%d %d - %d\n", cinfo.output_width, cinfo.output_height, cinfo.output_components);
+
+  data = malloc (row_stride * cinfo.output_height);
+  
   /* Make a one-row-high sample array that will go away when done with image */
   buffer = (*cinfo.mem->alloc_sarray)
 		((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
@@ -232,7 +240,9 @@ read_JPEG_file (char * filename)
      */
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
     /* Assume put_scanline_someplace wants a pointer and sample count. */
-    put_scanline_someplace(buffer[0], row_stride);
+    // TODO: put_scanline_someplace(buffer[0], row_stride);
+    //printf ("%d\n", cinfo.output_scanline);
+    memcpy (data+((cinfo.output_scanline-1)*row_stride), buffer[0], row_stride);
   }
 
   /* Step 7: Finish decompression */
@@ -259,31 +269,13 @@ read_JPEG_file (char * filename)
    */
 
   /* And we're done! */
-  return 1;
+  FILE* f = fopen ("test.raw", "w+");
+  fwrite (data, row_stride * cinfo.output_height, 1, f);
+  fclose(f);
 }
 
-
-/*
- * SOME FINE POINTS:
- *
- * In the above code, we ignored the return value of jpeg_read_scanlines,
- * which is the number of scanlines actually read.  We could get away with
- * this because we asked for only one line at a time and we weren't using
- * a suspending data source.  See libjpeg.doc for more info.
- *
- * We cheated a bit by calling alloc_sarray() after jpeg_start_decompress();
- * we should have done it beforehand to ensure that the space would be
- * counted against the JPEG max_memory setting.  In some systems the above
- * code would risk an out-of-memory error.  However, in general we don't
- * know the output image dimensions before jpeg_start_decompress(), unless we
- * call jpeg_calc_output_dimensions().  See libjpeg.doc for more about this.
- *
- * Scanlines are returned in the same order as they appear in the JPEG file,
- * which is standardly top-to-bottom.  If you must emit data bottom-to-top,
- * you can use one of the virtual arrays provided by the JPEG memory manager
- * to invert the data.  See wrbmp.c for an example.
- *
- * As with compression, some operating modes may require temporary files.
- * On some systems you may need to set up a signal handler to ensure that
- * temporary files are deleted if the program is interrupted.  See libjpeg.doc.
- */
+int main ()
+{
+  read_JPEG_file ("test.jpg");
+  return 0;
+}
