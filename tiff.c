@@ -29,41 +29,84 @@
 
  */
 
-int main (int argc, char* argv[])
+#define RELEASE 1
+
+void write_TIFF_file (const char* file, unsigned char* data, int w, int h, int bpp, int spp)
 {
         TIFF *out;
 	char thing [1024];
         unsigned char *inbuf, *outbuf;
 
-	int w, h, bpp, spp;
-	w = h = 16;
-	bpp = spp = 1;
+	uint32 rowsperstrip = (uint32) -1;
+	uint16 compression = COMPRESSION_LZW; // COMPRESSION_CCITTFAX4;
 
-        uint32 rowsperstrip = (uint32) -1;
-
-	uint16 compression = COMPRESSION_PACKBITS;
-
-        out = TIFFOpen("file.tiff", "w");
+        out = TIFFOpen("test.tif", "w");
         if (out == NULL)
-                return (-1);
+	  return;
         TIFFSetField(out, TIFFTAG_IMAGEWIDTH, w);
         TIFFSetField(out, TIFFTAG_IMAGELENGTH, h);
+#ifdef RELEASE
+        TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, 1);// bpp);
+	TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, 1); // spp);
+#else
         TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, bpp);
-        TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, spp);
+	TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, spp);
+#endif
         TIFFSetField(out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
         TIFFSetField(out, TIFFTAG_COMPRESSION, compression);
         TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-        sprintf(thing, "B&W version of %s", "file.tiff");
-        TIFFSetField(out, TIFFTAG_IMAGEDESCRIPTION, thing);
-        TIFFSetField(out, TIFFTAG_SOFTWARE, "tiff2bw");
+        TIFFSetField(out, TIFFTAG_IMAGEDESCRIPTION, "later some tag");
+        TIFFSetField(out, TIFFTAG_SOFTWARE, "ExactImage");
         outbuf = (unsigned char *)_TIFFmalloc(TIFFScanlineSize(out));
         TIFFSetField(out, TIFFTAG_ROWSPERSTRIP,
         TIFFDefaultStripSize(out, rowsperstrip));
-
+	
+	{
+	  int histogram [256] = { 0 };
+	  for (int i = 0; i < h*w; i++)
+	    histogram [data[i]] ++;
+	  
+	  int lowest = 255, highest = 0;
+	  for (int i = 0; i <= 255; i++) {
+	    printf ("%d: %d\n", i, histogram[i]);
+	    if (histogram[i] > 5) { // 5 == magic denoise constant
+	      if (i < lowest)
+		lowest = i;
+	      if (i > highest)
+		highest = i;
+	    }
+	  }
+	  printf ("lowest: %d - highest: %d\n", lowest, highest);
+	  signed int a = (255 * 256) / (highest - lowest);
+	  signed int b = -a * lowest;
+	  
+	  printf ("a: %f - b: %f\n", (float)a / 256, (float)b / 256);
+	  for (int i = 0; i < h*w; i++)
+	    data[i] = ((int) data[i] * a + b ) / 256;
+	}
+	
 	for (uint32 row = 0; row < h; row++) {
-                if (TIFFWriteScanline(out, outbuf, row, 0) < 0)
-                       break;
+#ifdef RELEASE
+	  {
+	    // convert to 1-bit (threshold)
+	    unsigned char z = 0;
+	    unsigned char* output = data;
+	    unsigned char* input = data;
+	    for (uint32 x = 0; x < w; x++) {
+	      if (*input++ > 127)
+		z = (z << 1) | 0x01;
+	      else
+		z <<= 1;
+	      if (x % 8 == 7) {
+		*output++ = z; z = 0;
+	      }
+	    }
+	  }
+#endif  
+	  if (TIFFWriteScanline(out, data, row, 0) < 0)
+	    break;
+	  data += w*spp;
         }
 
         TIFFClose(out);
