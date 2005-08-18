@@ -25,7 +25,7 @@
  * You may also wish to include "jerror.h".
  */
 
-#include "jpeglib.h"
+#include <jpeglib.h>
 
 /*
  * <setjmp.h> is used for the optional error recovery mechanism shown in
@@ -34,6 +34,7 @@
 
 #include <setjmp.h>
 
+#include "tiff.h"
 
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
 
@@ -272,6 +273,9 @@ read_JPEG_file (char * filename)
   FILE* f = fopen ("test.raw", "w+");
   fwrite (data, row_stride * cinfo.output_height, 1, f);
   fclose(f);
+
+  write_TIFF_file ("test.tif", data, cinfo.output_width, cinfo.output_height,
+		   8, cinfo.output_components);
 }
 
 int main ()

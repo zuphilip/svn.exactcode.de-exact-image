@@ -1,11 +1,11 @@
 
-all: read-jpeg2 tiff bw-optimize
+all: read-jpeg2 bw-optimize
 
-read-jpeg2: read-jpeg2.c
-	gcc -ggdb -std=c99 -o read-jpeg2 read-jpeg2.c -ljpeg
+read-jpeg2: read-jpeg2.c tiff.o
+	gcc -ggdb -std=c99 -o read-jpeg2 tiff.o read-jpeg2.c -ljpeg -ltiff
 
-tiff: tiff.c
-	gcc -ggdb -std=c99 -ltiff tiff.c -o tiff
+tiff.o: tiff.c
+	gcc -ggdb -std=c99 -c tiff.c -ltiff
 
 bw-optimize: bw-optimize.c
 	gcc `Wand-config --cflags --cppflags` bw-optimize.c \
