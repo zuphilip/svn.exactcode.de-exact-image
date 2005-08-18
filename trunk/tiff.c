@@ -29,7 +29,7 @@
 
  */
 
-// #define RELEASE
+#define RELEASE
 
 void
 write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
@@ -97,6 +97,7 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 #define WORKS
 #ifdef WORKS
 
+#define RIGHT
 #ifdef RIGHT
 #define matrix_w 5
 #define matrix_h 5
@@ -141,7 +142,7 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 		for (int y2 = 0; y2 < matrix_h; y2++)
 		  {
 		    //printf ("%d %d\n", x - matrix_w2 + x2, y - matrix_h2 + y2);
-		    matrix_type v = data[x - matrix_w2 + x2, +
+		    matrix_type v = data[x - matrix_w2 + x2 +
 					 ((y - matrix_h2 + y2) * w)];
 		    sum += v * matrix[x2][y2];
 		  }
