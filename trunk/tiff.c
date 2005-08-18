@@ -90,45 +90,63 @@ void write_TIFF_file (const char* file, unsigned char* data, int w, int h, int b
 	unsigned char* data2 = malloc (w*h);
 	{
 	  // any matrix and devisior
-	  //#define WORKS
+#define WORKS
 #ifdef WORKS
+
+#ifdef RIGHT
 #define matrix_w 5
 #define matrix_h 5
-	  
-#define matrix_w2 ((matrix_w-1)>>1)
-#define matrix_h2 ((matrix_h-1)>>1)
-	  
+#else
+#define matrix_w 3
+#define matrix_h 3
+#endif
+
+#define matrix_w2 ((matrix_w-1)/2)
+#define matrix_h2 ((matrix_h-1)/2)
 	  
 	  typedef float matrix_type;
 	  
 	  matrix_type matrix[matrix_w][matrix_h] = 
 	    {
+#ifdef RIGHT
 	      {  0,   0,  -1,   0,  0 },
 	      {  0,  -8, -21,  -8,  0 },
 	      { -1, -21, 299, -21, -1 },
 	      {  0,  -8, -21,  -8,  0 },
 	      {  0,   0,  -1,   0,  0 },
+#else
+	      {0,-1,0},
+	      {-1,5,-1},
+	      {0,-1,0}
+#endif
 	    };
-	  matrix_type divisor = 179;
-	  
-	  for (int y = matrix_h2; y < h - matrix_h2; y++) {
-	    for (int x = matrix_w2; x < w - matrix_w2; x++) {
+	
+	matrix_type divisor =
+#ifdef RIGHT
+	  179;
+#else
+	1;
+#endif
+	
+	for (int y = matrix_h2; y < h - matrix_h2; y++) {
+	  for (int x = matrix_w2; x < w - matrix_w2; x++) {
 	      matrix_type sum = 0;
-	      for (int y2 = 0; y2 < matrix_h; y2++)
-		for (int x2 = 0; x2 < matrix_w; x2++) {
+	      for (int x2 = 0; x2 < matrix_w; x2++) {
+		for (int y2 = 0; y2 < matrix_h; y2++)
 		  {
 		    //printf ("%d %d\n", x - matrix_w2 + x2, y - matrix_h2 + y2);
 		    matrix_type v = data [x - matrix_w2 + x2, +
-					  ((y - matrix_h2 + y2)*w)];
+					  ((y - matrix_h2 + y2) * w)];
 		    sum += v * matrix[x2][y2];
 		  }
 	      }
 	      
 	      sum /= divisor;
 	      unsigned char z = sum > 255 ? 255 : sum < 0 ? 0 : sum;
-	      data2 [x + (y * w)] = z;
+	      data2 [x + y*w] = z;
 	    }
-	  }
+	}
+
 #else
 	  
 #define sharp_w 3
