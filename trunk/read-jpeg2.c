@@ -137,9 +137,8 @@ my_error_exit (j_common_ptr cinfo)
  * is passed in.  We want to return 1 on success, 0 on error.
  */
 
-
-void
-read_JPEG_file (const char * filename)
+unsigned char*
+read_JPEG_file (const char * filename, int * w, int * h, int * bpp, int * spp)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -165,7 +164,7 @@ read_JPEG_file (const char * filename)
 
   if ((infile = fopen(filename, "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", filename);
-    return;
+    return 0;
   }
 
   /* Step 1: allocate and initialize JPEG decompression object */
@@ -180,7 +179,7 @@ read_JPEG_file (const char * filename)
      */
     jpeg_destroy_decompress(&cinfo);
     fclose(infile);
-    return;
+    return 0;
   }
   /* Now we can initialize the JPEG decompression object. */
   jpeg_create_decompress(&cinfo);
@@ -221,7 +220,12 @@ read_JPEG_file (const char * filename)
   row_stride = cinfo.output_width * cinfo.output_components;
 
   printf ("%d %d - %d\n", cinfo.output_width, cinfo.output_height, cinfo.output_components);
-
+  
+  *w = cinfo.output_width;
+  *h = cinfo.output_height;
+  *spp = cinfo.output_components;
+  *bpp = 8;
+  
   data = malloc (row_stride * cinfo.output_height);
   
   /* Make a one-row-high sample array that will go away when done with image */
@@ -270,19 +274,31 @@ read_JPEG_file (const char * filename)
    */
 
   /* And we're done! */
+#ifdef DEBUG
   FILE* f = fopen ("test.raw", "w+");
   fwrite (data, row_stride * cinfo.output_height, 1, f);
   fclose(f);
+#endif
 
-  write_TIFF_file ("test.tif", data, cinfo.output_width, cinfo.output_height,
-		   8, cinfo.output_components);
+  return data;
 }
 
 int main (int argc, char* argv[])
 {
-  const char* file = "test.jpg";
-  if (argv[1])
-    file = argv[1];
-  read_JPEG_file (file);
+  const char* infile = "test.jpg";
+  const char* outfile = "test.tif";
+  
+  if (*++argv) {
+    infile = *argv;
+    if (*++argv)
+      outfile = *argv;
+  }
+  
+  int w, h, bpp, spp;
+  unsigned char* data = read_JPEG_file (infile, &w, &h, &bpp, &spp);
+  
+  if (data)
+    write_TIFF_file (outfile, data, w, h, bpp, spp);
+
   return 0;
 }

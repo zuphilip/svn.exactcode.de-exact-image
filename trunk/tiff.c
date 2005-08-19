@@ -42,7 +42,7 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
   uint32 rowsperstrip = (uint32) - 1;
   uint16 compression = COMPRESSION_CCITTFAX4; // COMPRESSION_LZW
 
-  out = TIFFOpen ("test.tif", "w");
+  out = TIFFOpen (file, "w");
   if (out == NULL)
     return;
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, w);
