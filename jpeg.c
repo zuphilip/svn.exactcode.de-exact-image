@@ -283,22 +283,3 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp)
   return data;
 }
 
-int main (int argc, char* argv[])
-{
-  const char* infile = "test.jpg";
-  const char* outfile = "test.tif";
-  
-  if (*++argv) {
-    infile = *argv;
-    if (*++argv)
-      outfile = *argv;
-  }
-  
-  int w, h, bpp, spp;
-  unsigned char* data = read_JPEG_file (infile, &w, &h, &bpp, &spp);
-  
-  if (data)
-    write_TIFF_file (outfile, data, w, h, bpp, spp);
-
-  return 0;
-}
