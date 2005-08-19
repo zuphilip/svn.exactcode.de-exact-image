@@ -34,6 +34,8 @@
 
 #include <setjmp.h>
 
+#include "jpeg.h"
+
 #include "tiff.h"
 
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
