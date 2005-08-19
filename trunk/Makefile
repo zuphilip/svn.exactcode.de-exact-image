@@ -1,13 +1,14 @@
 
-all: read-jpeg2 bw-optimize
+all: optimize2bw
 
 CFLAGS := -O2 -march=athlon-xp -ggdb
 
-optimize2bw: optimize2bw.c tiff.o read-jpeg2.o
-        gcc $(CFLAGS) -std=c99 -o optimize2bw -ljpeg -ltiff
+optimize2bw: optimize2bw.c tiff.o jpeg.o
+	gcc $(CFLAGS) -std=c99 -o optimize2bw optimize2bw.c tiff.o jpeg.o \
+	    -ljpeg -ltiff
 
-read-jpeg2.o: read-jpeg2.c
-	gcc $(CFLAGS) -std=c99 -c read-jpeg2.c
+jpeg.o: jpeg.c
+	gcc $(CFLAGS) -std=c99 -c jpeg.c
 
 tiff.o: tiff.c
 	gcc $(CFLAGS) -std=c99 -c tiff.c
