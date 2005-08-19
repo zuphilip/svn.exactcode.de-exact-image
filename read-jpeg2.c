@@ -138,7 +138,7 @@ my_error_exit (j_common_ptr cinfo)
  */
 
 unsigned char*
-read_JPEG_file (const char * filename, int * w, int * h, int * bpp, int * spp)
+read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).

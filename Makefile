@@ -3,11 +3,14 @@ all: read-jpeg2 bw-optimize
 
 CFLAGS := -O2 -march=athlon-xp -ggdb
 
-read-jpeg2: read-jpeg2.c tiff.o
-	gcc $(CFLAGS) -std=c99 -o read-jpeg2 tiff.o read-jpeg2.c -ljpeg -ltiff
+optimize2bw: optimize2bw.c tiff.o read-jpeg2.o
+        gcc $(CFLAGS) -std=c99 -o optimize2bw -ljpeg -ltiff
+
+read-jpeg2.o: read-jpeg2.c
+	gcc $(CFLAGS) -std=c99 -c read-jpeg2.c
 
 tiff.o: tiff.c
-	gcc $(CFLAGS) -std=c99 -c tiff.c -ltiff
+	gcc $(CFLAGS) -std=c99 -c tiff.c
 
 bw-optimize: bw-optimize.c
 	gcc `Wand-config --cflags --cppflags` bw-optimize.c \

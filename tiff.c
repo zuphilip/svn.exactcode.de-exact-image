@@ -6,30 +6,14 @@
 #include <tiffconf.h>
 #include <tiffio.h>
 
-/* g3 for the CCITT Group 3 compression algorithm, -c  g4  for  the
-              CCITT Group 4 compression algorithm, and -c lzw for Lempel-Ziv &
-              Welch (the default).
- */
-
-/*
-                 compression = COMPRESSION_CCITTFAX3;
-        } else if (streq(opt, "g4"))
-                compression = COMPRESSION_CCITTFAX4;
-
- else if (strneq(opt, "lzw", 3)) {
-                char* cp = strchr(opt, ':');
-                if (cp)
-                        predictor = atoi(cp+1);
-                compression = COMPRESSION_LZW;
-        } else if (strneq(opt, "zip", 3)) {
-                char* cp = strchr(opt, ':');
-                if (cp)
-                        predictor = atoi(cp+1);
-                compression = COMPRESSION_DEFLATE;
-
- */
-
 #define RELEASE
+
+unsigned char*
+read_TIFF_file (const char *file, unsigned char *data, int* w, int* h, int* bpp,
+		 int* spp)
+{
+  return 0;
+}
 
 void
 write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
