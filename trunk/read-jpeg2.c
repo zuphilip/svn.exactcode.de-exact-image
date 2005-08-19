@@ -139,7 +139,7 @@ my_error_exit (j_common_ptr cinfo)
 
 
 void
-read_JPEG_file (char * filename)
+read_JPEG_file (const char * filename)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -278,8 +278,11 @@ read_JPEG_file (char * filename)
 		   8, cinfo.output_components);
 }
 
-int main ()
+int main (int argc, char* argv[])
 {
-  read_JPEG_file ("test.jpg");
+  const char* file = "test.jpg";
+  if (argv[1])
+    file = argv[1];
+  read_JPEG_file (file);
   return 0;
 }

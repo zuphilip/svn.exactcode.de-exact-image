@@ -40,20 +40,15 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
   unsigned char *inbuf, *outbuf;
 
   uint32 rowsperstrip = (uint32) - 1;
-  uint16 compression = COMPRESSION_LZW;	// COMPRESSION_CCITTFAX4;
+  uint16 compression = COMPRESSION_CCITTFAX4; // COMPRESSION_LZW
 
   out = TIFFOpen ("test.tif", "w");
   if (out == NULL)
     return;
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, w);
   TIFFSetField (out, TIFFTAG_IMAGELENGTH, h);
-#ifdef RELEASE
   TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, 1);	// bpp);
   TIFFSetField (out, TIFFTAG_SAMPLESPERPIXEL, 1);	// spp);
-#else
-  TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, bpp);
-  TIFFSetField (out, TIFFTAG_SAMPLESPERPIXEL, spp);
-#endif
   TIFFSetField (out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
@@ -63,7 +58,32 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
   outbuf = (unsigned char *) _TIFFmalloc (TIFFScanlineSize (out));
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
-
+  
+  // convert to RGB to gray - TODO: more cases
+  if (spp == 3 && bpp == 8) {
+    printf ("RGB -> Gray convertion\n");
+    unsigned char *output = data;
+    unsigned char *input = data;
+    
+    for (int i = 0; i < w*h; i++)
+      {
+	// R G B order
+	int c = (int)input [0] * 28;
+	c += (int)input [1] * 59;
+	c += (int)input [2] * 11;
+	input += 3;
+	
+	*output++ = (unsigned char)(c / 100);
+	
+	spp = 1; // converted data right now
+      }
+  }
+  else if (spp != 1 && bpp != 8)
+    {
+      printf ("Can't yet handle %d samples with %d bits per pixel\n.", spp, bpp);
+      exit (1);
+    }
+  
   {
     int histogram[256] = { 0 };
     for (int i = 0; i < h * w; i++)
@@ -73,8 +93,8 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
     for (int i = 0; i <= 255; i++)
       {
 	printf ("%d: %d\n", i, histogram[i]);
-	if (histogram[i] > 5)
-	  {			// 5 == magic denoise constant
+	if (histogram[i] > 2) // 5 == magic denoise constant
+	  {
 	    if (i < lowest)
 	      lowest = i;
 	    if (i > highest)
@@ -121,7 +141,6 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 	      {
 		for (int y2 = 0; y2 < matrix_h; y2++)
 		  {
-		    //printf ("%d %d\n", x - matrix_w2 + x2, y - matrix_h2 + y2);
 		    matrix_type v = data[x - matrix_w2 + x2 +
 					 ((y - matrix_h2 + y2) * w)];
 		    sum += v * matrix[x2][y2];
@@ -138,13 +157,13 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 
   for (uint32 row = 0; row < h; row++)
     {
-#ifdef RELEASE
       {
 	// convert to 1-bit (threshold)
 	unsigned char z = 0;
 	unsigned char *output = data;
 	unsigned char *input = data;
-	for (uint32 x = 0; x < w; x++)
+	uint32 x = 0;
+	for (; x < w; x++)
 	  {
 	    if (*input++ > 127)
 	      z = (z << 1) | 0x01;
@@ -156,8 +175,15 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 		z = 0;
 	      }
 	  }
+	// remainder - TODO: test for correctness ...
+	int remainder = 8 - x % 8;
+	if (remainder != 8)
+	  {
+	    z <<= remainder;
+	    *output++ = z;
+	  }
       }
-#endif
+
       if (TIFFWriteScanline (out, data, row, 0) < 0)
 	break;
       data += w * spp;
