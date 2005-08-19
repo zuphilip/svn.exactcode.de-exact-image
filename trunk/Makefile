@@ -1,11 +1,14 @@
 
-all: optimize2bw
+all: optimize2bw empty-page
 
 CFLAGS := -O2 -march=athlon-xp -ggdb
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o
 	gcc $(CFLAGS) -std=c99 -o optimize2bw optimize2bw.c tiff.o jpeg.o \
 	    -ljpeg -ltiff
+
+empty-page: empty-page.c tiff.o
+	gcc $(CFLAGS) -std=c99 -o empty-page empty-page.c tiff.o -ltiff
 
 jpeg.o: jpeg.c
 	gcc $(CFLAGS) -std=c99 -c jpeg.c

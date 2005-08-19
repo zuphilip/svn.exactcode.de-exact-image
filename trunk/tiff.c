@@ -6,13 +6,62 @@
 #include <tiffconf.h>
 #include <tiffio.h>
 
+#include "tiff.h"
+
 #define RELEASE
 
 unsigned char*
-read_TIFF_file (const char *file, unsigned char *data, int* w, int* h, int* bpp,
-		 int* spp)
+read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
 {
-  return 0;
+  TIFF* in;
+  in = TIFFOpen(file, "r");
+  if (!in)
+    return 0;
+  
+  uint16 photometric = 0;
+  TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
+  switch (photometric)
+    {
+    case PHOTOMETRIC_MINISWHITE:
+    case PHOTOMETRIC_MINISBLACK:
+    case PHOTOMETRIC_RGB:
+    case PHOTOMETRIC_PALETTE:
+      break;
+    
+    default:
+      printf("Bad photometric: %d\n", photometric);
+      return 0;
+    }
+  
+  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, w);
+  TIFFGetField(in, TIFFTAG_IMAGELENGTH, h);
+  
+  uint16 _spp;
+  TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp); *spp = _spp;
+  
+  uint16 _bps;
+  TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps); *bps = _bps;
+  
+  uint16 config;
+  TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
+
+  // format we know about
+
+  int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
+
+  printf ("w: %d h: %d\n", *w, *h);
+  printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
+
+  unsigned char* data = malloc (stride * *h);
+  
+  unsigned char* data2 = data;
+  for (unsigned int row = 0; row < *h; row++)
+    {
+      if (TIFFReadScanline(in, data2, row, 0) < 0)
+	break;
+      data2 += stride;
+    }
+  return data;
 }
 
 void
