@@ -94,17 +94,8 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
   unsigned char *data2 = malloc (w * h);
   {
     // any matrix and devisior
-#define WORKS
-#ifdef WORKS
-
-#define RIGHT
-#ifdef RIGHT
 #define matrix_w 5
 #define matrix_h 5
-#else
-#define matrix_w 3
-#define matrix_h 3
-#endif
 
 #define matrix_w2 ((matrix_w-1)/2)
 #define matrix_h2 ((matrix_h-1)/2)
@@ -112,25 +103,14 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
     typedef float matrix_type;
 
     matrix_type matrix[matrix_w][matrix_h] = {
-#ifdef RIGHT
       {0, 0, -1, 0, 0},
       {0, -8, -21, -8, 0},
       {-1, -21, 299, -21, -1},
       {0, -8, -21, -8, 0},
       {0, 0, -1, 0, 0},
-#else
-      {0, -1, 0},
-      {-1, 5, -1},
-      {0, -1, 0}
-#endif
     };
 
-    matrix_type divisor =
-#ifdef RIGHT
-      179;
-#else
-      1;
-#endif
+    matrix_type divisor = 179;
 
     for (int y = matrix_h2; y < h - matrix_h2; y++)
       {
@@ -153,39 +133,6 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 	    data2[x + y * w] = z;
 	  }
       }
-
-#else
-
-#define sharp_w 3
-#define sharp_h 3
-
-    float sharpen_filter[sharp_w][sharp_h] =
-      { {0, -1, 0}, {-1, 5, -1}, {0, -1, 0} };
-    float sharp_sum = 1;
-
-    for (int j = 1; j < h - 1; j++)
-      {
-	for (int i = 1; i < w - 1; i++)
-	  {
-	    float sumr = 0;
-
-	    for (int k = 0; k < sharp_w; k++)
-	      {
-		for (int l = 0; l < sharp_h; l++)
-		  {
-
-		    float color = data[i - ((sharp_w - 1) >> 1) + k +
-				       (j - ((sharp_h - 1) >> 1) + l) * w];
-		    sumr += ((float) color) * sharpen_filter[k][l];
-		  }
-	      }
-
-	    sumr /= sharp_sum;
-	    int z = sumr > 255 ? 255 : sumr < 0 ? 0 : sumr;
-	    data2[i + j * w] = z;
-	  }
-      }
-#endif
   }
   data = data2;
 
