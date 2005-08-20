@@ -96,6 +96,17 @@ int main (int argc, char* argv[])
       }
     std::cerr << "lowest: " << lowest << " - highest: "
 	      << highest << std::endl;
+    
+    if (arg_low.Get() != 0) {
+      lowest = arg_low.Get();
+      std::cerr << "Low value overwritten: " << lowest << std::endl;
+    }
+    
+    if (arg_high.Get() != 0) {
+      highest = arg_high.Get();
+      std::cerr << "High value overwritten: " << highest << std::endl;
+    }
+    
     // TODO use options
     signed int a = (255 * 256) / (highest - lowest);
     signed int b = -a * lowest;
