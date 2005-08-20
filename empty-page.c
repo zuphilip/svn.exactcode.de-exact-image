@@ -4,16 +4,43 @@
 #include "tiff.h"
 #include "jpeg.h"
 
+#include "ArgumentList.hh"
+
+using namespace Utility;
+
 int main (int argc, char* argv[])
 {
-  const char* infile = "test.tif";
+  ArgumentList arglist;
   
-  if (*++argv) {
-    infile = *argv;
-  }
+  // setup the argument list
+  Argument<bool> arg_help ("h", "help",
+			   "display this help text and exit");
+  Argument<std::string> arg_input ("i", "input", "input file",
+                                   1, 1);
+  Argument<int> arg_margin ("m", "margin",
+			    "border margin to skip", 16, 0, 1);
+  Argument<float> arg_percent ("p", "percentage",
+			       "coverate for non-empty page", 0.025, 0, 1);
+  
+  arglist.Add (&arg_help);
+  arglist.Add (&arg_input);
+  arglist.Add (&arg_margin);
+  arglist.Add (&arg_percent);
+  
+  // parse the specified argument list - and maybe output the Usage
+  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+    {
+      std::cout << "Empty page detector"
+                <<  " - Copyright 2005 by Renÿ Rebe" << std::endl
+                << "Usage:" << std::endl;
+
+      arglist.Usage (std::cout);
+      return 1;
+    }
   
   int w, h, bps, spp;
-  unsigned char* data = read_TIFF_file (infile, &w, &h, &bps, &spp);
+  unsigned char* data = read_TIFF_file (arg_input.Get().c_str(),
+					&w, &h, &bps, &spp);
   if (!data)
   {
     printf ("Error reading TIFF.\n");
@@ -54,8 +81,15 @@ int main (int argc, char* argv[])
       pixels += 8-b;
     }
   }
+  
+  float percentage = (float)pixels/(w*h) * 100;
   printf ("the image has %d dark pixels from a total of %d (%f%%)\n",
-	  pixels, w*h, (float)pixels/(w*h) );
+	  pixels, w*h, percentage );
+  
+  if (percentage > 0.05)
+    printf ("non-empty");
+  else
+    printf ("empty");
   
   FILE* f = fopen ("tiff-load.raw", "w+");
   fwrite (data, stride * h, 1, f);
