@@ -1,7 +1,7 @@
 
 all: optimize2bw empty-page
 
-CFLAGS := -O2 -march=athlon-xp -ggdb
+CFLAGS := -O2 -march=pentiumpro -ggdb
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o
 	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
