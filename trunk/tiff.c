@@ -53,7 +53,7 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
   printf ("w: %d h: %d\n", *w, *h);
   printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
 
-  unsigned char* data = malloc (stride * *h);
+  unsigned char* data = (unsigned char* ) malloc (stride * *h);
   
   unsigned char* data2 = data;
   for (unsigned int row = 0; row < *h; row++)
@@ -145,7 +145,7 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
   }
 
   // Convolution Matrix (unsharp mask like)
-  unsigned char *data2 = malloc (w * h);
+  unsigned char *data2 = (unsigned char *) malloc (w * h);
   {
     // any matrix and devisior
 #define matrix_w 5
@@ -188,7 +188,8 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 		  }
 		
 		sum /= divisor;
-		unsigned char z = sum > 255 ? 255 : sum < 0 ? 0 : sum;
+		unsigned char z = (unsigned char)
+		  (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 		data2[x + y * w] = z;
 	      }
 	  }

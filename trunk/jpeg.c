@@ -25,7 +25,9 @@
  * You may also wish to include "jerror.h".
  */
 
+extern "C" {
 #include <jpeglib.h>
+}
 
 /*
  * <setjmp.h> is used for the optional error recovery mechanism shown in
@@ -228,7 +230,7 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp)
   *spp = cinfo.output_components;
   *bpp = 8;
   
-  data = malloc (row_stride * cinfo.output_height);
+  data = (unsigned char*) malloc (row_stride * cinfo.output_height);
   
   /* Make a one-row-high sample array that will go away when done with image */
   buffer = (*cinfo.mem->alloc_sarray)
