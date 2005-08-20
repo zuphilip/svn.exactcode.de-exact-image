@@ -20,6 +20,7 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
   
   uint16 photometric = 0;
   TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
+  printf ("photometric: %d\n", photometric);
   switch (photometric)
     {
     case PHOTOMETRIC_MINISWHITE:
@@ -165,26 +166,34 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h, int bpp,
 
     matrix_type divisor = 179;
 
-    for (int y = matrix_h2; y < h - matrix_h2; y++)
+    for (int y = 0; y < h; y++)
       {
-	for (int x = matrix_w2; x < w - matrix_w2; x++)
+	for (int x = 0; x < w; x++)
 	  {
-	    matrix_type sum = 0;
-	    for (int x2 = 0; x2 < matrix_w; x2++)
+	    // for now copy border pixels
+	    if (y < matrix_h2 || y > h - matrix_h2 ||
+		x < matrix_w2 || x > w - matrix_w2)
+	      data2[x + y * w] = data[x + y * w];
+	    else
 	      {
-		for (int y2 = 0; y2 < matrix_h; y2++)
+		matrix_type sum = 0;
+		for (int x2 = 0; x2 < matrix_w; x2++)
 		  {
-		    matrix_type v = data[x - matrix_w2 + x2 +
-					 ((y - matrix_h2 + y2) * w)];
-		    sum += v * matrix[x2][y2];
+		    for (int y2 = 0; y2 < matrix_h; y2++)
+		      {
+			matrix_type v = data[x - matrix_w2 + x2 +
+					     ((y - matrix_h2 + y2) * w)];
+			sum += v * matrix[x2][y2];
+		      }
 		  }
+		
+		sum /= divisor;
+		unsigned char z = sum > 255 ? 255 : sum < 0 ? 0 : sum;
+		data2[x + y * w] = z;
 	      }
-
-	    sum /= divisor;
-	    unsigned char z = sum > 255 ? 255 : sum < 0 ? 0 : sum;
-	    data2[x + y * w] = z;
 	  }
       }
+    // copy unfiltered 
   }
   data = data2;
 
