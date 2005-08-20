@@ -1,5 +1,5 @@
 
-#include <stdio.h>
+#include <iostream>
 
 #include "tiff.h"
 #include "jpeg.h"
@@ -30,7 +30,7 @@ int main (int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
-      std::cout << "Empty page detector"
+      std::cerr << "Empty page detector"
                 <<  " - Copyright 2005 by Renÿ Rebe" << std::endl
                 << "Usage:" << std::endl;
 
@@ -43,15 +43,16 @@ int main (int argc, char* argv[])
 					&w, &h, &bps, &spp);
   if (!data)
   {
-    printf ("Error reading TIFF.\n");
+    std::cerr << "Error reading TIFF." << std::endl;
     return 1;
   }
-  printf ("read TIFF: w: %d: h: %d bps: %d spp: %d\n", w, h, bps, spp);
+  //printf ("read TIFF: w: %d: h: %d bps: %d spp: %d\n", w, h, bps, spp);
   
   // if not 1-bit optimize
   if (spp != 1 || bps != 1)
     {
-      printf ("the image type needs optimzation - to be added\n");
+      std::cerr << "Non-bilevel image - needs optimzation, to be done."
+		<< std::endl;
       
       return 1;
     }
@@ -70,7 +71,7 @@ int main (int argc, char* argv[])
   
   int stride = (w * bps * spp + 7) / 8;
   
-  int margin = 4;
+  const int margin = arg_margin.Get();
   
   // count pixels
   int pixels = 0;
@@ -83,17 +84,19 @@ int main (int argc, char* argv[])
   }
   
   float percentage = (float)pixels/(w*h) * 100;
-  printf ("the image has %d dark pixels from a total of %d (%f%%)\n",
-	  pixels, w*h, percentage );
+  std::cout << "The image has " << pixels << " dark pixels from a total of "
+	    << w*h << " (" << percentage << "%)." << std::endl;
   
-  if (percentage > 0.05)
-    printf ("non-empty");
+  if (percentage > arg_percent.Get())
+    std::cout << "non-empty" << std::endl;
   else
-    printf ("empty");
-  
+    std::cout << "empty" << std::endl;
+
+#ifdef DEBUG
   FILE* f = fopen ("tiff-load.raw", "w+");
   fwrite (data, stride * h, 1, f);
   fclose(f);
+#endif
   
   return 0;
 }
