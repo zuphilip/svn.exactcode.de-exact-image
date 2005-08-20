@@ -8,6 +8,13 @@
 
 using namespace Utility;
 
+/* TODO: for more accurance one could introduce a hot-spot area that
+   has a higher weight than the other (outer) region to more reliably
+   detect crossed but otherwise empty pages */
+
+/* TODO: include color / gray -> bi-level optimization and other file
+   loading */
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -20,7 +27,7 @@ int main (int argc, char* argv[])
   Argument<int> arg_margin ("m", "margin",
 			    "border margin to skip", 16, 0, 1);
   Argument<float> arg_percent ("p", "percentage",
-			       "coverate for non-empty page", 0.025, 0, 1);
+			       "coverate for non-empty page", 0.05, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -33,10 +40,17 @@ int main (int argc, char* argv[])
       std::cerr << "Empty page detector"
                 <<  " - Copyright 2005 by Renÿ Rebe" << std::endl
                 << "Usage:" << std::endl;
-
+      
       arglist.Usage (std::cout);
       return 1;
     }
+  
+  const int margin = arg_margin.Get();
+  if (margin % 8 != 0) {
+    std::cerr << "For speed reasons, the margin has to be a multiple of 8."
+	      << std::endl;
+    return  1;
+  }
   
   int w, h, bps, spp;
   unsigned char* data = read_TIFF_file (arg_input.Get().c_str(),
@@ -71,12 +85,10 @@ int main (int argc, char* argv[])
   
   int stride = (w * bps * spp + 7) / 8;
   
-  const int margin = arg_margin.Get();
-  
   // count pixels
   int pixels = 0;
   for (int row = margin; row < h-margin; row++) {
-    for (int x = margin; x < stride - margin; x++) {
+    for (int x = margin/8; x < stride - margin/8; x++) {
       int b = bits_set [ data[stride*row + x] ];
       // it is a bits_set table - and we want tze zeros ...
       pixels += 8-b;
