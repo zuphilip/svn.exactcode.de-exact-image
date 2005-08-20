@@ -4,8 +4,8 @@ all: optimize2bw empty-page
 CFLAGS := -O2 -march=athlon-xp -ggdb
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o
-	g++ $(CFLAGS) -o optimize2bw optimize2bw.c tiff.o jpeg.o \
-	    -ljpeg -ltiff
+	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
+	    utility/src/ArgumentList.cc tiff.o jpeg.o -ljpeg -ltiff
 
 empty-page: empty-page.c tiff.o
 	g++ $(CFLAGS) -I utility/include -o empty-page empty-page.c \

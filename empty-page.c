@@ -38,7 +38,7 @@ int main (int argc, char* argv[])
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "Empty page detector"
-                <<  " - Copyright 2005 by Renÿ Rebe" << std::endl
+                <<  " - Copyright 2005 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cout);
