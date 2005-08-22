@@ -135,14 +135,6 @@ int main (int argc, char* argv[])
 
     typedef float matrix_type;
 
-    /*    const matrix_type matrix[matrix_w][matrix_h] = {
-      {0, 0, -1, 0, 0},
-      {0, -8, -21, -8, 0},
-      {-1, -21, 299, -21, -1},
-      {0, -8, -21, -8, 0},
-      {0, 0, -1, 0, 0},
-      };*/
-
     // compute kernel (convolution matrix to move over the iamge)
     
     int radius = 3;
@@ -152,8 +144,8 @@ int main (int argc, char* argv[])
     }
 
     int width = radius * 2 + 1;
-    matrix_type divisor = 1;
-    float sd = 0.885;
+    matrix_type divisor = 3;
+    float sd = 1;
     
     
     matrix_type *matrix = new matrix_type[width * width];
@@ -163,7 +155,7 @@ int main (int argc, char* argv[])
       for (int x = -radius; x <= radius; x++) {
 	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
 	if (x == 0 && y == 0)
-	  v *= -5;
+	  v *= -8;
 	std::cout << v << " ";
 	matrix[x + radius + (y+radius)*width] = v;
       }
