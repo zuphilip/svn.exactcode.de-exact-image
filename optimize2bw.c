@@ -1,5 +1,8 @@
 
+#include <math.h>
+
 #include <iostream>
+#include <iomanip>
 
 #include "ArgumentList.hh"
 
@@ -24,11 +27,18 @@ int main (int argc, char* argv[])
   Argument<int> arg_high ("h", "high",
 			  "high normalization value", 0, 0, 1);
   
+  Argument<int> arg_threshold ("t", "threshold",
+			       "threshold", 0, 0, 1);
+
+  Argument<int> arg_radius ("r", "radius",
+			    "\"unsharp mask\" radius", 0, 0, 1);
+  
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
   arglist.Add (&arg_output);
   arglist.Add (&arg_low);
   arglist.Add (&arg_high);
+  arglist.Add (&arg_threshold);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -85,8 +95,8 @@ int main (int argc, char* argv[])
     int lowest = 255, highest = 0;
     for (int i = 0; i <= 255; i++)
       {
-	// printf ("%d: %d\n", i, histogram[i]);
-	if (histogram[i] > 2) // 5 == magic denoise constant
+	std::cout << i << ": "<< histogram[i] << std::endl;
+	if (histogram[i] > 2) // magic denoise constant
 	  {
 	    if (i < lowest)
 	      lowest = i;
@@ -121,46 +131,104 @@ int main (int argc, char* argv[])
   unsigned char *data2 = (unsigned char *) malloc (w * h);
   {
     // any matrix and devisior
-#define matrix_w 5
-#define matrix_h 5
-
-#define matrix_w2 ((matrix_w-1)/2)
-#define matrix_h2 ((matrix_h-1)/2)
 
     typedef float matrix_type;
 
-    matrix_type matrix[matrix_w][matrix_h] = {
+    /*    const matrix_type matrix[matrix_w][matrix_h] = {
       {0, 0, -1, 0, 0},
       {0, -8, -21, -8, 0},
       {-1, -21, 299, -21, -1},
       {0, -8, -21, -8, 0},
       {0, 0, -1, 0, 0},
-    };
+      };*/
 
-    matrix_type divisor = 179;
+    // compute kernel (convolution matrix to move over the iamge)
+    
+    int radius = 2;
+    int width = radius * 2 + 1;
+    matrix_type divisor = 1;
+    float sd = 0.9;
+    
+    if (arg_radius.Get() != 0) {
+      radius = arg_radius.Get();
+      std::cerr << "Radius: " << radius << std::endl;
+    }
+    
+    matrix_type *matrix = new matrix_type[width * width];
+    
+    std::cout << std::fixed << std::setprecision(2);
+    for (int y = -radius; y <= radius; y++) {
+      for (int x = -radius; x <= radius; x++) {
+	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
+	if (x == 0 && y == 0)
+	  v *= -5;
+	std::cout << v << " ";
+	matrix[x + radius + (y+radius)*width] = v;
+      }
+      std::cout << std::endl;
+    }
+    
+    #define KernelRank 3
 
+#ifdef image_magick_reference
+    long bias;
+
+    MagickRealType alpha,  normalize;
+    
+    register long i;
+    
+    /* Generate a 1-D convolution matrix. Calculate the kernel at higher
+       resolution than needed and average the results as a form of numerical
+       integration to get the best accuracy. */
+
+    assert(sigma != 0.0);
+    if (width < 3)
+      width=3;
+    if ((width & 0x01) == 0)
+      width++;
+    bias=KernelRank*(long) width/2;
+    for (i=(-bias); i <= bias; i++)
+      {
+	alpha=exp( (-((double) (i*i))/(2.0*KernelRank*KernelRank*sigma*sigma))
+		   );
+	(*kernel)[(i+bias)/KernelRank]+=alpha/(MagickSQ2PI*sigma);
+      }
+    normalize=0.0;
+    for (i=0; i < (long) width; i++)
+      normalize+=(*kernel)[i];
+    for (i=0; i < (long) width; i++)
+      (*kernel)[i]/=normalize;
+    return(width);
+    
+#endif
+    
     for (int y = 0; y < h; y++)
       {
 	for (int x = 0; x < w; x++)
 	  {
 	    // for now copy border pixels
-	    if (y < matrix_h2 || y > h - matrix_h2 ||
-		x < matrix_w2 || x > w - matrix_w2)
+	    if (y < radius || y > h - radius ||
+		x < radius || x > w - radius)
 	      data2[x + y * w] = data[x + y * w];
 	    else
 	      {
 		matrix_type sum = 0;
-		for (int x2 = 0; x2 < matrix_w; x2++)
+		for (int x2 = 0; x2 < width; x2++)
 		  {
-		    for (int y2 = 0; y2 < matrix_h; y2++)
+		    for (int y2 = 0; y2 < width; y2++)
 		      {
-			matrix_type v = data[x - matrix_w2 + x2 +
-					     ((y - matrix_h2 + y2) * w)];
-			sum += v * matrix[x2][y2];
+			matrix_type v = data[x - radius + x2 +
+					     ((y - radius + y2) * w)];
+			sum += v * matrix[x2 + y2*width];
+			if (y == h/2 && x == w/2)
+			  std::cout << sum << std::endl;
 		      }
 		  }
 		
+		
 		sum /= divisor;
+		if (y == h/2 && x == w/2)
+		  std::cout << sum << std::endl;
 		unsigned char z = (unsigned char)
 		  (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 		data2[x + y * w] = z;
@@ -169,21 +237,36 @@ int main (int argc, char* argv[])
       }
   }
   data = data2;
-
+  
+// #define DEBUG
+#ifdef DEBUG
+  FILE* f = fopen ("optimized.raw", "w+");
+  fwrite (data, w * h, 1, f);
+  fclose(f);
+#endif
+  
   // convert to 1-bit (threshold)
   
   unsigned char *output = data;
   unsigned char *input = data;
+  
+  int threshold = 127;
+    
+  if (arg_threshold.Get() != 0) {
+    threshold = arg_threshold.Get();
+    std::cerr << "Threshold: " << threshold << std::endl;
+  }
+    
   for (int row = 0; row < h; row++)
     {
       unsigned char z = 0;
       int x = 0;
       for (; x < w; x++)
 	{
-	  if (*input++ > 127)
-	    z = (z << 1) | 0x01;
-	  else
-	    z <<= 1;
+	  z <<= 1;
+	  if (*input++ > threshold)
+	    z |= 0x01;
+	  
 	  if (x % 8 == 7)
 	    {
 	      *output++ = z;
