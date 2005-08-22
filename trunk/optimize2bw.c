@@ -147,7 +147,7 @@ int main (int argc, char* argv[])
     int radius = 2;
     int width = radius * 2 + 1;
     matrix_type divisor = 1;
-    float sd = 0.9;
+    float sd = 0.885;
     
     if (arg_radius.Get() != 0) {
       radius = arg_radius.Get();
@@ -179,18 +179,20 @@ int main (int argc, char* argv[])
 	    else
 	      {
 		matrix_type sum = 0;
-		for (int x2 = 0; x2 < width; x2++)
+		for (int y2 = 0; y2 < width; y2++)
 		  {
-		    for (int y2 = 0; y2 < width; y2++)
+		    int matrix_stride = y2 * width;
+		    for (int x2 = 0; x2 < width; x2++)
 		      {
-			matrix_type v = data[x - radius + x2 +
-					     ((y - radius + y2) * w)];
-			sum += v * matrix[x2 + y2*width];
-			if (y == h/2 && x == w/2)
-			  std::cout << sum << std::endl;
+			{
+			  matrix_type v = data[x - radius + x2 +
+					       ((y - radius + y2) * w)];
+			  sum += v * matrix[x2 + matrix_stride];
+			  /*if (y == h/2 && x == w/2)
+			    std::cout << sum << std::endl; */
+			}
 		      }
-		  }
-		
+		}
 		
 		sum /= divisor;
 		if (y == h/2 && x == w/2)
