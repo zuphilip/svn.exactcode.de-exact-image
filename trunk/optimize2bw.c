@@ -39,6 +39,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_low);
   arglist.Add (&arg_high);
   arglist.Add (&arg_threshold);
+  arglist.Add (&arg_radius);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -95,7 +96,7 @@ int main (int argc, char* argv[])
     int lowest = 255, highest = 0;
     for (int i = 0; i <= 255; i++)
       {
-	std::cout << i << ": "<< histogram[i] << std::endl;
+	// std::cout << i << ": "<< histogram[i] << std::endl;
 	if (histogram[i] > 2) // magic denoise constant
 	  {
 	    if (i < lowest)
@@ -144,19 +145,20 @@ int main (int argc, char* argv[])
 
     // compute kernel (convolution matrix to move over the iamge)
     
-    int radius = 2;
-    int width = radius * 2 + 1;
-    matrix_type divisor = 1;
-    float sd = 0.885;
-    
+    int radius = 3;
     if (arg_radius.Get() != 0) {
       radius = arg_radius.Get();
       std::cerr << "Radius: " << radius << std::endl;
     }
+
+    int width = radius * 2 + 1;
+    matrix_type divisor = 1;
+    float sd = 0.885;
+    
     
     matrix_type *matrix = new matrix_type[width * width];
     
-    std::cout << std::fixed << std::setprecision(2);
+    std::cout << std::fixed << std::setprecision(3);
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
 	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
@@ -181,16 +183,15 @@ int main (int argc, char* argv[])
 		matrix_type sum = 0;
 		for (int y2 = 0; y2 < width; y2++)
 		  {
-		    int matrix_stride = y2 * width;
+		    matrix_type* matrix_row = &matrix [y2 * width];
+		    unsigned char* data_row = &data[ ((y - radius + y2) * w) - radius + x];
+		    
 		    for (int x2 = 0; x2 < width; x2++)
 		      {
-			{
-			  matrix_type v = data[x - radius + x2 +
-					       ((y - radius + y2) * w)];
-			  sum += v * matrix[x2 + matrix_stride];
-			  /*if (y == h/2 && x == w/2)
-			    std::cout << sum << std::endl; */
-			}
+			matrix_type v = data_row[x2];
+			sum += v * matrix_row [x2];
+			/*if (y == h/2 && x == w/2)
+			  std::cout << sum << std::endl; */
 		      }
 		}
 		
