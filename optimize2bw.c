@@ -168,40 +168,6 @@ int main (int argc, char* argv[])
       std::cout << std::endl;
     }
     
-    #define KernelRank 3
-
-#ifdef image_magick_reference
-    long bias;
-
-    MagickRealType alpha,  normalize;
-    
-    register long i;
-    
-    /* Generate a 1-D convolution matrix. Calculate the kernel at higher
-       resolution than needed and average the results as a form of numerical
-       integration to get the best accuracy. */
-
-    assert(sigma != 0.0);
-    if (width < 3)
-      width=3;
-    if ((width & 0x01) == 0)
-      width++;
-    bias=KernelRank*(long) width/2;
-    for (i=(-bias); i <= bias; i++)
-      {
-	alpha=exp( (-((double) (i*i))/(2.0*KernelRank*KernelRank*sigma*sigma))
-		   );
-	(*kernel)[(i+bias)/KernelRank]+=alpha/(MagickSQ2PI*sigma);
-      }
-    normalize=0.0;
-    for (i=0; i < (long) width; i++)
-      normalize+=(*kernel)[i];
-    for (i=0; i < (long) width; i++)
-      (*kernel)[i]/=normalize;
-    return(width);
-    
-#endif
-    
     for (int y = 0; y < h; y++)
       {
 	for (int x = 0; x < w; x++)
