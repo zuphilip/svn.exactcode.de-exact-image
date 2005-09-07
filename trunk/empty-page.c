@@ -41,7 +41,7 @@ int main (int argc, char* argv[])
                 <<  " - Copyright 2005 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
-      arglist.Usage (std::cout);
+      arglist.Usage (std::cerr);
       return 1;
     }
   
