@@ -52,9 +52,9 @@ int main (int argc, char* argv[])
     return  1;
   }
   
-  int w, h, bps, spp;
+  int w, h, bps, spp, xres, yres;
   unsigned char* data = read_TIFF_file (arg_input.Get().c_str(),
-					&w, &h, &bps, &spp);
+					&w, &h, &bps, &spp, &xres, &yres);
   if (!data)
   {
     std::cerr << "Error reading TIFF." << std::endl;
