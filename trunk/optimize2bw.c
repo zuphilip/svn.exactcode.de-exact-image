@@ -16,7 +16,7 @@ int main (int argc, char* argv[])
   ArgumentList arglist;
   
   // setup the argument list
-  Argument<bool> arg_help ("h", "help",
+  Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
   Argument<std::string> arg_input ("i", "input", "input file",
                                    1, 1);
@@ -28,12 +28,13 @@ int main (int argc, char* argv[])
 			  "high normalization value", 0, 0, 1);
   
   Argument<int> arg_threshold ("t", "threshold",
-			       "threshold", 0, 0, 1);
+			       "threshold value", 0, 0, 1);
 
   Argument<int> arg_radius ("r", "radius",
 			    "\"unsharp mask\" radius", 0, 0, 1);
 
   Argument<double> arg_scale ("s", "scale", "scale output by factor", 0.0, 0, 1);
+  Argument<int> arg_dpi ("d", "dpi", "scale to specified DPI", 0, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -43,6 +44,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_threshold);
   arglist.Add (&arg_radius);
   arglist.Add (&arg_scale);
+  arglist.Add (&arg_dpi);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -55,14 +57,16 @@ int main (int argc, char* argv[])
       return 1;
     }
   
-  int w, h, bps, spp;
+  int w, h, bps, spp, xres, yres;
   unsigned char* data = read_JPEG_file (arg_input.Get().c_str(),
-					&w, &h, &bps, &spp);
+					&w, &h, &bps, &spp, &xres, &yres);
   if (!data)
   {
     std::cerr << "Error reading JPEG." << std::endl;
     return 1;
   }
+  
+  std::cerr << "xres: " << xres << ", yres: " << yres << std::endl;
   
   // convert to RGB to gray - TODO: more cases
   if (spp == 3 && bps == 8) {
@@ -203,18 +207,40 @@ int main (int argc, char* argv[])
   data = data2;
   
 // #define DEBUG
-
+  
   // scale image using linear interpolation
-
+  
   double scale = arg_scale.Get ();
+  int dpi = arg_dpi.Get ();
+
+  if (scale != 0.0 && dpi != 0) {
+    std::cerr << "DPI and scale argument must not be specified at once!" << std::endl;
+    return 1;
+  }
+  
+  if (dpi != 0)
+    scale = (double)(dpi) / xres;
+  
+  if (scale != 0.0 && scale < 1.0) {
+    std::cerr << "Downscaling not yet implemented!" << std::endl;
+    return 1;
+  }
+  
+  std::cerr << "Scale: " << scale << std::endl;
+  
   if (scale > 1.0) {
 
     int wn = (int) (scale * (double) w);
     int hn = (int) (scale * (double) h);
 
+    xres = (int) (scale * xres);
+    yres = (int) (scale * yres);
+
     scale = 256.0 / scale;
 
-    std::cerr << "new dimensions: " << wn << " x " << hn << std::endl; 
+    std::cerr << "new dimensions: " << wn << " x " << hn 
+	      << " (xres: " << xres << ", yres: " << yres << ")" << std::endl;
+
     unsigned char* ndata = (unsigned char*) malloc (wn * hn);
 
     unsigned int offset = 0;
@@ -249,10 +275,9 @@ int main (int argc, char* argv[])
     data = ndata;
     w = wn;
     h = hn;
-    std::cerr << "done" << std::endl;
   }
-
-#if 1
+  
+#ifdef DEBUG
   std::cout << "w: " << w << ", h: " << h << std::endl;
   FILE* f = fopen ("optimized.raw", "w+");
   fwrite (data, w * h, 1, f);
@@ -300,7 +325,8 @@ int main (int argc, char* argv[])
   w = ((w + 7) / 8) * 8;
   bps = 1;
 
-  write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp);
+  write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp,
+		   xres, yres);
   
   free (data2);
 

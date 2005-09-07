@@ -1,7 +1,19 @@
 
 all: optimize2bw empty-page
 
-CFLAGS := -O2 -ggdb
+MYARCH:=$(shell uname -m)
+
+ifeq ($(MYARCH),ppc)
+OPT=-mcpu=750
+else
+ifeq ($(MYARCH),x86_64)
+OPT=
+else
+OPT:=-march=$(MYARCH)
+endif
+endif
+
+CFLAGS := -Wall $(OPT) -O2 -s
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o
 	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
@@ -24,3 +36,5 @@ bw-optimize: bw-optimize.c
 # check:
 #	display -size 1275x2096 -depth 8 gray:test.raw
 
+clean:
+	rm -rf optimize2bw *.o

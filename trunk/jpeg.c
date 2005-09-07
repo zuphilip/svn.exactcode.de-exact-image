@@ -142,7 +142,7 @@ my_error_exit (j_common_ptr cinfo)
  */
 
 unsigned char*
-read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp)
+read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* xres, int* yres)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -229,7 +229,23 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp)
   *h = cinfo.output_height;
   *spp = cinfo.output_components;
   *bpp = 8;
-  
+
+  /* These three values are not used by the JPEG code, merely copied */
+  /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
+  /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
+  /* ratio is defined by X_density/Y_density even when density_unit=0. */
+  switch (cinfo.density_unit)           /* JFIF code for pixel size units */
+  {
+    case 1: *xres = cinfo.X_density;		/* Horizontal pixel density */
+            *yres = cinfo.Y_density;		/* Vertical pixel density */
+            break;
+    case 2: *xres = cinfo.X_density * 254 / 100;
+            *yres = cinfo.Y_density * 254 / 100;
+            break;
+    default:
+      *xres = *yres = 0;
+  }
+
   data = (unsigned char*) malloc (row_stride * cinfo.output_height);
   
   /* Make a one-row-high sample array that will go away when done with image */

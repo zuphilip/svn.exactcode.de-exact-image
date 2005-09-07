@@ -11,7 +11,8 @@
 #define RELEASE
 
 unsigned char*
-read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
+read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
+		int* xres, int* yres)
 {
   TIFF* in;
   in = TIFFOpen(file, "r");
@@ -45,7 +46,15 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
   
   uint16 config;
   TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
-
+  
+  uint16 _xres;
+  if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres) == 0)
+    *xres = _xres;
+  
+  uint16 _yres;
+  if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres) == 0)
+    *yres = _yres;
+  
   // format we know about
 
   int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
@@ -67,11 +76,11 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp)
 
 void
 write_TIFF_file (const char *file, unsigned char *data, int w, int h,
-		 int bps, int spp)
+		 int bps, int spp, int xres, int yres)
 {
   TIFF *out;
-  char thing[1024];
-  unsigned char *inbuf, *outbuf;
+  //char thing[1024];
+  unsigned char /* *inbuf,*/  *outbuf;
 
   uint32 rowsperstrip = (uint32) - 1;
   uint16 compression = COMPRESSION_NONE;
@@ -96,6 +105,12 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
   else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
+  
+  if (xres != 0)
+    TIFFSetField (out, TIFFTAG_XRESOLUTION, xres);
+  
+  if (yres != 0)
+    TIFFSetField (out, TIFFTAG_YRESOLUTION, yres);
   
   TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");
   TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
