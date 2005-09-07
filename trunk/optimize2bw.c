@@ -246,14 +246,9 @@ int main (int argc, char* argv[])
     scale = (double)(dpi) / xres;
   }
   
-  if (scale != 0.0 && scale < 1.0) {
-    std::cerr << "Downscaling not yet implemented!" << std::endl;
-    return 1;
-  }
-  
   std::cerr << "Scale: " << scale << std::endl;
   
-  if (scale > 1.0) {
+  if (scale > 0.0) {
 
     int wn = (int) (scale * (double) w);
     int hn = (int) (scale * (double) h);
