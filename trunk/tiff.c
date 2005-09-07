@@ -74,7 +74,11 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
   unsigned char *inbuf, *outbuf;
 
   uint32 rowsperstrip = (uint32) - 1;
-  uint16 compression = COMPRESSION_CCITTFAX4; // COMPRESSION_LZW
+  uint16 compression = COMPRESSION_NONE;
+  if (bps == 1)
+    compression = COMPRESSION_CCITTFAX4;
+  else
+    compression = COMPRESSION_LZW;
 
   out = TIFFOpen (file, "w");
   if (out == NULL)
@@ -88,7 +92,9 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
   if (bps == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else // TODO
+  else if (spp == 1) // TODO: needs colormap ...
+    TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
+  else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   
   TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");

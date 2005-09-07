@@ -32,6 +32,8 @@ int main (int argc, char* argv[])
 
   Argument<int> arg_radius ("r", "radius",
 			    "\"unsharp mask\" radius", 0, 0, 1);
+
+  Argument<double> arg_scale ("s", "scale", "scale output by factor", 0.0, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -40,7 +42,8 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_high);
   arglist.Add (&arg_threshold);
   arglist.Add (&arg_radius);
-  
+  arglist.Add (&arg_scale);
+
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
@@ -200,12 +203,62 @@ int main (int argc, char* argv[])
   data = data2;
   
 // #define DEBUG
-#ifdef DEBUG
+
+  // scale image using linear interpolation
+
+  double scale = arg_scale.Get ();
+  if (scale > 1.0) {
+
+    int wn = (int) (scale * (double) w);
+    int hn = (int) (scale * (double) h);
+
+    scale = 256.0 / scale;
+
+    std::cerr << "new dimensions: " << wn << " x " << hn << std::endl; 
+    unsigned char* ndata = (unsigned char*) malloc (wn * hn);
+
+    unsigned int offset = 0;
+    for (int y=0; y < hn; y++)
+      for (int x=0; x < wn; x++) {
+
+	int bx = (int) (((double) x) * scale);
+	int by = (int) (((double) y) * scale);
+	
+	int sx = std::min(bx / 256, w - 1);
+	int sy = std::min(by / 256, h - 1);
+	int sxx = std::min(sx + 1, w - 1);
+	int syy = std::min(sy + 1, h - 1);
+
+	int fxx = bx % 256;
+	int fyy = by % 256;
+	int fx = 256 - fxx;
+	int fy = 256 - fyy;
+ 
+	unsigned int value
+	  = fx  * fy  * ( (unsigned int) data [sx  + w * sy ])
+	  + fxx * fy  * ( (unsigned int) data [sxx + w * sy ])
+	  + fx  * fyy * ( (unsigned int) data [sx  + w * syy])
+	  + fxx * fyy * ( (unsigned int) data [sxx + w * syy]);
+
+	value /= 256 * 256;
+	value = std::min (value, (unsigned int) 255);
+
+	ndata[offset++] = (unsigned char) value;
+      }
+    
+    data = ndata;
+    w = wn;
+    h = hn;
+    std::cerr << "done" << std::endl;
+  }
+
+#if 1
+  std::cout << "w: " << w << ", h: " << h << std::endl;
   FILE* f = fopen ("optimized.raw", "w+");
   fwrite (data, w * h, 1, f);
   fclose(f);
 #endif
-  
+
   // convert to 1-bit (threshold)
   
   unsigned char *output = data;
@@ -246,7 +299,7 @@ int main (int argc, char* argv[])
   // new image data - and 8 pixel align due to packing nature
   w = ((w + 7) / 8) * 8;
   bps = 1;
-  
+
   write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp);
   
   free (data2);
