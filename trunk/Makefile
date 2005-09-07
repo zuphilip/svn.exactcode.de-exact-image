@@ -15,19 +15,23 @@ endif
 
 CFLAGS := -Wall $(OPT) -O2 -s
 
-optimize2bw: optimize2bw.c tiff.o jpeg.o
+optimize2bw: optimize2bw.c tiff.o jpeg.o ArgumentList.o
 	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
-	    utility/src/ArgumentList.cc tiff.o jpeg.o -ljpeg -ltiff
+	    ArgumentList.o tiff.o jpeg.o -ljpeg -ltiff
 
-empty-page: empty-page.c tiff.o
+empty-page: empty-page.c tiff.o ArgumentList.o
 	g++ $(CFLAGS) -I utility/include -o empty-page empty-page.c \
-	    utility/src/ArgumentList.cc tiff.o -ltiff
+	    ArgumentList.o tiff.o -ltiff
 
 jpeg.o: jpeg.c
 	g++ $(CFLAGS) -c jpeg.c
 
 tiff.o: tiff.c
 	g++ $(CFLAGS) -c tiff.c
+
+
+ArgumentList.o: utility/src/ArgumentList.cc utility/include/ArgumentList.hh
+	g++ $(CFLAGS) -I utility/include -c utility/src/ArgumentList.cc
 
 bw-optimize: bw-optimize.c
 	g++ `Wand-config --cflags --cppflags` bw-optimize.c \
