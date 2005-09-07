@@ -218,8 +218,17 @@ int main (int argc, char* argv[])
     return 1;
   }
   
-  if (dpi != 0)
+  if (dpi != 0) {
+    if (xres == 0)
+      xres = yres;
+    
+    if (xres == 0) {
+      std::cerr << "Image does not include DPI information!" << std::endl;
+      return 1;
+    }
+    
     scale = (double)(dpi) / xres;
+  }
   
   if (scale != 0.0 && scale < 1.0) {
     std::cerr << "Downscaling not yet implemented!" << std::endl;
