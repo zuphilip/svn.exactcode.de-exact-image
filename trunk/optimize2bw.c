@@ -245,6 +245,11 @@ int main (int argc, char* argv[])
     
     scale = (double)(dpi) / xres;
   }
+
+  if (scale < 0.0) {
+    std::cerr << "Scale must not be negativ!" << std::endl;
+    return 1;
+  }
   
   std::cerr << "Scale: " << scale << std::endl;
   
