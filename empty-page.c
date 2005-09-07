@@ -36,7 +36,7 @@ int main (int argc, char* argv[])
   ArgumentList arglist;
   
   // setup the argument list
-  Argument<bool> arg_help ("h", "help",
+  Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
   Argument<std::string> arg_input ("i", "input", "input file",
                                    1, 1);
