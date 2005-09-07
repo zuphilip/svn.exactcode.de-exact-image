@@ -41,4 +41,16 @@ bw-optimize: bw-optimize.c
 #	display -size 1275x2096 -depth 8 gray:test.raw
 
 clean:
-	rm -rf optimize2bw *.o
+	rm -rf optimize2bw *.o *tar.*
+
+rel:= ec-$(shell date '+%Y%m%d-%H%M')
+dir:= $(shell pwd)
+
+release: clean
+	rm -rf /tmp/$(rel) ; mkdir /tmp/$(rel)
+	cp -arv * /tmp/$(rel)
+	cd /tmp/$(rel) ; \
+	find utility/ ! -name "ArgumentList.*" -a ! -name Compiler.hh | xargs rm -f ; \
+	cd .. ; \
+	tar cvfz $(dir)/$(rel).tar.gz --exclude .svn --exclude '*~' $(rel)
+	rm -rf /tmp/$(rel)
