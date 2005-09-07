@@ -47,7 +47,7 @@ rel:= ec-$(shell date '+%Y%m%d-%H%M')
 dir:= $(shell pwd)
 
 release: clean
-	rm -rf /tmp/$(rel) ; mkdir /tmp/$(rel)
+	rm -rf ec-[0-9]* /tmp/$(rel) ; mkdir /tmp/$(rel)
 	cp -arv * /tmp/$(rel)
 	cd /tmp/$(rel) ; \
 	find utility/ ! -name "ArgumentList.*" -a ! -name Compiler.hh | xargs rm -f ; \
