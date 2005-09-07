@@ -58,14 +58,14 @@ int main (int argc, char* argv[])
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
-      return 1;
+      return 2;
     }
   
   const int margin = arg_margin.Get();
   if (margin % 8 != 0) {
     std::cerr << "For speed reasons, the margin has to be a multiple of 8."
 	      << std::endl;
-    return  1;
+    return  2;
   }
   
   int w, h, bps, spp, xres, yres;
@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
   if (!data)
   {
     std::cerr << "Error reading TIFF." << std::endl;
-    return 1;
+    return 2;
   }
   //printf ("read TIFF: w: %d: h: %d bps: %d spp: %d\n", w, h, bps, spp);
   
@@ -84,7 +84,7 @@ int main (int argc, char* argv[])
       std::cerr << "Non-bilevel image - needs optimzation, to be done."
 		<< std::endl;
       
-      return 1;
+      return 2;
     }
   
   // count bits and decide based on that
@@ -110,15 +110,6 @@ int main (int argc, char* argv[])
       pixels += 8-b;
     }
   }
-  
-  float percentage = (float)pixels/(w*h) * 100;
-  std::cout << "The image has " << pixels << " dark pixels from a total of "
-	    << w*h << " (" << percentage << "%)." << std::endl;
-  
-  if (percentage > arg_percent.Get())
-    std::cout << "non-empty" << std::endl;
-  else
-    std::cout << "empty" << std::endl;
 
 #ifdef DEBUG
   FILE* f = fopen ("tiff-load.raw", "w+");
@@ -126,5 +117,15 @@ int main (int argc, char* argv[])
   fclose(f);
 #endif
   
+  float percentage = (float)pixels/(w*h) * 100;
+  std::cout << "The image has " << pixels << " dark pixels from a total of "
+	    << w*h << " (" << percentage << "%)." << std::endl;
+  
+  if (percentage > arg_percent.Get()) {
+    std::cout << "non-empty" << std::endl;
+    return 1;
+  }
+
+  std::cout << "empty" << std::endl;
   return 0;
 }
