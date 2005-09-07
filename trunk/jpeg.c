@@ -1,16 +1,18 @@
+
 /*
- * example.c
- *
- * This file illustrates how to use the IJG code as a subroutine library
- * to read or write JPEG image files.  You should look at this code in
- * conjunction with the documentation file libjpeg.doc.
- *
- * This code will not do anything useful as-is, but it may be helpful as a
- * skeleton for constructing routines that call the JPEG library.  
- *
- * We present these routines in the same coding style used in the JPEG code
- * (ANSI function definitions, etc); but you are of course free to code your
- * routines in a different style if you prefer.
+ * Copyright (C) 2005 René Rebe
+ *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ * 
  */
 
 #include <stdio.h>
