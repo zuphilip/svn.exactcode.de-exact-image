@@ -173,7 +173,7 @@ int main (int argc, char* argv[])
 
     int width = radius * 2 + 1;
     matrix_type divisor = 0;
-    float sd = 1.8;
+    float sd = 1.6;
     
     if (arg_sd.Get() != 0) {
       sd = arg_sd.Get();
@@ -187,8 +187,8 @@ int main (int argc, char* argv[])
       for (int x = -radius; x <= radius; x++) {
 	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
 	if (x == 0 && y == 0) {
-	  v *= -8 * (pow(sd,2));
-	  divisor = v / 4;
+	  v *= -8 * (pow(sd,1.77));
+	  divisor = v / (4 + (float)radius / 7);
 	}
 	std::cout << v << " ";
 	matrix[x + radius + (y+radius)*width] = v;
@@ -314,7 +314,7 @@ int main (int argc, char* argv[])
     h = hn;
   }
   
-#ifdef DEBUG
+#if 1
   {
     std::cout << "w: " << w << ", h: " << h << std::endl;
     FILE* f = fopen ("optimized.raw", "w+");
@@ -328,7 +328,7 @@ int main (int argc, char* argv[])
   unsigned char *output = data;
   unsigned char *input = data;
   
-  int threshold = 215;
+  int threshold = 170;
     
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
