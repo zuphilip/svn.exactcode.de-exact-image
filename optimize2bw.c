@@ -50,7 +50,11 @@ int main (int argc, char* argv[])
 			    "\"unsharp mask\" radius", 0, 0, 1);
 
   Argument<double> arg_scale ("s", "scale", "scale output by factor", 0.0, 0, 1);
+  
   Argument<int> arg_dpi ("d", "dpi", "scale to specified DPI", 0, 0, 1);
+  
+  Argument<double> arg_sd ("sd", "standard-deviation",
+			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -61,6 +65,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_radius);
   arglist.Add (&arg_scale);
   arglist.Add (&arg_dpi);
+  arglist.Add (&arg_sd);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -150,7 +155,7 @@ int main (int argc, char* argv[])
     for (int i = 0; i < h * w; i++)
       data[i] = ((int) data[i] * a + b) / 256;
   }
-
+  
   // Convolution Matrix (unsharp mask a-like)
   unsigned char *data2 = (unsigned char *) malloc (w * h);
   {
@@ -167,9 +172,13 @@ int main (int argc, char* argv[])
     }
 
     int width = radius * 2 + 1;
-    matrix_type divisor = 3;
-    float sd = 1;
+    matrix_type divisor = 0;
+    float sd = 1.8;
     
+    if (arg_sd.Get() != 0) {
+      sd = arg_sd.Get();
+      std::cerr << "SD overwritten: " << sd << std::endl;
+    }
     
     matrix_type *matrix = new matrix_type[width * width];
     
@@ -177,14 +186,17 @@ int main (int argc, char* argv[])
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
 	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
-	if (x == 0 && y == 0)
-	  v *= -8;
+	if (x == 0 && y == 0) {
+	  v *= -8 * (pow(sd,2));
+	  divisor = v / 4;
+	}
 	std::cout << v << " ";
 	matrix[x + radius + (y+radius)*width] = v;
       }
       std::cout << std::endl;
     }
-    
+    std::cout << "Divisor: " << divisor << std::endl;
+
     for (int y = 0; y < h; y++)
       {
 	for (int x = 0; x < w; x++)
@@ -211,8 +223,8 @@ int main (int argc, char* argv[])
 		}
 		
 		sum /= divisor;
-		if (y == h/2 && x == w/2)
-		  std::cout << sum << std::endl;
+		/*if (y == h/2 && x == w/2)
+		  std::cout << sum << std::endl; */
 		unsigned char z = (unsigned char)
 		  (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 		data2[x + y * w] = z;
@@ -303,10 +315,12 @@ int main (int argc, char* argv[])
   }
   
 #ifdef DEBUG
-  std::cout << "w: " << w << ", h: " << h << std::endl;
-  FILE* f = fopen ("optimized.raw", "w+");
-  fwrite (data, w * h, 1, f);
-  fclose(f);
+  {
+    std::cout << "w: " << w << ", h: " << h << std::endl;
+    FILE* f = fopen ("optimized.raw", "w+");
+    fwrite (data, w * h, 1, f);
+    fclose(f);
+  }
 #endif
 
   // convert to 1-bit (threshold)
@@ -314,7 +328,7 @@ int main (int argc, char* argv[])
   unsigned char *output = data;
   unsigned char *input = data;
   
-  int threshold = 127;
+  int threshold = 215;
     
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
