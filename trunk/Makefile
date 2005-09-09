@@ -13,7 +13,7 @@ OPT:=-march=$(MYARCH)
 endif
 endif
 
-CFLAGS := -Wall $(OPT) -O3 -s -ffast-math -funroll-loops
+CFLAGS := -Wall $(OPT) -O3 -s -funroll-loops
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o ArgumentList.o
 	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \

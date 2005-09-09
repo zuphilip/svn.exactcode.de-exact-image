@@ -170,10 +170,10 @@ int main (int argc, char* argv[])
       radius = arg_radius.Get();
       std::cerr << "Radius: " << radius << std::endl;
     }
-
+    
     int width = radius * 2 + 1;
     matrix_type divisor = 0;
-    float sd = 1.6;
+    float sd = 2.1;
     
     if (arg_sd.Get() != 0) {
       sd = arg_sd.Get();
@@ -185,18 +185,28 @@ int main (int argc, char* argv[])
     std::cout << std::fixed << std::setprecision(3);
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
-	double v = - exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
-	if (x == 0 && y == 0) {
-	  v *= -8 * (pow(sd,1.77));
-	  divisor = v / (4 + (float)radius / 7);
-	}
-	std::cout << v << " ";
+	double v = exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
+	divisor += v;
+	
 	matrix[x + radius + (y+radius)*width] = v;
+      }
+    }
+
+    // sub from image *2 and print
+    for (int y = -radius; y <= radius; y++) {
+      for (int x = -radius; x <= radius; x++) {
+	matrix_type* m = &matrix[x + radius + (y+radius)*width];
+	
+	*m *= -1;
+	if (x == 0 && y == 0)
+	  *m += 2*divisor;
+	
+	std::cout << *m << " ";
       }
       std::cout << std::endl;
     }
     std::cout << "Divisor: " << divisor << std::endl;
-
+    
     for (int y = 0; y < h; y++)
       {
 	for (int x = 0; x < w; x++)
@@ -328,7 +338,7 @@ int main (int argc, char* argv[])
   unsigned char *output = data;
   unsigned char *input = data;
   
-  int threshold = 170;
+  int threshold = 198;
     
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
