@@ -314,7 +314,7 @@ int main (int argc, char* argv[])
     h = hn;
   }
   
-#if 1
+#ifdef DEBUG
   {
     std::cout << "w: " << w << ", h: " << h << std::endl;
     FILE* f = fopen ("optimized.raw", "w+");
