@@ -338,7 +338,7 @@ int main (int argc, char* argv[])
   unsigned char *output = data;
   unsigned char *input = data;
   
-  int threshold = 198;
+  int threshold = 170;
     
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
