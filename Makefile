@@ -13,28 +13,29 @@ OPT:=-march=$(MYARCH)
 endif
 endif
 
+CC=gcc
+CXX=g++
 CFLAGS := -Wall $(OPT) -O3 -s -funroll-loops
 
 optimize2bw: optimize2bw.c tiff.o jpeg.o ArgumentList.o
-	g++ $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
+	$(CXX) $(CFLAGS) -I utility/include -o optimize2bw optimize2bw.c \
 	    ArgumentList.o tiff.o jpeg.o -ljpeg -ltiff
 
 empty-page: empty-page.c tiff.o ArgumentList.o
-	g++ $(CFLAGS) -I utility/include -o empty-page empty-page.c \
+	$(CXX) $(CFLAGS) -I utility/include -o empty-page empty-page.c \
 	    ArgumentList.o tiff.o -ltiff
 
 jpeg.o: jpeg.c
-	g++ $(CFLAGS) -c jpeg.c
+	$(CXX) $(CFLAGS) -c jpeg.c
 
 tiff.o: tiff.c
-	g++ $(CFLAGS) -c tiff.c
-
+	$(CXX) $(CFLAGS) -c tiff.c
 
 ArgumentList.o: utility/src/ArgumentList.cc utility/include/ArgumentList.hh
-	g++ $(CFLAGS) -I utility/include -c utility/src/ArgumentList.cc
+	$(CXX) $(CFLAGS) -I utility/include -c utility/src/ArgumentList.cc
 
 bw-optimize: bw-optimize.c
-	g++ `Wand-config --cflags --cppflags` bw-optimize.c \
+	$(CXX) `Wand-config --cflags --cppflags` bw-optimize.c \
 	    `Wand-config --ldflags --libs` -o bw-optimize
 
 # check:
