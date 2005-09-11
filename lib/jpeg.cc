@@ -38,7 +38,7 @@ extern "C" {
 
 #include <setjmp.h>
 
-#include "jpeg.h"
+#include "jpeg.hh"
 
 #include "tiff.h"
 
