@@ -42,7 +42,7 @@ bw-optimize: bw-optimize.c
 #	display -size 1275x2096 -depth 8 gray:test.raw
 
 clean:
-	rm -rf optimize2bw emptypage *.o *tar.*
+	rm -rf optimize2bw empty-page *.o *tar.*
 
 rel:= ec-$(shell date '+%Y%m%d-%H%M')
 dir:= $(shell pwd)
