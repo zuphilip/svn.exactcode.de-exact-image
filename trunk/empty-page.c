@@ -106,7 +106,7 @@ int main (int argc, char* argv[])
   for (int row = margin; row < h-margin; row++) {
     for (int x = margin/8; x < stride - margin/8; x++) {
       int b = bits_set [ data[stride*row + x] ];
-      // it is a bits_set table - and we want tze zeros ...
+      // it is a bits_set table - and we want the zeros ...
       pixels += 8-b;
     }
   }
