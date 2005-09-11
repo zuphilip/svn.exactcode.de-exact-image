@@ -85,6 +85,11 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
+      // invert if saved inverted
+      if (photometric == PHOTOMETRIC_MINISWHITE)
+	for (unsigned char* i = data2; i != data2 + stride; ++i)
+	  *i ^= 0xFF;
+
       data2 += stride;
     }
   return data;
