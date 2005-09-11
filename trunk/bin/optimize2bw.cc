@@ -22,8 +22,8 @@
 
 #include "ArgumentList.hh"
 
-#include "tiff.h"
-#include "jpeg.h"
+#include "tiff.hh"
+#include "jpeg.hh"
 
 using namespace Utility;
 

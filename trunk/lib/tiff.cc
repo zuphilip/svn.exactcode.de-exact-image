@@ -22,7 +22,7 @@
 #include <tiffconf.h>
 #include <tiffio.h>
 
-#include "tiff.h"
+#include "tiff.hh"
 
 #define RELEASE
 
