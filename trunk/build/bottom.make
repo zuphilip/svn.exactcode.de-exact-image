@@ -1,12 +1,12 @@
 
-include $(X_SYSTEM).make
+include build/$(X_SYSTEM).make
 
 $(X_MODULE)_OBJS = $(addsuffix $(X_OBJEXT),$(addprefix $($(X_MODULE)_OUTPUT)/,$(basename $(SRCS)))) $(DEPS)
 
 $(X_MODULE)_BINARY = $(addprefix $($(X_MODULE)_OUTPUT)/,$(BINARY))$(BINARY_EXT)
 
-# include $(X_ARCH).make
-# include $(X_CC).make
+# include build/$(X_ARCH).make
+# include build/$(X_CC).make
 
 # rules
 
@@ -20,7 +20,6 @@ $($(X_MODULE)_OUTPUT)/%.o: $(X_MODULE)/%.cc
 	$(COMPILE.cc) -o '$@' '$<'
 
 $($(X_MODULE)_OUTPUT)/$(BINARY).a: $($(X_MODULE)_OBJS)
-	echo $($(X_MODULE)_OBJS)
 	$(AR) r '$@' $^
 	ranlib '$@'
 
