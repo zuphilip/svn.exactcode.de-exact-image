@@ -1,4 +1,4 @@
 
-MODULES= lib empty-page optimize2bw
+MODULES= lib utility bin
 include $(addsuffix /Makefile,$(MODULES))
 
