@@ -17,8 +17,8 @@
 
 #include <iostream>
 
-#include "tiff.h"
-#include "jpeg.h"
+#include "tiff.hh"
+#include "jpeg.hh"
 
 #include "ArgumentList.hh"
 
