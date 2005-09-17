@@ -1,7 +1,7 @@
 
 include build/top.make
 
-BINARY = optimize2bw empty-page
+BINARY = optimize2bw empty-page edge
 
 BINARY_EXT = $(X_EXEEXT)
 DEPS = $(lib_BINARY)
@@ -23,4 +23,9 @@ $($(X_MODULE)_OUTPUT)/empty-page$(X_EXEEXT): $($(X_MODULE)_OUTPUT)/empty-page.o 
 $($(X_MODULE)_OUTPUT)/optimize2bw$(X_EXEEXT): $($(X_MODULE)_OUTPUT)/optimize2bw.o $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(lib_BINARY)
 	@echo '  LINK EXEC $@'
 	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -o '$@' $^ $(LDFLAGS)
+
+$($(X_MODULE)_OUTPUT)/edge$(X_EXEEXT): $($(X_MODULE)_OUTPUT)/edge.o $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(lib_BINARY)
+	@echo '  LINK EXEC $@'
+	$(Q)$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -o '$@' $^ $(LDFLAGS)
+
 
