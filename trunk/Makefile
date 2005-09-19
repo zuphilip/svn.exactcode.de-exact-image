@@ -1,4 +1,4 @@
 
-MODULES= lib utility bin
+MODULES = lib utility bin
 include $(addsuffix /Makefile,$(MODULES))
 
