@@ -1,7 +1,9 @@
 
 include build/top.make
 
-BINARY = optimize2bw empty-page edge
+# build earch .cc file as executable - if this is not desired
+# in the future a list must be supplied manually ...
+BINARY = $(basename $(notdir $(wildcard $(X_MODULE)/*.cc)))
 
 BINARY_EXT = $(X_EXEEXT)
 DEPS = $(lib_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT)
