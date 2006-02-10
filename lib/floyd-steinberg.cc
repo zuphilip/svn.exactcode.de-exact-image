@@ -58,12 +58,11 @@ FloydSteinberg (unsigned char *image, int width, int height, int shades)
 	{
 	  newval =
 	    src_row[col * bytes + channel] + error[col * bytes + channel];
-	  newval *= factor;
-	  newval = floor (newval + 0.5);
-	  newval /= factor;
+
+          newval = floor (newval*factor + 0.5) / factor;
 	  if (newval > 255)
 	    newval = 255;
-	  if (newval < 0)
+	  else if (newval < 0)
 	    newval = 0;
 
 	  dest_row[col * bytes + channel] = (unsigned int) (newval + 0.5);
