@@ -40,10 +40,16 @@ int main (int argc, char* argv[])
                                    1, 1);
   Argument<std::string> arg_output ("o", "output", "output file",
 				    1, 1);
-  
+  Argument<int> arg_shades ("s", "shades",
+                             "Number of shades to quantisize to.", 2, 0, 1);
+  Argument<bool> arg_riem ("r", "riemersma",
+                           "Riemersma dithering instead of Floyd-Steinberg");
+
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
   arglist.Add (&arg_output);
+  arglist.Add (&arg_shades);
+  arglist.Add (&arg_riem);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -93,43 +99,15 @@ int main (int argc, char* argv[])
     }
 
   // dither (in the gray data)
-  //FloydSteinberg(data,w,h,2);
-  Riemersma(data,w,h);
+  if (arg_riem.Get() == false) {
+    std::cout << "Using Floyd-Steinberg dithering ..." << std::endl;
+    FloydSteinberg(data,w,h,arg_shades.Get());
+  }
+  else {
+    std::cout << "Using Riemersma dithering ..." << std::endl;
+    Riemersma(data,w,h,arg_shades.Get());
+  }
   
-  // convert to 1-bit (threshold)
-  
-  unsigned char *output = data;
-  unsigned char *input = data;
-
-  for (int row = 0; row < h; row++)
-    {
-      unsigned char z = 0;
-      int x = 0;
-      for (; x < w; x++)
-	{
-	  z <<= 1;
-	  if (*input++ > 128)
-	    z |= 0x01;
-
-	  if (x % 8 == 7)
-	    {
-	      *output++ = z;
-	      z = 0;
-	    }
-	}
-      // remainder - TODO: test for correctness ...
-      int remainder = 8 - x % 8;
-      if (remainder != 8)
-	{
-	  z <<= remainder;
-	  *output++ = z;
-	}
-    }
-
-  // new image data - and 8 pixel align due to packing nature
-  w = ((w + 7) / 8) * 8;
-  bps = 1;
-
   write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp,
 		   xres, yres);
   
