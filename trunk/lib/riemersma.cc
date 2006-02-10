@@ -19,6 +19,7 @@ enum {
 /* variables needed for the Riemersma dither algorithm */
 static int cur_x=0, cur_y=0;
 static int img_width=0, img_height=0;
+static float img_factor;
 static unsigned char *img_ptr;
 
 #define SIZE 16                 /* queue size: number of pixels remembered */
@@ -42,18 +43,26 @@ static void init_weights(int a[],int size,int max)
 static void dither_pixel(unsigned char *pixel)
 {
 static int error[SIZE]; /* queue with error values of recent pixels */
-  int i,pvalue,err;
+  int i,err;
+  float pvalue;
 
   for (i=0,err=0L; i<SIZE; i++)
     err+=error[i]*weights[i];
-  pvalue=*pixel + err/MAX;
-  pvalue = (pvalue>=128) ? 255 : 0;
+
+  pvalue = *pixel + err/MAX;
+
+  pvalue = floor (pvalue*img_factor + 0.5) / img_factor;
+  if (pvalue > 255)
+    pvalue = 255;
+  else if (pvalue < 0)
+    pvalue = 0;
+
   memmove(error,error+1,(SIZE-1)*sizeof error[0]);    /* shift queue */
-  error[SIZE-1] = *pixel - pvalue;
-  *pixel=(unsigned char)pvalue;
+  error[SIZE-1] = *pixel - (unsigned char)(pvalue + 0.5);
+  *pixel=(unsigned char)(pvalue + 0.5);
 }
 
-static void move(int direction)
+static void move (int direction)
 {
   /* dither the current pixel */
   if (cur_x>=0 && cur_x<img_width && cur_y>=0 && cur_y<img_height)
@@ -147,24 +156,27 @@ void hilbert_level(int level,int direction)
   } /* if */
 }
 
-void Riemersma(unsigned char *image,int width,int height)
+void Riemersma(unsigned char *image,int width,int height, int shades)
 {
   int level,size;
 
   /* determine the required order of the Hilbert curve */
-  size=width > height ? width : height;
-  level=(int)log2(size);
+  size = width > height ? width : height;
+  level = (int) log2 (size);
   if ((1L << level) < size)
     level++;
 
-  init_weights(weights,SIZE,MAX);
-  img_ptr=image;
-  img_width=width;
-  img_height=height;
-  cur_x=0;
-  cur_y=0;
-  if (level>0)
-    hilbert_level(level,UP);
-  move(NONE);
+  init_weights (weights, SIZE,MAX);
+  img_ptr = image;
+  img_width = width;
+  img_height = height;
+  img_factor = (float) (shades - 1) / (float) 255;
+  cur_x = 0;
+  cur_y = 0;
+
+  if (level > 0)
+    hilbert_level (level, UP);
+
+  move (NONE);
 }
 
