@@ -122,8 +122,15 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
   if (bps == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else if (spp == 1) // TODO: needs colormap ...
+  else if (spp == 1) {
+    uint16 rmap[256], gmap[256], bmap[256];
+    int i;
+    for (i=0;i<256;++i) {
+      rmap[i] = gmap[i] = bmap[i] = (i<<8);
+    }
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
+    TIFFSetField (out, TIFFTAG_COLORMAP, rmap, gmap, bmap);
+  }
   else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   
