@@ -19,6 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <iostream>
+
 /*
  * Include file for users of JPEG library.
  * You will need to have included system headers that define at least
@@ -157,7 +159,8 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
   struct my_error_mgr jerr;
   /* More stuff */
   FILE * infile;		/* source file */
-  JSAMPARRAY buffer;		/* Output row buffer */
+  JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
+
   int row_stride;		/* physical row width in output buffer */
   
   unsigned char* data = 0;
@@ -250,10 +253,6 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
 
   data = (unsigned char*) malloc (row_stride * cinfo.output_height);
   
-  /* Make a one-row-high sample array that will go away when done with image */
-  buffer = (*cinfo.mem->alloc_sarray)
-		((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
-
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
 
@@ -265,11 +264,8 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
      * Here the array is only one element long, but you could ask for
      * more than one scanline at a time if that's more convenient.
      */
+    buffer[0] = data + (cinfo.output_scanline*row_stride);
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
-    /* Assume put_scanline_someplace wants a pointer and sample count. */
-    // TODO: put_scanline_someplace(buffer[0], row_stride);
-    //printf ("%d\n", cinfo.output_scanline);
-    memcpy (data+((cinfo.output_scanline-1)*row_stride), buffer[0], row_stride);
   }
 
   /* Step 7: Finish decompression */
@@ -305,3 +301,72 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
   return data;
 }
 
+
+void
+write_JPEG_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
+                 int xres, int yres)
+{
+  struct jpeg_compress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+
+  int quality = 80; /* TODO: allow atributes ... */
+
+  JSAMPROW buffer[1];	/* pointer to JSAMPLE row[s] */
+
+  FILE * output_file;
+
+  /* Initialize the JPEG compression object with default error handling. */
+  cinfo.err = jpeg_std_error(&jerr);
+  jpeg_create_compress(&cinfo);
+
+  /* Open the output file. */
+  if ((output_file = fopen(file, "wb")) == NULL) {
+    fprintf(stderr, "can't open %s\n", file);
+    return;
+  }
+  jpeg_stdio_dest(&cinfo, output_file);
+
+  if (bps == 8 && spp == 3)
+    cinfo.in_color_space = JCS_RGB;
+  else if (bps == 8 && spp == 1)
+    cinfo.in_color_space = JCS_GRAYSCALE;
+  else {
+    std::cout << "Unhandled bps/spp combination." << std::endl;
+    return;
+  }
+
+  cinfo.image_width = w;
+  cinfo.image_height = h;
+  cinfo.input_components = spp;
+  cinfo.data_precision = bps; 
+
+  cinfo.X_density = xres;
+  cinfo.X_density = yres;
+  cinfo.density_unit = 1; /* 1 for dots/inch */
+
+  /* defaults depending on in_color_space */
+  jpeg_set_defaults(&cinfo);
+  jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
+
+  /* Start compressor */
+  jpeg_start_compress(&cinfo, TRUE);
+
+  /* Process data */
+  while (cinfo.next_scanline < cinfo.image_height) {
+    buffer[0] = data + cinfo.next_scanline*w*spp*bps/8;
+    (void) jpeg_write_scanlines(&cinfo, buffer, 1);
+  }
+
+  /* Finish compression and release memory */
+  jpeg_finish_compress(&cinfo);
+  jpeg_destroy_compress(&cinfo);
+
+  if (jerr.num_warnings)
+    std::cout << jerr.num_warnings << " Warnings." << std::endl;
+
+  /* Close files, if we opened them */
+  if (output_file != stdout)
+    fclose(output_file);
+
+  return;
+}
