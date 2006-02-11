@@ -114,7 +114,6 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
   }
 
   jas_image_destroy (image);
-//  jas_stream_close (in);
   return data;
 }
 
@@ -123,4 +122,56 @@ void
 write_JPEG2000_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
                  int xres, int yres)
 {
+  jas_image_t *image;
+  jas_stream_t *out;
+
+  if (!(out = jas_stream_fopen(file, "w+b"))) {
+    fprintf(stderr, "err r: cannot open output image file %s\n", file);
+    return;
+  }
+
+  jas_image_cmptparm_t compparms[3];
+
+  for (int i = 0; i < spp; ++i) {
+    compparms[i].tlx = 0;
+    compparms[i].tly = 0;
+    compparms[i].hstep = 1;
+    compparms[i].vstep = 1;
+    compparms[i].width = w;
+    compparms[i].height = h;
+    compparms[i].prec = bps;
+    compparms[i].sgnd = false;
+  }
+
+  if (!(image = jas_image_create(spp, compparms,
+                                 spp==3?JAS_CLRSPC_SRGB:JAS_CLRSPC_SGRAY))) {
+    std::cout << "error creating jasper image" << std::endl;
+  }
+
+  jas_matrix_t *jasdata[3];
+  for (int i = 0; i < spp; ++i) {
+    if (!(jasdata[i] = jas_matrix_create(h, w))) {
+      fprintf(stderr, "internal error\n");
+      return;
+    }
+  }
+
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) {
+      for (int k = 0; k < spp; ++k)
+        jas_matrix_set(jasdata[k], y, x, *data++);
+    }
+  }
+
+  for (int i = 0; i < spp; ++i) {
+    if (jas_image_writecmpt(image, i, 0, 0, w, h, jasdata[i])) {
+      std::cout << "error writing converted data into jasper" << std::endl;
+      return;
+    }
+  }
+
+  jp2_encode(image, out, 0);
+  jas_image_destroy (image);
+  jas_stream_close (out);
 }
+
