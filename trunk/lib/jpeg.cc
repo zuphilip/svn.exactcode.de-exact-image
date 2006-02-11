@@ -42,8 +42,6 @@ extern "C" {
 
 #include "jpeg.hh"
 
-#include "tiff.h"
-
 /******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
 
 /* This half of the example shows how to feed data into the JPEG compressor.
@@ -67,11 +65,6 @@ extern "C" {
  * pointer to our image buffer.  In particular, let's say that the image is
  * RGB color and is described by:
  */
-
-extern JSAMPLE * image_buffer;	/* Points to large array of R,G,B-order data */
-extern int image_height;	/* Number of rows in image */
-extern int image_width;		/* Number of columns in image */
-
 
 /******************** JPEG DECOMPRESSION SAMPLE INTERFACE *******************/
 
