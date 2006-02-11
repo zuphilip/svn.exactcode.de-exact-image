@@ -23,6 +23,9 @@
 #include <jasper/jasper.h>
 #include <jasper/jas_image.h>
 
+
+#include "utils.hh"
+
 unsigned char*
 read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, int* xres, int* yres)
 {
@@ -57,12 +60,12 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
     PRINT(JAS_CLRSPC_GENRGB, "GENRGB")
     PRINT(JAS_CLRSPC_GENYCBCR, "GENYCBCR")
     default:
-      std::cout << "Totally unknown colorspace ..." << std::endl;
+      std::cout << "Yet unknown colorspace ..." << std::endl;
   }
 
   *spp = jas_image_numcmpts(image);
   *bps = jas_image_cmptprec(image, 0/*component*/);
-  if (*bps > 1 && *bps < 8) // so far we do not support 2..7 */
+  if (*bps != 1 && *bps != 8) // we do not support the others, yet
 	*bps = 8;
 
   std::cout << "Components: " << jas_image_numcmpts(image)
@@ -84,23 +87,27 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
     }
   }
 
+  int v [3];
   for( int y = 0; y < *h; ++y ) {
     for( int x = 0; x < *w; ++x ) {
-       unsigned char v [3];
        for( int k = 0; k < *spp; ++k ) {
          v[k] = jas_matrix_get (jasdata[k], y, x);
-         // if the precision of the component is too small, increase
-         // it to use the complete value range.
-         //v[k] <<= 8 - jas_image_cmptprec(image, jasdata[k]);
+         // if the precision of the component is not supported, scale it
+         int prec = jas_image_cmptprec(image, k);
+	 if (prec < 8)
+           v[k] <<= 8 - prec;
+	 else
+	   v[k] >>= prec - 8;
        }
-#if 0
-       if( ycbcr ) ycbcr_to_rgb( v, v );
 
-       for( int k = 0; k < 3; ++k ) {
-         if( v[k] < 0 ) v[k] = 0;
-         else if( v[k] > 255 ) v[k] = 255;
-       } // for k
-#endif
+       switch (jas_image_clrspc(image)) {
+	case JAS_CLRSPC_SYCBCR:
+        case JAS_CLRSPC_GENYCBCR:
+       	ycbcr_to_rgb (v, v);
+	break;
+	default:
+	;
+       }
        for( int k = 0; k < *spp; ++k )
        	*data_ptr++ = v[k];
     }
