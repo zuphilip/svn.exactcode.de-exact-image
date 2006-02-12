@@ -33,14 +33,25 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
   jas_stream_t *in;
 
   if (!(in = jas_stream_fopen(filename, "rb"))) {
-    fprintf(stderr, "err r: cannot open input image file %s\n", filename);
+    fprintf(stderr, "error: cannot open input image file %s\n", filename);
     return 0;
   }
 
-  if (!(image = jp2_decode(in, ""))) {
+  if (!(image = jp2_decode(in, 0))) {
     fprintf(stderr, "error: cannot load image data\n");
     return 0;
   }
+  /* Create a color profile if needed. */
+  if (!jas_clrspc_isunknown(image->clrspc_) &&
+      !jas_clrspc_isgeneric(image->clrspc_) && !image->cmprof_) {
+    if (!(image->cmprof_ =
+      jas_cmprof_createfromclrspc(jas_image_clrspc(image))))
+      {
+        std::cout << "error: cannot create the colorspace" << std::endl;
+        return 0;
+      }
+  }
+
 
   jas_stream_close (in);
 
@@ -61,6 +72,36 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
     PRINT(JAS_CLRSPC_GENYCBCR, "GENYCBCR")
     default:
       std::cout << "Yet unknown colorspace ..." << std::endl;
+  }
+
+  // convert colorspace
+  switch (jas_image_clrspc(image)) {
+    case JAS_CLRSPC_SGRAY:
+    case JAS_CLRSPC_SRGB:
+    case JAS_CLRSPC_GENGRAY:
+    case JAS_CLRSPC_GENRGB:
+      break;
+    default:
+      {
+        jas_image_t *newimage;
+        jas_cmprof_t *outprof;
+
+        std::cout << "forcing conversion to sRGB" << std::endl;
+        if (!(outprof = jas_cmprof_createfromclrspc(JAS_CLRSPC_SRGB))) {
+          std::cout << "cannot create sRGB profile" << std::endl;
+          return 0;
+        }
+        std::cout << "in space: " << jas_image_cmprof(image) << std::endl;
+        if (!(newimage = jas_image_chclrspc(image, outprof, JAS_CMXFORM_INTENT_PER))) {
+          std::cout << "cannot convert to sRGB" << std::endl;
+          return 0;
+        }
+
+        jas_image_destroy(image);
+        jas_cmprof_destroy(outprof);
+        image = newimage;
+	std::cout << "converted to sRGB" << std::endl;
+     }
   }
 
   *spp = jas_image_numcmpts(image);
@@ -100,14 +141,6 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
 	   v[k] >>= prec - 8;
        }
 
-       switch (jas_image_clrspc(image)) {
-	case JAS_CLRSPC_SYCBCR:
-        case JAS_CLRSPC_GENYCBCR:
-       	ycbcr_to_rgb (v, v);
-	break;
-	default:
-	;
-       }
        for( int k = 0; k < *spp; ++k )
        	*data_ptr++ = v[k];
     }
