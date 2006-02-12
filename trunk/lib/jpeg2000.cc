@@ -26,6 +26,20 @@
 
 #include "utils.hh"
 
+static void add_color_prof(jas_image_t* image)
+{
+  /* Create a color profile if needed. */
+  if (!jas_clrspc_isunknown(image->clrspc_) &&
+      !jas_clrspc_isgeneric(image->clrspc_) && !image->cmprof_) {
+    if (!(image->cmprof_ =
+      jas_cmprof_createfromclrspc(jas_image_clrspc(image))))
+      {
+        std::cout << "error: cannot create the colorspace" << std::endl;
+        return;
+      }
+  }
+}
+
 unsigned char*
 read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, int* xres, int* yres)
 {
@@ -41,17 +55,8 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
     fprintf(stderr, "error: cannot load image data\n");
     return 0;
   }
-  /* Create a color profile if needed. */
-  if (!jas_clrspc_isunknown(image->clrspc_) &&
-      !jas_clrspc_isgeneric(image->clrspc_) && !image->cmprof_) {
-    if (!(image->cmprof_ =
-      jas_cmprof_createfromclrspc(jas_image_clrspc(image))))
-      {
-        std::cout << "error: cannot create the colorspace" << std::endl;
-        return 0;
-      }
-  }
 
+  add_color_prof(image);
 
   jas_stream_close (in);
 
@@ -197,6 +202,14 @@ write_JPEG2000_file (const char* file, unsigned char* data, int w, int h, int bp
   }
 
   for (int i = 0; i < spp; ++i) {
+    int ct = JAS_IMAGE_CT_GRAY_Y;
+    if (spp > 1)
+      switch (i) {
+       case 0: ct = JAS_IMAGE_CT_RGB_R; break;
+       case 1: ct = JAS_IMAGE_CT_RGB_G; break;
+       case 2: ct = JAS_IMAGE_CT_RGB_B; break;
+    }
+    jas_image_setcmpttype (image, i, ct );
     if (jas_image_writecmpt(image, i, 0, 0, w, h, jasdata[i])) {
       std::cout << "error writing converted data into jasper" << std::endl;
       return;
