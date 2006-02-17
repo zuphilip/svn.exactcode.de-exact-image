@@ -55,6 +55,8 @@ int main (int argc, char* argv[])
   
   Argument<double> arg_sd ("sd", "standard-deviation",
 			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
+
+  Argument<int> arg_lazy_thr ("z", "lazy", "do not unsharp mask values within threshold", 0, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -66,6 +68,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_scale);
   arglist.Add (&arg_dpi);
   arglist.Add (&arg_sd);
+  arglist.Add (&arg_lazy_thr);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -192,7 +195,8 @@ int main (int argc, char* argv[])
       }
     }
 
-    // sub from image *2 and print
+    
+    // sub fromes image *2 and print
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
 	matrix_type* m = &matrix[x + radius + (y+radius)*width];
@@ -206,42 +210,55 @@ int main (int argc, char* argv[])
       std::cout << std::endl;
     }
     std::cout << "Divisor: " << divisor << std::endl;
-    
-    for (int y = 0; y < h; y++)
-      {
-	for (int x = 0; x < w; x++)
+
+    const int sloppy_thr = arg_lazy_thr.Get();
+    std::cout << "Lazy threshold: " << sloppy_thr << std::endl;
+#if 0
+    const int tiles = 16;
+    for (int my = 0; my < h; my += tiles)
+      for (int mx = 0; mx < w; mx += tiles)
+	for (int y = my; y < my + tiles && y < h; ++y)
+	  for (int x = mx; x < mx + tiles && x < w; ++x)
+#else
+    for (int y = 0; y < h; ++y)
+      for (int x = 0; x < w; ++x)
+#endif    
 	  {
+	    unsigned char * const dst_ptr = &data2[x + y * w];
+	    unsigned char * const src_ptr = &data[x + y * w];
+
 	    // for now copy border pixels
 	    if (y < radius || y > h - radius ||
 		x < radius || x > w - radius)
-	      data2[x + y * w] = data[x + y * w];
-	    else
-	      {
-		matrix_type sum = 0;
-		for (int y2 = 0; y2 < width; y2++)
-		  {
-		    matrix_type* matrix_row = &matrix [y2 * width];
-		    unsigned char* data_row = &data[ ((y - radius + y2) * w) - radius + x];
-		    
-		    for (int x2 = 0; x2 < width; x2++)
-		      {
-			matrix_type v = data_row[x2];
-			sum += v * matrix_row [x2];
-			/*if (y == h/2 && x == w/2)
-			  std::cout << sum << std::endl; */
-		      }
-		}
-		
-		sum /= divisor;
-		/*if (y == h/2 && x == w/2)
-		  std::cout << sum << std::endl; */
-		unsigned char z = (unsigned char)
-		  (sum > 255 ? 255 : sum < 0 ? 0 : sum);
-		data2[x + y * w] = z;
+	      *dst_ptr = *src_ptr;
+	    else if (*src_ptr < sloppy_thr || *src_ptr > 255-sloppy_thr)
+	      *dst_ptr = *src_ptr;
+	    else {
+	        matrix_type sum = 0;
+	        for (int y2 = 0; y2 < width; ++y2)
+	  	{
+	  	  matrix_type* matrix_row = &matrix [y2 * width];
+	  	  unsigned char* data_row = &data[ ((y - radius + y2) * w) - radius + x];
+	  	  
+	  	  for (int x2 = 0; x2 < width; ++x2)
+	  	    {
+	  	      matrix_type v = data_row[x2];
+	  	      sum += v * matrix_row [x2];
+	  	      /*if (y == h/2 && x == w/2)
+	  		std::cout << sum << std::endl; */
+	  	    }
+	  	}
+	      
+	    sum /= divisor;
+	    /*if (y == h/2 && x == w/2)
+	      std::cout << sum << std::endl; */
+	    unsigned char z = (unsigned char)
+	      (sum > 255 ? 255 : sum < 0 ? 0 : sum);
+	    *dst_ptr = z;
 	      }
 	  }
-      }
   }
+  
   data = data2;
   
 // #define DEBUG
