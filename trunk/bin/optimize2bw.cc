@@ -97,20 +97,16 @@ int main (int argc, char* argv[])
     std::cerr << "RGB -> Gray convertion" << std::endl;
     
     unsigned char* output = data;
-    unsigned char* input = data;
-    
-    for (int i = 0; i < w*h; i++)
+    for (unsigned char* it = data; it < data + w*h;)
       {
 	// R G B order and associated weighting
-	int c = (int)input [0] * 28;
-	c += (int)input [1] * 59;
-	c += (int)input [2] * 11;
-	input += 3;
+	int c = (int)*it++ * 28;
+	c += (int)*it++ * 59;
+	c += (int)*it++ * 11;
 	
 	*output++ = (unsigned char)(c / 100);
-	
-	spp = 1; // converted data right now
       }
+    spp = 1; // converted data right now
   }
   else if (spp != 1 && bps != 8)
     {
@@ -121,8 +117,8 @@ int main (int argc, char* argv[])
   
   {
     int histogram[256] = { 0 };
-    for (int i = 0; i < h * w; i++)
-      histogram[data[i]]++;
+    for (unsigned char* it = data; it < data + w*h;)
+      histogram[*it++]++;
 
     int lowest = 255, highest = 0;
     for (int i = 0; i <= 255; i++)
@@ -155,16 +151,18 @@ int main (int argc, char* argv[])
 
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
-    for (int i = 0; i < h * w; i++)
-      data[i] = ((int) data[i] * a + b) / 256;
+
+   for (unsigned char* it = data; it < data + w*h; ++it)
+     *it = ((int) *it * a + b) / 256;
   }
   
   // Convolution Matrix (unsharp mask a-like)
   unsigned char *data2 = (unsigned char *) malloc (w * h);
   {
     // any matrix and devisior
-
-    typedef float matrix_type;
+    // on my AMD Turion speed is: double > int > float
+    // and in 32bit mode: double > float > int ?
+    typedef double matrix_type;
 
     // compute kernel (convolution matrix to move over the iamge)
     
@@ -174,7 +172,7 @@ int main (int argc, char* argv[])
       std::cerr << "Radius: " << radius << std::endl;
     }
     
-    int width = radius * 2 + 1;
+    const int width = radius * 2 + 1;
     matrix_type divisor = 0;
     float sd = 2.1;
     
@@ -188,15 +186,14 @@ int main (int argc, char* argv[])
     std::cout << std::fixed << std::setprecision(3);
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
-	double v = exp (-((float)x*x + (float)y*y) / ((float)2 * sd * sd));
+	matrix_type v = (matrix_type) (exp (-((float)x*x + (float)y*y) / (2. * sd * sd)) * 5);
 	divisor += v;
 	
 	matrix[x + radius + (y+radius)*width] = v;
       }
     }
-
     
-    // sub fromes image *2 and print
+    // sub from image *2 and print
     for (int y = -radius; y <= radius; y++) {
       for (int x = -radius; x <= radius; x++) {
 	matrix_type* m = &matrix[x + radius + (y+radius)*width];
@@ -222,36 +219,30 @@ int main (int argc, char* argv[])
 #else
     for (int y = 0; y < h; ++y)
       for (int x = 0; x < w; ++x)
-#endif    
+#endif
 	  {
 	    unsigned char * const dst_ptr = &data2[x + y * w];
 	    unsigned char * const src_ptr = &data[x + y * w];
 
+	    const unsigned char val = *src_ptr;
+
 	    // for now copy border pixels
 	    if (y < radius || y > h - radius ||
 		x < radius || x > w - radius)
-	      *dst_ptr = *src_ptr;
-	    else if (*src_ptr < sloppy_thr || *src_ptr > 255-sloppy_thr)
-	      *dst_ptr = *src_ptr;
+	      *dst_ptr = val;
+	    else if (!(val > sloppy_thr && val < 255-sloppy_thr))
+	      *dst_ptr = val;
 	    else {
 	        matrix_type sum = 0;
-	        for (int y2 = 0; y2 < width; ++y2)
-	  	{
-	  	  matrix_type* matrix_row = &matrix [y2 * width];
-	  	  unsigned char* data_row = &data[ ((y - radius + y2) * w) - radius + x];
-	  	  
-	  	  for (int x2 = 0; x2 < width; ++x2)
-	  	    {
-	  	      matrix_type v = data_row[x2];
-	  	      sum += v * matrix_row [x2];
-	  	      /*if (y == h/2 && x == w/2)
-	  		std::cout << sum << std::endl; */
-	  	    }
-	  	}
-	      
+		unsigned char* data_row = &data[ (y - radius) * w - radius + x];
+	        matrix_type* matrix_row = matrix;
+	  	// in former times this was more readable and got overoptimized
+		// for speed ,-)
+		for (int y2 = 0; y2 < width; ++y2, data_row += w - width)
+		  for (int x2 = 0; x2 < width; ++x2)
+		    sum += *data_row++ * *matrix_row++;
+		
 	    sum /= divisor;
-	    /*if (y == h/2 && x == w/2)
-	      std::cout << sum << std::endl; */
 	    unsigned char z = (unsigned char)
 	      (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	    *dst_ptr = z;
