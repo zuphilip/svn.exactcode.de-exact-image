@@ -354,6 +354,7 @@ int main (int argc, char* argv[])
   }
     
   for (int row = 0; row < h; row++)
+
     {
       unsigned char z = 0;
       int x = 0;
@@ -377,9 +378,6 @@ int main (int argc, char* argv[])
 	  *output++ = z;
 	}
     }
-
-  // new image data - and 8 pixel align due to packing nature
-  w = ((w + 7) / 8) * 8;
   bps = 1;
 
   write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp,
