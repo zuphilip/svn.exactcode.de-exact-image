@@ -49,40 +49,63 @@ public:
 void flipX (Image& image)
 {
   int bytes = (image.w*image.spp*image.bps + 7) / 8;
-  for (int y = 0; y < image.h; ++y)
+  
+  switch (image.spp * image.bps)
     {
-      unsigned char* row = &image.data[y*bytes];
-      
-      switch (image.spp * image.bps)
-	{
-	case 1:
-	  break;
-	case 8:
+    case 1:
+      {
+	// create a reversed bit table for fast lookup
+	int reversed_bits[256];
+	for (int i = 0; i < 256; ++i) {
+	  char rev = 0, v = i;
+	  for (int j = 0; j < 8; ++j) {
+	    rev = rev << 1 | v & 1;
+	    v >>= 1;
+	  }
+	  reversed_bits[i] = rev;
+	}
+	
+	for (int y = 0; y < image.h; ++y)
 	  {
+	    unsigned char* row = &image.data [y*bytes];
+	    for (int x = 0; x < bytes/2; ++x) {
+	      unsigned char v = row [x];
+	      row[x] = reversed_bits [row[bytes - 1 - x]];
+	      row[bytes - 1 - x] = reversed_bits[v];
+	    }
+	  }
+      }
+      break;
+    case 8:
+      {
+	for (int y = 0; y < image.h; ++y)
+	  {
+	    unsigned char* row = &image.data [y*bytes];
 	    for (int x = 0; x < bytes/2; ++x) {
 	      unsigned char v = row [x];
 	      row[x] = row[bytes - 1 - x];
 	      row[bytes - 1 - x] = v;
 	    }
 	  }
-	  break;
-	case 24:
-	  {
-	    typedef struct { unsigned char r, g, b; } rgb;
-	    
-	    rgb* rgb_row = (rgb*) row;
-	    
-	    for (int x = 0; x < image.w/2; ++x) {
-	      rgb v = rgb_row [x];
-	      rgb_row[x] = rgb_row[image.w - 1 - x];
-	      rgb_row[image.w- 1 - x] = v;
-	    }
+      }
+      break;
+    case 24:
+      {
+	typedef struct { unsigned char r, g, b; } rgb;
+	
+	for (int y = 0; y < image.h; ++y) {
+	  rgb* rgb_row = (rgb*) &image.data[y*bytes]; 
+	  for (int x = 0; x < image.w/2; ++x) {
+	    rgb v = rgb_row [x];
+	    rgb_row[x] = rgb_row[image.w - 1 - x];
+	    rgb_row[image.w - 1 - x] = v;
 	  }
-	  break;
-	default:
-	  std::cerr << "flipX: unsuported depth." << std::endl;
-	  return;
 	}
+      }
+      break;
+    default:
+      std::cerr << "flipX: unsuported depth." << std::endl;
+      return;
     }
 }
 
@@ -157,16 +180,6 @@ int main (int argc, char* argv[])
     case 180: 
       // IM: user	0m1.324s
       {
-	/*
-	// create a bit table for fast lookup
-	int bits_set[256] = { 0 };
-	for (int i = 0; i < 256; i++) {
-	int bits = 0;
-	for (int j = i; j != 0; j >>= 1) {
-	bits += (j & 0x01);
-	}
-	}
-	*/
 	flipX (image);
 	flipY (image);
 	
