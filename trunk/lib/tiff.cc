@@ -37,7 +37,7 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
   
   uint16 photometric = 0;
   TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
-  printf ("photometric: %d\n", photometric);
+  //printf ("photometric: %d\n", photometric);
   switch (photometric)
     {
     case PHOTOMETRIC_MINISWHITE:
@@ -71,8 +71,6 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
   if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres) == 0)
     *yres = _yres;
   
-  // format we know about
-
   int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
 
   //  printf ("w: %d h: %d\n", *w, *h);
@@ -86,7 +84,7 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
       // invert if saved inverted
-      if (photometric == PHOTOMETRIC_MINISWHITE)
+      if (photometric == PHOTOMETRIC_MINISWHITE && *bps == 1)
 	for (unsigned char* i = data2; i != data2 + stride; ++i)
 	  *i ^= 0xFF;
 
@@ -150,7 +148,7 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
     {
       if (TIFFWriteScanline (out, data, row, 0) < 0)
 	break;
-      data += (w * spp * bps) / 8;
+      data += (w * spp * bps + 7) / 8;
     }
 
   TIFFClose (out);
