@@ -147,11 +147,11 @@ void rot90 (Image& image, int angle)
 	  new_row = &rot_data [ (image.h - 1 - y) / 8 ];
 	else
 	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / 8 ];
-	for (int x = 0; x < (image.w+7) / 8; ++x) {
-	  //	  std::cout << y << " x: " << x << ", bytes: " << (image.w + 7) / 8 << std::endl;
+	for (int x = 0; x < image.w;) {
 	  // spread the bits thru the various row slots
 	  unsigned char bits = *data++;
-	  for (int i = 0; i < 8; ++i) {
+	  int i = 0;
+	  for (; i < 8 && x < image.w; ++i) {
 	    if (cw) {
 	      *new_row = *new_row >> 1 | (bits & 0x80);
 	      new_row += rot_bytes;
@@ -161,6 +161,21 @@ void rot90 (Image& image, int angle)
 	      new_row -= rot_bytes;
 	    }
 	    bits <<= 1;
+	    ++x;
+	  }
+	  // finally shift the last line if necessary
+	  if (i < 8) {
+	    if (cw) {
+	      new_row -= rot_bytes;
+	      *new_row = *new_row >> (8 - i);
+	    }
+	    else {
+	      new_row += rot_bytes;
+	      *new_row = *new_row << (8 - i);
+	      
+	    }
+	    bits <<= 1;
+	    ++x;
 	  }
 	}
       }
@@ -206,7 +221,7 @@ void rot90 (Image& image, int angle)
       break;
       
     default:
-      std::cerr << "rot90: unsupported depth." << std::endl;
+      std::cerr << "rot90: unsupported depth. spp: " << image.spp << ", bpp:" << image.bps << std::endl;
       free (rot_data);
       return;
     }
@@ -267,7 +282,7 @@ int main (int argc, char* argv[])
   int rot = arg_angle.Get() % 360;
   if (rot < 0)
     rot += 360;
-  
+
   switch (rot)
     {
     case 0:
