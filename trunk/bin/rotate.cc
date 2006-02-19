@@ -45,6 +45,7 @@ public:
   unsigned char* data;
 };
 
+typedef struct { unsigned char r, g, b; } rgb;
 
 void flipX (Image& image)
 {
@@ -91,8 +92,6 @@ void flipX (Image& image)
       break;
     case 24:
       {
-	typedef struct { unsigned char r, g, b; } rgb;
-	
 	for (int y = 0; y < image.h; ++y) {
 	  rgb* rgb_row = (rgb*) &image.data[y*bytes]; 
 	  for (int x = 0; x < image.w/2; ++x) {
@@ -104,7 +103,7 @@ void flipX (Image& image)
       }
       break;
     default:
-      std::cerr << "flipX: unsuported depth." << std::endl;
+      std::cerr << "flipX: unsupported depth." << std::endl;
       return;
     }
 }
@@ -138,22 +137,54 @@ void rot90 (Image& image, int angle)
   
   unsigned char* data = image.data;
   unsigned char* rot_data = (unsigned char*) malloc (rot_bytes * image.w);
-  
-  // gray for now
-  for (int y = 0; y < image.h; ++y) {
-    unsigned char* new_row;
-    if (cw)
-      new_row = &rot_data [ image.h - 1 -y ];
-    else
-      new_row = &rot_data [ (image.w - 1) * rot_bytes + y ];
-    for (int x = 0; x < image.w; ++x) {
-      *new_row = *data++;
-      if (cw)
-	new_row += rot_bytes;
-      else
-	new_row -= rot_bytes;
+
+  switch (image.spp * image.bps)
+    {
+      
+    case 8:
+      for (int y = 0; y < image.h; ++y) {
+	unsigned char* new_row;
+	if (cw)
+	  new_row = &rot_data [ image.h - 1 - y ];
+	else
+	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y ];
+	for (int x = 0; x < image.w; ++x) {
+	  *new_row = *data++;
+	  if (cw)
+	    new_row += rot_bytes;
+	  else
+	    new_row -= rot_bytes;
+	}
+      }
+      break;
+      
+    case 24:
+      {
+	rgb* rgb_data = (rgb*) image.data; 
+	for (int y = 0; y < image.h; ++y) {
+	  rgb* new_row;
+	  if (cw)
+	    new_row = (rgb*)
+	      &rot_data [ (image.h - 1 - y) * image.spp ];
+	  else
+	    new_row = (rgb*)
+	      &rot_data [ (image.w - 1) * rot_bytes + (y * image.spp) ];
+	  for (int x = 0; x < image.w; ++x) {
+	    *new_row = *rgb_data++;
+	    if (cw)
+	      new_row += image.h;
+	    else
+	      new_row -= image.h;
+	  }
+	}
+      }
+      break;
+      
+    default:
+      std::cerr << "rot90: unsupported depth." << std::endl;
+      free (rot_data);
+      return;
     }
-  }
   
   // set the new data
   free (image.data);
