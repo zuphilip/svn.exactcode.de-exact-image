@@ -113,7 +113,7 @@ void flipY (Image& image)
   int bytes = (image.w*image.spp*image.bps + 7) / 8;
   for (int y = 0; y < image.h / 2; ++y)
     {
-      int y2 = image.h - y;
+      int y2 = image.h - y - 1;
 
       unsigned char* row1 = &image.data[y*bytes];
       unsigned char* row2 = &image.data[y2*bytes];
