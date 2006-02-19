@@ -151,12 +151,15 @@ void rot90 (Image& image, int angle)
 	  // spread the bits thru the various row slots
 	  unsigned char bits = *data++;
 	  for (int i = 0; i < 8; ++i) {
-	    *new_row = *new_row >> 1 | (bits & 0x80);
-	    bits <<= 1;
-	    if (cw)
+	    if (cw) {
+	      *new_row = *new_row >> 1 | (bits & 0x80);
 	      new_row += rot_bytes;
-	    else
+	    }
+	    else {
+	      *new_row = *new_row << 1 | (bits & 0x80) >> 7;
 	      new_row -= rot_bytes;
+	    }
+	    bits <<= 1;
 	  }
 	}
 	// break;
@@ -241,7 +244,7 @@ int main (int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "Fast rotator (especially for orthogonal angles)"
+      std::cerr << "Fast rotation (especially for orthogonal angles)"
                 <<  " - Copyright 2006 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
@@ -271,11 +274,9 @@ int main (int argc, char* argv[])
       ; // NOP
       break;
     case 180: 
-      // IM: user	0m1.324s
       {
 	flipX (image);
 	flipY (image);
-	
       }
       break;
     case 90:
