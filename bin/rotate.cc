@@ -48,6 +48,42 @@ public:
 
 void flipX (Image& image)
 {
+  int bytes = (image.w*image.spp*image.bps + 7) / 8;
+  for (int y = 0; y < image.h; ++y)
+    {
+      unsigned char* row = &image.data[y*bytes];
+      
+      switch (image.spp * image.bps)
+	{
+	case 1:
+	  break;
+	case 8:
+	  {
+	    for (int x = 0; x < bytes/2; ++x) {
+	      unsigned char v = row [x];
+	      row[x] = row[bytes - 1 - x];
+	      row[bytes - 1 - x] = v;
+	    }
+	  }
+	  break;
+	case 24:
+	  {
+	    typedef struct { unsigned char r, g, b; } rgb;
+	    
+	    rgb* rgb_row = (rgb*) row;
+	    
+	    for (int x = 0; x < image.w/2; ++x) {
+	      rgb v = rgb_row [x];
+	      rgb_row[x] = rgb_row[image.w - 1 - x];
+	      rgb_row[image.w- 1 - x] = v;
+	    }
+	  }
+	  break;
+	default:
+	  std::cerr << "flipX: unsuported depth." << std::endl;
+	  return;
+	}
+    }
 }
 
 void flipY (Image& image)
@@ -111,9 +147,13 @@ int main (int argc, char* argv[])
     return 1;
   }
   
+  std::cout << "spp: " << image.spp << ", bps: " << image.bps << std::endl;
+  
   // rotation algorithms
   switch (arg_angle.Get())
     {
+    case 0:
+      ; // NOP
     case 180: 
       // IM: user	0m1.324s
       {
