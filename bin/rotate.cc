@@ -140,6 +140,28 @@ void rot90 (Image& image, int angle)
 
   switch (image.spp * image.bps)
     {
+    case 1:
+      for (int y = 0; y < image.h; ++y) {
+	unsigned char* new_row;
+	if (cw)
+	  new_row = &rot_data [ (image.h - 1 - y) / 8 ];
+	else
+	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / 8 ];
+	for (int x = 0; x < image.w/8; ++x) {
+	  // spread the bits thru the various row slots
+	  unsigned char bits = *data++;
+	  for (int i = 0; i < 8; ++i) {
+	    *new_row = *new_row >> 1 | (bits & 0x80);
+	    bits <<= 1;
+	    if (cw)
+	      new_row += rot_bytes;
+	    else
+	      new_row -= rot_bytes;
+	  }
+	}
+	// break;
+      }
+      break;
       
     case 8:
       for (int y = 0; y < image.h; ++y) {
@@ -247,6 +269,7 @@ int main (int argc, char* argv[])
     {
     case 0:
       ; // NOP
+      break;
     case 180: 
       // IM: user	0m1.324s
       {
