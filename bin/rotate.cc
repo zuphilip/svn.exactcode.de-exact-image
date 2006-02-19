@@ -128,6 +128,43 @@ void flipY (Image& image)
     }
 }
 
+void rot90 (Image& image, int angle)
+{
+  bool cw = false; // clock-wise
+  if (angle == 90)
+    cw = true; // else 270 or -90 or whatever and thus counter cw
+    
+  int rot_bytes = (image.h*image.spp*image.bps + 7) / 8;
+  
+  unsigned char* data = image.data;
+  unsigned char* rot_data = (unsigned char*) malloc (rot_bytes * image.w);
+  
+  // gray for now
+  for (int y = 0; y < image.h; ++y) {
+    unsigned char* new_row;
+    if (cw)
+      new_row = &rot_data [ image.h - 1 -y ];
+    else
+      new_row = &rot_data [ (image.w - 1) * rot_bytes + y ];
+    for (int x = 0; x < image.w; ++x) {
+      *new_row = *data++;
+      if (cw)
+	new_row += rot_bytes;
+      else
+	new_row -= rot_bytes;
+    }
+  }
+  
+  // set the new data
+  free (image.data);
+  image.data = rot_data;
+  
+  // we are done, tweak the w/h
+  int x = image.w;
+  image.w = image.h;
+  image.h = x;
+}
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -170,10 +207,12 @@ int main (int argc, char* argv[])
     return 1;
   }
   
-  std::cout << "spp: " << image.spp << ", bps: " << image.bps << std::endl;
-  
   // rotation algorithms
-  switch (arg_angle.Get())
+  int rot = arg_angle.Get() % 360;
+  if (rot < 0)
+    rot += 360;
+  
+  switch (rot)
     {
     case 0:
       ; // NOP
@@ -184,6 +223,12 @@ int main (int argc, char* argv[])
 	flipY (image);
 	
       }
+      break;
+    case 90:
+      rot90 (image, 90);
+      break;
+    case 270:
+      rot90 (image, 0);
       break;
     default:
       std::cerr << "Rotation angle not yet supported." << std::endl;
