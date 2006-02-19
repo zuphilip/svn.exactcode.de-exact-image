@@ -147,7 +147,8 @@ void rot90 (Image& image, int angle)
 	  new_row = &rot_data [ (image.h - 1 - y) / 8 ];
 	else
 	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / 8 ];
-	for (int x = 0; x < image.w/8; ++x) {
+	for (int x = 0; x < (image.w+7) / 8; ++x) {
+	  //	  std::cout << y << " x: " << x << ", bytes: " << (image.w + 7) / 8 << std::endl;
 	  // spread the bits thru the various row slots
 	  unsigned char bits = *data++;
 	  for (int i = 0; i < 8; ++i) {
@@ -162,7 +163,6 @@ void rot90 (Image& image, int angle)
 	    bits <<= 1;
 	  }
 	}
-	// break;
       }
       break;
       
