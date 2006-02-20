@@ -73,8 +73,7 @@ int main (int argc, char* argv[])
   image.data = read_TIFF_file (arg_input.Get().c_str(),
 			       &image.w, &image.h, &image.bps,
 			       &image.spp, &image.xres, &image.yres);
-  if (!image.data)
-  {
+  if (!image.data) {
     std::cerr << "Error reading TIFF." << std::endl;
     return 2;
   }

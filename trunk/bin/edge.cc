@@ -81,8 +81,7 @@ int main (int argc, char* argv[])
   int w, h, bps, spp, xres, yres;
   unsigned char* data = read_JPEG_file (arg_input.Get().c_str(),
 					&w, &h, &bps, &spp, &xres, &yres);
-  if (!data)
-  {
+  if (!data) {
     std::cerr << "Error reading JPEG." << std::endl;
     return 1;
   }

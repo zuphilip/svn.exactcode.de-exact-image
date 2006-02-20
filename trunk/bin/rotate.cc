@@ -252,8 +252,7 @@ int main (int argc, char* argv[])
 			       &image.w, &image.h,
 			       &image.bps, &image.spp,
 			       &image.xres, &image.yres);
-  if (!image.data)
-  {
+  if (!image.data) {
     std::cerr << "Error reading JPEG." << std::endl;
     return 1;
   }
