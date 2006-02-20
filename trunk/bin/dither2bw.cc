@@ -23,6 +23,7 @@
 
 #include "tiff.hh"
 #include "jpeg.hh"
+#include "Image.hh"
 
 #include "riemersma.h"
 #include "floyd-steinberg.h"
@@ -62,23 +63,24 @@ int main (int argc, char* argv[])
       return 1;
     }
   
-  int w, h, bps, spp, xres, yres;
-  unsigned char* data = read_JPEG_file (arg_input.Get().c_str(),
-					&w, &h, &bps, &spp, &xres, &yres);
-  if (!data)
+  Image image;
+  image.data = read_JPEG_file (arg_input.Get().c_str(),
+			       &image.w, &image.h, &image.bps, &image.spp,
+			       &image.xres, &image.yres);
+  if (!image.data)
   {
     std::cerr << "Error reading JPEG." << std::endl;
     return 1;
   }
   
   // convert to RGB to gray - TODO: more cases
-  if (spp == 3 && bps == 8) {
+  if (image.spp == 3 && image.bps == 8) {
     std::cerr << "RGB -> Gray convertion" << std::endl;
     
-    unsigned char* output = data;
-    unsigned char* input = data;
+    unsigned char* output = image.data;
+    unsigned char* input = image.data;
     
-    for (int i = 0; i < w*h; i++)
+    for (int i = 0; i < image.w*image.h; i++)
       {
 	// R G B order and associated weighting
 	int c = (int)input [0] * 28;
@@ -88,28 +90,28 @@ int main (int argc, char* argv[])
 	
 	*output++ = (unsigned char)(c / 100);
 	
-	spp = 1; // converted data right now
+	image.spp = 1; // converted data right now
       }
   }
-  else if (spp != 1 && bps != 8)
+  else if (image.spp != 1 && image.bps != 8)
     {
-      std::cerr << "Can't yet handle " << spp << " samples with "
-		<< bps << " bits per sample." << std::endl;
+      std::cerr << "Can't yet handle " << image.spp << " samples with "
+		<< image.bps << " bits per sample." << std::endl;
       return 1;
     }
 
   // dither (in the gray data)
   if (arg_riem.Get() == false) {
     std::cout << "Using Floyd-Steinberg dithering ..." << std::endl;
-    FloydSteinberg(data,w,h,arg_shades.Get());
+    FloydSteinberg (image.data, image.w, image.h, arg_shades.Get());
   }
   else {
     std::cout << "Using Riemersma dithering ..." << std::endl;
-    Riemersma(data,w,h,arg_shades.Get());
+    Riemersma (image.data, image.w, image.h, arg_shades.Get());
   }
   
-  write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp,
-		   xres, yres);
+  write_TIFF_file (arg_output.Get().c_str(), image.data, image.w, image.h,
+		   image.bps, image.spp, image.xres, image.yres);
   
   return 0;
 }
