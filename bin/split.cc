@@ -37,7 +37,7 @@ int main (int argc, char* argv[])
   Argument<std::string> arg_input ("i", "input", "input file",
                                    1, 1);
   Argument<std::string> arg_output ("o", "output", "output file",
-				    2, 2);
+				    2, 99);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -65,12 +65,19 @@ int main (int argc, char* argv[])
   }
   
   // this is a bit ugly hacked for now
-  image.h /= 2;
+  image.h /= arg_output.count;
   int stride = (image.w * image.spp * image.bps + 7) / 8;
+  
+  if (image.h == 0) {
+    std::cerr << "Resulting image size too small." << std::endl
+	      << "The resulting slices must have at least a height of one pixel."
+	      << std::endl;
+    return 1;
+  }
   
   // TODO: allow obtaining read argument count, missing in the utility
   // right now it seems
-  for (int i = 0; i < 2; ++i)
+  for (int i = 0; i < arg_output.count; ++i)
     {
       std::cout << "Writing file: " << arg_output.Get(i) << std::endl;
       write_TIFF_file (arg_output.Get(i).c_str(),
