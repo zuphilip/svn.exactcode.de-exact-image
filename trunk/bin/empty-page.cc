@@ -59,23 +59,20 @@ int main (int argc, char* argv[])
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
-      return 2;
+      return 1;
     }
   
   const int margin = arg_margin.Get();
   if (margin % 8 != 0) {
     std::cerr << "For speed reasons, the margin has to be a multiple of 8."
 	      << std::endl;
-    return  2;
+    return 1;
   }
   
   Image image;
-  image.data = read_TIFF_file (arg_input.Get().c_str(),
-			       &image.w, &image.h, &image.bps,
-			       &image.spp, &image.xres, &image.yres);
-  if (!image.data) {
-    std::cerr << "Error reading TIFF." << std::endl;
-    return 2;
+  if (!image.Read(arg_input.Get())) {
+    std::cerr << "Error reading input file." << std::endl;
+    return 1;
   }
   
   // if not 1-bit optimize
