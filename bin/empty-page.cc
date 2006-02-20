@@ -19,6 +19,7 @@
 
 #include "tiff.hh"
 #include "jpeg.hh"
+#include "Image.hh"
 
 #include "ArgumentList.hh"
 
@@ -68,18 +69,18 @@ int main (int argc, char* argv[])
     return  2;
   }
   
-  int w, h, bps, spp, xres, yres;
-  unsigned char* data = read_TIFF_file (arg_input.Get().c_str(),
-					&w, &h, &bps, &spp, &xres, &yres);
-  if (!data)
+  Image image;
+  image.data = read_TIFF_file (arg_input.Get().c_str(),
+			       &image.w, &image.h, &image.bps,
+			       &image.spp, &image.xres, &image.yres);
+  if (!image.data)
   {
     std::cerr << "Error reading TIFF." << std::endl;
     return 2;
   }
-  //printf ("read TIFF: w: %d: h: %d bps: %d spp: %d\n", w, h, bps, spp);
   
   // if not 1-bit optimize
-  if (spp != 1 || bps != 1)
+  if (image.spp != 1 || image.bps != 1)
     {
       std::cerr << "Non-bilevel image - needs optimzation, to be done."
 		<< std::endl;
@@ -99,27 +100,21 @@ int main (int argc, char* argv[])
     bits_set[i] = bits;
   }
   
-  int stride = (w * bps * spp + 7) / 8;
+  int stride = (image.w * image.bps * image.spp + 7) / 8;
   
   // count pixels
   int pixels = 0;
-  for (int row = margin; row < h-margin; row++) {
+  for (int row = margin; row < image.h-margin; row++) {
     for (int x = margin/8; x < stride - margin/8; x++) {
-      int b = bits_set [ data[stride*row + x] ];
+      int b = bits_set [ image.data[stride*row + x] ];
       // it is a bits_set table - and we want the zeros ...
       pixels += 8-b;
     }
   }
 
-#ifdef DEBUG
-  FILE* f = fopen ("tiff-load.raw", "w+");
-  fwrite (data, stride * h, 1, f);
-  fclose(f);
-#endif
-  
-  float percentage = (float)pixels/(w*h) * 100;
+  float percentage = (float)pixels/(image.w*image.h) * 100;
   std::cout << "The image has " << pixels << " dark pixels from a total of "
-	    << w*h << " (" << percentage << "%)." << std::endl;
+	    << image.w*image.h << " (" << percentage << "%)." << std::endl;
   
   if (percentage > arg_percent.Get()) {
     std::cout << "non-empty" << std::endl;
