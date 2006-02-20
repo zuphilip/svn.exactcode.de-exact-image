@@ -24,6 +24,7 @@
 
 #include "tiff.hh"
 #include "jpeg.hh"
+#include "Image.hh"
 
 using namespace Utility;
 
@@ -81,23 +82,24 @@ int main (int argc, char* argv[])
       return 1;
     }
   
-  int w, h, bps, spp, xres, yres;
-  unsigned char* data = read_JPEG_file (arg_input.Get().c_str(),
-					&w, &h, &bps, &spp, &xres, &yres);
-  if (!data)
+  Image image;
+  image.data = read_JPEG_file (arg_input.Get().c_str(),
+			       &image.w, &image.h, &image.bps, &image.spp,
+			       &image.xres, &image.yres);
+  if (!image.data)
   {
     std::cerr << "Error reading JPEG." << std::endl;
     return 1;
   }
   
-  std::cerr << "xres: " << xres << ", yres: " << yres << std::endl;
+  std::cerr << "xres: " << image.xres << ", yres: " << image.yres << std::endl;
   
   // convert to RGB to gray - TODO: more cases
-  if (spp == 3 && bps == 8) {
+  if (image.spp == 3 && image.bps == 8) {
     std::cerr << "RGB -> Gray convertion" << std::endl;
     
-    unsigned char* output = data;
-    for (unsigned char* it = data; it < data + w*h;)
+    unsigned char* output = image.data;
+    for (unsigned char* it = image.data; it < image.data + image.w*image.h;)
       {
 	// R G B order and associated weighting
 	int c = (int)*it++ * 28;
@@ -106,18 +108,18 @@ int main (int argc, char* argv[])
 	
 	*output++ = (unsigned char)(c / 100);
       }
-    spp = 1; // converted data right now
+    image.spp = 1; // converted data right now
   }
-  else if (spp != 1 && bps != 8)
+  else if (image.spp != 1 && image.bps != 8)
     {
-      std::cerr << "Can't yet handle " << spp << " samples with "
-		<< bps << " bits per sample." << std::endl;
+      std::cerr << "Can't yet handle " << image.spp << " samples with "
+		<< image.bps << " bits per sample." << std::endl;
       return 1;
     }
   
   {
     int histogram[256] = { 0 };
-    for (unsigned char* it = data; it < data + w*h;)
+    for (unsigned char* it = image.data; it < image.data + image.w*image.h;)
       histogram[*it++]++;
 
     int lowest = 255, highest = 0;
@@ -152,12 +154,12 @@ int main (int argc, char* argv[])
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
 
-   for (unsigned char* it = data; it < data + w*h; ++it)
+   for (unsigned char* it = image.data; it < image.data + image.w*image.h; ++it)
      *it = ((int) *it * a + b) / 256;
   }
   
   // Convolution Matrix (unsharp mask a-like)
-  unsigned char *data2 = (unsigned char *) malloc (w * h);
+  unsigned char *data2 = (unsigned char *) malloc (image.w * image.h);
   {
     // any matrix and devisior
     // on my AMD Turion speed is: double > int > float
@@ -217,28 +219,29 @@ int main (int argc, char* argv[])
 	for (int y = my; y < my + tiles && y < h; ++y)
 	  for (int x = mx; x < mx + tiles && x < w; ++x)
 #else
-    for (int y = 0; y < h; ++y)
-      for (int x = 0; x < w; ++x)
+    for (int y = 0; y < image.h; ++y)
+      for (int x = 0; x < image.w; ++x)
 #endif
 	  {
-	    unsigned char * const dst_ptr = &data2[x + y * w];
-	    unsigned char * const src_ptr = &data[x + y * w];
+	    unsigned char * const dst_ptr = &data2[x + y * image.w];
+	    unsigned char * const src_ptr = &image.data[x + y * image.w];
 
 	    const unsigned char val = *src_ptr;
 
 	    // for now copy border pixels
-	    if (y < radius || y > h - radius ||
-		x < radius || x > w - radius)
+	    if (y < radius || y > image.h - radius ||
+		x < radius || x > image.w - radius)
 	      *dst_ptr = val;
 	    else if (!(val > sloppy_thr && val < 255-sloppy_thr))
 	      *dst_ptr = val;
 	    else {
 	        matrix_type sum = 0;
-		unsigned char* data_row = &data[ (y - radius) * w - radius + x];
+		unsigned char* data_row =
+		  &image.data[ (y - radius) * image.w - radius + x];
 	        matrix_type* matrix_row = matrix;
 	  	// in former times this was more readable and got overoptimized
 		// for speed ,-)
-		for (int y2 = 0; y2 < width; ++y2, data_row += w - width)
+		for (int y2 = 0; y2 < width; ++y2, data_row += image.w - width)
 		  for (int x2 = 0; x2 < width; ++x2)
 		    sum += *data_row++ * *matrix_row++;
 		
@@ -246,13 +249,12 @@ int main (int argc, char* argv[])
 	    unsigned char z = (unsigned char)
 	      (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	    *dst_ptr = z;
-	      }
+	    }
 	  }
   }
   
-  data = data2;
-  
-// #define DEBUG
+  free (image.data);
+  image.data = data2;
   
   // scale image using interpolation
   
@@ -265,15 +267,15 @@ int main (int argc, char* argv[])
   }
   
   if (dpi != 0) {
-    if (xres == 0)
-      xres = yres;
+    if (image.xres == 0)
+      image.xres = image.yres;
     
-    if (xres == 0) {
+    if (image.xres == 0) {
       std::cerr << "Image does not include DPI information!" << std::endl;
       return 1;
     }
     
-    scale = (double)(dpi) / xres;
+    scale = (double)(dpi) / image.xres;
   }
 
   if (scale < 0.0) {
@@ -285,16 +287,17 @@ int main (int argc, char* argv[])
   
   if (scale > 0.0) {
 
-    int wn = (int) (scale * (double) w);
-    int hn = (int) (scale * (double) h);
+    int wn = (int) (scale * (double) image.w);
+    int hn = (int) (scale * (double) image.h);
 
-    xres = (int) (scale * xres);
-    yres = (int) (scale * yres);
+    image.xres = (int) (scale * image.xres);
+    image.yres = (int) (scale * image.yres);
 
     scale = 256.0 / scale;
 
     std::cerr << "new dimensions: " << wn << " x " << hn 
-	      << " (xres: " << xres << ", yres: " << yres << ")" << std::endl;
+	      << " (xres: " << image.xres
+	      << ", yres: " << image.yres << ")" << std::endl;
 
     unsigned char* ndata = (unsigned char*) malloc (wn * hn);
 
@@ -305,10 +308,10 @@ int main (int argc, char* argv[])
 	int bx = (int) (((double) x) * scale);
 	int by = (int) (((double) y) * scale);
 	
-	int sx = std::min(bx / 256, w - 1);
-	int sy = std::min(by / 256, h - 1);
-	int sxx = std::min(sx + 1, w - 1);
-	int syy = std::min(sy + 1, h - 1);
+	int sx = std::min(bx / 256, image.w - 1);
+	int sy = std::min(by / 256, image.h - 1);
+	int sxx = std::min(sx + 1, image.w - 1);
+	int syy = std::min(sy + 1, image.h - 1);
 
 	int fxx = bx % 256;
 	int fyy = by % 256;
@@ -316,10 +319,10 @@ int main (int argc, char* argv[])
 	int fy = 256 - fyy;
  
 	unsigned int value
-	  = fx  * fy  * ( (unsigned int) data [sx  + w * sy ])
-	  + fxx * fy  * ( (unsigned int) data [sxx + w * sy ])
-	  + fx  * fyy * ( (unsigned int) data [sx  + w * syy])
-	  + fxx * fyy * ( (unsigned int) data [sxx + w * syy]);
+	  = fx  * fy  * ( (unsigned int) image.data [sx  + image.w * sy ])
+	  + fxx * fy  * ( (unsigned int) image.data [sxx + image.w * sy ])
+	  + fx  * fyy * ( (unsigned int) image.data [sx  + image.w * syy])
+	  + fxx * fyy * ( (unsigned int) image.data [sxx + image.w * syy]);
 
 	value /= 256 * 256;
 	value = std::min (value, (unsigned int) 255);
@@ -327,24 +330,16 @@ int main (int argc, char* argv[])
 	ndata[offset++] = (unsigned char) value;
       }
     
-    data = ndata;
-    w = wn;
-    h = hn;
+    free (image.data);
+    image.data = ndata;
+    image.w = wn;
+    image.h = hn;
   }
   
-#ifdef DEBUG
-  {
-    std::cout << "w: " << w << ", h: " << h << std::endl;
-    FILE* f = fopen ("optimized.raw", "w+");
-    fwrite (data, w * h, 1, f);
-    fclose(f);
-  }
-#endif
-
   // convert to 1-bit (threshold)
   
-  unsigned char *output = data;
-  unsigned char *input = data;
+  unsigned char *output = image.data;
+  unsigned char *input = image.data;
   
   int threshold = 170;
     
@@ -353,12 +348,12 @@ int main (int argc, char* argv[])
     std::cerr << "Threshold: " << threshold << std::endl;
   }
     
-  for (int row = 0; row < h; row++)
+  for (int row = 0; row < image.h; row++)
 
     {
       unsigned char z = 0;
       int x = 0;
-      for (; x < w; x++)
+      for (; x < image.w; x++)
 	{
 	  z <<= 1;
 	  if (*input++ > threshold)
@@ -378,12 +373,10 @@ int main (int argc, char* argv[])
 	  *output++ = z;
 	}
     }
-  bps = 1;
+  image.bps = 1;
 
-  write_TIFF_file (arg_output.Get().c_str(), data, w, h, bps, spp,
-		   xres, yres);
+  write_TIFF_file (arg_output.Get().c_str(), image.data, image.w, image.h,
+		   image.bps, image.spp, image.xres, image.yres);
   
-  free (data2);
-
   return 0;
 }
