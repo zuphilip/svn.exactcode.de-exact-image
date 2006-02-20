@@ -27,6 +27,7 @@
 #include "Image.hh"
 
 #include "Colorspace.hh"
+#include "Matrix.hh"
 
 using namespace Utility;
 
@@ -120,13 +121,7 @@ int main (int argc, char* argv[])
   normalize (image, lowest, highest);
   
   // Convolution Matrix (unsharp mask a-like)
-  unsigned char *data2 = (unsigned char *) malloc (image.w * image.h);
   {
-    // any matrix and devisior
-    // on my AMD Turion speed is: double > int > float
-    // and in 32bit mode: double > float > int ?
-    typedef double matrix_type;
-
     // compute kernel (convolution matrix to move over the iamge)
     
     int radius = 3;
@@ -173,49 +168,10 @@ int main (int argc, char* argv[])
 
     const int sloppy_thr = arg_lazy_thr.Get();
     std::cout << "Lazy threshold: " << sloppy_thr << std::endl;
-#if 0
-    const int tiles = 16;
-    for (int my = 0; my < h; my += tiles)
-      for (int mx = 0; mx < w; mx += tiles)
-	for (int y = my; y < my + tiles && y < h; ++y)
-	  for (int x = mx; x < mx + tiles && x < w; ++x)
-#else
-    for (int y = 0; y < image.h; ++y)
-      for (int x = 0; x < image.w; ++x)
-#endif
-	  {
-	    unsigned char * const dst_ptr = &data2[x + y * image.w];
-	    unsigned char * const src_ptr = &image.data[x + y * image.w];
-
-	    const unsigned char val = *src_ptr;
-
-	    // for now copy border pixels
-	    if (y < radius || y > image.h - radius ||
-		x < radius || x > image.w - radius)
-	      *dst_ptr = val;
-	    else if (!(val > sloppy_thr && val < 255-sloppy_thr))
-	      *dst_ptr = val;
-	    else {
-	        matrix_type sum = 0;
-		unsigned char* data_row =
-		  &image.data[ (y - radius) * image.w - radius + x];
-	        matrix_type* matrix_row = matrix;
-	  	// in former times this was more readable and got overoptimized
-		// for speed ,-)
-		for (int y2 = 0; y2 < width; ++y2, data_row += image.w - width)
-		  for (int x2 = 0; x2 < width; ++x2)
-		    sum += *data_row++ * *matrix_row++;
-		
-	    sum /= divisor;
-	    unsigned char z = (unsigned char)
-	      (sum > 255 ? 255 : sum < 0 ? 0 : sum);
-	    *dst_ptr = z;
-	    }
-	  }
+    
+    convolution_matrix (image, matrix, width, width, divisor);
   }
   
-  free (image.data);
-  image.data = data2;
   
   // scale image using interpolation
   
