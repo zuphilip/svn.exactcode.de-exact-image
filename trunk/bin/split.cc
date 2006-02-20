@@ -55,36 +55,35 @@ int main (int argc, char* argv[])
     }
   
   Image image;
-  image.data = read_TIFF_file (arg_input.Get().c_str(),
-			       &image.w, &image.h,
-			       &image.bps, &image.spp,
-			       &image.xres, &image.yres);
-  if (!image.data) {
-    std::cerr << "Error reading JPEG." << std::endl;
+  if (!image.Read (arg_input.Get())) {
+    std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
   
   // this is a bit ugly hacked for now
   image.h /= arg_output.count;
-  int stride = (image.w * image.spp * image.bps + 7) / 8;
+  int stride = image.Stride();
   
   if (image.h == 0) {
     std::cerr << "Resulting image size too small." << std::endl
 	      << "The resulting slices must have at least a height of one pixel."
 	      << std::endl;
+    
     return 1;
   }
   
-  // TODO: allow obtaining read argument count, missing in the utility
-  // right now it seems
+  int err = 0;
+  unsigned char* data = image.data;
   for (int i = 0; i < arg_output.count; ++i)
     {
       std::cout << "Writing file: " << arg_output.Get(i) << std::endl;
-      write_TIFF_file (arg_output.Get(i).c_str(),
-		       image.data + i * stride * image.h,
-		       image.w, image.h,
-		       image.bps, image.spp, image.xres, image.yres);
+      image.data = data + i * stride * image.h;
+      if (!image.Write (arg_output.Get(i))) {
+	err = 1;
+	std::cerr << "Error writing output file." << std::endl;
+      }
     }
+  image.data = data;
   
-  return 0;
+  return err;
 }
