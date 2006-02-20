@@ -5,7 +5,7 @@ BINARY = lib
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
-CXXFLAGS += -I lib/
+CPPFLAGS += -I lib/
 LDFLAGS += -ljpeg -ltiff -ljasper
 
 include build/bottom.make
