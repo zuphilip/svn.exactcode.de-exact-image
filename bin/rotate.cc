@@ -1,7 +1,7 @@
 
 /*
- * Copyright (C) 2005 René Rebe
- *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2006 René Rebe
+ *           (C) 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
