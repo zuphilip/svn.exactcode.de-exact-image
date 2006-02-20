@@ -83,11 +83,8 @@ int main (int argc, char* argv[])
     }
   
   Image image;
-  image.data = read_JPEG_file (arg_input.Get().c_str(),
-			       &image.w, &image.h, &image.bps, &image.spp,
-			       &image.xres, &image.yres);
-  if (!image.data) {
-    std::cerr << "Error reading JPEG." << std::endl;
+  if (!image.Read (arg_input.Get())) {
+    std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
   
@@ -374,8 +371,10 @@ int main (int argc, char* argv[])
     }
   image.bps = 1;
 
-  write_TIFF_file (arg_output.Get().c_str(), image.data, image.w, image.h,
-		   image.bps, image.spp, image.xres, image.yres);
+  if (!image.Write(arg_output.Get())) {
+    std::cerr << "Error writing output file." << std::endl;
+    return 1;
+  }
   
   return 0;
 }
