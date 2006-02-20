@@ -99,7 +99,7 @@ int main (int argc, char* argv[])
     std::cerr << "RGB -> Gray convertion" << std::endl;
     
     unsigned char* output = image.data;
-    for (unsigned char* it = image.data; it < image.data + image.w*image.h;)
+    for (unsigned char* it = image.data; it < image.data + image.w*image.h*image.spp;)
       {
 	// R G B order and associated weighting
 	int c = (int)*it++ * 28;
