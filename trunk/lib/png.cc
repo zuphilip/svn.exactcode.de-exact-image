@@ -1,5 +1,6 @@
 
 #include <stdlib.h>
+
 #include <png.h>
 
 #include "png.hh"
@@ -44,7 +45,7 @@ read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
 				   NULL /*user_error_ptr*/,
 				   NULL /*user_error_fn*/,
-				   NULL/*user_warning_fn*/);
+				   NULL /*user_warning_fn*/);
   
   if (png_ptr == NULL) {
     fclose(fp);
@@ -90,8 +91,15 @@ read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
   *h = height;
   *bps = bit_depth;
   *spp = info_ptr->channels;
+  
+  png_uint_32 res_x, res_y;  
+  res_x = ((png_uint_32)((float)
+          png_get_x_pixels_per_meter(png_ptr, info_ptr) *.0254 +.5));
 
-  std::cout << "samples: " << *spp << std::endl;
+  res_y = ((png_uint_32)((float)
+          png_get_y_pixels_per_meter(png_ptr, info_ptr) *.0254 +.5));
+  *xres = res_x;
+  *yres = res_y;
   
   /* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
    * byte into separate bytes (useful for paletted and grayscale images) */
@@ -167,7 +175,7 @@ read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
   
   /* The other way to read images - deal with interlacing: */
   for (int pass = 0; pass < number_passes; ++pass)
-    for (int y = 0; y < height; y++) {
+    for (int y = 0; y < height; ++y) {
       row_pointers[0] = data + y * stride;
       png_read_rows(png_ptr, row_pointers, png_bytepp_NULL, 1);
     }
@@ -186,4 +194,89 @@ void
 write_PNG_file (const char* file, unsigned char* data, int w, int h,
 		int bps, int spp, int xres, int yres)
 {
+  png_structp png_ptr;
+  png_infop info_ptr;
+
+  FILE *fp;
+  if ((fp = fopen(file, "wb")) == NULL)
+    return;
+  
+  png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
+				    NULL /*user_error_ptr*/,
+				    NULL /*user_error_fn*/,
+				    NULL /*user_warning_fn*/);
+  
+  if (png_ptr == NULL) {
+    fclose(fp);
+    return;
+  }
+  
+  /* Allocate/initialize the memory for image information.  REQUIRED. */
+  info_ptr = png_create_info_struct(png_ptr);
+  if (info_ptr == NULL) {
+    fclose(fp);
+    png_destroy_write_struct(&png_ptr, png_infopp_NULL);
+    return;
+  }
+  
+  /* Set error handling if you are using the setjmp/longjmp method (this is
+   * the normal method of doing things with libpng).  REQUIRED unless you
+   * set up your own error handlers in the png_create_read_struct() earlier.
+   */
+  
+  if (setjmp(png_jmpbuf(png_ptr))) {
+    /* Free all of the memory associated with the png_ptr and info_ptr */
+    png_destroy_write_struct(&png_ptr, &info_ptr);
+    fclose(fp);
+    /* If we get here, we had a problem reading the file */
+    return;
+  }
+  
+  png_info_init (info_ptr);
+  
+  /* Set up the input control if you are using standard C streams */
+  png_init_io(png_ptr, fp);
+  
+  ///* If we have already read some of the signature */
+  //png_set_sig_bytes(png_ptr, sig_read);
+  
+  int color_type;
+  switch (spp) {
+  case 1:
+    color_type = PNG_COLOR_TYPE_GRAY;
+    break;
+  default:
+    color_type = PNG_COLOR_TYPE_RGB;
+  }
+  
+  png_set_IHDR (png_ptr, info_ptr, w, h, bps, color_type,
+		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
+		PNG_FILTER_TYPE_BASE);
+  
+  png_set_pHYs (png_ptr, info_ptr, xres *.0254 +.5, yres *.0254 +.5,
+		PNG_RESOLUTION_METER);
+
+  /* The call to png_read_info() gives us all of the information from the
+   * PNG file before the first IDAT (image data chunk).  REQUIRED
+   */
+  png_write_info (png_ptr, info_ptr);
+  
+  int stride = png_get_rowbytes (png_ptr, info_ptr);
+  
+  png_bytep row_pointers[1]; 
+  /* The other way to write images */
+  int number_passes = 1;
+  for (int pass = 0; pass < number_passes; ++pass)
+    for (int y = 0; y < h; ++y) {
+      row_pointers[0] = data + y * stride;
+      png_write_rows(png_ptr, (png_byte**)&row_pointers, 1);
+    }
+
+  png_write_end(png_ptr, NULL);
+  
+  /* clean up after the read, and free any memory allocated - REQUIRED */
+  png_destroy_write_struct(&png_ptr, &info_ptr);
+  
+  /* close the file */
+  fclose(fp);
 }
