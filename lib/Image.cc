@@ -7,6 +7,7 @@
 #include "tiff.hh"
 #include "jpeg.hh"
 #include "jpeg2000.hh"
+#include "png.hh"
 
 std::string get_ext (const std::string& filename)
 {
@@ -28,6 +29,8 @@ bool Image::Read (const std::string& file) {
       data = read_JPEG_file (file.c_str(), &w, &h, &bps, &spp, &xres, &yres);
     else if (ext == "jp2")
       data = read_JPEG2000_file (file.c_str(), &w, &h, &bps, &spp, &xres, &yres);
+    else if (ext == "png")
+      data = read_PNG_file (file.c_str(), &w, &h, &bps, &spp, &xres, &yres);
     else {
       std::cerr << "Unrecognized extension: " << ext << std::endl;
       return false;
@@ -45,10 +48,12 @@ bool Image::Write (const std::string& file) {
       write_JPEG_file (file.c_str(), data, w, h, bps, spp, xres, yres);
     else if (ext == "jp2")
       write_JPEG2000_file (file.c_str(), data, w, h, bps, spp, xres, yres);
+    else if (ext == "png")
+      write_PNG_file (file.c_str(), data, w, h, bps, spp, xres, yres);
     else {
       std::cerr << "Unrecognized extension: " << ext << std::endl;
       return false;
     }
-	    
+    
     return true;
-  }
+}
