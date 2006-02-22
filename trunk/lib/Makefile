@@ -6,7 +6,7 @@ BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
 CPPFLAGS += -I lib/
-LDFLAGS += -ljpeg -ltiff -ljasper
+LDFLAGS += -ljpeg -ltiff -lpng -ljasper
 
 include build/bottom.make
 
