@@ -38,24 +38,19 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
+#include <byteswap.h>
 
-#if HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
+#define TIFFSwabShort(x) *x = bswap_16 (*x)
+#define TIFFSwabLong(x) *x = bswap_32 (*x)
 
-#if HAVE_SYS_TYPES_H
-# include <sys/types.h>
-#endif
+#include <inttypes.h>
 
-#if HAVE_IO_H
-# include <io.h>
-#endif
-
-#include "tiffio.h"
+typedef int16_t int16;
+typedef uint16_t uint16;
+typedef int32_t int32;
+typedef uint32_t uint32;
 
 #ifndef O_BINARY
 # define O_BINARY 0
@@ -254,7 +249,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   lseek(fd, 10, SEEK_SET);
   read(fd, &file_hdr.iOffBits, 4);
 #ifdef __BIG_ENDIAN__
-  TIFFSwabLong(&file_hdr.iOffBits);
+  TIFSwabLong(&file_hdr.iOffBits);
 #endif
   fstat(fd, &instat);
   file_hdr.iSize = instat.st_size;
@@ -450,10 +445,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 
       rearrangePixels(scanbuf, *w, info_hdr.iBitCount);
 
-      if (TIFFWriteScanline(out, scanbuf, row, 0) < 0) {
-	fprintf(stderr, "scanline %lu: Write error\n",
-		(unsigned long) row);
-      }
+      // scanline done: (out, scanbuf, row, 0)
     }
 
     _TIFFfree(scanbuf);
@@ -478,7 +470,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
     uncomprbuf = (unsigned char *) _TIFFmalloc( uncompr_size );
     if (!uncomprbuf) {
-      fprintf (fprintf, "Can't allocate space for uncompressed scanline buffer\n");
+      fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
       goto bad3;
     }
 
@@ -564,11 +556,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 
     _TIFFfree(comprbuf);
 
-    for (row = 0; row < *hh; row++) {
-      if (TIFFWriteScanline(out, uncomprbuf + (*h - row - 1) * *w, row, 0) < 0) {
-	fprintf(stderr, "scanline %lu: Write error.\n",
-		(unsigned long) row);
-      }
+    for (row = 0; row < *h; row++) {
+      // scanline done: uncomprbuf + (*h - row - 1) * *w, row, 0) < 0)
     }
 
     _TIFFfree(uncomprbuf);
@@ -586,8 +575,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
  bad:
   close(fd);
 
-  if (out)
-    TIFFClose(out);
   return 0;
 }
 
