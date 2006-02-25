@@ -366,7 +366,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       clr_tbl = (unsigned char *)
 	_TIFFmalloc(n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
-	frintf(stderr, "Can't allocate space for color table\n");
+	fprintf(stderr, "Can't allocate space for color table\n");
 	goto bad;
       }
       
