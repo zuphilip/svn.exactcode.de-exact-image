@@ -233,6 +233,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   unsigned short *red_tbl = NULL, *green_tbl = NULL, *blue_tbl = NULL;
   
   uint32	row, clr;
+
+  unsigned char* data = 0;
   
   fd = open(file, O_RDONLY|O_BINARY, 0);
   if (fd < 0) {
@@ -422,12 +424,12 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 
   if (info_hdr.iCompression == BMPC_RGB) {
     uint32 offset, size;
-    char *scanbuf;
-
+    
     size = ((*w * info_hdr.iBitCount + 31) & ~31) / 8;
-    scanbuf = (char *) _TIFFmalloc(size);
-    if (!scanbuf) {
-      fprintf(stderr, "Can't allocate space for scanline buffer\n");
+    data = _TIFFmalloc (size * *h);
+    
+    if (!data) {
+      fprintf(stderr, "Can't allocate space for image buffer\n");
       goto bad3;
     }
 
@@ -441,22 +443,18 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 		(unsigned long) row);
       }
 
-      if (read(fd, scanbuf, size) < 0) {
+      if (read(fd, data + size*row, size) < 0) {
 	fprintf(stderr, "scanline %lu: Read error\n",
 		(unsigned long) row);
       }
 
-      rearrangePixels(scanbuf, *w, info_hdr.iBitCount);
-
-      // scanline done: (out, scanbuf, row, 0)
+      rearrangePixels(data + size*row, *w, info_hdr.iBitCount);
     }
-
-    _TIFFfree(scanbuf);
 
     /* -------------------------------------------------------------------- */
     /*  Read compressed image data.                                         */
     /* -------------------------------------------------------------------- */
-
+    
   } else if ( info_hdr.iCompression == BMPC_RLE8
 	      || info_hdr.iCompression == BMPC_RLE4 ) {
     uint32		i, j, k, runlength;
@@ -566,6 +564,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     _TIFFfree(uncomprbuf);
   }
 
+  return data;
+  
  bad3:
   if (blue_tbl)
     _TIFFfree(blue_tbl);
