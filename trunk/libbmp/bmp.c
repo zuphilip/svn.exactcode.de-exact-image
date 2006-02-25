@@ -453,158 +453,164 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
   
   printf ("w: %d, h: %d, spp: %d, bps: %d\n", *w, *h, *spp, *bps);
-
-
+  
   /* -------------------------------------------------------------------- */
   /*  Read uncompressed image data.                                       */
   /* -------------------------------------------------------------------- */
 
-  if (info_hdr.iCompression == BMPC_RGB) {
-    uint32 stride = (*w * info_hdr.iBitCount + 7) / 8;
-    uint32 file_stride = ((stride + 3) / 4) * 4;
-    
-    printf ("stride: %d, file stride: %d\n", stride, file_stride);
-    
-    data = _TIFFmalloc (stride * *h);
-    
-    if (!data) {
-      fprintf(stderr, "Can't allocate space for image buffer\n");
-      goto bad3;
-    }
-
-    for (row = 0; row < *h; row++) {
-      uint32 offset;
+  switch (info_hdr.iCompression) {
+  case BMPC_RGB:
+  case BMPC_BITFIELDS:
+    {
+      uint32 stride = (*w * *spp * *bps + 7) / 8;
+      uint32 file_stride = ((*w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
-      if (info_hdr.iHeight > 0)
-	offset = file_hdr.iOffBits + (*h - row - 1) * file_stride;
-      else
-	offset = file_hdr.iOffBits + row * file_stride;
+      printf ("bitcount: %d, stride: %d, file stride: %d\n",
+	      info_hdr.iBitCount, stride, file_stride);
       
-      if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
-	fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
+      data = _TIFFmalloc (stride * *h);
+      
+      if (!data) {
+	fprintf(stderr, "Can't allocate space for image buffer\n");
+	goto bad3;
       }
       
-      if (read(fd, data + stride*row, stride) < 0) {
-	fprintf(stderr, "scanline %lu: Read error\n",
-		(unsigned long) row);
-      }
-
-      rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
+      for (row = 0; row < *h; row++) {
+	uint32 offset;
+	
+	if (info_hdr.iHeight > 0)
+	  offset = file_hdr.iOffBits + (*h - row - 1) * file_stride;
+	else
+	  offset = file_hdr.iOffBits + row * file_stride;
+	
+	if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
+	  fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
+	}
+	
+	if (read(fd, data + stride*row, stride) < 0) {
+	  fprintf(stderr, "scanline %lu: Read error\n",
+		  (unsigned long) row);
+	}
+	
+	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
+      }  
     }
-
+    break;
+    
     /* -------------------------------------------------------------------- */
     /*  Read compressed image data.                                         */
     /* -------------------------------------------------------------------- */
-    
-  } else if ( info_hdr.iCompression == BMPC_RLE8
-	      || info_hdr.iCompression == BMPC_RLE4 ) {
-    uint32		i, j, k, runlength;
-    uint32		compr_size, uncompr_size;
-    unsigned char   *comprbuf;
-    unsigned char   *uncomprbuf;
-
-    compr_size = file_hdr.iSize - file_hdr.iOffBits;
-    uncompr_size = *w * *h;
-    comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
-    if (!comprbuf) {
-      fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
-      goto bad3;
-    }
-    uncomprbuf = (unsigned char *) _TIFFmalloc( uncompr_size );
-    if (!uncomprbuf) {
-      fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
-      goto bad3;
-    }
-
-    lseek(fd, file_hdr.iOffBits, SEEK_SET);
-    read(fd, comprbuf, compr_size);
-    i = 0;
-    j = 0;
-    if (info_hdr.iBitCount == 8) {		    /* RLE8 */
-      while( j < uncompr_size && i < compr_size ) {
-	if ( comprbuf[i] ) {
-	  runlength = comprbuf[i++];
-	  while( runlength > 0
-		 && j < uncompr_size
-		 && i < compr_size ) {
-	    uncomprbuf[j++] = comprbuf[i];
-	    runlength--;
-	  }
-	  i++;
-	} else {
-	  i++;
-	  if ( comprbuf[i] == 0 )         /* Next scanline */
-	    i++;
-	  else if ( comprbuf[i] == 1 )    /* End of image */
-	    break;
-	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
-	    i++;
-	    if ( i < compr_size - 1 ) {
-	      j += comprbuf[i] + comprbuf[i+1] * *w;
-	      i += 2;
-	    }
-	    else
-	      break;
-	  } else {                         /* Absolute mode */
-	    runlength = comprbuf[i++];
-	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++ )
-	      uncomprbuf[j++] = comprbuf[i++];
-	    if ( k & 0x01 )
-	      i++;
-	  }
-	}
+  case BMPC_RLE8:
+  case BMPC_RLE4:
+    {
+      uint32		i, j, k, runlength;
+      uint32		compr_size, uncompr_size;
+      unsigned char   *comprbuf;
+      unsigned char   *uncomprbuf;
+      
+      compr_size = file_hdr.iSize - file_hdr.iOffBits;
+      uncompr_size = *w * *h;
+      comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
+      if (!comprbuf) {
+	fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
+	goto bad3;
       }
-    }
-    else {					    /* RLE4 */
-      while( j < uncompr_size && i < compr_size ) {
-	if ( comprbuf[i] ) {
-	  runlength = comprbuf[i++];
-	  while( runlength > 0 && j < uncompr_size && i < compr_size ) {
-	    if ( runlength & 0x01 )
-	      uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
-	    else
-	      uncomprbuf[j++] = comprbuf[i] & 0x0F;
-	    runlength--;
-	  }
-	  i++;
-	} else {
-	  i++;
-	  if ( comprbuf[i] == 0 )         /* Next scanline */
-	    i++;
-	  else if ( comprbuf[i] == 1 )    /* End of image */
-	    break;
-	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
-	    i++;
-	    if ( i < compr_size - 1 ) {
-	      j += comprbuf[i] + comprbuf[i+1] * *w;
-	      i += 2;
-	    }
-	    else
-	      break;
-	  } else {                        /* Absolute mode */
+      uncomprbuf = (unsigned char *) _TIFFmalloc( uncompr_size );
+      if (!uncomprbuf) {
+	fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
+	goto bad3;
+      }
+      
+      lseek(fd, file_hdr.iOffBits, SEEK_SET);
+      read(fd, comprbuf, compr_size);
+      i = 0;
+      j = 0;
+      if (info_hdr.iBitCount == 8) {		    /* RLE8 */
+	while( j < uncompr_size && i < compr_size ) {
+	  if ( comprbuf[i] ) {
 	    runlength = comprbuf[i++];
-	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++) {
-	      if ( k & 0x01 )
-		uncomprbuf[j++] = comprbuf[i++] & 0x0F;
+	    while( runlength > 0
+		   && j < uncompr_size
+		   && i < compr_size ) {
+	      uncomprbuf[j++] = comprbuf[i];
+	      runlength--;
+	    }
+	    i++;
+	  } else {
+	    i++;
+	    if ( comprbuf[i] == 0 )         /* Next scanline */
+	      i++;
+	    else if ( comprbuf[i] == 1 )    /* End of image */
+	      break;
+	    else if ( comprbuf[i] == 2 ) {  /* Move to... */
+	      i++;
+	      if ( i < compr_size - 1 ) {
+		j += comprbuf[i] + comprbuf[i+1] * *w;
+		i += 2;
+	      }
 	      else
-		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+		break;
+	    } else {                         /* Absolute mode */
+	      runlength = comprbuf[i++];
+	      for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++ )
+		uncomprbuf[j++] = comprbuf[i++];
+	      if ( k & 0x01 )
+		i++;
 	    }
-	    if ( k & 0x01 )
-	      i++;
 	  }
 	}
       }
+      else {					    /* RLE4 */
+	while( j < uncompr_size && i < compr_size ) {
+	  if ( comprbuf[i] ) {
+	    runlength = comprbuf[i++];
+	    while( runlength > 0 && j < uncompr_size && i < compr_size ) {
+	      if ( runlength & 0x01 )
+		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+	      else
+		uncomprbuf[j++] = comprbuf[i] & 0x0F;
+	      runlength--;
+	    }
+	    i++;
+	  } else {
+	    i++;
+	    if ( comprbuf[i] == 0 )         /* Next scanline */
+	      i++;
+	    else if ( comprbuf[i] == 1 )    /* End of image */
+	      break;
+	    else if ( comprbuf[i] == 2 ) {  /* Move to... */
+	      i++;
+	      if ( i < compr_size - 1 ) {
+		j += comprbuf[i] + comprbuf[i+1] * *w;
+		i += 2;
+	      }
+	      else
+		break;
+	    } else {                        /* Absolute mode */
+	      runlength = comprbuf[i++];
+	      for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++) {
+		if ( k & 0x01 )
+		  uncomprbuf[j++] = comprbuf[i++] & 0x0F;
+		else
+		  uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+	      }
+	      if ( k & 0x01 )
+		i++;
+	    }
+	  }
+	}
+      }
+      _TIFFfree(comprbuf);
+      
+      for (row = 0; row < *h; row++) {
+	// scanline done: uncomprbuf + (*h - row - 1) * *w, row, 0) < 0)
+      }
+      
+      _TIFFfree(uncomprbuf);
     }
-
-    _TIFFfree(comprbuf);
-
-    for (row = 0; row < *h; row++) {
-      // scanline done: uncomprbuf + (*h - row - 1) * *w, row, 0) < 0)
-    }
-
-    _TIFFfree(uncomprbuf);
-  }
-
+    break;
+  } /* switch */
+  
   return data;
   
  bad3:
