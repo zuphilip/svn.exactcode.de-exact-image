@@ -458,8 +458,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   /* -------------------------------------------------------------------- */
 
   if (info_hdr.iCompression == BMPC_RGB) {
-    uint32 stride = *w * 3;
-    uint32 file_stride = ((*w * info_hdr.iBitCount + 31) & ~31) / 8;
+    uint32 stride = (*w * info_hdr.iBitCount + 7) / 8;
+    uint32 file_stride = ((stride + 3) / 4) * 4;
     
     printf ("stride: %d, file stride: %d\n", stride, file_stride);
     
