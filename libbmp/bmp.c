@@ -334,6 +334,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     TIFFSwabLong(&info_hdr.iClrImportant);
 #endif
     n_clr_elems = 4;
+    *xres = ((double)info_hdr.iXPelsPerMeter * 2.54 + 0.05) / 100;
+    *yres = ((double)info_hdr.iYPelsPerMeter * 2.54 + 0.05) / 100;
   }
   
   if (bmp_type == BMPT_OS22) {
