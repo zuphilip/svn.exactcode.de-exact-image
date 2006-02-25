@@ -5,6 +5,6 @@ X_BUILD_IMPLICIT=1
 
 CXXFLAGS += -Wall
 
-MODULES = lib bin
+MODULES = libbmp lib bin
 include $(addsuffix /Makefile,$(MODULES))
 
