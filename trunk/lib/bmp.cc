@@ -1,4 +1,8 @@
 
+#include "bmp.h"
+
+#include "bmp.hh"
+
 unsigned char*
 read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
                int* xres, int* yres)
@@ -7,7 +11,7 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
 }
 
 void
-write_PNG_file (const char* file, unsigned char* data, int w, int h,
+write_BMP_file (const char* file, unsigned char* data, int w, int h,
 		int bps, int spp, int xres, int yres)
 {
 }

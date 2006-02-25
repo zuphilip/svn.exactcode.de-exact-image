@@ -45,6 +45,9 @@
 #define TIFFSwabShort(x) *x = bswap_16 (*x)
 #define TIFFSwabLong(x) *x = bswap_32 (*x)
 
+#define _TIFFmalloc malloc
+#define _TIFFfree free
+
 #include <inttypes.h>
 
 typedef int16_t int16;
