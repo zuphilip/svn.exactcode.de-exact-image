@@ -500,16 +500,19 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     /* -------------------------------------------------------------------- */
     /*  Read compressed image data.                                         */
     /* -------------------------------------------------------------------- */
-  case BMPC_RLE8:
   case BMPC_RLE4:
+  case BMPC_RLE8:
     {
       uint32		i, j, k, runlength;
       uint32		compr_size, uncompr_size;
       unsigned char   *comprbuf;
       unsigned char   *uncomprbuf;
       
+      printf ("RLE%s compressed\n", info_hdr.iCompression == BMPC_RLE4 ? "4" : "8");
+      
       compr_size = file_hdr.iSize - file_hdr.iOffBits;
       uncompr_size = *w * *h;
+      
       comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
       if (!comprbuf) {
 	fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
@@ -602,9 +605,15 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       }
       _TIFFfree(comprbuf);
       
-      for (row = 0; row < *h; row++) {
-	// scanline done: uncomprbuf + (*h - row - 1) * *w, row, 0) < 0)
+      data = (unsigned char *) _TIFFmalloc( uncompr_size );
+      if (!data) {
+	fprintf (stderr, "Can't allocate space for final uncompressed scanline buffer\n");
+	goto bad3;
       }
+      
+      // TODO: suboptimal, later improve the above to yield the corrent orientation natively
+      for (row = 0; row < *h; ++row)
+	memcpy (data + row * *w, uncomprbuf + (*h - 1 - row) * *w, *w);
       
       _TIFFfree(uncomprbuf);
     }
