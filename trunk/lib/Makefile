@@ -8,8 +8,7 @@ DEPS =
 CPPFLAGS += -I lib/
 LDFLAGS += -ljpeg -ltiff -lpng -ljasper
 
-DEPS = $(libbmp_BINARY)
-
+DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
 
 include build/bottom.make
 
