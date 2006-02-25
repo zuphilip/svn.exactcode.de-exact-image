@@ -212,11 +212,43 @@ typedef struct
   char       bReserved;      /* Must be 0 */
 } BMPColorEntry;
 
-static	uint16 predictor = 0;
 
-static void usage(void);
-static int processCompressOptions(char*);
-static void rearrangePixels(char *, uint32, uint32);
+/*
+ * Image data in BMP file stored in BGR (or ABGR) format. We should rearrange
+ * pixels to RGB (RGBA) format.
+ */
+static void
+rearrangePixels(char *buf, uint32 width, uint32 bit_count)
+{
+  char tmp;
+  uint32 i;
+
+  switch(bit_count) {
+  case 16:    /* FIXME: need a sample file */
+    break;
+  case 24:
+    for (i = 0; i < width; i++, buf += 3) {
+      tmp = *buf;
+      *buf = *(buf + 2);
+      *(buf + 2) = tmp;
+    }
+    break;
+  case 32:
+    {
+      char	*buf1 = buf;
+
+      for (i = 0; i < width; i++, buf += 4) {
+	tmp = *buf;
+	*buf1++ = *(buf + 2);
+	*buf1++ = *(buf + 1);
+	*buf1++ = tmp;
+      }
+    }
+    break;
+  default:
+    break;
+  }
+}
 
 unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 			 int* xres, int* yres)
@@ -417,16 +449,21 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     default:
       break;
     }
+  
+  printf ("w: %d, h: %d, spp: %d, bps: %d\n", *w, *h, *spp, *bps);
+
 
   /* -------------------------------------------------------------------- */
   /*  Read uncompressed image data.                                       */
   /* -------------------------------------------------------------------- */
 
   if (info_hdr.iCompression == BMPC_RGB) {
-    uint32 offset, size;
+    uint32 stride = *w * 3;
+    uint32 file_stride = ((*w * info_hdr.iBitCount + 31) & ~31) / 8;
     
-    size = ((*w * info_hdr.iBitCount + 31) & ~31) / 8;
-    data = _TIFFmalloc (size * *h);
+    printf ("stride: %d, file stride: %d\n", stride, file_stride);
+    
+    data = _TIFFmalloc (stride * *h);
     
     if (!data) {
       fprintf(stderr, "Can't allocate space for image buffer\n");
@@ -434,21 +471,23 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
 
     for (row = 0; row < *h; row++) {
+      uint32 offset;
+      
       if (info_hdr.iHeight > 0)
-	offset = file_hdr.iOffBits + (*h - row - 1) * size;
+	offset = file_hdr.iOffBits + (*h - row - 1) * file_stride;
       else
-	offset = file_hdr.iOffBits + row * size;
+	offset = file_hdr.iOffBits + row * file_stride;
+      
       if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
-	fprintf(stderr, "scanline %lu: Seek error\n",
-		(unsigned long) row);
+	fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
       }
-
-      if (read(fd, data + size*row, size) < 0) {
+      
+      if (read(fd, data + stride*row, stride) < 0) {
 	fprintf(stderr, "scanline %lu: Read error\n",
 		(unsigned long) row);
       }
 
-      rearrangePixels(data + size*row, *w, info_hdr.iBitCount);
+      rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
     }
 
     /* -------------------------------------------------------------------- */
@@ -579,41 +618,4 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   close(fd);
 
   return 0;
-}
-
-/*
- * Image data in BMP file stored in BGR (or ABGR) format. We should rearrange
- * pixels to RGB (RGBA) format.
- */
-static void
-rearrangePixels(char *buf, uint32 width, uint32 bit_count)
-{
-  char tmp;
-  uint32 i;
-
-  switch(bit_count) {
-  case 16:    /* FIXME: need a sample file */
-    break;
-  case 24:
-    for (i = 0; i < width; i++, buf += 3) {
-      tmp = *buf;
-      *buf = *(buf + 2);
-      *(buf + 2) = tmp;
-    }
-    break;
-  case 32:
-    {
-      char	*buf1 = buf;
-
-      for (i = 0; i < width; i++, buf += 4) {
-	tmp = *buf;
-	*buf1++ = *(buf + 2);
-	*buf1++ = *(buf + 1);
-	*buf1++ = tmp;
-      }
-    }
-    break;
-  default:
-    break;
-  }
 }
