@@ -507,7 +507,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   case BMPC_RLE4:
   case BMPC_RLE8:
     {
-      uint32		i, j, k, runlength;
+      uint32		i, j, k, runlength, x;
       uint32		compr_size, uncompr_size;
       unsigned char   *comprbuf;
       unsigned char   *uncomprbuf;
@@ -530,28 +530,31 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       
       lseek(fd, file_hdr.iOffBits, SEEK_SET);
       read(fd, comprbuf, compr_size);
-      i = 0;
-      j = 0;
+      i = j = x = 0;
       
       while( j < uncompr_size && i < compr_size ) {
 	if ( comprbuf[i] ) {
 	  runlength = comprbuf[i++];
-	  while( runlength > 0 && j < uncompr_size && i < compr_size ) {
+	  for ( k = 0;
+		runlength > 0 && j < uncompr_size && i < compr_size && x < *w;
+		++k, ++x) {
 	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
 	    else {
-	      if ( runlength & 0x01 )
-		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
-	      else
+	      if ( k & 0x01 )
 		uncomprbuf[j++] = comprbuf[i] & 0x0F;
+	      else
+		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
 	    }
 	    runlength--;
 	  }
 	  i++;
 	} else {
 	  i++;
-	  if ( comprbuf[i] == 0 )         /* Next scanline */
+	  if ( comprbuf[i] == 0 ) {         /* Next scanline */
 	    i++;
+	    x = 0;;
+	  }
 	  else if ( comprbuf[i] == 1 )    /* End of image */
 	    break;
 	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
@@ -564,18 +567,20 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	      break;
 	  } else {                         /* Absolute mode */
 	    runlength = comprbuf[i++];
-	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++ )
+	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++, x++)
 	      {
 		if (info_hdr.iBitCount == 8)
 		  uncomprbuf[j++] = comprbuf[i++];
 		else {
-		  if ( runlength & 0x01 )
+		  if ( k & 0x01 )
 		    uncomprbuf[j++] = comprbuf[i++] & 0x0F;
 		  else
 		    uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
 		}
 	      }
-	    
+	    /* word boundary alignment */
+	    if (info_hdr.iBitCount == 4)
+	      k /= 2;
 	    if ( k & 0x01 )
 	      i++;
 	  }
@@ -583,7 +588,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       }
       
       _TIFFfree(comprbuf);
-      
       data = (unsigned char *) _TIFFmalloc( uncompr_size );
       if (!data) {
 	fprintf (stderr, "Can't allocate space for final uncompressed scanline buffer\n");
