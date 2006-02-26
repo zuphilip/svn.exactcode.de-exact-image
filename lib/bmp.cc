@@ -15,14 +15,20 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
 				  xres, yres, &clr_tbl,
 				  &clr_tbl_size, &clr_tbl_elems);
   
-  /* convert to RGB color-space - we do not handle palet images internally */
+  // convert to RGB color-space - we do not handle palet images internally
+  
+  // no color table anyway or RGB* ?
   if (!clr_tbl || *spp >= 3)
     return data;
   
-  // detect correct 1bps b/w tables ?
+  // detect 1bps b/w tables
   if (*bps == 1) {
-    if (clr_tbl[0] == 0 && clr_tbl[1] == 0 && clr_tbl[2] == 0 &&
-	clr_tbl[3] == 255 && clr_tbl[4] == 255 && clr_tbl[5] == 255)
+    if (clr_tbl[0] == 0 &&
+	clr_tbl[1] == 0 &&
+	clr_tbl[2] == 0 &&
+	clr_tbl[clr_tbl_elems+0] == 255 &&
+	clr_tbl[clr_tbl_elems+1] == 255 &&
+	clr_tbl[clr_tbl_elems+2] == 255)
       {
 	std::cerr << "correct b/w table." << std::endl;
 	return data;
@@ -49,42 +55,55 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
       return data;
   }
   
-  /*if (is_gray) {
-    std::cerr << "TODO: convert to GRAY" << std::endl;
-  }
-  else*/ {
-    std::cerr << "TODO: convert to RGB" << std::endl;
-    unsigned char* orig_data = data;
-    data = (unsigned char*)malloc (*w * *h * 3);
-    
-    unsigned char* src = orig_data;
-    unsigned char* dst = data;
-    
-    int bits_used = 0;
-    char bit_mask = 0xFF >> (8 - *bps);
-    while (dst < data + *w * *h * 3)
-      {
-	unsigned char v = *src & bit_mask;
-	// BMP stores the color table as BGR
+  int new_size = *w * *h;
+  if (!is_gray) // RGB
+    new_size *= 3;
+  
+  unsigned char* orig_data = data;
+  data = (unsigned char*) malloc (new_size);
+  
+  unsigned char* src = orig_data;
+  unsigned char* dst = data;
+  
+  int bits_used = 0;
+  char bit_mask = 0xFF >> (8 - *bps);
+  
+  int x = 0;
+  while (dst < data + new_size)
+    {
+      unsigned char v = *src & bit_mask;
+      if (is_gray) {
+	*dst++ = clr_tbl[v*clr_tbl_elems+0];
+      } else {
+	// BMP stores the color table in BGR order
 	*dst++ = clr_tbl[v*clr_tbl_elems+2];
 	*dst++ = clr_tbl[v*clr_tbl_elems+1];
 	*dst++ = clr_tbl[v*clr_tbl_elems+0];
-	
-	bits_used += *bps;
-	if (bits_used == 8) {
-	  ++src;
-	  bits_used = 0;
-	}
-	else {
-	  *src >>= *bps;
-	  bits_used += *bps;
-	}
       }
-    free (orig_data);
-    
+      
+      bits_used += *bps;
+      //      std::cerr << "bits used" << bits_used << std::endl;
+      ++x;
+
+      if (bits_used >= 8 || x >= *w) {
+	++src;
+	bits_used = 0;
+	if (x >= *w)
+	  x = 0;
+      }
+      else {
+	*src >>= *bps;
+	bits_used += *bps;
+      }
+    }
+  free (orig_data);
+  
+  *bps = 8;
+  if (is_gray)
+    *spp = 1;
+  else
     *spp = 3;
-    *bps = 8;
-  }
+
   return data;
 }
 
