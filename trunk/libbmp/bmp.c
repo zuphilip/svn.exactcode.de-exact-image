@@ -218,14 +218,25 @@ typedef struct
  * pixels to RGB (RGBA) format.
  */
 static void
-rearrangePixels(char *buf, uint32 width, uint32 bit_count)
+rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count,
+		unsigned char* clr_tbl)
 {
   char tmp;
   uint32 i;
-
+  
   switch(bit_count) {
+  case 1:
+    /* sanitize inverted 1bpp b/w data */
+    if ( clr_tbl[0] == 255 && clr_tbl[1] == 255 && clr_tbl[2] == 255 &&
+	 clr_tbl[3] == 0   && clr_tbl[4] == 0   && clr_tbl[5] == 0 ) {
+      for (i = 0; i < width; i += 8)
+	*buf++ ^= 0xFF;
+    }
+    break;
+    
   case 16:    /* FIXME: need a sample file */
     break;
+    
   case 24:
     for (i = 0; i < width; i++, buf += 3) {
       tmp = *buf;
@@ -233,10 +244,10 @@ rearrangePixels(char *buf, uint32 width, uint32 bit_count)
       *(buf + 2) = tmp;
     }
     break;
+  
   case 32:
     {
-      char	*buf1 = buf;
-
+      unsigned char* buf1 = buf;
       for (i = 0; i < width; i++, buf += 4) {
 	tmp = *buf;
 	*buf1++ = *(buf + 2);
@@ -245,6 +256,7 @@ rearrangePixels(char *buf, uint32 width, uint32 bit_count)
       }
     }
     break;
+    
   default:
     break;
   }
@@ -263,7 +275,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   uint32  clr_tbl_size, n_clr_elems = 3;
   unsigned char *clr_tbl;
   
-  uint32	row, clr;
+  uint32	row, clr, stride;
 
   unsigned char* data = 0;
   
@@ -411,26 +423,31 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       lseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
       read(fd, clr_tbl, n_clr_elems * clr_tbl_size);
       
-      /* for(clr = 0; clr < clr_tbl_size; clr++) {
-	   red_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+2];
-	   green_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+1];
-	   blue_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems];
-	 } */
-
+      for(clr = 0; clr < clr_tbl_size; ++clr) {
+	printf ("%d: r: %d g: %d b: %d\n",
+		clr,
+		clr_tbl[clr*n_clr_elems+2],
+		clr_tbl[clr*n_clr_elems+1],
+		clr_tbl[clr*n_clr_elems]);
+      }
       break;
+    
     case 16:
     case 24:
       *spp = 3;
       *bps = info_hdr.iBitCount / *spp;
       break;
+    
     case 32:
       *spp = 3;
       *bps = 8;
       break;
+    
     default:
       break;
     }
   
+  stride = (*w * *spp * *bps + 7) / 8;
   printf ("w: %d, h: %d, spp: %d, bps: %d\n", *w, *h, *spp, *bps);
   
   /* -------------------------------------------------------------------- */
@@ -441,7 +458,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   case BMPC_RGB:
   case BMPC_BITFIELDS:
     {
-      uint32 stride = (*w * *spp * *bps + 7) / 8;
       uint32 file_stride = ((*w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
       printf ("bitcount: %d, stride: %d, file stride: %d\n",
@@ -471,8 +487,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 		  (unsigned long) row);
 	}
 	
-	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
-      }  
+	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
+      }
     }
     break;
     
@@ -486,7 +502,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       uint32		compr_size, uncompr_size;
       unsigned char   *comprbuf;
       unsigned char   *uncomprbuf;
-      
+
       printf ("RLE%s compressed\n", info_hdr.iCompression == BMPC_RLE4 ? "4" : "8");
       
       compr_size = file_hdr.iSize - file_hdr.iOffBits;
@@ -591,9 +607,10 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       }
       
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
-      for (row = 0; row < *h; ++row)
+      for (row = 0; row < *h; ++row) {
 	memcpy (data + row * *w, uncomprbuf + (*h - 1 - row) * *w, *w);
-      
+	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
+      }
       _TIFFfree(uncomprbuf);
     }
     break;
