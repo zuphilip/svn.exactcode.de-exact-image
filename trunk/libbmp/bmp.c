@@ -270,7 +270,9 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count,
 }
 
 unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
-			 int* xres, int* yres, unsigned char** color_table)
+			 int* xres, int* yres,
+			 unsigned char** color_table, int* color_table_size,
+			 int* color_table_elements)
 {
   int	fd;
   struct stat instat;
@@ -632,6 +634,10 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   /* export the table */
   printf ("exported clr_tbl\n");
   *color_table = clr_tbl;
+  *color_table_size = clr_tbl_size;
+  *color_table_elements = n_clr_elems;
+  
+  goto bad;
   
  bad1:
   if (clr_tbl)
