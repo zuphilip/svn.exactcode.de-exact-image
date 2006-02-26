@@ -55,6 +55,8 @@ typedef uint16_t uint16;
 typedef int32_t int32;
 typedef uint32_t uint32;
 
+#include "bmp.h"
+
 #ifndef O_BINARY
 # define O_BINARY 0
 #endif
@@ -213,6 +215,12 @@ typedef struct
 } BMPColorEntry;
 
 
+static int inverted1bps (unsigned char* clr_tbl)
+{
+  return clr_tbl[0] == 255 && clr_tbl[1] == 255 && clr_tbl[2] == 255 &&
+    clr_tbl[3] == 0   && clr_tbl[4] == 0   && clr_tbl[5] == 0;
+}
+
 /*
  * Image data in BMP file stored in BGR (or ABGR) format. We should rearrange
  * pixels to RGB (RGBA) format.
@@ -227,8 +235,7 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count,
   switch(bit_count) {
   case 1:
     /* sanitize inverted 1bpp b/w data */
-    if ( clr_tbl[0] == 255 && clr_tbl[1] == 255 && clr_tbl[2] == 255 &&
-	 clr_tbl[3] == 0   && clr_tbl[4] == 0   && clr_tbl[5] == 0 ) {
+    if ( inverted1bps (clr_tbl) ) {
       for (i = 0; i < width; i += 8)
 	*buf++ ^= 0xFF;
     }
@@ -263,7 +270,7 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count,
 }
 
 unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
-			 int* xres, int* yres)
+			 int* xres, int* yres, unsigned char** color_table)
 {
   int	fd;
   struct stat instat;
@@ -615,15 +622,24 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
     break;
   } /* switch */
+ 
+  /* free the color table if we corrected inverted data ourselfs,
+     export it otherwise */
+  if (*bps == 1 && inverted1bps(clr_tbl)) {
+    goto bad1;
+  }
   
-  return data;
+  /* export the table */
+  printf ("exported clr_tbl\n");
+  *color_table = clr_tbl;
   
  bad1:
   if (clr_tbl)
     _TIFFfree(clr_tbl);
+  clr_tbl = NULL;
   
  bad:
   close(fd);
 
-  return 0;
+  return data;
 }
