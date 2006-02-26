@@ -39,14 +39,13 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
   bool is_gray = false;
   if (*spp < 3) {
     int i;
-    std::cerr << "checking for gray table." << std::endl;
     for (i = 0; i < clr_tbl_size; ++i) {
       if (clr_tbl[i*clr_tbl_elems+0] != clr_tbl[i*clr_tbl_elems+1] ||
 	  clr_tbl[i*clr_tbl_elems+0] != clr_tbl[i*clr_tbl_elems+2])
 	break;
     }
     if (i == clr_tbl_size) {
-      std::cerr << "correct gray table." << std::endl;
+      std::cerr << "found gray table." << std::endl;
       is_gray = true;
     }
     
@@ -66,12 +65,10 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
   unsigned char* dst = data;
   
   int bits_used = 0;
-  char bit_mask = 0xFF >> (8 - *bps);
-  
   int x = 0;
   while (dst < data + new_size)
     {
-      unsigned char v = *src & bit_mask;
+      unsigned char v = *src >> (8 - *bps);
       if (is_gray) {
 	*dst++ = clr_tbl[v*clr_tbl_elems+0];
       } else {
@@ -82,18 +79,16 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
       }
       
       bits_used += *bps;
-      //      std::cerr << "bits used" << bits_used << std::endl;
       ++x;
 
-      if (bits_used >= 8 || x >= *w) {
+      if (bits_used == 8 || x == *w) {
 	++src;
 	bits_used = 0;
-	if (x >= *w)
+	if (x == *w)
 	  x = 0;
       }
       else {
-	*src >>= *bps;
-	bits_used += *bps;
+	*src <<= *bps;
       }
     }
   free (orig_data);
