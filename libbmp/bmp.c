@@ -532,81 +532,56 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       read(fd, comprbuf, compr_size);
       i = 0;
       j = 0;
-      if (info_hdr.iBitCount == 8) {		    /* RLE8 */
-	while( j < uncompr_size && i < compr_size ) {
-	  if ( comprbuf[i] ) {
-	    runlength = comprbuf[i++];
-	    while( runlength > 0
-		   && j < uncompr_size
-		   && i < compr_size ) {
+      
+      while( j < uncompr_size && i < compr_size ) {
+	if ( comprbuf[i] ) {
+	  runlength = comprbuf[i++];
+	  while( runlength > 0 && j < uncompr_size && i < compr_size ) {
+	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
-	      runlength--;
-	    }
-	    i++;
-	  } else {
-	    i++;
-	    if ( comprbuf[i] == 0 )         /* Next scanline */
-	      i++;
-	    else if ( comprbuf[i] == 1 )    /* End of image */
-	      break;
-	    else if ( comprbuf[i] == 2 ) {  /* Move to... */
-	      i++;
-	      if ( i < compr_size - 1 ) {
-		j += comprbuf[i] + comprbuf[i+1] * *w;
-		i += 2;
-	      }
-	      else
-		break;
-	    } else {                         /* Absolute mode */
-	      runlength = comprbuf[i++];
-	      for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++ )
-		uncomprbuf[j++] = comprbuf[i++];
-	      if ( k & 0x01 )
-		i++;
-	    }
-	  }
-	}
-      }
-      else {					    /* RLE4 */
-	while( j < uncompr_size && i < compr_size ) {
-	  if ( comprbuf[i] ) {
-	    runlength = comprbuf[i++];
-	    while( runlength > 0 && j < uncompr_size && i < compr_size ) {
+	    else {
 	      if ( runlength & 0x01 )
 		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
 	      else
 		uncomprbuf[j++] = comprbuf[i] & 0x0F;
-	      runlength--;
 	    }
+	    runlength--;
+	  }
+	  i++;
+	} else {
+	  i++;
+	  if ( comprbuf[i] == 0 )         /* Next scanline */
 	    i++;
-	  } else {
+	  else if ( comprbuf[i] == 1 )    /* End of image */
+	    break;
+	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
 	    i++;
-	    if ( comprbuf[i] == 0 )         /* Next scanline */
-	      i++;
-	    else if ( comprbuf[i] == 1 )    /* End of image */
+	    if ( i < compr_size - 1 ) {
+	      j += comprbuf[i] + comprbuf[i+1] * *w;
+	      i += 2;
+	    }
+	    else
 	      break;
-	    else if ( comprbuf[i] == 2 ) {  /* Move to... */
+	  } else {                         /* Absolute mode */
+	    runlength = comprbuf[i++];
+	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++ )
+	      {
+		if (info_hdr.iBitCount == 8)
+		  uncomprbuf[j++] = comprbuf[i++];
+		else {
+		  if ( runlength & 0x01 )
+		    uncomprbuf[j++] = comprbuf[i++] & 0x0F;
+		  else
+		    uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+		}
+	      }
+	    
+	    if ( k & 0x01 )
 	      i++;
-	      if ( i < compr_size - 1 ) {
-		j += comprbuf[i] + comprbuf[i+1] * *w;
-		i += 2;
-	      }
-	      else
-		break;
-	    } else {                        /* Absolute mode */
-	      runlength = comprbuf[i++];
-	      for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++) {
-		if ( k & 0x01 )
-		  uncomprbuf[j++] = comprbuf[i++] & 0x0F;
-		else
-		  uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
-	      }
-	      if ( k & 0x01 )
-		i++;
-	    }
 	  }
 	}
       }
+      
       _TIFFfree(comprbuf);
       
       data = (unsigned char *) _TIFFmalloc( uncompr_size );
@@ -618,9 +593,11 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
       for (row = 0; row < *h; ++row) {
 	memcpy (data + row * *w, uncomprbuf + (*h - 1 - row) * *w, *w);
-	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
+	rearrangePixels(data + row * *w, *w, info_hdr.iBitCount, clr_tbl);
       }
+      
       _TIFFfree(uncomprbuf);
+      *bps = 8;
     }
     break;
   } /* switch */
@@ -632,7 +609,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   }
   
   /* export the table */
-  printf ("exported clr_tbl\n");
   *color_table = clr_tbl;
   *color_table_size = clr_tbl_size;
   *color_table_elements = n_clr_elems;
