@@ -262,7 +262,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   
   uint32  clr_tbl_size, n_clr_elems = 3;
   unsigned char *clr_tbl;
-  unsigned short *red_tbl = NULL, *green_tbl = NULL, *blue_tbl = NULL;
   
   uint32	row, clr;
 
@@ -406,38 +405,18 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	goto bad;
       }
       
+      printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
+	      n_clr_elems, clr_tbl_size);
+      
       lseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
       read(fd, clr_tbl, n_clr_elems * clr_tbl_size);
       
-      red_tbl = (unsigned short*)
-	_TIFFmalloc(1 << *bps * sizeof(unsigned short));
-      if (!red_tbl) {
-	fprintf(stderr, "Can't allocate space for red component table\n");
-	_TIFFfree(clr_tbl);
-	goto bad1;
-      }
-      green_tbl = (unsigned short*)
-	_TIFFmalloc(1 << *bps * sizeof(unsigned short));
-      if (!green_tbl) {
-	fprintf(stderr, "Can't allocate space for green component table\n");
-	_TIFFfree(clr_tbl);
-	goto bad2;
-      }
-      blue_tbl = (unsigned short*)
-	_TIFFmalloc(1 << *bps * sizeof(unsigned short));
-      if (!blue_tbl) {
-	fprintf(stderr, "Can't allocate space for blue component table\n");
-	_TIFFfree(clr_tbl);
-	goto bad3;
-      }
+      /* for(clr = 0; clr < clr_tbl_size; clr++) {
+	   red_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+2];
+	   green_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+1];
+	   blue_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems];
+	 } */
 
-      for(clr = 0; clr < clr_tbl_size; clr++) {
-	red_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+2];
-	green_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems+1];
-	blue_tbl[clr] = 257 * clr_tbl[clr*n_clr_elems];
-      }
-
-      _TIFFfree(clr_tbl);
       break;
     case 16:
     case 24:
@@ -472,7 +451,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       
       if (!data) {
 	fprintf(stderr, "Can't allocate space for image buffer\n");
-	goto bad3;
+	goto bad1;
       }
       
       for (row = 0; row < *h; row++) {
@@ -516,12 +495,12 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
       if (!comprbuf) {
 	fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
-	goto bad3;
+	goto bad1;
       }
       uncomprbuf = (unsigned char *) _TIFFmalloc( uncompr_size );
       if (!uncomprbuf) {
 	fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
-	goto bad3;
+	goto bad1;
       }
       
       lseek(fd, file_hdr.iOffBits, SEEK_SET);
@@ -608,7 +587,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       data = (unsigned char *) _TIFFmalloc( uncompr_size );
       if (!data) {
 	fprintf (stderr, "Can't allocate space for final uncompressed scanline buffer\n");
-	goto bad3;
+	goto bad1;
       }
       
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
@@ -622,15 +601,10 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   
   return data;
   
- bad3:
-  if (blue_tbl)
-    _TIFFfree(blue_tbl);
- bad2:
-  if (green_tbl)
-    _TIFFfree(green_tbl);
  bad1:
-  if (red_tbl)
-    _TIFFfree(red_tbl);
+  if (clr_tbl)
+    _TIFFfree(clr_tbl);
+  
  bad:
   close(fd);
 
