@@ -69,6 +69,18 @@ bool convert_rotate (const Argument<int>& arg)
   return true;
 }
 
+bool convert_flip (const Argument<bool>& arg)
+{
+  flipY (image);
+  return true;
+}
+
+bool convert_flop (const Argument<bool>& arg)
+{
+  flipX (image);
+  return true;
+}
+
 bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 {
   if (image.spp != 1 || image.bps != 8) {
@@ -113,6 +125,16 @@ int main (int argc, char* argv[])
   arg_rotate.Bind (convert_rotate);
   arglist.Add (&arg_rotate);
 
+  Argument<bool> arg_flip ("", "flip",
+			   "flip the image vertically");
+  arg_flip.Bind (convert_flip);
+  arglist.Add (&arg_flip);
+
+  Argument<bool> arg_flop ("", "flop",
+			   "flip the image horizontally");
+  arg_flop.Bind (convert_flop);
+  arglist.Add (&arg_flop);
+
   Argument<int> arg_floyd ("", "floyd-steinberg",
 			   "Floyd Steinberg dithering using n shades", 0, 0, 1);
   arg_floyd.Bind (convert_dither_floyd_steinberg);
@@ -136,7 +158,7 @@ int main (int argc, char* argv[])
       return 1;
     }
   
-  // all is done inside the argument callback functions
   
+  // all is done inside the argument callback functions
   return 0;
 }
