@@ -61,6 +61,34 @@ bool convert_output (const Argument<std::string>& arg)
   return true;
 }
 
+bool convert_colorspace (const Argument<std::string>& arg)
+{
+  const std::string& space = arg.Get();
+  std::cerr << "convert_colorspace: " << space << std::endl;
+  
+  // TODO: implement in all variants
+  if (image.spp == 3 && (space == "GRAY" || space == "BW")) {
+    colorspace_rgb_to_gray (image);
+    if (space == "BW")
+      colorspace_gray_to_bilevel (image);
+  }
+  else if (image.spp == 1 && image.bps > 1 && space == "BW") {
+    colorspace_gray_to_bilevel (image);
+  }
+  else {
+    std::cerr << "Requested colorspace conversion not yet implemented." << std::endl;
+    return false;
+  }
+  
+  return true;
+}
+
+bool convert_normalize (const Argument<bool>& arg)
+{
+  normalize (image);
+  return true;
+}
+
 bool convert_rotate (const Argument<int>& arg)
 {
   int angle = arg.Get() % 360;
@@ -119,7 +147,17 @@ int main (int argc, char* argv[])
 				    1, 1);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
-  
+
+  Argument<std::string> arg_colorspace ("", "colorspace",
+					"convert image colorspace", 0, 1);
+  arg_colorspace.Bind (convert_colorspace);
+  arglist.Add (&arg_colorspace);
+
+  Argument<bool> arg_normalize ("", "normalize",
+				"transform the image to span the full color range");
+  arg_normalize.Bind (convert_normalize);
+  arglist.Add (&arg_normalize);
+
   Argument<int> arg_rotate ("", "rotate",
 			    "rotation angle", 0, 0, 1);
   arg_rotate.Bind (convert_rotate);
