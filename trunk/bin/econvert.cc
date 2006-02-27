@@ -54,6 +54,11 @@ bool convert_input (const Argument<std::string>& arg)
 
 bool convert_output (const Argument<std::string>& arg)
 {
+  if (image.data == 0) {
+    std::cerr << "No image available." << std::endl;
+    return false;
+  }
+  
   if (!image.Write(arg.Get())) {
     std::cerr << "Error writing output file." << std::endl;
     return false;
