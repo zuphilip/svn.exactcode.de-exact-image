@@ -1,3 +1,4 @@
 
-#       display -size 1275x2096 -depth 8 gray:test.raw
+The code should be written in modern, template and STL based C++. Due to
+rapid prototyping this is not the case yet.
 
