@@ -28,7 +28,8 @@
 
 #include "Colorspace.hh"
 
-#include "rotate.h"
+#include "scale.hh"
+#include "rotate.hh"
 #include "riemersma.h"
 #include "floyd-steinberg.h"
 
@@ -91,6 +92,14 @@ bool convert_colorspace (const Argument<std::string>& arg)
 bool convert_normalize (const Argument<bool>& arg)
 {
   normalize (image);
+  return true;
+}
+
+bool convert_scale (const Argument<double>& arg)
+{
+  double scale = arg.Get();
+   
+  linear_scale (image, scale);
   return true;
 }
 
@@ -162,6 +171,11 @@ int main (int argc, char* argv[])
 				"transform the image to span the full color range");
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
+
+  Argument<double> arg_scale ("", "scale",
+			      "scale image data", 0.0, 0, 1);
+  arg_scale.Bind (convert_scale);
+  arglist.Add (&arg_scale);
 
   Argument<int> arg_rotate ("", "rotate",
 			    "rotation angle", 0, 0, 1);
