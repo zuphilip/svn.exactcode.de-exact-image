@@ -4,26 +4,19 @@
 
 void linear_scale (Image& image, double scale)
 {
-  if (image.spp != 1 || image.bps != 8)
-    {
-      std::cerr << "scaling with this bit-depth and colorspace not yet implemented"
-		<< std::endl;
-      return;
-    }
+  Image new_image = image;
   
-  int wn = (int) (scale * (double) image.w);
-  int hn = (int) (scale * (double) image.h);
+  new_image.New ((int)(scale * (double) image.w),
+		 (int)(scale * (double) image.h));
   
-  image.xres = (int) (scale * image.xres);
-  image.yres = (int) (scale * image.yres);
+  new_image.xres = (int) (scale * image.xres);
+  new_image.yres = (int) (scale * image.yres);
   
   scale = 256.0 / scale;
   
-  unsigned char* ndata = (unsigned char*) malloc (wn * hn);
-  
-  unsigned int offset = 0;
-  for (int y=0; y < hn; y++)
-    for (int x=0; x < wn; x++) {
+  Image::iterator it = new_image.begin();
+  for (int y=0; y < new_image.h; ++y)
+    for (int x=0; x < new_image.w; ++x) {
       
       int bx = (int) (((double) x) * scale);
       int by = (int) (((double) y) * scale);
@@ -47,11 +40,10 @@ void linear_scale (Image& image, double scale)
       value /= 256 * 256;
       value = std::min (value, (unsigned int) 255);
 
-      ndata[offset++] = (unsigned char) value;
+      *it++ = (unsigned char) value;
     }
     
-  free (image.data);
-  image.data = ndata;
-  image.w = wn;
-  image.h = hn;
+
+  image = new_image;
+  new_image.data = 0;
 }
