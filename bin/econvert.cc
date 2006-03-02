@@ -146,22 +146,11 @@ bool convert_dither_riemersma (const Argument<int>& arg)
 
 bool convert_edge (const Argument<bool>& arg)
 {
-  int width = 3;
-  matrix_type *matrix = new matrix_type[width * width];
+  matrix_type matrix[] = { -1.0, 0.0,  1.0,
+                           -2.0, 0.0,  2.0,
+                           -1.0, 0.0, -1.0};
 
-  matrix [0 + (width * 0)] = -1.0;
-  matrix [1 + (width * 0)] = 0.0;
-  matrix [2 + (width * 0)] = 1.0;
-
-  matrix [0 + (width * 1)] = -2.0;
-  matrix [1 + (width * 1)] = 0.0;
-  matrix [2 + (width * 1)] = 2.0;
-
-  matrix [0 + (width * 2)] = -1.0;
-  matrix [1 + (width * 2)] = 0.0;
-  matrix [2 + (width * 2)] = -1.0;
-
-  convolution_matrix (image, matrix, width, width, (matrix_type)3.0);
+  convolution_matrix (image, matrix, 3, 3, (matrix_type)3.0);
 
   return true;
 }
