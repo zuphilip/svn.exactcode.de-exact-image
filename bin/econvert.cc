@@ -30,6 +30,7 @@
 
 #include "scale.hh"
 #include "rotate.hh"
+#include "Matrix.hh"
 #include "riemersma.h"
 #include "floyd-steinberg.h"
 
@@ -143,6 +144,28 @@ bool convert_dither_riemersma (const Argument<int>& arg)
   return true;
 }
 
+bool convert_edge (const Argument<bool>& arg)
+{
+  int width = 3;
+  matrix_type *matrix = new matrix_type[width * width];
+
+  matrix [0 + (width * 0)] = -1.0;
+  matrix [1 + (width * 0)] = 0.0;
+  matrix [2 + (width * 0)] = 1.0;
+
+  matrix [0 + (width * 1)] = -2.0;
+  matrix [1 + (width * 1)] = 0.0;
+  matrix [2 + (width * 1)] = 2.0;
+
+  matrix [0 + (width * 2)] = -1.0;
+  matrix [1 + (width * 2)] = 0.0;
+  matrix [2 + (width * 2)] = -1.0;
+
+  convolution_matrix (image, matrix, width, width, (matrix_type)3.0);
+
+  return true;
+}
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -201,6 +224,12 @@ int main (int argc, char* argv[])
 			   "Riemersma dithering using n shades", 0, 0, 1);
   arg_riemersma.Bind (convert_dither_riemersma);
   arglist.Add (&arg_riemersma);
+
+
+  Argument<bool> arg_edge ("", "edge",
+                           "Edge detect");
+  arg_edge.Bind (convert_edge);
+  arglist.Add (&arg_edge);
   
   
   // parse the specified argument list - and maybe output the Usage
