@@ -22,8 +22,6 @@
 
 #include "ArgumentList.hh"
 
-#include "tiff.hh"
-#include "jpeg.hh"
 #include "Image.hh"
 
 #include "Colorspace.hh"
