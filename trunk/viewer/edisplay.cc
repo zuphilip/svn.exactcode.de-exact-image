@@ -1,5 +1,6 @@
 
 #include <X11/Xutil.h>
+#include <X11/keysym.h>
 
 #include "Evas.h"
 #include "Evas_Engine_Software_X11.h"
@@ -79,7 +80,9 @@ int main (int argc, char** argv)
   attr.border_pixel = 0;
   attr.background_pixmap = None;
   attr.event_mask =
-    ExposureMask | ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
+    ExposureMask |
+    ButtonPressMask | ButtonReleaseMask | PointerMotionMask |
+    KeyPressMask | KeyReleaseMask |
     StructureNotifyMask;
   attr.bit_gravity = ForgetGravity;
   /*  attr.override_redirect = 1; */
@@ -193,12 +196,15 @@ int main (int argc, char** argv)
 			      KeyPressMask |
 			      KeyReleaseMask |
 			      ButtonPressMask |
-			      ButtonReleaseMask | PointerMotionMask, &ev))
+			      ButtonReleaseMask |
+			      PointerMotionMask, &ev))
 	{
+	  //std::cout << "event" << std::endl;
 	  Evas_Button_Flags flags = EVAS_BUTTON_NONE;
 	  /* FIXME - Add flags for double & triple click! */
 	  switch (ev.type)
 	    {
+	      Evas_Coord x, y, w, h;
 	      /*
 	    case ButtonPress:
 	      evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
@@ -212,6 +218,29 @@ int main (int argc, char** argv)
 	      evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
 	      break;
 	      */
+	    case KeyPress:
+	      //std::cout << "key: " << ev.xkey.keycode << std::endl;
+	      KeySym ks;	      
+	      XLookupString ((XKeyEvent*)&ev, 0, 0, &ks, NULL);
+	      //std::cout << "sym: " << ks << std::endl;
+	      switch (ks)
+		{
+		case XK_plus:
+		  w = (Evas_Coord) (.75 * evas_image.Width());
+		  h = (Evas_Coord) (.75 * evas_image.Height());
+		  evas_image.Resize (w, h);
+		  evas_image.ImageFill (0, 0, w, h);
+		  break;
+		  
+		case XK_minus:
+		  w = (Evas_Coord) (1.33 * evas_image.Width());
+		  h = (Evas_Coord) (1.33 * evas_image.Height());
+		  evas_image.Resize (w, h);
+		  evas_image.ImageFill (0, 0, w, h);
+		  break;
+		}
+	      break;
+	      
 	    case Expose:
 	      evas->DamageRectangleAdd (ev.xexpose.x,
 					ev.xexpose.y,
