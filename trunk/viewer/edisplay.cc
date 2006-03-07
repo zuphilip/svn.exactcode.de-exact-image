@@ -152,16 +152,25 @@ int main (int argc, char** argv)
   }
   
   EvasImage evas_image (*evas);
-  evas_image.ImageSize (image.w,image.h);
   evas_image.Move (0,0);
-  evas_image.ImageFill (0,0,image.w,image.h);
-  evas_image.Alpha (false);
-  evas_image.SetData (image.data);
-  evas_image.DataUpdateAdd (0,0,image.w,image.h);
-  
+  evas_image.Resize (image.w,image.h);
   evas_image.Layer (5);
+  evas_image.ImageSize (image.w,image.h);
+  evas_image.ImageFill (0,0,image.w,image.h);
   evas_image.Show ();
-
+  evas_image.DataUpdateAdd (0,0,image.w,image.h/2);
+  
+  unsigned char* data = new unsigned char [image.w*image.h*4];
+  unsigned char* src_ptr = image.data;
+  unsigned char* dest_ptr = data;
+  for (int y=0; y < image.h; ++y)
+    for (int x=0; x < image.w; ++x, dest_ptr +=4, src_ptr += 3) {
+      dest_ptr[0] = src_ptr[2];
+      dest_ptr[1] = src_ptr[1];
+      dest_ptr[2] = src_ptr[0];
+    }
+  evas_image.SetData (data);
+  
   XMapWindow (dpy, win);
    
   while (true)
