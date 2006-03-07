@@ -17,6 +17,7 @@ using namespace Utility;
 // imaging stuff
 
 #include "Image.hh"
+#include "Colorspace.hh"
 
 int main (int argc, char** argv)
 {
@@ -159,6 +160,13 @@ int main (int argc, char** argv)
   evas_image.ImageFill (0,0,image.w,image.h);
   evas_image.Show ();
   evas_image.DataUpdateAdd (0,0,image.w,image.h/2);
+  
+  // convert colorspace
+  if (image.spp == 1 && image.bps == 1)
+    colorspace_bilevel_to_gray (image);
+  
+  if (image.spp == 1 && image.bps == 8)
+    colorspace_gray_to_rgb (image);
   
   unsigned char* data = new unsigned char [image.w*image.h*4];
   unsigned char* src_ptr = image.data;
