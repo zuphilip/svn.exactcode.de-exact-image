@@ -87,3 +87,48 @@ void colorspace_gray_to_bilevel (Image& image, unsigned char threshold)
     }
   image.bps = 1;
 }
+
+
+void colorspace_gray_to_rgb (Image& image)
+{
+  unsigned char* data = (unsigned char*)malloc (image.w*image.h*3);
+  unsigned char* output = data;
+  for (unsigned char* it = image.data;
+       it < image.data + image.w*image.h*image.spp; ++it)
+    {
+      *output++ = *it;
+      *output++ = *it;
+      *output++ = *it;
+    }
+  free (image.data);
+  image.data = data;
+  image.spp = 3; // converted data right now
+}
+
+void colorspace_bilevel_to_gray (Image& image)
+{
+  unsigned char* data = (unsigned char*) malloc (image.h*image.w);
+  
+  unsigned char* output = data;
+  unsigned char* input = image.data;
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      unsigned char z;
+      for (int x = 0; x < image.w; x++)
+	{
+	  if (x % 8 == 0)
+	    z = *input++;
+	  
+	  *output++ = (z >> 7) ? 0xff : 0x00;
+	  
+	  z <<= 1;
+	  
+	}
+    }
+  
+  free (image.data);
+  image.data = data;
+  
+  image.bps = 8;
+}
