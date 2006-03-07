@@ -2,7 +2,7 @@
 class Viewer {
 public:
   
-  Viewer() {}
+  Viewer() : zoom(1.0) {}
   ~Viewer() {}
   
   int Run (Image* _image);
@@ -15,6 +15,7 @@ private:
   
   // Image
   Image* image;
+  double zoom;
   
   // X11 stuff
   Display* dpy;
