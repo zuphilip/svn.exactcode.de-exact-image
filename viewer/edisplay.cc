@@ -24,13 +24,15 @@ using namespace Utility;
 
 void Viewer::Zoom (double f)
 {
-  Evas_Coord w = (Evas_Coord) (f * evas_image->Width());
-  Evas_Coord h = (Evas_Coord) (f * evas_image->Height());
+  zoom *= f;
+  Evas_Coord w = (Evas_Coord) (.5 + f * evas_image->Width());
+  Evas_Coord h = (Evas_Coord) (.5 + f * evas_image->Height());
   
   evas_image->Resize (w, h);
   evas_image->ImageFill (0, 0, w, h);
   
   // resize X window accordingly
+  X11Window::Resize (dpy, win, w, h);
 }
 
 
@@ -205,11 +207,11 @@ int Viewer::Run (Image* _image)
 	      switch (ks)
 		{
 		case XK_plus:
-		  Zoom (1.33);
+		  Zoom (1.25);
 		  break;
 		  
 		case XK_minus:
-		  Zoom (0.75);
+		  Zoom (1./1.25);
 		  break;
 		}
 	      break;
@@ -223,6 +225,9 @@ int Viewer::Run (Image* _image)
 	    case ConfigureNotify:
 	      evas->OutputSize (ev.xconfigure.width,
 				ev.xconfigure.height);
+	      evas->OutputViewport (0, 0,
+				    ev.xconfigure.width,
+				    ev.xconfigure.height);
 	      break;
 	    default:
 	      break;
