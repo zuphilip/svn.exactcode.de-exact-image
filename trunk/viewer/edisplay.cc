@@ -25,8 +25,9 @@ using namespace Utility;
 void Viewer::Zoom (double f)
 {
   zoom *= f;
-  Evas_Coord w = (Evas_Coord) (.5 + f * evas_image->Width());
-  Evas_Coord h = (Evas_Coord) (.5 + f * evas_image->Height());
+  
+  Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
+  Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
   
   evas_image->Resize (w, h);
   evas_image->ImageFill (0, 0, w, h);
