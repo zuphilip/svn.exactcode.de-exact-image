@@ -20,43 +20,23 @@ using namespace Utility;
 #include "Image.hh"
 #include "Colorspace.hh"
 
-int main (int argc, char** argv)
+#include "edisplay.hh"
+
+void Viewer::Zoom (double f)
 {
-  ArgumentList arglist;
+  Evas_Coord w = (Evas_Coord) (f * evas_image->Width());
+  Evas_Coord h = (Evas_Coord) (f * evas_image->Height());
   
-  // setup the argument list
-  Argument<bool> arg_help ("", "help",
-                           "display this help text and exit");
-  arglist.Add (&arg_help);
+  evas_image->Resize (w, h);
+  evas_image->ImageFill (0, 0, w, h);
   
-  Argument<std::string> arg_input ("i", "input", "input file",
-                                   1, 1);
-  arglist.Add (&arg_input);
-  
-  // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
-    {
-      std::cerr << "Exact image viewer."
-                << std::endl
-                <<  " - Copyright 2006 by Ren Rebe" << std::endl
-                << "Usage:" << std::endl;
-      
-      arglist.Usage (std::cerr);
-      return 1;
-    }
-  
-  Image image;
-  if (!image.Read(arg_input.Get())) {
-    std::cerr << "Error reading input file." << std::endl;
-    return 1;
-  }
-  
-  // X11 stuff
-  Display* dpy;
-  int scr;
-  Visual* visual;
-  Window  win;
-  int depth;
+  // resize X window accordingly
+}
+
+
+int Viewer::Run (Image* _image)
+{
+  image = _image;
   
   // TODO: move to the X11Helper ...
   
@@ -91,8 +71,8 @@ int main (int argc, char** argv)
   depth = DefaultDepth(dpy, scr);
   attr.colormap = DefaultColormap(dpy, scr);
   
-  int win_w = std::min (image.w, X11Window::Width(dpy, 0));
-  int win_h = std::min (image.h, X11Window::Height(dpy, 0));
+  int win_w = std::min (image->w, X11Window::Width(dpy, 0));
+  int win_h = std::min (image->h, X11Window::Height(dpy, 0));
   
   win = XCreateWindow (dpy, root,
 		       (X11Window::Width(dpy, 0) - win_w) / 2,
@@ -155,32 +135,32 @@ int main (int argc, char** argv)
     evas->FontCache (0);
   }
   
-  EvasImage evas_image (*evas);
-  evas_image.Move (0,0);
-  evas_image.Resize (image.w,image.h);
-  evas_image.Layer (5);
-  evas_image.ImageSize (image.w,image.h);
-  evas_image.ImageFill (0,0,image.w,image.h);
-  evas_image.Show ();
-  evas_image.DataUpdateAdd (0,0,image.w,image.h/2);
+  evas_image = new EvasImage (*evas);
+  evas_image->Move (0,0);
+  evas_image->Resize (image->w,image->h);
+  evas_image->Layer (5);
+  evas_image->ImageSize (image->w,image->h);
+  evas_image->ImageFill (0,0,image->w,image->h);
+  evas_image->Show ();
+  evas_image->DataUpdateAdd (0,0,image->w,image->h);
   
   // convert colorspace
-  if (image.spp == 1 && image.bps == 1)
-    colorspace_bilevel_to_gray (image);
+  if (image->spp == 1 && image->bps == 1)
+    colorspace_bilevel_to_gray (*image);
   
-  if (image.spp == 1 && image.bps == 8)
-    colorspace_gray_to_rgb (image);
+  if (image->spp == 1 && image->bps == 8)
+    colorspace_gray_to_rgb (*image);
   
-  unsigned char* data = new unsigned char [image.w*image.h*4];
-  unsigned char* src_ptr = image.data;
+  unsigned char* data = new unsigned char [image->w*image->h*4];
+  unsigned char* src_ptr = image->data;
   unsigned char* dest_ptr = data;
-  for (int y=0; y < image.h; ++y)
-    for (int x=0; x < image.w; ++x, dest_ptr +=4, src_ptr += 3) {
+  for (int y=0; y < image->h; ++y)
+    for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += 3) {
       dest_ptr[0] = src_ptr[2];
       dest_ptr[1] = src_ptr[1];
       dest_ptr[2] = src_ptr[0];
     }
-  evas_image.SetData (data);
+  evas_image->SetData (data);
   
   XMapWindow (dpy, win);
    
@@ -204,7 +184,6 @@ int main (int argc, char** argv)
 	  /* FIXME - Add flags for double & triple click! */
 	  switch (ev.type)
 	    {
-	      Evas_Coord x, y, w, h;
 	      /*
 	    case ButtonPress:
 	      evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
@@ -226,17 +205,11 @@ int main (int argc, char** argv)
 	      switch (ks)
 		{
 		case XK_plus:
-		  w = (Evas_Coord) (.75 * evas_image.Width());
-		  h = (Evas_Coord) (.75 * evas_image.Height());
-		  evas_image.Resize (w, h);
-		  evas_image.ImageFill (0, 0, w, h);
+		  Zoom (1.33);
 		  break;
 		  
 		case XK_minus:
-		  w = (Evas_Coord) (1.33 * evas_image.Width());
-		  h = (Evas_Coord) (1.33 * evas_image.Height());
-		  evas_image.Resize (w, h);
-		  evas_image.ImageFill (0, 0, w, h);
+		  Zoom (0.75);
 		  break;
 		}
 	      break;
@@ -260,4 +233,39 @@ int main (int argc, char** argv)
       XFlush (dpy);
     }
   return 0;
+}
+
+int main (int argc, char** argv)
+{
+  ArgumentList arglist;
+  
+  // setup the argument list
+  Argument<bool> arg_help ("", "help",
+                           "display this help text and exit");
+  arglist.Add (&arg_help);
+  
+  Argument<std::string> arg_input ("i", "input", "input file",
+                                   1, 1);
+  arglist.Add (&arg_input);
+  
+  // parse the specified argument list - and maybe output the Usage
+  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+    {
+      std::cerr << "Exact image viewer."
+                << std::endl
+                <<  " - Copyright 2006 by Ren Rebe" << std::endl
+                << "Usage:" << std::endl;
+      
+      arglist.Usage (std::cerr);
+      return 1;
+    }
+  
+  Image image;
+  if (!image.Read(arg_input.Get())) {
+    std::cerr << "Error reading input file." << std::endl;
+    return 1;
+  }
+  
+  Viewer viewer;
+  return viewer.Run (&image);
 }
