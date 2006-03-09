@@ -24,7 +24,7 @@ using namespace Utility;
 
 void Viewer::Zoom (double f)
 {
-  zoom *= f;
+  zoom = (int )(f * zoom);
   
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
@@ -36,6 +36,34 @@ void Viewer::Zoom (double f)
   X11Window::Resize (dpy, win, w, h);
 }
 
+void Viewer::Move (int _x, int _y)
+{
+  Evas_Coord x = evas_image->X() + _x * 10;
+  Evas_Coord y = evas_image->Y() + _y * 10;
+  
+  Evas_Coord w = evas_image->Width();
+  Evas_Coord h = evas_image->Height();
+  
+  // limit
+  if (_x < 0) {
+    if (x + w < evas->OutputWidth() )
+      x = evas->OutputWidth() - w;
+  }
+  else  {
+    if (x > 0)
+      x = 0;
+  }
+      
+  if (_y < 0) {
+    if (y + h < evas->OutputHeight() )
+      y = evas->OutputHeight() - h;
+  } else {
+    if (y > 0)
+      y = 0;
+  }
+  
+  evas_image->Move (x, y);
+}
 
 int Viewer::Run (Image* _image)
 {
@@ -104,7 +132,7 @@ int Viewer::Run (Image* _image)
 
   XSync(dpy, False);
   
-  EvasCanvas* evas = new EvasCanvas ();
+  evas = new EvasCanvas ();
   evas->OutputMethod ("software_x11");
   evas->OutputSize (win_w, win_h);
   evas->OutputViewport (0, 0, win_w, win_h);
@@ -166,8 +194,9 @@ int Viewer::Run (Image* _image)
   evas_image->SetData (data);
   
   XMapWindow (dpy, win);
-   
-  while (true)
+
+  bool quit = false;
+  while (!quit)
     {
       // process X11 events ...
       // TODO: move into X11 Helper ...
@@ -208,13 +237,42 @@ int Viewer::Run (Image* _image)
 	      switch (ks)
 		{
 		case XK_plus:
-		  Zoom (1.25);
+		  Zoom (2);
 		  break;
 		  
 		case XK_minus:
-		  Zoom (1./1.25);
+		  Zoom (.5);
+		  break;
+		  
+		case XK_Left:
+		  Move (1, 0);
+		  break;
+		
+		case XK_Right:
+		  Move (-1, 0);
+		  break;
+		  
+		case XK_Up:
+		  Move (0, 1);
+		  break;
+		  
+		case XK_Down:
+		  Move (0, -1);
+		  break;
+		  
+		case XK_Page_Up:
+		  Move (0, 5);
+		  break;
+		  
+		case XK_Page_Down:
+		  Move (0, -5);
+		  break;
+		  
+		case XK_q:
+		  quit = true;
 		  break;
 		}
+	      
 	      break;
 	      
 	    case Expose:
@@ -257,7 +315,7 @@ int main (int argc, char** argv)
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "Exact image viewer."
+      std::cerr << "Exact image viewer (edisplay)."
                 << std::endl
                 <<  " - Copyright 2006 by Ren Rebe" << std::endl
                 << "Usage:" << std::endl;

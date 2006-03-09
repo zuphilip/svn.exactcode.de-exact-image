@@ -10,6 +10,7 @@ public:
 protected:
   
   void Zoom (double factor);
+  void Move (int _x, int _y);
   
 private:
   int zoom;
@@ -25,5 +26,6 @@ private:
   int depth;
   
   // evas
+  EvasCanvas* evas;
   EvasImage* evas_image;
 };
