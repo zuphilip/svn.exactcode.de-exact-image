@@ -30,9 +30,7 @@ headercheck c++ iostream string iostream sstream fstream || \
 	status_error "Not all tested STL headers are present - please install them."
 
 pkgcheck evas -config EVAS atleast 0.9.9
-pkgcheck xx11 pkg-config X11 atleast 1.0
-
-[ "$WITHX11" != 1 ] && unset WITHX11 && pkgcheck x11 compile X11 atleast 11.0
+pkgcheck x11 compile X11 atleast 11.0
 
 save
 
