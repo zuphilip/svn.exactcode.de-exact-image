@@ -24,7 +24,7 @@ bool Image::Read (const std::string& file) {
     
     std::string ext = get_ext (file);
     
-    if (ext == "tif")
+    if (ext == "tif"|| ext == "tiff")
       data = read_TIFF_file (file.c_str(), &w, &h, &bps, &spp, &xres, &yres);
     else if (ext == "jpg")
       data = read_JPEG_file (file.c_str(), &w, &h, &bps, &spp, &xres, &yres);
@@ -45,7 +45,7 @@ bool Image::Read (const std::string& file) {
 bool Image::Write (const std::string& file) {
     std::string ext = get_ext (file);
     
-    if (ext == "tif")
+    if (ext == "tif" || ext == "tiff")
       write_TIFF_file (file.c_str(), data, w, h, bps, spp, xres, yres);
     else if (ext == "jpg")
       write_JPEG_file (file.c_str(), data, w, h, bps, spp, xres, yres);
