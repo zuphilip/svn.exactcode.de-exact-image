@@ -88,7 +88,6 @@ void colorspace_gray_to_bilevel (Image& image, unsigned char threshold)
   image.bps = 1;
 }
 
-
 void colorspace_gray_to_rgb (Image& image)
 {
   unsigned char* data = (unsigned char*)malloc (image.w*image.h*3);
@@ -131,4 +130,16 @@ void colorspace_bilevel_to_gray (Image& image)
   image.data = data;
   
   image.bps = 8;
+}
+
+void colorspace_16_to_8 (Image& image)
+{
+  unsigned char* output = image.data;
+  for (unsigned char* it = image.data;
+       it < image.data + image.w*image.h*image.spp*2;)
+    {
+      *output++ = it[1];
+      it += 2;
+    }
+  image.spp = 8; // converted 8bit data
 }
