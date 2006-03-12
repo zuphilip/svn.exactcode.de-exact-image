@@ -250,6 +250,11 @@ int Viewer::Run (Image* _image)
 	      //std::cout << "sym: " << ks << std::endl;
 	      switch (ks)
 		{
+		case XK_1:
+		  zoom = 100;
+		  Zoom (1);
+		  break;
+
 		case XK_plus:
 		  Zoom (2);
 		  break;
