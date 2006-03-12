@@ -342,6 +342,9 @@ void Viewer::Load ()
   if (image->spp == 1 && image->bps == 8)
     colorspace_gray_to_rgb (*image);
   
+  if (image->bps == 16)
+    colorspace_16_to_8 (*image);
+  
   unsigned char* data = (unsigned char*) malloc (image->w*image->h*4);
   unsigned char* src_ptr = image->data;
   unsigned char* dest_ptr = data;
