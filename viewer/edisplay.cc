@@ -216,19 +216,33 @@ int Viewer::Run (Image* _image)
 	  /* FIXME - Add flags for double & triple click! */
 	  switch (ev.type)
 	    {
-	      /*
 	    case ButtonPress:
-	      evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
- 	      evas->EventFeedMouseDown (ev.xbutton.button, flags);
+	      {
+		//evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
+		//evas->EventFeedMouseDown (ev.xbutton.button, flags);
+		if (ev.xbutton.state & ControlMask)
+		  switch (ev.xbutton.button) {
+		  case 4: Zoom (1.1); break;
+		  case 5: Zoom (1.0/1.1); break;
+		  }
+		else
+		  switch (ev.xbutton.button) {
+		  case 4: Move (0, 4); break;
+		  case 5: Move (0, -4); break;
+		  case 6: Move (4, 0); break;
+		  case 7: Move (-4, 0); break;
+		  }
+	      }
 	      break;
+#if 0
 	    case ButtonRelease:
 	      evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
- 	      evas->EventFeedMouseUp (ev.xbutton.button, flags);
+	      evas->EventFeedMouseUp (ev.xbutton.button, flags);
 	      break;
 	    case MotionNotify:
 	      evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
 	      break;
-	      */
+#endif
 	    case KeyPress:
 	      //std::cout << "key: " << ev.xkey.keycode << std::endl;
 	      KeySym ks;	      
@@ -245,27 +259,27 @@ int Viewer::Run (Image* _image)
 		  break;
 		  
 		case XK_Left:
-		  Move (1, 0);
+		  Move (4, 0);
 		  break;
 		
 		case XK_Right:
-		  Move (-1, 0);
+		  Move (-4, 0);
 		  break;
 		  
 		case XK_Up:
-		  Move (0, 1);
+		  Move (0, 4);
 		  break;
 		  
 		case XK_Down:
-		  Move (0, -1);
+		  Move (0, -4);
 		  break;
 		  
 		case XK_Page_Up:
-		  Move (0, 5);
+		  Move (0, 16);
 		  break;
 		  
 		case XK_Page_Down:
-		  Move (0, -5);
+		  Move (0, -16);
 		  break;
 		  
 		case XK_q:
