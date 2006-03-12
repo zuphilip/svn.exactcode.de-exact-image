@@ -296,6 +296,14 @@ int Viewer::Run ()
       evas->Render ();
       XFlush (dpy);
     }
+  
+  free (evas_image->Data());
+  delete evas_image;
+  evas_image = 0;
+  
+  delete evas;
+  evas = 0;
+  
   return 0;
 }
 
@@ -345,9 +353,12 @@ void Viewer::Load ()
       dest_ptr[2] = src_ptr[0];
     }
 
-  if (evas_image)
+  if (evas_image) {
+    free (evas_image->Data());
     delete evas_image;
+  }
   evas_image = new EvasImage (*evas);
+  evas_image->SmoothScale(false);
   evas_image->Layer (5);
   evas_image->Move (0,0);
   
@@ -357,7 +368,6 @@ void Viewer::Load ()
   evas_image->DataUpdateAdd (0,0,image->w,image->h);
   evas_image->SetData (data);
   evas_image->Show ();
-  
   
   // position and resize
   zoom = 100;
