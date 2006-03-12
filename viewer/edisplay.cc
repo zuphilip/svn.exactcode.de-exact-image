@@ -77,8 +77,6 @@ int Viewer::Run ()
 
   if (!image->Read(*it))
     std::cerr << "Could not read the file " << *it << std::endl;
-  else
-    std::cerr << "read: " << *it << std::endl;
   
   dpy = XOpenDisplay (NULL);
   if (!dpy) {
@@ -287,7 +285,6 @@ int Viewer::Run ()
 					ev.xexpose.height);
 	      break;
 	    case ConfigureNotify:
-	      std::cerr << "ConfigureNotify" << std::endl;
 	      evas->OutputSize (ev.xconfigure.width,
 				ev.xconfigure.height);
 	      evas->OutputViewport (0, 0,
@@ -324,20 +321,15 @@ void Viewer::Previous ()
 
 void Viewer::Load ()
 {
-  std::cerr << "Load" << std::endl;
   if (image->data) {
     free (image->data);
     image->data = 0;
   }
   
   if (!image->Read(*it))
+    // TODO: fix to gracefully handle this
     std::cerr << "Could not read the file " << *it << std::endl;
-  else
-    std::cerr << "Read " << *it << std::endl;
   
-  std::cerr << "w: " << image->w << ", h: " << image->h << std::endl;
-  std::cerr << "spp: " << image->spp << ", bps: " << image->bps << std::endl;
-
   // convert colorspace
   if (image->spp == 1 && image->bps == 1)
     colorspace_bilevel_to_gray (*image);

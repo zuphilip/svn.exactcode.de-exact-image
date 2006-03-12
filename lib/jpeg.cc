@@ -221,8 +221,6 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
   /* JSAMPLEs per row in output buffer */
   row_stride = cinfo.output_width * cinfo.output_components;
 
-  printf ("%d %d - %d\n", cinfo.output_width, cinfo.output_height, cinfo.output_components);
-  
   *w = cinfo.output_width;
   *h = cinfo.output_height;
   *spp = cinfo.output_components;
