@@ -24,7 +24,7 @@ using namespace Utility;
 
 void Viewer::Zoom (double f)
 {
-  zoom = (int )(f * zoom);
+  zoom = (int) (f * zoom);
   
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
@@ -65,10 +65,8 @@ void Viewer::Move (int _x, int _y)
   evas_image->Move (x, y);
 }
 
-int Viewer::Run (Image* _image)
+int Viewer::Run ()
 {
-  image = _image;
-  
   // TODO: move to the X11Helper ...
   
   XSetWindowAttributes attr;
@@ -76,6 +74,11 @@ int Viewer::Run (Image* _image)
 #if 0
   XSizeHints           szhints;
 #endif
+
+  if (!image->Read(*it))
+    std::cerr << "Could not read the file " << *it << std::endl;
+  else
+    std::cerr << "read: " << *it << std::endl;
   
   dpy = XOpenDisplay (NULL);
   if (!dpy) {
@@ -166,32 +169,7 @@ int Viewer::Run (Image* _image)
     evas->FontCache (0);
   }
   
-  evas_image = new EvasImage (*evas);
-  evas_image->Move (0,0);
-  evas_image->Resize (image->w,image->h);
-  evas_image->Layer (5);
-  evas_image->ImageSize (image->w,image->h);
-  evas_image->ImageFill (0,0,image->w,image->h);
-  evas_image->Show ();
-  evas_image->DataUpdateAdd (0,0,image->w,image->h);
-  
-  // convert colorspace
-  if (image->spp == 1 && image->bps == 1)
-    colorspace_bilevel_to_gray (*image);
-  
-  if (image->spp == 1 && image->bps == 8)
-    colorspace_gray_to_rgb (*image);
-  
-  unsigned char* data = new unsigned char [image->w*image->h*4];
-  unsigned char* src_ptr = image->data;
-  unsigned char* dest_ptr = data;
-  for (int y=0; y < image->h; ++y)
-    for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += 3) {
-      dest_ptr[0] = src_ptr[2];
-      dest_ptr[1] = src_ptr[1];
-      dest_ptr[2] = src_ptr[0];
-    }
-  evas_image->SetData (data);
+  Load ();
   
   XMapWindow (dpy, win);
 
@@ -286,6 +264,14 @@ int Viewer::Run (Image* _image)
 		case XK_Page_Down:
 		  Move (0, -16);
 		  break;
+
+		case XK_space:
+		  Next ();
+		  break;
+
+		case XK_BackSpace:
+		  Previous ();
+		  break;
 		  
 		case XK_q:
 		  quit = true;
@@ -301,6 +287,7 @@ int Viewer::Run (Image* _image)
 					ev.xexpose.height);
 	      break;
 	    case ConfigureNotify:
+	      std::cerr << "ConfigureNotify" << std::endl;
 	      evas->OutputSize (ev.xconfigure.width,
 				ev.xconfigure.height);
 	      evas->OutputViewport (0, 0,
@@ -318,6 +305,76 @@ int Viewer::Run (Image* _image)
   return 0;
 }
 
+void Viewer::Next ()
+{
+  if (++it == images.end())
+    it = images.begin();
+  
+  Load ();
+}
+
+void Viewer::Previous ()
+{
+  if (it == images.begin())
+    it = images.end();
+  --it;
+  
+  Load ();
+}
+
+void Viewer::Load ()
+{
+  std::cerr << "Load" << std::endl;
+  if (image->data) {
+    free (image->data);
+    image->data = 0;
+  }
+  
+  if (!image->Read(*it))
+    std::cerr << "Could not read the file " << *it << std::endl;
+  else
+    std::cerr << "Read " << *it << std::endl;
+  
+  std::cerr << "w: " << image->w << ", h: " << image->h << std::endl;
+  std::cerr << "spp: " << image->spp << ", bps: " << image->bps << std::endl;
+
+  // convert colorspace
+  if (image->spp == 1 && image->bps == 1)
+    colorspace_bilevel_to_gray (*image);
+  
+  if (image->spp == 1 && image->bps == 8)
+    colorspace_gray_to_rgb (*image);
+  
+  unsigned char* data = (unsigned char*) malloc (image->w*image->h*4);
+  unsigned char* src_ptr = image->data;
+  unsigned char* dest_ptr = data;
+  
+  for (int y=0; y < image->h; ++y)
+    for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += 3) {
+      dest_ptr[0] = src_ptr[2];
+      dest_ptr[1] = src_ptr[1];
+      dest_ptr[2] = src_ptr[0];
+    }
+
+  if (evas_image)
+    delete evas_image;
+  evas_image = new EvasImage (*evas);
+  evas_image->Layer (5);
+  evas_image->Move (0,0);
+  
+  evas_image->Resize (image->w,image->h);
+  evas_image->ImageSize (image->w,image->h);
+  evas_image->ImageFill (0,0,image->w,image->h);
+  evas_image->DataUpdateAdd (0,0,image->w,image->h);
+  evas_image->SetData (data);
+  evas_image->Show ();
+  
+  
+  // position and resize
+  zoom = 100;
+  Zoom (1.0);
+}
+
 int main (int argc, char** argv)
 {
   ArgumentList arglist;
@@ -328,7 +385,7 @@ int main (int argc, char** argv)
   arglist.Add (&arg_help);
   
   Argument<std::string> arg_input ("i", "input", "input file",
-                                   1, 1);
+                                   1, 99999);
   arglist.Add (&arg_input);
   
   // parse the specified argument list - and maybe output the Usage
@@ -343,12 +400,6 @@ int main (int argc, char** argv)
       return 1;
     }
   
-  Image image;
-  if (!image.Read(arg_input.Get())) {
-    std::cerr << "Error reading input file." << std::endl;
-    return 1;
-  }
-  
-  Viewer viewer;
-  return viewer.Run (&image);
+  Viewer viewer(arg_input.Values());
+  return viewer.Run ();
 }

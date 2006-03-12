@@ -2,10 +2,20 @@
 class Viewer {
 public:
   
-  Viewer() : zoom(100) {}
-  ~Viewer() {}
+  Viewer(const std::vector<std::string>& _images)
+    : images(_images), zoom(100), evas_image(0) {
+    it = images.begin();
+    image = new Image;
+  }
+  ~Viewer() {
+    delete (image); image = 0;
+  }
   
-  int Run (Image* _image);
+  void Load ();
+  void Next ();
+  void Previous ();
+
+  int Run ();
   
 protected:
   
@@ -13,10 +23,13 @@ protected:
   void Move (int _x, int _y);
   
 private:
-  int zoom;
+  const std::vector<std::string>& images;
+  std::vector<std::string>::const_iterator it;
   
   // Image
   Image* image;
+  
+  int zoom;
   
   // X11 stuff
   Display* dpy;
