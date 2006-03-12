@@ -74,7 +74,7 @@ int main (int argc, char* argv[])
   
   int err = 0;
   unsigned char* data = image.data;
-  for (int i = 0; i < arg_output.count; ++i)
+  for (int i = 0; i < arg_output.Size(); ++i)
     {
       std::cout << "Writing file: " << arg_output.Get(i) << std::endl;
       image.data = data + i * stride * image.h;
