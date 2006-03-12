@@ -75,9 +75,6 @@ int Viewer::Run ()
   XSizeHints           szhints;
 #endif
 
-  if (!image->Read(*it))
-    std::cerr << "Could not read the file " << *it << std::endl;
-  
   dpy = XOpenDisplay (NULL);
   if (!dpy) {
     std::cout << "Error: cannot open display.\n" << std::endl;
@@ -103,8 +100,8 @@ int Viewer::Run ()
   depth = DefaultDepth(dpy, scr);
   attr.colormap = DefaultColormap(dpy, scr);
   
-  int win_w = std::min (image->w, X11Window::Width(dpy, 0));
-  int win_h = std::min (image->h, X11Window::Height(dpy, 0));
+  int win_w = 1;
+  int win_h = 1;
   
   win = XCreateWindow (dpy, root,
 		       (X11Window::Width(dpy, 0) - win_w) / 2,
