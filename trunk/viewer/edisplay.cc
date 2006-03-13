@@ -164,7 +164,8 @@ int Viewer::Run ()
     evas->FontCache (0);
   }
   
-  Load ();
+  if (!Load ())
+    Next ();
   
   XMapWindow (dpy, win);
 
@@ -309,31 +310,44 @@ int Viewer::Run ()
 
 void Viewer::Next ()
 {
-  if (++it == images.end())
-    it = images.begin();
-  
-  Load ();
+  std::vector<std::string>::const_iterator ref_it = it;
+  do {
+    ++it;
+    if (it == images.end())
+      it = images.begin();
+    
+    if (Load ())
+      return;
+  }
+  while (it != ref_it);
 }
 
 void Viewer::Previous ()
 {
-  if (it == images.begin())
-    it = images.end();
-  --it;
-  
-  Load ();
+  std::vector<std::string>::const_iterator ref_it = it;
+  do {
+    if (it == images.begin())
+      it = images.end();
+    --it;
+    if (Load ())
+      return;
+  }
+  while (it != ref_it);
 }
 
-void Viewer::Load ()
+bool Viewer::Load ()
 {
   if (image->data) {
     free (image->data);
     image->data = 0;
   }
   
-  if (!image->Read(*it))
+  if (!image->Read(*it)) {
     // TODO: fix to gracefully handle this
     std::cerr << "Could not read the file " << *it << std::endl;
+    return false;
+  }
+  std::cerr << "Load: " << *it << std::endl;
   
   // convert colorspace
   if (image->spp == 1 && image->bps == 1)
@@ -344,6 +358,17 @@ void Viewer::Load ()
   
   if (image->bps == 16)
     colorspace_16_to_8 (*image);
+  
+  if (image->bps != 8 || image->spp != 3) {
+    std::cerr << "Unsupported colorspace. bps: " << image->bps
+	      << ", spp: " << image->spp << std::endl;
+    return false;
+  }
+
+  if (image->data == 0) {
+    std::cerr << "image data not loaded?"<< std::endl;
+    return false;
+  }
   
   unsigned char* data = (unsigned char*) malloc (image->w*image->h*4);
   unsigned char* src_ptr = image->data;
@@ -375,6 +400,8 @@ void Viewer::Load ()
   // position and resize
   zoom = 100;
   Zoom (1.0);
+  
+  return true;
 }
 
 int main (int argc, char** argv)

@@ -11,7 +11,7 @@ public:
     delete (image); image = 0;
   }
   
-  void Load ();
+  bool Load ();
   void Next ();
   void Previous ();
 
