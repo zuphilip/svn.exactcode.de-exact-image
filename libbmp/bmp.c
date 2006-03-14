@@ -331,6 +331,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     bmp_type = BMPT_WIN5;
   
   if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 || bmp_type == BMPT_OS22) {
+    printf ("reading info hdr\n");
     read(fd, &info_hdr.iWidth, 4);
     read(fd, &info_hdr.iHeight, 4);
     read(fd, &info_hdr.iPlanes, 2);
@@ -341,6 +342,10 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     read(fd, &info_hdr.iYPelsPerMeter, 4);
     read(fd, &info_hdr.iClrUsed, 4);
     read(fd, &info_hdr.iClrImportant, 4);
+    read(fd, &info_hdr.iRedMask, 4);
+    read(fd, &info_hdr.iGreenMask, 4);
+    read(fd, &info_hdr.iBlueMask, 4);
+    read(fd, &info_hdr.iAlphaMask, 4);
 #ifdef __BIG_ENDIAN__
     TIFFSwabLong(&info_hdr.iWidth);
     TIFFSwabLong(&info_hdr.iHeight);
@@ -352,6 +357,10 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     TIFFSwabLong(&info_hdr.iYPelsPerMeter);
     TIFFSwabLong(&info_hdr.iClrUsed);
     TIFFSwabLong(&info_hdr.iClrImportant);
+    TIFFSwabLong(&info_hdr.iRedMask);
+    TIFFSwabLong(&info_hdr.iGreenMask);
+    TIFFSwabLong(&info_hdr.iBlueMask);
+    TIFFSwabLong(&info_hdr.iAlphaMask);
 #endif
     n_clr_elems = 4;
     *xres = ((double)info_hdr.iXPelsPerMeter * 2.54 + 0.05) / 100;
@@ -457,20 +466,37 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
   
   stride = (*w * *spp * *bps + 7) / 8;
-  printf ("w: %d, h: %d, spp: %d, bps: %d\n", *w, *h, *spp, *bps);
+  /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
+   *w, *h, *spp, *bps, info_hdr.iCompression); */
+  
+  // detect old style bitmask images
+  if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 16)
+    {
+      /*printf ("implicit non-RGB image\n"); */
+      info_hdr.iCompression = BMPC_BITFIELDS;
+      info_hdr.iBlueMask = 0x1f;
+      info_hdr.iGreenMask = 0x1f << 5;
+      info_hdr.iRedMask = 0x1f << 10;
+    }
   
   /* -------------------------------------------------------------------- */
   /*  Read uncompressed image data.                                       */
   /* -------------------------------------------------------------------- */
 
   switch (info_hdr.iCompression) {
-  case BMPC_RGB:
   case BMPC_BITFIELDS:
+    // we convert those to RGB for easier use
+    *bps = 8;
+    stride = (*w * *spp * *bps + 7) / 8;
+  case BMPC_RGB:
     {
       uint32 file_stride = ((*w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
-      printf ("bitcount: %d, stride: %d, file stride: %d\n",
+      /*printf ("bitcount: %d, stride: %d, file stride: %d\n",
 	      info_hdr.iBitCount, stride, file_stride);
+      
+      printf ("red mask: %x, green mask: %x, blue mask: %x\n",
+      info_hdr.iRedMask, info_hdr.iGreenMask, info_hdr.iBlueMask); */
       
       data = _TIFFmalloc (stride * *h);
       
@@ -496,7 +522,46 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 		  (unsigned long) row);
 	}
 	
-	rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
+	// convert to RGB
+	if (info_hdr.iCompression == BMPC_BITFIELDS)
+	  {
+	    int last_bit_set (int v)
+	    {
+	      unsigned int i;
+	      for (i = sizeof (int) * 8 - 1; i > 0; --i) {
+		if (v & (1L << i))
+		  return i;
+	      }
+	      return 0;
+	    }
+	    
+	    unsigned char* row_ptr = data + stride*row;
+	    unsigned char* r16_ptr = row_ptr + file_stride - 2;
+	    unsigned char* rgb_ptr = row_ptr + stride - 3;
+	    
+	    int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
+	    int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
+	    int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
+	    
+	    for ( ; rgb_ptr >= row_ptr; r16_ptr -= 2, rgb_ptr -= 3)
+	      {
+		int val = (r16_ptr[0] << 0) + (r16_ptr[1] << 8);
+		if (r_shift > 0)
+		  rgb_ptr[0] = (val & info_hdr.iRedMask) >> r_shift;
+		else
+		  rgb_ptr[0] = (val & info_hdr.iRedMask) << -r_shift;
+		if (g_shift > 0)
+		  rgb_ptr[1] = (val & info_hdr.iGreenMask) >> g_shift;
+		else
+		  rgb_ptr[1] = (val & info_hdr.iGreenMask) << -g_shift;
+		if (b_shift > 0)
+		  rgb_ptr[2] = (val & info_hdr.iBlueMask) >> b_shift;
+		else
+		  rgb_ptr[2] = (val & info_hdr.iBlueMask) << -b_shift;
+	      }
+	  }
+	else
+	  rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
       }
     }
     break;
