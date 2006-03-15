@@ -141,5 +141,5 @@ void colorspace_16_to_8 (Image& image)
       *output++ = it[1];
       it += 2;
     }
-  image.spp = 8; // converted 8bit data
+  image.bps = 8; // converted 8bit data
 }
