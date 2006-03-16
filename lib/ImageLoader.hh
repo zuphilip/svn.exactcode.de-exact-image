@@ -32,32 +32,30 @@ public:
 	      int bps, int spp, int xres, int yres) = 0;
   
   static bool Read (const std::string& file, Image& image) {
-    
     std::string ext = get_ext (file);
-    
-    std::cerr << "reading: " << loader->size() << std::endl;
-    std::cout << "  size:   " << loader->size() << " @" << loader << std::endl;
-    
     std::vector<loader_ref>::iterator it;
     for (it = loader->begin(); it != loader->end(); ++it)
       {
-	std::cerr << ext << " vs. " << it->ext << std::endl;
-	if (it->ext == ext)
+	 if (it->ext == ext)
 	  image.data = it->loader->readImage (file.c_str(), &image.w, &image.h,
 					      &image.bps, &image.spp, &image.xres, &image.yres);
 	if (image.data)
 	  return true; 
       }
-    
     return false;
   }
   
   static bool Write (const std::string& file, Image& image) {
     std::string ext = get_ext (file);
-    
-    
-    
-    return true;
+    std::vector<loader_ref>::iterator it;
+    for (it = loader->begin(); it != loader->end(); ++it)
+      {
+	if (it->ext == ext)
+	  it->loader->writeImage (file.c_str(), image.data, image.w, image.h,
+				  image.bps, image.spp, image.xres, image.yres);
+	return true;
+      }
+    return false;
   }
   
 protected:
@@ -73,10 +71,16 @@ protected:
   {
     if (!loader)
       loader = new std::vector<loader_ref>;
-    
-    std::cout << "register: " << _ext << std::endl;
     loader->push_back ( (loader_ref) {_ext, _loader}  );
-    std::cout << "  size:   " << loader->size() << " @" << loader << std::endl;
+  }
+
+  static void unregisterLoader (ImageLoader* _loader)
+  {
+    // TODO, remove
+    if (loader->empty()) {
+      delete loader;
+      loader = 0;
+    }
   }
   
 };

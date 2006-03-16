@@ -5,6 +5,7 @@ class PNGLoader : public ImageLoader {
 public:
   
   PNGLoader () { registerLoader ("png", this); };
+  virtual ~PNGLoader () { unregisterLoader (this); };
 
   virtual 
   unsigned char*

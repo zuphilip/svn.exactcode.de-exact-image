@@ -5,6 +5,7 @@ class JPEG2000Loader : public ImageLoader {
 public:
   
   JPEG2000Loader () { registerLoader ("jp2", this); };
+  virtual ~JPEG2000Loader () { unregisterLoader (this); };
 
   virtual 
   unsigned char*

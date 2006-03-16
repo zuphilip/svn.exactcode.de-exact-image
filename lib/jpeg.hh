@@ -3,8 +3,8 @@
 class JPEGLoader : public ImageLoader {
 public:
   
-  JPEGLoader () { std::cerr << "here" << std::endl;
-    registerLoader ("jpg", this); };
+  JPEGLoader () { registerLoader ("jpg", this); };
+  virtual ~JPEGLoader () { unregisterLoader (this); };
 
   virtual 
   unsigned char*
