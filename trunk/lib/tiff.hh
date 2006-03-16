@@ -8,6 +8,8 @@ public:
     registerLoader ("tif", this);
     registerLoader ("tiff", this);
   };
+
+  ~TIFFLoader () { unregisterLoader (this); };
   
   virtual 
   unsigned char*
