@@ -1,8 +1,17 @@
 
-unsigned char*
-read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp,
-                int* xres, int* yres);
+#include "ImageLoader.hh"
 
-void
-write_JPEG2000_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
-                 int xres, int yres);
+class JPEG2000Loader : public ImageLoader {
+public:
+  
+  JPEG2000Loader () { registerLoader ("jp2", this); };
+
+  virtual 
+  unsigned char*
+  readImage (const char* filename, int* w, int* h, int* bps, int* spp,
+	     int* xres, int* yres);
+  
+  virtual void
+  writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
+	      int xres, int yres);
+};

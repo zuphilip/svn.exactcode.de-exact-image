@@ -22,9 +22,8 @@
 
 #include "ArgumentList.hh"
 
-#include "tiff.hh"
-#include "jpeg.hh"
 #include "Image.hh"
+#include "ImageLoader.hh"
 
 #include "Colorspace.hh"
 #include "Matrix.hh"
@@ -87,7 +86,7 @@ int main (int argc, char* argv[])
     }
   
   Image image;
-  if (!image.Read (arg_input.Get())) {
+  if (!ImageLoader::Read (arg_input.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
@@ -218,7 +217,7 @@ int main (int argc, char* argv[])
     
   colorspace_gray_to_bilevel (image, threshold);
 
-  if (!image.Write(arg_output.Get())) {
+  if (!ImageLoader::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
     return 1;
   }

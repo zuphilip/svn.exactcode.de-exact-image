@@ -29,8 +29,8 @@ int check_if_png(char *file_name, FILE **fp)
 #endif
 
 unsigned char*
-read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
-               int* xres, int* yres)
+PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
+		      int* xres, int* yres)
 {
   png_structp png_ptr;
   png_infop info_ptr;
@@ -191,8 +191,8 @@ read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
 }
 
 void
-write_PNG_file (const char* file, unsigned char* data, int w, int h,
-		int bps, int spp, int xres, int yres)
+PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
+		       int bps, int spp, int xres, int yres)
 {
   png_structp png_ptr;
   png_infop info_ptr;
@@ -280,3 +280,5 @@ write_PNG_file (const char* file, unsigned char* data, int w, int h,
   /* close the file */
   fclose(fp);
 }
+
+PNGLoader png_loader;

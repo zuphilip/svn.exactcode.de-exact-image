@@ -1,6 +1,9 @@
 
+#ifndef IMAGE_HH
+#define IMAGE_HH
+
 #include <string>
-  
+ 
 class Image
 {
 public:
@@ -19,9 +22,6 @@ public:
     h = _h;
     data = (unsigned char*) malloc (Stride() * h);
   }
-  
-  bool Read (const std::string& file);
-  bool Write (const std::string& file);
   
   int Stride () {
     return (w * spp * bps + 7) / 8;
@@ -42,3 +42,5 @@ public:
 };
 
 typedef struct { unsigned char r, g, b; } rgb;
+
+#endif

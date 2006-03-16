@@ -18,6 +18,7 @@ using namespace Utility;
 // imaging stuff
 
 #include "Image.hh"
+#include "ImageLoader.hh"
 #include "Colorspace.hh"
 
 #include "edisplay.hh"
@@ -342,7 +343,7 @@ bool Viewer::Load ()
     image->data = 0;
   }
   
-  if (!image->Read(*it)) {
+  if (!ImageLoader::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
     std::cerr << "Could not read the file " << *it << std::endl;
     return false;

@@ -5,8 +5,8 @@
 #include "bmp.hh"
 
 unsigned char*
-read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
-               int* xres, int* yres)
+BMPLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
+		      int* xres, int* yres)
 {
   unsigned char* clr_tbl = 0;
   int clr_tbl_size = 0, clr_tbl_elems = 0;
@@ -102,9 +102,10 @@ read_BMP_file (const char* file, int* w, int* h, int* bps, int* spp,
   return data;
 }
 
-void
-write_BMP_file (const char* file, unsigned char* data, int w, int h,
-		int bps, int spp, int xres, int yres)
+void BMPLoader::writeImage (const char* file, unsigned char* data, int w, int h,
+			    int bps, int spp, int xres, int yres)
 {
   // return write_bmp (file, w, h, bps, spp, xres, yres);
 }
+
+BMPLoader bmp_loader;

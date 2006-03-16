@@ -24,11 +24,10 @@
 
 #include "tiff.hh"
 
-#define RELEASE
 
 unsigned char*
-read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
-		int* xres, int* yres)
+TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
+		       int* xres, int* yres)
 {
   TIFF* in;
   in = TIFFOpen(file, "r");
@@ -94,8 +93,8 @@ read_TIFF_file (const char *file, int* w, int* h, int* bps, int* spp,
 }
 
 void
-write_TIFF_file (const char *file, unsigned char *data, int w, int h,
-		 int bps, int spp, int xres, int yres)
+TIFFLoader::writeImage (const char *file, unsigned char *data, int w, int h,
+			int bps, int spp, int xres, int yres)
 {
   TIFF *out;
   //char thing[1024];
@@ -153,3 +152,5 @@ write_TIFF_file (const char *file, unsigned char *data, int w, int h,
 
   TIFFClose (out);
 }
+
+TIFFLoader tiff_loader;
