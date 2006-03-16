@@ -50,10 +50,11 @@ public:
     std::vector<loader_ref>::iterator it;
     for (it = loader->begin(); it != loader->end(); ++it)
       {
-	if (it->ext == ext)
+	if (it->ext == ext) {
 	  it->loader->writeImage (file.c_str(), image.data, image.w, image.h,
 				  image.bps, image.spp, image.xres, image.yres);
-	return true;
+	  return true;
+	}
       }
     return false;
   }
