@@ -17,9 +17,8 @@
 
 #include <iostream>
 
-#include "tiff.hh"
-#include "jpeg.hh"
 #include "Image.hh"
+#include "ImageLoader.hh"
 
 #include "ArgumentList.hh"
 
@@ -70,7 +69,7 @@ int main (int argc, char* argv[])
   }
   
   Image image;
-  if (!image.Read(arg_input.Get())) {
+  if (!ImageLoader::Read(arg_input.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return 1;
   }

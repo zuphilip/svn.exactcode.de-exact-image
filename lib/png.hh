@@ -1,9 +1,17 @@
 
+#include "ImageLoader.hh"
 
-unsigned char*
-read_PNG_file (const char* file, int* w, int* h, int* bps, int* spp,
-               int* xres, int* yres);
+class PNGLoader : public ImageLoader {
+public:
+  
+  PNGLoader () { registerLoader ("png", this); };
 
-void
-write_PNG_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
-                int xres, int yres);
+  virtual 
+  unsigned char*
+  readImage (const char* file, int* w, int* h, int* bps, int* spp,
+	     int* xres, int* yres);
+
+  virtual void
+  writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
+	      int xres, int yres);
+};

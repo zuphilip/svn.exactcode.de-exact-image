@@ -22,8 +22,8 @@
 
 #include "ArgumentList.hh"
 
-#include "tiff.hh"
 #include "Image.hh"
+#include "ImageLoader.hh"
 
 using namespace Utility;
 
@@ -55,7 +55,7 @@ int main (int argc, char* argv[])
     }
   
   Image image;
-  if (!image.Read (arg_input.Get())) {
+  if (!ImageLoader::Read (arg_input.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
@@ -78,7 +78,7 @@ int main (int argc, char* argv[])
     {
       std::cout << "Writing file: " << arg_output.Get(i) << std::endl;
       image.data = data + i * stride * image.h;
-      if (!image.Write (arg_output.Get(i))) {
+      if (!ImageLoader::Write (arg_output.Get(i), image)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
       }

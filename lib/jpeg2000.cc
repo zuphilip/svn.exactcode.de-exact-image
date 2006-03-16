@@ -26,6 +26,8 @@
 
 #include "utils.hh"
 
+#include "jpeg2000.hh"
+
 static void add_color_prof(jas_image_t* image)
 {
   /* Create a color profile if needed. */
@@ -41,7 +43,7 @@ static void add_color_prof(jas_image_t* image)
 }
 
 unsigned char*
-read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, int* xres, int* yres)
+JPEG2000Loader::readImage (const char* filename, int* w, int* h, int* bps, int* spp, int* xres, int* yres)
 {
   jas_image_t *image;
   jas_stream_t *in;
@@ -157,7 +159,7 @@ read_JPEG2000_file (const char* filename, int* w, int* h, int* bps, int* spp, in
 
 
 void
-write_JPEG2000_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
+JPEG2000Loader::writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
                  int xres, int yres)
 {
   jas_image_t *image;
@@ -221,3 +223,4 @@ write_JPEG2000_file (const char* file, unsigned char* data, int w, int h, int bp
   jas_stream_close (out);
 }
 
+JPEG2000Loader jpeg2000_loader;

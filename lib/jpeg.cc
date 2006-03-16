@@ -139,7 +139,7 @@ my_error_exit (j_common_ptr cinfo)
  */
 
 unsigned char*
-read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* xres, int* yres)
+JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp, int* xres, int* yres)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -294,7 +294,7 @@ read_JPEG_file (const char* filename, int* w, int* h, int* bpp, int* spp, int* x
 
 
 void
-write_JPEG_file (const char* file, unsigned char* data, int w, int h, int bps, int spp,
+JPEGLoader::writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
                  int xres, int yres)
 {
   struct jpeg_compress_struct cinfo;
@@ -358,6 +358,6 @@ write_JPEG_file (const char* file, unsigned char* data, int w, int h, int bps, i
   /* Close files, if we opened them */
   if (output_file != stdout)
     fclose(output_file);
-
-  return;
 }
+
+JPEGLoader jpeg_loader;

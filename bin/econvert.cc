@@ -23,6 +23,7 @@
 #include "ArgumentList.hh"
 
 #include "Image.hh"
+#include "ImageLoader.hh"
 
 #include "Colorspace.hh"
 
@@ -45,7 +46,7 @@ bool convert_input (const Argument<std::string>& arg)
     image.data = 0;
   }
 
-  if (!image.Read(arg.Get())) {
+  if (!ImageLoader::Read(arg.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return false;
   }
@@ -59,7 +60,7 @@ bool convert_output (const Argument<std::string>& arg)
     return false;
   }
   
-  if (!image.Write(arg.Get())) {
+  if (!ImageLoader::Write(arg.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
     return false;
   }
