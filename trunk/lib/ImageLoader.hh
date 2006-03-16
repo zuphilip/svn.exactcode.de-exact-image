@@ -35,17 +35,18 @@ public:
     
     std::string ext = get_ext (file);
     
-    std::cerr << "reading: " << loader.size() << std::endl;
-    std::cout << "  size:   " << loader.size() << " @" << &loader << std::endl;
+    std::cerr << "reading: " << loader->size() << std::endl;
+    std::cout << "  size:   " << loader->size() << " @" << loader << std::endl;
     
     std::vector<loader_ref>::iterator it;
-    for (it = loader.begin(); it != loader.end(); ++it)
+    for (it = loader->begin(); it != loader->end(); ++it)
       {
 	std::cerr << ext << " vs. " << it->ext << std::endl;
 	if (it->ext == ext)
-	  if (it->loader->readImage (file.c_str(), &image.w, &image.h,
-				     &image.bps, &image.spp, &image.xres, &image.yres))
-	      return true;
+	  image.data = it->loader->readImage (file.c_str(), &image.w, &image.h,
+					      &image.bps, &image.spp, &image.xres, &image.yres);
+	if (image.data)
+	  return true; 
       }
     
     return false;
@@ -66,13 +67,16 @@ protected:
     ImageLoader* loader;
   };
   
-  static std::vector<loader_ref> loader;
+  static std::vector<loader_ref>* loader;
   
   static void registerLoader (const char* _ext, ImageLoader* _loader)
   {
+    if (!loader)
+      loader = new std::vector<loader_ref>;
+    
     std::cout << "register: " << _ext << std::endl;
-    loader.push_back ( (loader_ref) {_ext, _loader}  );
-    std::cout << "  size:   " << loader.size() << " @" << &loader << std::endl;
+    loader->push_back ( (loader_ref) {_ext, _loader}  );
+    std::cout << "  size:   " << loader->size() << " @" << loader << std::endl;
   }
   
 };
