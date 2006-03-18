@@ -9,4 +9,5 @@ void colorspace_bilevel_to_gray (Image& image);
 
 void colorspace_16_to_8 (Image& image);
 
-void colorspace_de_palette (Image& image, uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);
+void colorspace_de_palette (Image& image, int table_entries,
+			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);

@@ -114,7 +114,7 @@ bool TIFFLoader::readImage (const char *file, Image& image)
     }
   
   if (photometric == PHOTOMETRIC_PALETTE) {
-    colorspace_de_palette (image, rmap, gmap, bmap);
+    colorspace_de_palette (image, 1 << image.bps, rmap, gmap, bmap);
     free (rmap);
     free (gmap);
     free (bmap);
