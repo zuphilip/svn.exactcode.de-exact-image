@@ -152,11 +152,25 @@ void colorspace_de_palette (Image& image, int table_entries,
     if (rmap[0] == 0 &&
 	gmap[0] == 0 &&
 	bmap[0] == 0 &&
-	rmap[1] == 0xffff &&
-	gmap[1] == 0xffff &&
-	bmap[1] == 0xffff)
+	rmap[1] >= 0xff00 &&
+	gmap[1] >= 0xff00 &&
+	bmap[1] >= 0xff00)
       {
 	std::cerr << "correct b/w table." << std::endl;
+	return;
+      }
+    if (rmap[1] == 0 &&
+	gmap[1] == 0 &&
+	bmap[1] == 0 &&
+	rmap[0] >= 0xff00 &&
+	gmap[0] >= 0xff00 &&
+	bmap[0] >= 0xff00)
+      {
+	std::cerr << "inverted b/w table." << std::endl;
+	for (unsigned char* it = image.data;
+	     it < image.data + image.Stride()*image.h;
+	     ++it)
+	  *it ^= 0xff;
 	return;
       }
   }
