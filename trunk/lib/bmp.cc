@@ -22,7 +22,23 @@ bool BMPLoader::readImage (const char* file, Image& image)
     return true;
   
   // TODO convert to our colormap format
-  // colormap_de_palette (image, rmap, gmap, bmap);
+  
+  uint16_t* rmap = new uint16_t [1 << image.bps];
+  uint16_t* gmap = new uint16_t [1 << image.bps];
+  uint16_t* bmap = new uint16_t [1 << image.bps];
+  
+  for (int i = 0; i < (1 << image.bps); ++i) {
+    // BMP maps have BGR order ...
+    rmap[i] = clr_tbl[i*clr_tbl_elems+2] << 8;
+    gmap[i] = clr_tbl[i*clr_tbl_elems+1] << 8;
+    bmap[i] = clr_tbl[i*clr_tbl_elems+0] << 8;
+  }
+  
+  colorspace_de_palette (image, clr_tbl_size, rmap, gmap, bmap);
+  
+  delete (rmap);
+  delete (gmap);
+  delete (bmap);
   
   return true;
 }

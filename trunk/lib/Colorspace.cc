@@ -144,7 +144,8 @@ void colorspace_16_to_8 (Image& image)
   image.bps = 8; // converted 8bit data
 }
 
-void colorspace_de_palette (Image& image, uint16_t* rmap, uint16_t* gmap, uint16_t* bmap)
+void colorspace_de_palette (Image& image, int table_entries,
+			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap)
 {
   // detect 1bps b/w tables
   if (image.bps == 1) {
@@ -164,20 +165,22 @@ void colorspace_de_palette (Image& image, uint16_t* rmap, uint16_t* gmap, uint16
   bool is_gray = false;
   {
     int i;
-    for (i = 0; i < (1 << image.bps); ++i) {
+    for (i = 0; i < table_entries; ++i) {
       if (rmap [i] != gmap[i] ||
 	  rmap [i] != bmap[i])
 	break;
     }
     
-    if (i == (1 << image.bps) ) {
+    if (i == table_entries) {
       std::cerr << "found gray table." << std::endl;
       is_gray = true;
     }
     
     // shortpath if the data is already 8bit gray
-    if (is_gray && image.bps == 8)
+    if (is_gray && image.bps == 8 && table_entries == 256) {
+      std::cerr << "is gray table and already 8bit data" << std::endl;
       return;
+    }
   }
   
   int new_size = image.w * image.h;
