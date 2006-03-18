@@ -8,3 +8,5 @@ void colorspace_gray_to_rgb (Image& image);
 void colorspace_bilevel_to_gray (Image& image);
 
 void colorspace_16_to_8 (Image& image);
+
+void colorspace_de_palette (Image& image, uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);

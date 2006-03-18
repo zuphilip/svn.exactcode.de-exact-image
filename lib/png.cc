@@ -28,13 +28,10 @@ int check_if_png(char *file_name, FILE **fp)
 }
 #endif
 
-unsigned char*
-PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
-		      int* xres, int* yres)
+bool PNGLoader::readImage (const char* file, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
-  unsigned int sig_read = 0;
   png_uint_32 width, height;
   int bit_depth, color_type, interlace_type;
   FILE *fp;
@@ -87,10 +84,10 @@ PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
   png_get_IHDR (png_ptr, info_ptr, &width, &height, &bit_depth, &color_type,
 		&interlace_type, int_p_NULL, int_p_NULL);
   
-  *w = width;
-  *h = height;
-  *bps = bit_depth;
-  *spp = info_ptr->channels;
+  image.w = width;
+  image.h = height;
+  image.bps = bit_depth;
+  image.spp = info_ptr->channels;
   
   png_uint_32 res_x, res_y;  
   res_x = ((png_uint_32)((float)
@@ -98,8 +95,8 @@ PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
 
   res_y = ((png_uint_32)((float)
           png_get_y_pixels_per_meter(png_ptr, info_ptr) *.0254 +.5));
-  *xres = res_x;
-  *yres = res_y;
+  image.xres = res_x;
+  image.yres = res_y;
   
   /* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
    * byte into separate bytes (useful for paletted and grayscale images) */
@@ -170,13 +167,13 @@ PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
   
   int stride = png_get_rowbytes (png_ptr, info_ptr);
   
-  unsigned char* data = (unsigned char*) malloc (stride * height);
+  image.data = (unsigned char*) malloc (stride * height);
   png_bytep row_pointers[1];
   
   /* The other way to read images - deal with interlacing: */
   for (int pass = 0; pass < number_passes; ++pass)
-    for (int y = 0; y < height; ++y) {
-      row_pointers[0] = data + y * stride;
+    for (unsigned int y = 0; y < height; ++y) {
+      row_pointers[0] = image.data + y * stride;
       png_read_rows(png_ptr, row_pointers, png_bytepp_NULL, 1);
     }
   
@@ -187,19 +184,17 @@ PNGLoader::readImage (const char* file, int* w, int* h, int* bps, int* spp,
   fclose(fp);
   
   /* that's it */
-  return data;
+  return true;
 }
 
-void
-PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
-		       int bps, int spp, int xres, int yres)
+bool PNGLoader::writeImage (const char* file, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
 
   FILE *fp;
   if ((fp = fopen(file, "wb")) == NULL)
-    return;
+    return false;
   
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 				    NULL /*user_error_ptr*/,
@@ -208,7 +203,7 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
   
   if (png_ptr == NULL) {
     fclose(fp);
-    return;
+    return false;
   }
   
   /* Allocate/initialize the memory for image information.  REQUIRED. */
@@ -216,7 +211,7 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
   if (info_ptr == NULL) {
     fclose(fp);
     png_destroy_write_struct(&png_ptr, png_infopp_NULL);
-    return;
+    return false;
   }
   
   /* Set error handling if you are using the setjmp/longjmp method (this is
@@ -229,7 +224,7 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
     png_destroy_write_struct(&png_ptr, &info_ptr);
     fclose(fp);
     /* If we get here, we had a problem reading the file */
-    return;
+    return false;
   }
   
   png_info_init (info_ptr);
@@ -241,7 +236,7 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
   //png_set_sig_bytes(png_ptr, sig_read);
   
   int color_type;
-  switch (spp) {
+  switch (image.spp) {
   case 1:
     color_type = PNG_COLOR_TYPE_GRAY;
     break;
@@ -249,11 +244,11 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
     color_type = PNG_COLOR_TYPE_RGB;
   }
   
-  png_set_IHDR (png_ptr, info_ptr, w, h, bps, color_type,
+  png_set_IHDR (png_ptr, info_ptr, image.w, image.h, image.bps, color_type,
 		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		PNG_FILTER_TYPE_BASE);
   
-  png_set_pHYs (png_ptr, info_ptr, xres *.0254 +.5, yres *.0254 +.5,
+  png_set_pHYs (png_ptr, info_ptr, (int)(image.xres *.0254 +.5), (int)(image.yres *.0254 +.5),
 		PNG_RESOLUTION_METER);
 
   /* The call to png_read_info() gives us all of the information from the
@@ -267,8 +262,8 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
   /* The other way to write images */
   int number_passes = 1;
   for (int pass = 0; pass < number_passes; ++pass)
-    for (int y = 0; y < h; ++y) {
-      row_pointers[0] = data + y * stride;
+    for (int y = 0; y < image.h; ++y) {
+      row_pointers[0] = image.data + y * stride;
       png_write_rows(png_ptr, (png_byte**)&row_pointers, 1);
     }
 
@@ -279,6 +274,8 @@ PNGLoader::writeImage (const char* file, unsigned char* data, int w, int h,
   
   /* close the file */
   fclose(fp);
+  
+  return true;
 }
 
 PNGLoader png_loader;

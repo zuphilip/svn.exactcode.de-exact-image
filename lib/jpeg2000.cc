@@ -42,28 +42,27 @@ static void add_color_prof(jas_image_t* image)
   }
 }
 
-unsigned char*
-JPEG2000Loader::readImage (const char* filename, int* w, int* h, int* bps, int* spp, int* xres, int* yres)
+bool JPEG2000Loader::readImage (const char* filename, Image& im)
 {
   jas_image_t *image;
   jas_stream_t *in;
 
   if (!(in = jas_stream_fopen(filename, "rb"))) {
     fprintf(stderr, "error: cannot open input image file %s\n", filename);
-    return 0;
+    return false;
   }
 
   if (!(image = jp2_decode(in, 0))) {
     fprintf(stderr, "error: cannot load image data\n");
-    return 0;
+    return false;
   }
 
   add_color_prof(image);
 
   jas_stream_close (in);
 
-  *w = jas_image_width (image);
-  *h = jas_image_height (image);
+  im.w = jas_image_width (image);
+  im.h = jas_image_height (image);
 
 #define PRINT(a,b) case a: std::cout << "Clrspc: " << a << ", " << b << std::endl; break;
 
@@ -111,34 +110,34 @@ JPEG2000Loader::readImage (const char* filename, int* w, int* h, int* bps, int* 
      }
   }
 
-  *spp = jas_image_numcmpts(image);
-  *bps = jas_image_cmptprec(image, 0/*component*/);
-  if (*bps != 1 && *bps != 8) // we do not support the others, yet
-	*bps = 8;
+  im.spp = jas_image_numcmpts(image);
+  im.bps = jas_image_cmptprec(image, 0/*component*/);
+  if (im.bps != 1 && im.bps != 8) // we do not support the others, yet
+	im.bps = 8;
 
   std::cout << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
-  unsigned char* data = (unsigned char*) malloc (*h * *h * *spp);
+  unsigned char* data = (unsigned char*) malloc (im.h * im.h * im.spp);
   unsigned char* data_ptr = data;
 
   jas_matrix_t *jasdata[3];
-  for (int k = 0; k < *spp; ++k) {
-    if (!(jasdata[k] = jas_matrix_create(*h, *w))) {
+  for (int k = 0; k < im.spp; ++k) {
+    if (!(jasdata[k] = jas_matrix_create(im.h, im.w))) {
       fprintf(stderr, "internal error\n");
       return 0;
     }
 
-    if (jas_image_readcmpt(image, k, 0, 0, *w, *h, jasdata[k])) {
+    if (jas_image_readcmpt(image, k, 0, 0, im.w, im.h, jasdata[k])) {
       fprintf(stderr, "cannot read component data %d\n", k);
       return 0;
     }
   }
 
   int v [3];
-  for( int y = 0; y < *h; ++y ) {
-    for( int x = 0; x < *w; ++x ) {
-       for( int k = 0; k < *spp; ++k ) {
+  for( int y = 0; y < im.h; ++y ) {
+    for( int x = 0; x < im.w; ++x ) {
+       for( int k = 0; k < im.spp; ++k ) {
          v[k] = jas_matrix_get (jasdata[k], y, x);
          // if the precision of the component is not supported, scale it
          int prec = jas_image_cmptprec(image, k);
@@ -148,79 +147,80 @@ JPEG2000Loader::readImage (const char* filename, int* w, int* h, int* bps, int* 
 	   v[k] >>= prec - 8;
        }
 
-       for( int k = 0; k < *spp; ++k )
+       for( int k = 0; k < im.spp; ++k )
        	*data_ptr++ = v[k];
     }
   }
 
   jas_image_destroy (image);
-  return data;
+  return true;
 }
 
 
-void
-JPEG2000Loader::writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
-                 int xres, int yres)
+bool JPEG2000Loader::writeImage (const char* file, Image& im)
 {
   jas_image_t *image;
   jas_stream_t *out;
 
   if (!(out = jas_stream_fopen(file, "w+b"))) {
     fprintf(stderr, "err r: cannot open output image file %s\n", file);
-    return;
+    return false;
   }
 
   jas_image_cmptparm_t compparms[3];
 
-  for (int i = 0; i < spp; ++i) {
+  for (int i = 0; i < im.spp; ++i) {
     compparms[i].tlx = 0;
     compparms[i].tly = 0;
     compparms[i].hstep = 1;
     compparms[i].vstep = 1;
-    compparms[i].width = w;
-    compparms[i].height = h;
-    compparms[i].prec = bps;
+    compparms[i].width = im.w;
+    compparms[i].height = im.h;
+    compparms[i].prec = im.bps;
     compparms[i].sgnd = false;
   }
 
-  if (!(image = jas_image_create(spp, compparms,
-                                 spp==3?JAS_CLRSPC_SRGB:JAS_CLRSPC_SGRAY))) {
+  if (!(image = jas_image_create(im.spp, compparms,
+                                 im.spp==3?JAS_CLRSPC_SRGB:JAS_CLRSPC_SGRAY))) {
     std::cout << "error creating jasper image" << std::endl;
   }
 
   jas_matrix_t *jasdata[3];
-  for (int i = 0; i < spp; ++i) {
-    if (!(jasdata[i] = jas_matrix_create(h, w))) {
+  for (int i = 0; i < im.spp; ++i) {
+    if (!(jasdata[i] = jas_matrix_create(im.h, im.w))) {
       fprintf(stderr, "internal error\n");
-      return;
+      return false;
     }
   }
 
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      for (int k = 0; k < spp; ++k)
-        jas_matrix_set(jasdata[k], y, x, *data++);
+  unsigned char* it = im.data;
+  for (int y = 0; y < im.h; ++y) {
+    for (int x = 0; x < im.w; ++x) {
+      for (int k = 0; k < im.spp; ++k)
+        jas_matrix_set(jasdata[k], y, x, *it++);
     }
   }
 
-  for (int i = 0; i < spp; ++i) {
+  for (int i = 0; i < im.spp; ++i) {
     int ct = JAS_IMAGE_CT_GRAY_Y;
-    if (spp > 1)
+    if (im.spp > 1)
       switch (i) {
        case 0: ct = JAS_IMAGE_CT_RGB_R; break;
        case 1: ct = JAS_IMAGE_CT_RGB_G; break;
        case 2: ct = JAS_IMAGE_CT_RGB_B; break;
     }
     jas_image_setcmpttype (image, i, ct );
-    if (jas_image_writecmpt(image, i, 0, 0, w, h, jasdata[i])) {
+    if (jas_image_writecmpt(image, i, 0, 0, im.w, im.h, jasdata[i])) {
       std::cout << "error writing converted data into jasper" << std::endl;
-      return;
+      return false;
     }
   }
 
   jp2_encode(image, out, 0);
   jas_image_destroy (image);
   jas_stream_close (out);
+  
+  return true;
 }
 
 JPEG2000Loader jpeg2000_loader;
