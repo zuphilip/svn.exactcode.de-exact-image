@@ -50,8 +50,6 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
       return 0;
     }
   
-  printf ("photometric: %d\n", photometric);
-  
   TIFFGetField(in, TIFFTAG_IMAGEWIDTH, w);
   TIFFGetField(in, TIFFTAG_IMAGELENGTH, h);
   
@@ -74,8 +72,8 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
   
   int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
 
-  printf ("w: %d h: %d\n", *w, *h);
-  printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
+  // printf ("w: %d h: %d\n", *w, *h);
+  // printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
 
   unsigned char* data = (unsigned char* ) malloc (stride * *h);
   
@@ -99,10 +97,21 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
       data2 += stride;
     }
   
+  /* strange 16bit gray images ??? */
+  if (*spp == 2)
+    {
+      for (unsigned char* it = data; it < data + stride* *h; it += 2) {
+	char x = it[0];
+	it[0] = it[1];
+	it[1] = x;
+      }
+      
+      *spp = 1;
+      *bps *= 2;
+    }
+  
   if (photometric == PHOTOMETRIC_PALETTE)
     {
-      printf ("palette -> rgb\n");
-      
       // convert palette images
       int new_size = *w * *h * 3;
       
@@ -139,6 +148,10 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
       
       *bps = 8;
       *spp = 3;
+      
+      free (rmap);
+      free (gmap);
+      free (bmap);
     }
   
   return data;
