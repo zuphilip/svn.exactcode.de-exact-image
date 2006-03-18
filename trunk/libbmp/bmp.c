@@ -214,32 +214,17 @@ typedef struct
   char       bReserved;      /* Must be 0 */
 } BMPColorEntry;
 
-
-static int inverted1bps (unsigned char* clr_tbl)
-{
-  return clr_tbl[0] == 255 && clr_tbl[1] == 255 && clr_tbl[2] == 255 &&
-    clr_tbl[3] == 0   && clr_tbl[4] == 0   && clr_tbl[5] == 0;
-}
-
 /*
  * Image data in BMP file stored in BGR (or ABGR) format. We should rearrange
  * pixels to RGB (RGBA) format.
  */
 static void
-rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count,
-		unsigned char* clr_tbl)
+rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
 {
   char tmp;
   uint32 i;
   
   switch(bit_count) {
-  case 1:
-    /* sanitize inverted 1bpp b/w data */
-    if ( inverted1bps (clr_tbl) ) {
-      for (i = 0; i < width; i += 8)
-	*buf++ ^= 0xFF;
-    }
-    break;
     
   case 16:    /* FIXME: need a sample file */
     break;
@@ -561,7 +546,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	      }
 	  }
 	else
-	  rearrangePixels(data + stride*row, *w, info_hdr.iBitCount, clr_tbl);
+	  rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
       }
     }
     break;
@@ -662,7 +647,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
       for (row = 0; row < *h; ++row) {
 	memcpy (data + row * *w, uncomprbuf + (*h - 1 - row) * *w, *w);
-	rearrangePixels(data + row * *w, *w, info_hdr.iBitCount, clr_tbl);
+	rearrangePixels(data + row * *w, *w, info_hdr.iBitCount);
       }
       
       _TIFFfree(uncomprbuf);
@@ -670,18 +655,11 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     }
     break;
   } /* switch */
- 
-  /* free the color table if we corrected inverted data ourselfs,
-     export it otherwise */
-  if (*bps == 1 && inverted1bps(clr_tbl)) {
-    goto bad1;
-  }
   
   /* export the table */
   *color_table = clr_tbl;
   *color_table_size = clr_tbl_size;
   *color_table_elements = n_clr_elems;
-  
   goto bad;
   
  bad1:
