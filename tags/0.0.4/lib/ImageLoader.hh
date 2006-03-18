@@ -1,0 +1,49 @@
+
+#ifndef IMAGELOADER_HH
+#define IMAGELOADER_HH
+
+#include <vector>
+#include <iostream>
+
+#include "Image.hh"
+
+class ImageLoader
+{
+public:
+  
+  virtual ~ImageLoader () {};
+  
+  virtual bool readImage (const char* file, Image& image) = 0;
+  virtual bool writeImage (const char* file, Image& image) = 0;
+  
+  static bool Read (const std::string& file, Image& image);
+  static bool Write (const std::string& file, Image& image);
+   
+protected:
+  
+  struct loader_ref {
+    const char* ext;
+    ImageLoader* loader;
+  };
+  
+  static std::vector<loader_ref>* loader;
+  
+  static void registerLoader (const char* _ext, ImageLoader* _loader)
+  {
+    if (!loader)
+      loader = new std::vector<loader_ref>;
+    loader->push_back ( (loader_ref) {_ext, _loader}  );
+  }
+
+  static void unregisterLoader (ImageLoader* _loader)
+  {
+    // TODO, remove
+    if (loader->empty()) {
+      delete loader;
+      loader = 0;
+    }
+  }
+  
+};
+
+#endif
