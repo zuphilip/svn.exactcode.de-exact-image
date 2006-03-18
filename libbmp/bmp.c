@@ -316,7 +316,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     bmp_type = BMPT_WIN5;
   
   if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 || bmp_type == BMPT_OS22) {
-    printf ("reading info hdr\n");
     read(fd, &info_hdr.iWidth, 4);
     read(fd, &info_hdr.iHeight, 4);
     read(fd, &info_hdr.iPlanes, 2);
@@ -420,19 +419,19 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	goto bad;
       }
       
-      printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
-	      n_clr_elems, clr_tbl_size);
+      /*printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
+	n_clr_elems, clr_tbl_size); */
       
       lseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
       read(fd, clr_tbl, n_clr_elems * clr_tbl_size);
       
-      for(clr = 0; clr < clr_tbl_size; ++clr) {
+      /*for(clr = 0; clr < clr_tbl_size; ++clr) {
 	printf ("%d: r: %d g: %d b: %d\n",
 		clr,
 		clr_tbl[clr*n_clr_elems+2],
 		clr_tbl[clr*n_clr_elems+1],
 		clr_tbl[clr*n_clr_elems]);
-      }
+      }*/
       break;
     
     case 16:
