@@ -31,7 +31,7 @@ bool TIFFLoader::readImage (const char *file, Image& image)
   TIFF* in;
   in = TIFFOpen(file, "r");
   if (!in)
-    return 0;
+    return false;
   
   uint16 photometric = 0;
   TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
@@ -49,11 +49,11 @@ bool TIFFLoader::readImage (const char *file, Image& image)
       return 0;
     }
   
-  uint16 _w;
-  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, _w); image.w = _w;
+  uint32 _w;
+  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &_w); image.w = _w;
   
-  uint16 _h;
-  TIFFGetField(in, TIFFTAG_IMAGELENGTH, _h); image.h = _h;
+  uint32 _h;
+  TIFFGetField(in, TIFFTAG_IMAGELENGTH, &_h); image.h = _h;
   
   uint16 _spp;
   TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp); image.spp = _spp;
@@ -139,7 +139,7 @@ bool TIFFLoader::writeImage (const char *file, Image& image)
   out = TIFFOpen (file, "w");
   if (out == NULL)
     return false;
-  
+   
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, image.w);
   TIFFSetField (out, TIFFTAG_IMAGELENGTH, image.h);
   TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, image.bps);
