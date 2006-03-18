@@ -50,6 +50,8 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
       return 0;
     }
   
+  printf ("photometric: %d\n", photometric);
+  
   TIFFGetField(in, TIFFTAG_IMAGEWIDTH, w);
   TIFFGetField(in, TIFFTAG_IMAGELENGTH, h);
   
@@ -72,13 +74,20 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
   
   int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
 
-  //  printf ("w: %d h: %d\n", *w, *h);
-  //  printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
+  printf ("w: %d h: %d\n", *w, *h);
+  printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
 
   unsigned char* data = (unsigned char* ) malloc (stride * *h);
   
+  uint16 *rmap = 0, *gmap = 0, *bmap = 0;
+  if (photometric == PHOTOMETRIC_PALETTE)
+    {
+      if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
+	printf ("Error reading colormap.\n");
+    }
+
   unsigned char* data2 = data;
-  for (unsigned int row = 0; row < *h; row++)
+  for (int row = 0; row < *h; row++)
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
@@ -89,6 +98,49 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
 
       data2 += stride;
     }
+  
+  if (photometric == PHOTOMETRIC_PALETTE)
+    {
+      printf ("palette -> rgb\n");
+      
+      // convert palette images
+      int new_size = *w * *h * 3;
+      
+      unsigned char* orig_data = data;
+      data = (unsigned char*) malloc (new_size);
+      
+      unsigned char* src = orig_data;
+      unsigned char* dst = data;
+      
+      int bits_used = 0;
+      int x = 0;
+      while (dst < data + new_size)
+	{
+	  unsigned char v = *src >> (8 - *bps);
+	  // BMP stores the color table in BGR order
+	  *dst++ = rmap[v] >> 8;
+	  *dst++ = gmap[v] >> 8;
+	  *dst++ = bmap[v] >> 8;
+	  
+	  bits_used += *bps;
+	  ++x;
+	  
+	  if (bits_used == 8 || x == *w) {
+	    ++src;
+	    bits_used = 0;
+	    if (x == *w)
+	      x = 0;
+	  }
+	  else {
+	    *src <<= *bps;
+	  }
+	}
+      free (orig_data);
+      
+      *bps = 8;
+      *spp = 3;
+    }
+  
   return data;
 }
 
@@ -143,7 +195,7 @@ TIFFLoader::writeImage (const char *file, unsigned char *data, int w, int h,
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
   
-  for (uint32 row = 0; row < h; row++)
+  for (int row = 0; row < h; row++)
     {
       if (TIFFWriteScanline (out, data, row, 0) < 0)
 	break;
