@@ -143,3 +143,86 @@ void colorspace_16_to_8 (Image& image)
     }
   image.bps = 8; // converted 8bit data
 }
+
+void colorspace_de_palette (Image& image, uint16_t* rmap, uint16_t* gmap, uint16_t* bmap)
+{
+  // detect 1bps b/w tables
+  if (image.bps == 1) {
+    if (rmap[0] == 0 &&
+	gmap[0] == 0 &&
+	bmap[0] == 0 &&
+	rmap[1] == 0xffff &&
+	gmap[1] == 0xffff &&
+	bmap[1] == 0xffff)
+      {
+	std::cerr << "correct b/w table." << std::endl;
+	return;
+      }
+  }
+  
+  // detect gray tables
+  bool is_gray = false;
+  {
+    int i;
+    for (i = 0; i < (1 << image.bps); ++i) {
+      if (rmap [i] != gmap[i] ||
+	  rmap [i] != bmap[i])
+	break;
+    }
+    
+    if (i == (1 << image.bps) ) {
+      std::cerr << "found gray table." << std::endl;
+      is_gray = true;
+    }
+    
+    // shortpath if the data is already 8bit gray
+    if (is_gray && image.bps == 8)
+      return;
+  }
+  
+  int new_size = image.w * image.h;
+  if (!is_gray) // RGB
+    new_size *= 3;
+  
+  unsigned char* orig_data = image.data;
+  image.data = (unsigned char*) malloc (new_size);
+  
+  unsigned char* src = orig_data;
+  unsigned char* dst = image.data;
+
+  // TODO: allow 16bit output if the palete contains that much dynamic
+
+  int bits_used = 0;
+  int x = 0;
+  while (dst < image.data + new_size)
+    {
+      unsigned char v = *src >> (8 - image.bps);
+      if (is_gray) {
+	*dst++ = rmap[v] >> 8;
+      } else {
+	*dst++ = rmap[v] >> 8;
+	*dst++ = gmap[v] >> 8;
+	*dst++ = bmap[v] >> 8;
+      }
+      
+      bits_used += image.bps;
+      ++x;
+
+      if (bits_used == 8 || x == image.w) {
+	++src;
+	bits_used = 0;
+	if (x == image.w)
+	  x = 0;
+      }
+      else {
+	*src <<= image.bps;
+      }
+    }
+  free (orig_data);
+  
+  image.bps = 8;
+  if (is_gray)
+    image.spp = 1;
+  else
+    image.spp = 3;
+}

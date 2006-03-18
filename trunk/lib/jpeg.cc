@@ -138,8 +138,7 @@ my_error_exit (j_common_ptr cinfo)
  * is passed in.  We want to return 1 on success, 0 on error.
  */
 
-unsigned char*
-JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp, int* xres, int* yres)
+bool JPEGLoader::readImage (const char* filename, Image& image)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -156,8 +155,6 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
 
   int row_stride;		/* physical row width in output buffer */
   
-  unsigned char* data = 0;
-  
   /* In this example we want to open the input file before doing anything else,
    * so that the setjmp() error recovery below can assume the file is open.
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
@@ -166,7 +163,7 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
 
   if ((infile = fopen(filename, "rb")) == NULL) {
     fprintf(stderr, "can't open %s\n", filename);
-    return 0;
+    return false;
   }
 
   /* Step 1: allocate and initialize JPEG decompression object */
@@ -181,7 +178,7 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
      */
     jpeg_destroy_decompress(&cinfo);
     fclose(infile);
-    return 0;
+    return false;
   }
   /* Now we can initialize the JPEG decompression object. */
   jpeg_create_decompress(&cinfo);
@@ -221,10 +218,10 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
   /* JSAMPLEs per row in output buffer */
   row_stride = cinfo.output_width * cinfo.output_components;
 
-  *w = cinfo.output_width;
-  *h = cinfo.output_height;
-  *spp = cinfo.output_components;
-  *bpp = 8;
+  image.w = cinfo.output_width;
+  image.h = cinfo.output_height;
+  image.spp = cinfo.output_components;
+  image.bps = 8;
 
   /* These three values are not used by the JPEG code, merely copied */
   /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
@@ -232,17 +229,17 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
   /* ratio is defined by X_density/Y_density even when density_unit=0. */
   switch (cinfo.density_unit)           /* JFIF code for pixel size units */
   {
-    case 1: *xres = cinfo.X_density;		/* Horizontal pixel density */
-            *yres = cinfo.Y_density;		/* Vertical pixel density */
+    case 1: image.xres = cinfo.X_density;		/* Horizontal pixel density */
+            image.yres = cinfo.Y_density;		/* Vertical pixel density */
             break;
-    case 2: *xres = cinfo.X_density * 254 / 100;
-            *yres = cinfo.Y_density * 254 / 100;
+    case 2: image.xres = cinfo.X_density * 254 / 100;
+            image.yres = cinfo.Y_density * 254 / 100;
             break;
     default:
-      *xres = *yres = 0;
+      image.xres = image.yres = 0;
   }
 
-  data = (unsigned char*) malloc (row_stride * cinfo.output_height);
+  image.data = (unsigned char*) malloc (row_stride * cinfo.output_height);
   
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
@@ -255,7 +252,7 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
      * Here the array is only one element long, but you could ask for
      * more than one scanline at a time if that's more convenient.
      */
-    buffer[0] = data + (cinfo.output_scanline*row_stride);
+    buffer[0] = image.data + (cinfo.output_scanline*row_stride);
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
   }
 
@@ -289,13 +286,10 @@ JPEGLoader::readImage (const char* filename, int* w, int* h, int* bpp, int* spp,
   fclose(f);
 #endif
 
-  return data;
+  return true;
 }
 
-
-void
-JPEGLoader::writeImage (const char* file, unsigned char* data, int w, int h, int bps, int spp,
-                 int xres, int yres)
+bool JPEGLoader::writeImage (const char* file, Image& image)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -313,26 +307,26 @@ JPEGLoader::writeImage (const char* file, unsigned char* data, int w, int h, int
   /* Open the output file. */
   if ((output_file = fopen(file, "wb")) == NULL) {
     fprintf(stderr, "can't open %s\n", file);
-    return;
+    return false;
   }
   jpeg_stdio_dest(&cinfo, output_file);
 
-  if (bps == 8 && spp == 3)
+  if (image.bps == 8 && image.spp == 3)
     cinfo.in_color_space = JCS_RGB;
-  else if (bps == 8 && spp == 1)
+  else if (image.bps == 8 && image.spp == 1)
     cinfo.in_color_space = JCS_GRAYSCALE;
   else {
     std::cout << "Unhandled bps/spp combination." << std::endl;
-    return;
+    return false;
   }
 
-  cinfo.image_width = w;
-  cinfo.image_height = h;
-  cinfo.input_components = spp;
-  cinfo.data_precision = bps; 
+  cinfo.image_width = image.w;
+  cinfo.image_height = image.h;
+  cinfo.input_components = image.spp;
+  cinfo.data_precision = image.bps; 
 
-  cinfo.X_density = xres;
-  cinfo.X_density = yres;
+  cinfo.X_density = image.xres;
+  cinfo.X_density = image.yres;
   cinfo.density_unit = 1; /* 1 for dots/inch */
 
   /* defaults depending on in_color_space */
@@ -344,7 +338,7 @@ JPEGLoader::writeImage (const char* file, unsigned char* data, int w, int h, int
 
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
-    buffer[0] = data + cinfo.next_scanline*w*spp*bps/8;
+    buffer[0] = image.data + cinfo.next_scanline*image.w*image.spp*image.bps/8;
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 
@@ -358,6 +352,8 @@ JPEGLoader::writeImage (const char* file, unsigned char* data, int w, int h, int
   /* Close files, if we opened them */
   if (output_file != stdout)
     fclose(output_file);
+
+  return true;
 }
 
 JPEGLoader jpeg_loader;

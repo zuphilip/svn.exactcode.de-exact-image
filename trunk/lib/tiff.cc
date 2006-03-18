@@ -24,10 +24,9 @@
 
 #include "tiff.hh"
 
+#include "Colorspace.hh"
 
-unsigned char*
-TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
-		       int* xres, int* yres)
+bool TIFFLoader::readImage (const char *file, Image& image)
 {
   TIFF* in;
   in = TIFFOpen(file, "r");
@@ -50,32 +49,35 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
       return 0;
     }
   
-  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, w);
-  TIFFGetField(in, TIFFTAG_IMAGELENGTH, h);
+  uint16 _w;
+  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, _w); image.w = _w;
+  
+  uint16 _h;
+  TIFFGetField(in, TIFFTAG_IMAGELENGTH, _h); image.h = _h;
   
   uint16 _spp;
-  TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp); *spp = _spp;
+  TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp); image.spp = _spp;
   
   uint16 _bps;
-  TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps); *bps = _bps;
+  TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps); image.bps = _bps;
   
   uint16 config;
   TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
   
   uint16 _xres;
   if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres) == 0)
-    *xres = _xres;
+    image.xres = _xres;
   
   uint16 _yres;
   if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres) == 0)
-    *yres = _yres;
+    image.yres = _yres;
   
-  int stride = (((*w) * (*spp) * (*bps)) + 7) / 8;
+  int stride = image.Stride();
 
   // printf ("w: %d h: %d\n", *w, *h);
   // printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
 
-  unsigned char* data = (unsigned char* ) malloc (stride * *h);
+  image.data = (unsigned char* ) malloc (stride * image.h);
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
   if (photometric == PHOTOMETRIC_PALETTE)
@@ -84,13 +86,13 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
 	printf ("Error reading colormap.\n");
     }
 
-  unsigned char* data2 = data;
-  for (int row = 0; row < *h; row++)
+  unsigned char* data2 = image.data;
+  for (int row = 0; row < image.h; row++)
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
       // invert if saved inverted
-      if (photometric == PHOTOMETRIC_MINISWHITE && *bps == 1)
+      if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
 	for (unsigned char* i = data2; i != data2 + stride; ++i)
 	  *i ^= 0xFF;
 
@@ -98,68 +100,30 @@ TIFFLoader::readImage (const char *file, int* w, int* h, int* bps, int* spp,
     }
   
   /* strange 16bit gray images ??? */
-  if (*spp == 2)
+  if (image.spp == 2)
     {
-      for (unsigned char* it = data; it < data + stride* *h; it += 2) {
+      for (unsigned char* it = image.data;
+	   it < image.data + stride * image.h; it += 2) {
 	char x = it[0];
 	it[0] = it[1];
 	it[1] = x;
       }
       
-      *spp = 1;
-      *bps *= 2;
+      image.spp = 1;
+      image.bps *= 2;
     }
   
-  if (photometric == PHOTOMETRIC_PALETTE)
-    {
-      // convert palette images
-      int new_size = *w * *h * 3;
-      
-      unsigned char* orig_data = data;
-      data = (unsigned char*) malloc (new_size);
-      
-      unsigned char* src = orig_data;
-      unsigned char* dst = data;
-      
-      int bits_used = 0;
-      int x = 0;
-      while (dst < data + new_size)
-	{
-	  unsigned char v = *src >> (8 - *bps);
-	  // BMP stores the color table in BGR order
-	  *dst++ = rmap[v] >> 8;
-	  *dst++ = gmap[v] >> 8;
-	  *dst++ = bmap[v] >> 8;
-	  
-	  bits_used += *bps;
-	  ++x;
-	  
-	  if (bits_used == 8 || x == *w) {
-	    ++src;
-	    bits_used = 0;
-	    if (x == *w)
-	      x = 0;
-	  }
-	  else {
-	    *src <<= *bps;
-	  }
-	}
-      free (orig_data);
-      
-      *bps = 8;
-      *spp = 3;
-      
-      free (rmap);
-      free (gmap);
-      free (bmap);
-    }
+  if (photometric == PHOTOMETRIC_PALETTE) {
+    colorspace_de_palette (image, rmap, gmap, bmap);
+    free (rmap);
+    free (gmap);
+    free (bmap);
+  }
   
-  return data;
+  return true;
 }
 
-void
-TIFFLoader::writeImage (const char *file, unsigned char *data, int w, int h,
-			int bps, int spp, int xres, int yres)
+bool TIFFLoader::writeImage (const char *file, Image& image)
 {
   TIFF *out;
   //char thing[1024];
@@ -167,24 +131,25 @@ TIFFLoader::writeImage (const char *file, unsigned char *data, int w, int h,
 
   uint32 rowsperstrip = (uint32) - 1;
   uint16 compression = COMPRESSION_NONE;
-  if (bps == 1)
+  if (image.bps == 1)
     compression = COMPRESSION_CCITTFAX4;
   else
     compression = COMPRESSION_LZW;
 
   out = TIFFOpen (file, "w");
   if (out == NULL)
-    return;
-  TIFFSetField (out, TIFFTAG_IMAGEWIDTH, w);
-  TIFFSetField (out, TIFFTAG_IMAGELENGTH, h);
-  TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, bps);
-  TIFFSetField (out, TIFFTAG_SAMPLESPERPIXEL, spp);
+    return false;
+  
+  TIFFSetField (out, TIFFTAG_IMAGEWIDTH, image.w);
+  TIFFSetField (out, TIFFTAG_IMAGELENGTH, image.h);
+  TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, image.bps);
+  TIFFSetField (out, TIFFTAG_SAMPLESPERPIXEL, image.spp);
   TIFFSetField (out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
-  if (bps == 1)
+  if (image.bps == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else if (spp == 1) {
+  else if (image.spp == 1) {
     uint16 rmap[256], gmap[256], bmap[256];
     int i;
     for (i=0;i<256;++i) {
@@ -196,26 +161,28 @@ TIFFLoader::writeImage (const char *file, unsigned char *data, int w, int h,
   else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   
-  if (xres != 0)
-    TIFFSetField (out, TIFFTAG_XRESOLUTION, xres);
+  if (image.xres != 0)
+    TIFFSetField (out, TIFFTAG_XRESOLUTION, image.xres);
   
-  if (yres != 0)
-    TIFFSetField (out, TIFFTAG_YRESOLUTION, yres);
+  if (image.yres != 0)
+    TIFFSetField (out, TIFFTAG_YRESOLUTION, image.yres);
   
   TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");
   TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
   outbuf = (unsigned char *) _TIFFmalloc (TIFFScanlineSize (out));
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
-  
-  for (int row = 0; row < h; row++)
-    {
-      if (TIFFWriteScanline (out, data, row, 0) < 0)
-	break;
-      data += (w * spp * bps + 7) / 8;
-    }
 
+  int stride = image.Stride();
+  for (int row = 0; row < image.h; row++)
+    {
+      if (TIFFWriteScanline (out, image.data + row * stride, row, 0) < 0)
+	break;
+    }
+  
   TIFFClose (out);
+  
+  return true;
 }
 
 TIFFLoader tiff_loader;
