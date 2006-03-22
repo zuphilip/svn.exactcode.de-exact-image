@@ -269,7 +269,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   uint32  clr_tbl_size, n_clr_elems = 3;
   unsigned char *clr_tbl;
   
-  uint32	row, clr, stride;
+  uint32	row, stride;
 
   unsigned char* data = 0;
   
