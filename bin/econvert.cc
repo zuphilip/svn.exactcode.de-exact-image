@@ -67,6 +67,45 @@ bool convert_output (const Argument<std::string>& arg)
   return true;
 }
 
+bool convert_split (const Argument<std::string>& arg)
+{
+  if (image.data == 0) {
+    std::cerr << "No image available." << std::endl;
+    return false;
+  }
+  
+  if (!ImageLoader::Write(arg.Get(), image)) {
+    std::cerr << "Error writing output file." << std::endl;
+    return false;
+  }
+
+  Image split_image (image);
+  
+  // this is a bit ugly hacked for now
+  split_image.h /= arg.count;
+  if (split_image.h == 0) {
+    std::cerr << "Resulting image size too small." << std::endl
+	      << "The resulting slices must have at least a height of one pixel."
+	      << std::endl;
+    
+    return false;
+  }
+  
+  int err = 0;
+  for (int i = 0; i < arg.Size(); ++i)
+    {
+      std::cout << "Writing file: " << arg.Get(i) << std::endl;
+      split_image.data = image.data + i * split_image.Stride() * split_image.h;
+      if (!ImageLoader::Write (arg.Get(i), split_image)) {
+	err = 1;
+	std::cerr << "Error writing output file." << std::endl;
+      }
+    }
+  split_image.data = 0; // not deallocate in dtor
+  
+  return err == 0;
+}
+
 bool convert_colorspace (const Argument<std::string>& arg)
 {
   const std::string& space = arg.Get();
@@ -169,10 +208,16 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_input);
   
   Argument<std::string> arg_output ("o", "output", "output file",
-				    1, 1);
+				    0, 1);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
-
+  
+  Argument<std::string> arg_split ("", "split",
+				   "filenames to save the images split into n parts",
+				   0, 999);
+  arg_split.Bind (convert_split);
+  arglist.Add (&arg_split);
+  
   Argument<std::string> arg_colorspace ("", "colorspace",
 					"convert image colorspace", 0, 1);
   arg_colorspace.Bind (convert_colorspace);
