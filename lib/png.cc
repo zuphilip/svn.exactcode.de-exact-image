@@ -107,13 +107,17 @@ bool PNGLoader::readImage (const char* file, Image& image)
   // png_set_packswap(png_ptr);
 
   /* Expand paletted colors into true RGB triplets */
-  /* TODO:
-  if (color_type == PNG_COLOR_TYPE_PALETTE)
-    png_set_palette_rgb(png_ptr); */
+  if (color_type == PNG_COLOR_TYPE_PALETTE) {
+    png_set_palette_to_rgb(png_ptr);
+    image.spp = 3;
+    image.bps = 8;
+  }
   
-  /* Expand grayscale images to the full 8 bits from 1, 2, or 4 bits/pixel */
-  // if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-  //  png_set_gray_1_2_4_to_8(png_ptr);
+  /* Expand grayscale images to the full 8 bits from 2, or 4 bits/pixel */
+  if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth > 1 && bit_depth < 8) {
+    png_set_gray_1_2_4_to_8(png_ptr);
+    image.bps = 8;
+  }
   
   /* Expand paletted or RGB images with transparency to full alpha channels
    * so the data will be available as RGBA quartets.
