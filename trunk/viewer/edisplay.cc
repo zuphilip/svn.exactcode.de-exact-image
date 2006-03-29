@@ -25,7 +25,13 @@ using namespace Utility;
 
 void Viewer::Zoom (double f)
 {
+  int z = zoom;
   zoom = (int) (f * zoom);
+  
+  if (f > 1.0 && zoom == z)
+    ++zoom;
+  else if (zoom <= 0)
+    zoom = 1;
   
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
