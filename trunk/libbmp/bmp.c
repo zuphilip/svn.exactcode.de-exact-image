@@ -291,7 +291,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   lseek(fd, 10, SEEK_SET);
   read(fd, &file_hdr.iOffBits, 4);
 #ifdef __BIG_ENDIAN__
-  TIFSwabLong(&file_hdr.iOffBits);
+  TIFFSwabLong(&file_hdr.iOffBits);
 #endif
   fstat(fd, &instat);
   file_hdr.iSize = instat.st_size;
