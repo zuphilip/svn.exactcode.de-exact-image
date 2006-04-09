@@ -12,12 +12,12 @@ CXXFLAGS += -Wall -O2 -march=athlon64 -ggdb -ftree-vectorize -ftracer -frename-r
 CFLAGS = -Wall -O0 -ggdb
 CXXFLAGS = -Wall -O0 -ggdb
 
-MODULES = libbmp lib bin
+MODULES = libbmp lib econvert
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
 ifeq "$(WITHEVAS)" "1"
 include gfx/Makefile
-include viewer/Makefile
+include edisplay/Makefile
 endif
 endif
