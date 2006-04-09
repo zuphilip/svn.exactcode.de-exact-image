@@ -369,6 +369,8 @@ bool Viewer::Load ()
   if (image->bps != 8 || image->spp != 3) {
     std::cerr << "Unsupported colorspace. bps: " << image->bps
 	      << ", spp: " << image->spp << std::endl;
+    std::cerr << "If possible please send a test image to rene@exactcode.de."
+              << std::endl;
     return false;
   }
 
