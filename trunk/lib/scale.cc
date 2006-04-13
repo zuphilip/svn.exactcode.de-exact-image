@@ -2,8 +2,15 @@
 #include <iostream>
 #include "Image.hh"
 
+#include "Colorspace.hh"
+
 void linear_scale (Image& image, double scale)
 {
+  bool was_bilevel = image.bps == 1;
+
+  if (was_bilevel)
+    colorspace_bilevel_to_gray (image);
+
   Image new_image = image;
   
   new_image.New ((int)(scale * (double) image.w),
@@ -11,7 +18,7 @@ void linear_scale (Image& image, double scale)
   
   new_image.xres = (int) (scale * image.xres);
   new_image.yres = (int) (scale * image.yres);
-  
+
   scale = 256.0 / scale;
   
   Image::iterator it = new_image.begin();
@@ -46,4 +53,7 @@ void linear_scale (Image& image, double scale)
 
   image = new_image;
   new_image.data = 0;
+
+  if (was_bilevel)
+    colorspace_gray_to_bilevel (image);
 }
