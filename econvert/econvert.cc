@@ -134,6 +134,14 @@ bool convert_normalize (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_scale_near (const Argument<double>& arg)
+{
+  double scale = arg.Get();
+   
+  nearest_scale (image, scale);
+  return true;
+}
+
 bool convert_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();
@@ -227,6 +235,11 @@ int main (int argc, char* argv[])
 				"transform the image to span the full color range");
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
+
+  Argument<double> arg_scale_near ("", "scale-near",
+				   "scale image data using nearest sample", 0.0, 0, 1);
+  arg_scale_near.Bind (convert_scale_near);
+  arglist.Add (&arg_scale_near);
 
   Argument<double> arg_scale ("", "scale",
 			      "scale image data", 0.0, 0, 1);
