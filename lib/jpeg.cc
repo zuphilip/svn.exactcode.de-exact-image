@@ -30,7 +30,9 @@
  */
 
 extern "C" {
+#define HAVE_PROTOTYPES
 #include <jpeglib.h>
+#undef HAVE_PROTOTYPES
 }
 
 /*
@@ -252,7 +254,7 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
      * Here the array is only one element long, but you could ask for
      * more than one scanline at a time if that's more convenient.
      */
-    buffer[0] = image.data + (cinfo.output_scanline*row_stride);
+    buffer[0] = (JSAMPLE*) image.data + (cinfo.output_scanline*row_stride);
     (void) jpeg_read_scanlines(&cinfo, buffer, 1);
   }
 
@@ -338,7 +340,8 @@ bool JPEGLoader::writeImage (const char* file, Image& image)
 
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
-    buffer[0] = image.data + cinfo.next_scanline*image.w*image.spp*image.bps/8;
+    buffer[0] = (JSAMPLE*) image.data +
+      cinfo.next_scanline*image.w*image.spp*image.bps/8;
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 
