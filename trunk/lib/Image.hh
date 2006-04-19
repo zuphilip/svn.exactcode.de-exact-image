@@ -14,7 +14,7 @@ public:
     GRAY16,
     RGB,
     RGB16,
-    CYMK,
+    CMYK,
     YUV
   } type_t;
 
@@ -104,19 +104,26 @@ public:
     Image* image;
     
     type_t type;
-    int stride;
+    int stride, width, _x;
     ivalue_t value;
 
     value_t* ptr;
     signed int bitpos; // for 1bps sub-position
     
     iterator (Image* _image, bool end)
-      : image (_image), type (_image->Type()), stride (_image->Stride())
+      : image (_image), type (_image->Type()),
+	stride (_image->Stride()), width (image->w)
     {
-      if (!end)
+      if (!end) {
 	ptr = (value_t*) image->data;
-      else
+	_x = 0;
+	bitpos = 7;
+      }
+      else {
 	ptr = (value_t*) image->data + stride * image->h + image->w;
+	_x = width;
+	// TODO: bitpos= ...
+      }
     }
     
     inline void clear () {
@@ -130,6 +137,12 @@ public:
       case RGB16:
 	ptr->rgb.r = ptr->rgb.g = ptr->rgb.b = 0;
 	break;
+      case CMYK:
+	ptr->cmyk.c = ptr->cmyk.m = ptr->cmyk.y = ptr->cmyk.k = 0;
+	break;
+      case YUV:
+	ptr->yuv.y = ptr->yuv.u = ptr->yuv.v = 0;
+	break;
       }
     }
     
@@ -139,8 +152,9 @@ public:
       switch (type) {
       case BILEVEL:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 8);
-	bitpos = x % 8;
-	tmp.value.gray = tmp.ptr->gray & (1 << bitpos) ? 255 : 0;
+	tmp.bitpos = 7 - x % 8;
+	tmp.value.gray = (tmp.ptr->gray & (1 << tmp.bitpos))
+	  << (7 - tmp.bitpos); 
 	break;
       case GRAY:
 	tmp.ptr = (value_t*) (image->data + stride * y + x);
@@ -162,6 +176,17 @@ public:
 	tmp.value.rgb.g = tmp.ptr->rgb16.g;
 	tmp.value.rgb.b = tmp.ptr->rgb16.b;
 	break;
+      case CMYK:
+	tmp.value.cmyk.c = tmp.ptr->cmyk.c;
+	tmp.value.cmyk.m = tmp.ptr->cmyk.m;
+	tmp.value.cmyk.y = tmp.ptr->cmyk.y;
+	tmp.value.cmyk.k = tmp.ptr->cmyk.k;
+	break;
+      case YUV:
+	tmp.value.yuv.y = tmp.ptr->yuv.y;
+	tmp.value.yuv.u = tmp.ptr->yuv.u;
+	tmp.value.yuv.v = tmp.ptr->yuv.v;
+	break;
       }
       return tmp;
     }
@@ -179,6 +204,17 @@ public:
 	value.rgb.g += other.value.rgb.g;
 	value.rgb.b += other.value.rgb.b;
 	break;
+      case CMYK:
+	value.cmyk.c += other.value.cmyk.c;
+	value.cmyk.m += other.value.cmyk.m;
+	value.cmyk.y += other.value.cmyk.y;
+	value.cmyk.k += other.value.cmyk.k;
+	break;
+      case YUV:
+	value.yuv.y += other.value.yuv.y;
+	value.yuv.u += other.value.yuv.u;
+	value.yuv.v += other.value.yuv.v;
+	break;     
       }
       return *this;
     }
@@ -195,6 +231,17 @@ public:
 	value.rgb.r -= other.value.rgb.r;
 	value.rgb.g -= other.value.rgb.g;
 	value.rgb.b -= other.value.rgb.b;
+	break;
+      case CMYK:
+	value.cmyk.c -= other.value.cmyk.c;
+	value.cmyk.m -= other.value.cmyk.m;
+	value.cmyk.y -= other.value.cmyk.y;
+	value.cmyk.k -= other.value.cmyk.k;
+	break;
+      case YUV:
+	value.yuv.y -= other.value.yuv.y;
+	value.yuv.u -= other.value.yuv.u;
+	value.yuv.v -= other.value.yuv.v;
 	break;
       }
       return *this;
@@ -213,6 +260,17 @@ public:
 	value.rgb.g *= v;
 	value.rgb.b *= v;
 	break;
+      case CMYK:
+	value.cmyk.c *= v;
+	value.cmyk.m *= v;
+	value.cmyk.y *= v;
+	value.cmyk.k *= v;
+	break;
+      case YUV:
+	value.yuv.y *= v;
+	value.yuv.u *= v;
+	value.yuv.v *= v;
+	break;
       }
       return *this;
     }
@@ -230,6 +288,17 @@ public:
 	value.rgb.g /= v;
 	value.rgb.b /= v;
 	break;
+      case CMYK:
+	value.cmyk.c /= v;
+	value.cmyk.m /= v;
+	value.cmyk.y /= v;
+	value.cmyk.k /= v;
+	break;
+      case YUV:
+	value.yuv.y /= v;
+	value.yuv.u /= v;
+	value.yuv.v /= v;
+	break;
       }
       return *this;
     }
@@ -238,9 +307,11 @@ public:
     inline iterator& operator++ () {
       switch (type) {
       case BILEVEL:
-	++bitpos;
-	if (bitpos == 8) {
-	  bitpos = 0;
+	--bitpos; ++_x;
+	if (bitpos < 0 || _x == width) {
+	  bitpos = 7;
+	  if (_x == width)
+	    _x = 0;
 	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
 	}
 	break;
@@ -249,9 +320,12 @@ public:
       case GRAY16:
 	ptr = (value_t*) ((u_int8_t*) ptr + 2); break;
       case RGB:
+      case YUV:
 	ptr = (value_t*) ((u_int8_t*) ptr + 3); break;
       case RGB16:
 	ptr = (value_t*) ((u_int8_t*) ptr + 6); break;
+      case CMYK:
+	ptr = (value_t*) ((u_int8_t*) ptr + 4); break;
       }
       return *this;
     }
@@ -259,9 +333,9 @@ public:
     inline iterator& operator-- () {
       switch (type) {
       case BILEVEL:
-	--bitpos;
-	if (bitpos < 0) {
-	  bitpos = 7;
+	++bitpos;
+	if (bitpos > 7) {
+	  bitpos = 0;
 	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
 	}
 	break;
@@ -270,9 +344,12 @@ public:
       case GRAY16:
 	ptr = (value_t*) ((u_int8_t*) ptr - 2); break;
       case RGB:
+      case YUV:
 	ptr = (value_t*) ((u_int8_t*) ptr - 3); break;
       case RGB16:
 	ptr = (value_t*) ((u_int8_t*) ptr - 6); break;
+      case CMYK:
+	ptr = (value_t*) ((u_int8_t*) ptr - 4); break;
       }
       return *this;
     }
@@ -301,10 +378,7 @@ public:
     inline void set (const iterator& other) {
       switch (type) {
       case BILEVEL:
-	{
-	  int i = other.value.gray > 127 ? 1 : 0;
-	  ptr->gray |= i << bitpos;
-	}
+	ptr->gray |= (other.value.gray >> 7) << bitpos;
 	break;
       case GRAY:
 	ptr->gray = other.value.gray;
@@ -321,6 +395,17 @@ public:
 	ptr->rgb16.r = other.value.rgb.r;
 	ptr->rgb16.g = other.value.rgb.g;
 	ptr->rgb16.b = other.value.rgb.b;
+	break;
+      case CMYK:
+	ptr->cmyk.c = other.value.cmyk.c;
+	ptr->cmyk.m = other.value.cmyk.m;
+	ptr->cmyk.y = other.value.cmyk.y;
+	ptr->cmyk.k = other.value.cmyk.k;
+	break;
+      case YUV:
+	ptr->yuv.y = other.value.yuv.y;
+	ptr->yuv.u = other.value.yuv.u;
+	ptr->yuv.v = other.value.yuv.v;
 	break;
       }
     }
