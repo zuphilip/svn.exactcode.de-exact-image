@@ -113,7 +113,7 @@ void colorspace_bilevel_to_gray (Image& image)
   
   for (int row = 0; row < image.h; row++)
     {
-      unsigned char z;
+      unsigned char z = 0;
       for (int x = 0; x < image.w; x++)
 	{
 	  if (x % 8 == 0)
@@ -122,7 +122,6 @@ void colorspace_bilevel_to_gray (Image& image)
 	  *output++ = (z >> 7) ? 0xff : 0x00;
 	  
 	  z <<= 1;
-	  
 	}
     }
   
