@@ -385,9 +385,15 @@ bool Viewer::Load ()
   
   for (int y=0; y < image->h; ++y)
     for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += 3) {
+#ifndef __BIG_ENDIAN__
       dest_ptr[0] = src_ptr[2];
       dest_ptr[1] = src_ptr[1];
       dest_ptr[2] = src_ptr[0];
+#else
+      dest_ptr[1] = src_ptr[0];
+      dest_ptr[2] = src_ptr[1];
+      dest_ptr[3] = src_ptr[2];
+#endif
     }
 
   if (evas_image) {
