@@ -30,9 +30,7 @@
  */
 
 extern "C" {
-#define HAVE_PROTOTYPES
 #include <jpeglib.h>
-#undef HAVE_PROTOTYPES
 }
 
 /*
