@@ -114,28 +114,33 @@ bool convert_colorspace (const Argument<std::string>& arg)
   // up
   if (image.spp == 1 && image.bps == 1 &&
       (space == "GRAY" || space == "RGB")) {
-    colorspace_bilevel_to_gray (image);
+    colorspace_gray1_to_gray8 (image);
     
     if (space == "RGB")
-      colorspace_gray_to_rgb (image);
+      colorspace_gray8_to_rgb8 (image);
   }
   
   else if (image.spp == 1 && image.bps == 8 &&
 	   space == "RGB") {
-    colorspace_gray_to_rgb (image);
+    colorspace_gray8_to_rgb8 (image);
   }
   
   // down
   else if (image.spp == 3 && image.bps == 8 &&
-	   (space == "GRAY" || space == "BW")) {
-    colorspace_rgb_to_gray (image);
+	   (space == "GRAY2" || space == "GRAY4"
+	    || space == "GRAY" || space == "BW")) {
+    colorspace_rgb8_to_gray8 (image);
     
+    if (space == "GRAY4")
+      colorspace_gray8_to_gray4 (image);
+    else if (space == "GRAY2")
+      colorspace_gray8_to_gray2 (image);
     if (space == "BW")
-      colorspace_gray_to_bilevel (image);
+      colorspace_gray8_to_gray1 (image);
   }
   else if (image.spp == 1 && image.bps == 8 &&
 	   space == "BW") {
-    colorspace_gray_to_bilevel (image);
+    colorspace_gray8_to_gray1 (image);
   }
   else if (image.spp == 1 && image.bps == 8 &&
 	   space == "GRAY4") {

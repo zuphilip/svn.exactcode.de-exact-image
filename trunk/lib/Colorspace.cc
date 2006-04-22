@@ -41,7 +41,7 @@ void normalize (Image& image, unsigned char low, unsigned char high)
 
 }
 
-void colorspace_rgb_to_gray (Image& image)
+void colorspace_rgb8_to_gray8 (Image& image)
 {
   unsigned char* output = image.data;
   for (unsigned char* it = image.data; it < image.data + image.w*image.h*image.spp;)
@@ -56,7 +56,7 @@ void colorspace_rgb_to_gray (Image& image)
   image.spp = 1; // converted data right now
 }
 
-void colorspace_gray_to_bilevel (Image& image, unsigned char threshold)
+void colorspace_gray8_to_gray1 (Image& image, unsigned char threshold)
 {
   unsigned char *output = image.data;
   unsigned char *input = image.data;
@@ -149,7 +149,7 @@ void colorspace_gray8_to_gray2 (Image& image)
   image.bps = 2;
 }
 
-void colorspace_gray_to_rgb (Image& image)
+void colorspace_gray8_to_rgb8 (Image& image)
 {
   unsigned char* data = (unsigned char*)malloc (image.w*image.h*3);
   unsigned char* output = data;
@@ -165,7 +165,7 @@ void colorspace_gray_to_rgb (Image& image)
   image.spp = 3; // converted data right now
 }
 
-void colorspace_bilevel_to_gray (Image& image)
+void colorspace_gray1_to_gray8 (Image& image)
 {
   unsigned char* data = (unsigned char*) malloc (image.h*image.w);
   

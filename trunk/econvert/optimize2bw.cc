@@ -97,7 +97,7 @@ int main (int argc, char* argv[])
   if (image.spp == 3 && image.bps == 8) {
     std::cerr << "RGB -> Gray convertion" << std::endl;
     
-    colorspace_rgb_to_gray (image);
+    colorspace_rgb8_to_gray8 (image);
   }
   else if (image.spp != 1 && image.bps != 8)
     {
@@ -215,7 +215,7 @@ int main (int argc, char* argv[])
     std::cerr << "Threshold: " << threshold << std::endl;
   }
     
-  colorspace_gray_to_bilevel (image, threshold);
+  colorspace_gray8_to_gray1 (image, threshold);
 
   if (!ImageLoader::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
