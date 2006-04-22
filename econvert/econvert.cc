@@ -113,9 +113,15 @@ bool convert_colorspace (const Argument<std::string>& arg)
   
   // up
   if (image.spp == 1 && image.bps == 1 &&
-      (space == "GRAY" || space == "RGB")) {
-    colorspace_gray1_to_gray8 (image);
-    
+      (space == "GRAY" || space == "GRAY2" || space == "GRAY4" ||
+       space == "RGB")) {
+    if (space == "GRAY2")
+      colorspace_gray1_to_gray2 (image);
+    else if (space == "GRAY4")
+      colorspace_gray1_to_gray4 (image);
+    else
+      colorspace_gray1_to_gray8 (image);
+
     if (space == "RGB")
       colorspace_gray8_to_rgb8 (image);
   }
