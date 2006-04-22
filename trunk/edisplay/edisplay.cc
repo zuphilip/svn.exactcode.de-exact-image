@@ -361,10 +361,10 @@ bool Viewer::Load ()
     colorspace_16_to_8 (*image);
   
   if (image->spp == 1 && image->bps == 1)
-    colorspace_bilevel_to_gray (*image);
+    colorspace_gray1_to_gray8 (*image);
   
   if (image->spp == 1 && image->bps == 8)
-    colorspace_gray_to_rgb (*image);
+    colorspace_gray8_to_rgb8 (*image);
   
   if (image->bps != 8 || image->spp != 3) {
     std::cerr << "Unsupported colorspace. bps: " << image->bps

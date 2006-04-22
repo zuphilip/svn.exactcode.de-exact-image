@@ -165,6 +165,70 @@ void colorspace_gray8_to_rgb8 (Image& image)
   image.spp = 3; // converted data right now
 }
 
+void colorspace_gray1_to_gray2 (Image& image)
+{
+  unsigned char* data = (unsigned char*) malloc (image.h*image.w/4);
+  
+  unsigned char* output = data;
+  unsigned char* input = image.data;
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      unsigned char z = 0;
+      unsigned char zz = 0;
+      for (int x = 0; x < image.w; x++)
+	{
+	  if (x % 8 == 0)
+	    z = *input++;
+
+	  zz <<= 2;
+	  if (z >> 7)
+	    zz |= 0x3;
+	  z <<= 1;
+	  
+	  if (x % 4 == 3)
+	    *output++ = zz;
+	}
+    }
+  
+  free (image.data);
+  image.data = data;
+  
+  image.bps = 2;
+}
+
+void colorspace_gray1_to_gray4 (Image& image)
+{
+    unsigned char* data = (unsigned char*) malloc (image.h*image.w/2);
+  
+  unsigned char* output = data;
+  unsigned char* input = image.data;
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      unsigned char z = 0;
+      unsigned char zz = 0;
+      for (int x = 0; x < image.w; x++)
+	{
+	  if (x % 8 == 0)
+	    z = *input++;
+	  
+	  zz <<= 4;
+	  if (z >> 7)
+	    zz |= 0x0F;
+	  z <<= 1;
+	  
+	  if (x % 2 == 1)
+	    *output++ = zz;
+	}
+    }
+  
+  free (image.data);
+  image.data = data;
+  
+  image.bps = 4;
+}
+
 void colorspace_gray1_to_gray8 (Image& image)
 {
   unsigned char* data = (unsigned char*) malloc (image.h*image.w);
