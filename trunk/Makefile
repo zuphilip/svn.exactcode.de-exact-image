@@ -15,7 +15,20 @@ ifeq "$(X_ARCH)" "i686"
 CXXFLAGS += -mtune=pentium4 -march=i686
 endif
 
-CXXFLAGS += -O2 -ftracer -frename-registers -funit-at-a-time -funroll-loops -funswitch-loops -fpeel-loops # -mfpmath=sse
+# from the linux-kernel build system:
+cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
+            > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+
+CXXFLAGS += -O2 -funroll-loops -fomit-frame-pointer
+CXXFLAGS += $(call cc-option,-funswitch-loops,)
+CXXFLAGS += $(call cc-option,-fpeel-loops,)
+CXXFLAGS += $(call cc-option,-ftracer,)
+CXXFLAGS += $(call cc-option,-funit-at-a-time,)
+CXXFLAGS += $(call cc-option,-frename-registers,)
+CXXFLAGS += $(call cc-option,-ftree-vectorize,)
+
+CXXFLAGS += $(call cc-option,-mfpmath=sse,)
+
 
 MODULES = libbmp lib econvert
 include $(addsuffix /Makefile,$(MODULES))
