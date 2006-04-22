@@ -127,7 +127,6 @@ bool TIFFLoader::writeImage (const char *file, Image& image)
 {
   TIFF *out;
   //char thing[1024];
-  unsigned char /* *inbuf,*/  *outbuf;
 
   uint32 rowsperstrip = (uint32) - 1;
   uint16 compression = COMPRESSION_NONE;
@@ -169,7 +168,6 @@ bool TIFFLoader::writeImage (const char *file, Image& image)
   
   TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");
   TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
-  outbuf = (unsigned char *) _TIFFmalloc (TIFFScanlineSize (out));
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
 
