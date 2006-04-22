@@ -171,42 +171,61 @@ public:
       case BILEVEL:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 8);
 	tmp.bitpos = 7 - x % 8;
-	tmp.value.gray = (tmp.ptr->gray & (1 << tmp.bitpos))
-	  << (7 - tmp.bitpos); 
 	break;
       case GRAY:
 	tmp.ptr = (value_t*) (image->data + stride * y + x);
-	tmp.value.gray = tmp.ptr->gray;
 	break;
       case GRAY16:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 2);
-	tmp.value.gray = tmp.ptr->gray16;
 	break;
       case RGB:
+      case YUV:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 3);
-	tmp.value.rgb.r = tmp.ptr->rgb.r;
-	tmp.value.rgb.g = tmp.ptr->rgb.g;
-	tmp.value.rgb.b = tmp.ptr->rgb.b;
 	break;
       case RGB16:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 6);
-	tmp.value.rgb.r = tmp.ptr->rgb16.r;
-	tmp.value.rgb.g = tmp.ptr->rgb16.g;
-	tmp.value.rgb.b = tmp.ptr->rgb16.b;
 	break;
       case CMYK:
-	tmp.value.cmyk.c = tmp.ptr->cmyk.c;
-	tmp.value.cmyk.m = tmp.ptr->cmyk.m;
-	tmp.value.cmyk.y = tmp.ptr->cmyk.y;
-	tmp.value.cmyk.k = tmp.ptr->cmyk.k;
-	break;
-      case YUV:
-	tmp.value.yuv.y = tmp.ptr->yuv.y;
-	tmp.value.yuv.u = tmp.ptr->yuv.u;
-	tmp.value.yuv.v = tmp.ptr->yuv.v;
+	tmp.ptr = (value_t*) (image->data + stride * y + x * 4);
 	break;
       }
       return tmp;
+    }
+
+    inline iterator& operator* () {
+      switch (type) {
+      case BILEVEL:
+	value.gray = (ptr->gray & (1 << bitpos)) << (7 - bitpos); 
+	break;
+      case GRAY:
+	value.gray = ptr->gray;
+	break;
+      case GRAY16:
+	value.gray = ptr->gray16;
+	break;
+      case RGB:
+	value.rgb.r = ptr->rgb.r;
+	value.rgb.g = ptr->rgb.g;
+	value.rgb.b = ptr->rgb.b;
+	break;
+      case RGB16:
+	value.rgb.r = ptr->rgb16.r;
+	value.rgb.g = ptr->rgb16.g;
+	value.rgb.b = ptr->rgb16.b;
+	break;
+      case CMYK:
+	value.cmyk.c = ptr->cmyk.c;
+	value.cmyk.m = ptr->cmyk.m;
+	value.cmyk.y = ptr->cmyk.y;
+	value.cmyk.k = ptr->cmyk.k;
+	break;
+      case YUV:
+	value.yuv.y = ptr->yuv.y;
+	value.yuv.u = ptr->yuv.u;
+	value.yuv.v = ptr->yuv.v;
+	break;
+      }
+      return *this;
     }
     
     inline iterator& operator+ (const iterator& other) {
@@ -362,7 +381,8 @@ public:
 	}
 	break;
       case GRAY:
-	ptr = (value_t*) ((u_int8_t*) ptr + 1); break;
+	ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	break;
       case GRAY16:
 	ptr = (value_t*) ((u_int8_t*) ptr + 2); break;
       case RGB:
