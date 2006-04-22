@@ -111,17 +111,35 @@ bool convert_colorspace (const Argument<std::string>& arg)
   const std::string& space = arg.Get();
   std::cerr << "convert_colorspace: " << space << std::endl;
   
-  // TODO: implement in all variants
-  if (image.spp == 3 && (space == "GRAY" || space == "BW")) {
+  // up
+  if (image.spp == 1 && image.bps == 1 &&
+      (space == "GRAY" || space == "RGB")) {
+    colorspace_bilevel_to_gray (image);
+    
+    if (space == "RGB")
+      colorspace_gray_to_rgb (image);
+  }
+  
+  else if (image.spp == 1 && image.bps == 8 &&
+	   space == "RGB") {
+    colorspace_gray_to_rgb (image);
+  }
+  
+  // down
+  else if (image.spp == 3 && image.bps == 8 &&
+	   (space == "GRAY" || space == "BW")) {
     colorspace_rgb_to_gray (image);
+    
     if (space == "BW")
       colorspace_gray_to_bilevel (image);
   }
-  else if (image.spp == 1 && image.bps > 1 && space == "BW") {
+  else if (image.spp == 1 && image.bps == 1 &&
+	   space == "BW") {
     colorspace_gray_to_bilevel (image);
   }
   else {
-    std::cerr << "Requested colorspace conversion not yet implemented." << std::endl;
+    std::cerr << "Requested colorspace conversion not yet implemented."
+	      << std::endl;
     return false;
   }
   
@@ -134,19 +152,24 @@ bool convert_normalize (const Argument<bool>& arg)
   return true;
 }
 
-bool convert_scale_near (const Argument<double>& arg)
+bool convert_near_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-   
+  double scale = arg.Get();   
   nearest_scale (image, scale);
   return true;
 }
 
-bool convert_scale (const Argument<double>& arg)
+bool convert_bilinear_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();
-   
-  linear_scale (image, scale);
+  bilinear_scale (image, scale);
+  return true;
+}
+
+bool convert_box_scale (const Argument<double>& arg)
+{
+  double scale = arg.Get();   
+  box_scale (image, scale);
   return true;
 }
 
@@ -236,15 +259,20 @@ int main (int argc, char* argv[])
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
 
-  Argument<double> arg_scale_near ("", "scale-near",
+  Argument<double> arg_near_scale ("", "near-scale",
 				   "scale image data using nearest sample", 0.0, 0, 1);
-  arg_scale_near.Bind (convert_scale_near);
-  arglist.Add (&arg_scale_near);
+  arg_near_scale.Bind (convert_near_scale);
+  arglist.Add (&arg_near_scale);
 
-  Argument<double> arg_scale ("", "scale",
+  Argument<double> arg_bilinear_scale ("", "bilinear-scale",
 			      "scale image data", 0.0, 0, 1);
-  arg_scale.Bind (convert_scale);
-  arglist.Add (&arg_scale);
+  arg_bilinear_scale.Bind (convert_bilinear_scale);
+  arglist.Add (&arg_bilinear_scale);
+
+  Argument<double> arg_box_scale ("", "box-scale",
+				   "(down)scale image data using a box filter", 0.0, 0, 1);
+  arg_box_scale.Bind (convert_box_scale);
+  arglist.Add (&arg_box_scale);
 
   Argument<int> arg_rotate ("", "rotate",
 			    "rotation angle", 0, 0, 1);
