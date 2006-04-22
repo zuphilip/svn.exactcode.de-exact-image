@@ -155,21 +155,21 @@ bool convert_normalize (const Argument<bool>& arg)
 bool convert_near_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();   
-  nearest_scale (image, scale);
+  nearest_scale (image, scale, scale);
   return true;
 }
 
 bool convert_bilinear_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();
-  bilinear_scale (image, scale);
+  bilinear_scale (image, scale, scale);
   return true;
 }
 
 bool convert_box_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();   
-  box_scale (image, scale);
+  box_scale (image, scale, scale);
   return true;
 }
 
@@ -260,7 +260,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_normalize);
 
   Argument<double> arg_near_scale ("", "near-scale",
-				   "scale image data using nearest sample", 0.0, 0, 1);
+				   "scale image data using nearest neighbour sample", 0.0, 0, 1);
   arg_near_scale.Bind (convert_near_scale);
   arglist.Add (&arg_near_scale);
 

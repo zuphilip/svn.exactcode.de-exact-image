@@ -203,7 +203,7 @@ int main (int argc, char* argv[])
   std::cerr << "Scale: " << scale << std::endl;
   
   if (scale > 0.0) {
-    bilinear_scale (image, scale);
+    bilinear_scale (image, scale, scale);
   }
   
   // convert to 1-bit (threshold)

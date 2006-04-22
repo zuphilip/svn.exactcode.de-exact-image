@@ -110,6 +110,9 @@ public:
     value_t* ptr;
     signed int bitpos; // for 1bps sub-position
     
+    // for seperate use, e.g. to accumulate
+    iterator () {};
+    
     iterator (Image* _image, bool end)
       : image (_image), type (_image->Type()),
 	stride (_image->Stride()), width (image->w)
@@ -131,17 +134,17 @@ public:
       case BILEVEL:
       case GRAY:
       case GRAY16:
-	ptr->gray = 0;
+	value.gray = 0;
 	break;
       case RGB:
       case RGB16:
-	ptr->rgb.r = ptr->rgb.g = ptr->rgb.b = 0;
+	value.rgb.r = value.rgb.g = value.rgb.b = 0;
 	break;
       case CMYK:
-	ptr->cmyk.c = ptr->cmyk.m = ptr->cmyk.y = ptr->cmyk.k = 0;
+	value.cmyk.c = value.cmyk.m = value.cmyk.y = value.cmyk.k = 0;
 	break;
       case YUV:
-	ptr->yuv.y = ptr->yuv.u = ptr->yuv.v = 0;
+	value.yuv.y = value.yuv.u = value.yuv.v = 0;
 	break;
       }
     }
@@ -192,6 +195,34 @@ public:
     }
     
     inline iterator& operator+ (const iterator& other) {
+      switch (type) {
+      case BILEVEL:
+      case GRAY:
+      case GRAY16:
+	value.gray += other.value.gray;
+	break;
+      case RGB:
+      case RGB16:
+	value.rgb.r += other.value.rgb.r;
+	value.rgb.g += other.value.rgb.g;
+	value.rgb.b += other.value.rgb.b;
+	break;
+      case CMYK:
+	value.cmyk.c += other.value.cmyk.c;
+	value.cmyk.m += other.value.cmyk.m;
+	value.cmyk.y += other.value.cmyk.y;
+	value.cmyk.k += other.value.cmyk.k;
+	break;
+      case YUV:
+	value.yuv.y += other.value.yuv.y;
+	value.yuv.u += other.value.yuv.u;
+	value.yuv.v += other.value.yuv.v;
+	break;     
+      }
+      return *this;
+    }
+    
+    inline iterator& operator+= (const iterator& other) {
       switch (type) {
       case BILEVEL:
       case GRAY:
