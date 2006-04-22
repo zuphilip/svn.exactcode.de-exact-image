@@ -88,6 +88,36 @@ void colorspace_gray_to_bilevel (Image& image, unsigned char threshold)
   image.bps = 1;
 }
 
+void colorspace_gray8_to_gray4 (Image& image)
+{
+  unsigned char *output = image.data;
+  unsigned char *input = image.data;
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      unsigned char z = 0;
+      int x = 0;
+      for (; x < image.w; x++)
+	{
+	  z <<= 4;
+	  z |= (*input++ >> 4) & 0xF;
+	  
+	  if (x % 2 == 1)
+	    {
+	      *output++ = z;
+	      z = 0;
+	    }
+	}
+      // remainder - TODO: test for correctness ...
+      int remainder = 2 - x % 2;
+      if (remainder != 2)
+	{
+	  z <<= 4*remainder;
+	  *output++ = z;
+	}
+    }
+  image.bps = 4;
+}
 void colorspace_gray8_to_gray2 (Image& image)
 {
   unsigned char *output = image.data;
@@ -112,7 +142,7 @@ void colorspace_gray8_to_gray2 (Image& image)
       int remainder = 4 - x % 4;
       if (remainder != 4)
 	{
-	  z <<= remainder;
+	  z <<= 2*remainder;
 	  *output++ = z;
 	}
     }

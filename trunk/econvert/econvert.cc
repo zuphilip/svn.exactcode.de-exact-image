@@ -138,6 +138,10 @@ bool convert_colorspace (const Argument<std::string>& arg)
     colorspace_gray_to_bilevel (image);
   }
   else if (image.spp == 1 && image.bps == 8 &&
+	   space == "GRAY4") {
+    colorspace_gray8_to_gray4 (image);
+  }
+  else if (image.spp == 1 && image.bps == 8 &&
 	   space == "GRAY2") {
     colorspace_gray8_to_gray2 (image);
   }
