@@ -108,7 +108,7 @@ bool convert_split (const Argument<std::string>& arg)
 
 bool convert_colorspace (const Argument<std::string>& arg)
 {
-  const std::string& space = arg.Get();
+  const std::string& space = arg.Get(arg.Size()-1);
   std::cerr << "convert_colorspace: " << space << std::endl;
   
   // up
@@ -133,9 +133,13 @@ bool convert_colorspace (const Argument<std::string>& arg)
     if (space == "BW")
       colorspace_gray_to_bilevel (image);
   }
-  else if (image.spp == 1 && image.bps == 1 &&
+  else if (image.spp == 1 && image.bps == 8 &&
 	   space == "BW") {
     colorspace_gray_to_bilevel (image);
+  }
+  else if (image.spp == 1 && image.bps == 8 &&
+	   space == "GRAY2") {
+    colorspace_gray8_to_gray2 (image);
   }
   else {
     std::cerr << "Requested colorspace conversion not yet implemented."
@@ -250,7 +254,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_split);
   
   Argument<std::string> arg_colorspace ("", "colorspace",
-					"convert image colorspace", 0, 1);
+					"convert image colorspace", 0, 10);
   arg_colorspace.Bind (convert_colorspace);
   arglist.Add (&arg_colorspace);
 
