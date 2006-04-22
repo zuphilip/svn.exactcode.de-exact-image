@@ -1,4 +1,6 @@
 
+#include <math.h>
+
 #include <iostream>
 #include "Image.hh"
 
@@ -66,15 +68,14 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   }
 
   image = new_image;
-  new_image.data = 0;
 }
 
 void box_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
 
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.New ((int)ceil(scalex * (double) image.w),
+		 (int)ceil(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
   
@@ -95,9 +96,9 @@ void box_scale (Image& image, double scalex, double scaley)
       boxes[x].clear();
       count[x] = 0;
     }
-    
+
     for (; sy < image.h && sy * scaley < dy + 1; ++sy) {
-      std::cout << "sy: " << sy << " from " << image.h << std::endl;
+      //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
       for (int sx=0; sx < image.w; ++sx) {
 	//	std::cout << "sx: " << sx << " -> " << (int)(sx*scalex) << std::endl;
 	boxes[(int)(sx*scalex)] += src.at(sx, sy);
@@ -105,9 +106,10 @@ void box_scale (Image& image, double scalex, double scaley)
       }
     }
     // set box
-    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
+    //    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
     for (int dx = 0; dx < new_image.w; ++dx) {
-      std::cout << "setting: dx: " << dx << ", count: " << count[dx] << std::endl;      
+      //      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
+      //		<< ", count: " << count[dx] << std::endl;      
       dst.set (boxes[dx] / count[dx]);
       ++dst;
     }
@@ -115,5 +117,4 @@ void box_scale (Image& image, double scalex, double scaley)
   }
   
   image = new_image;
-  new_image.data = 0;
 }

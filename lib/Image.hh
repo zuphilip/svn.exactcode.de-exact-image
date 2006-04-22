@@ -76,6 +76,21 @@ public:
       free (data);
   }
   
+  Image& operator= (Image& other)
+  {
+    w = other.w;
+    h = other.h;
+    bps = other.bps;
+    spp = other.spp;
+    xres = other.xres;
+    yres = other.yres;
+    if (data)
+      free (data);
+    data = other.data;
+    other.data = 0;
+    return *this;
+  }
+  
   void New (int _w, int _h) {
     w = _w;
     h = _h;
