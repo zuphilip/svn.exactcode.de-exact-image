@@ -27,7 +27,7 @@ CXXFLAGS += $(call cc-option,-funit-at-a-time,)
 CXXFLAGS += $(call cc-option,-frename-registers,)
 CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 
-CXXFLAGS += $(call cc-option,-mfpmath=sse,)
+#CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
 MODULES = libbmp lib econvert
