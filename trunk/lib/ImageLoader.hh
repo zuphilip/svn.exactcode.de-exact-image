@@ -11,7 +11,11 @@ class ImageLoader
 {
 public:
   
-  virtual ~ImageLoader () {};
+  virtual ~ImageLoader () {
+    if (loader)
+      delete loader;
+    loader = 0;
+  };
   
   virtual bool readImage (const char* file, Image& image) = 0;
   virtual bool writeImage (const char* file, Image& image) = 0;
