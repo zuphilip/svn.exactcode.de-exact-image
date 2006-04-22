@@ -9,13 +9,15 @@ class Image
 public:
   
   typedef enum {
-    BILEVEL,
-    GRAY,
+    GRAY1,
+    GRAY2,
+    GRAY4,
+    GRAY8,
     GRAY16,
-    RGB,
+    RGB8,
     RGB16,
-    CMYK,
-    YUV
+    CMYK8,
+    YUV8
   } type_t;
 
   typedef union {
@@ -103,10 +105,12 @@ public:
 
   type_t Type () const {
     switch (spp*bps) {
-    case 1:  return BILEVEL;
-    case 8:  return GRAY;
+    case 1:  return GRAY1;
+    case 2:  return GRAY2;
+    case 4:  return GRAY4;
+    case 8:  return GRAY8;
     case 16: return GRAY16;
-    case 24: return RGB;
+    case 24: return RGB8;
     case 48: return RGB16;
     default:
       std::cerr << "Unknown type" << std::endl;
@@ -146,19 +150,21 @@ public:
     
     inline void clear () {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray = 0;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r = value.rgb.g = value.rgb.b = 0;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c = value.cmyk.m = value.cmyk.y = value.cmyk.k = 0;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y = value.yuv.u = value.yuv.v = 0;
 	break;
       }
@@ -168,24 +174,32 @@ public:
       iterator tmp = *this;
       
       switch (type) {
-      case BILEVEL:
+      case GRAY1:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 8);
 	tmp.bitpos = 7 - x % 8;
 	break;
-      case GRAY:
+      case GRAY2:
+	tmp.ptr = (value_t*) (image->data + stride * y + x / 4);
+	tmp.bitpos = 7 - (x % 4) * 2;
+	break;
+      case GRAY4:
+	tmp.ptr = (value_t*) (image->data + stride * y + x / 2);
+	tmp.bitpos = 7 - (x % 2) * 4;
+	break;
+      case GRAY8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x);
 	break;
       case GRAY16:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 2);
 	break;
-      case RGB:
-      case YUV:
+      case RGB8:
+      case YUV8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 3);
 	break;
       case RGB16:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 6);
 	break;
-      case CMYK:
+      case CMYK8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 4);
 	break;
       }
@@ -194,16 +208,22 @@ public:
 
     inline iterator& operator* () {
       switch (type) {
-      case BILEVEL:
-	value.gray = (ptr->gray & (1 << bitpos)) << (7 - bitpos); 
+      case GRAY1:
+	value.gray = (ptr->gray & (0x01 << bitpos)) << (7 - bitpos); 
 	break;
-      case GRAY:
+      case GRAY2:
+	value.gray = (ptr->gray & (0x03 << (bitpos-1))) << (7 - bitpos); 
+	break;
+      case GRAY4:
+	value.gray = (ptr->gray & (0x0F << (bitpos-3))) << (7 - bitpos); 
+	break;
+      case GRAY8:
 	value.gray = ptr->gray;
 	break;
       case GRAY16:
 	value.gray = ptr->gray16;
 	break;
-      case RGB:
+      case RGB8:
 	value.rgb.r = ptr->rgb.r;
 	value.rgb.g = ptr->rgb.g;
 	value.rgb.b = ptr->rgb.b;
@@ -213,13 +233,13 @@ public:
 	value.rgb.g = ptr->rgb16.g;
 	value.rgb.b = ptr->rgb16.b;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c = ptr->cmyk.c;
 	value.cmyk.m = ptr->cmyk.m;
 	value.cmyk.y = ptr->cmyk.y;
 	value.cmyk.k = ptr->cmyk.k;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y = ptr->yuv.y;
 	value.yuv.u = ptr->yuv.u;
 	value.yuv.v = ptr->yuv.v;
@@ -230,24 +250,26 @@ public:
     
     inline iterator& operator+ (const iterator& other) {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray += other.value.gray;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r += other.value.rgb.r;
 	value.rgb.g += other.value.rgb.g;
 	value.rgb.b += other.value.rgb.b;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c += other.value.cmyk.c;
 	value.cmyk.m += other.value.cmyk.m;
 	value.cmyk.y += other.value.cmyk.y;
 	value.cmyk.k += other.value.cmyk.k;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y += other.value.yuv.y;
 	value.yuv.u += other.value.yuv.u;
 	value.yuv.v += other.value.yuv.v;
@@ -258,24 +280,26 @@ public:
     
     inline iterator& operator+= (const iterator& other) {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray += other.value.gray;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r += other.value.rgb.r;
 	value.rgb.g += other.value.rgb.g;
 	value.rgb.b += other.value.rgb.b;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c += other.value.cmyk.c;
 	value.cmyk.m += other.value.cmyk.m;
 	value.cmyk.y += other.value.cmyk.y;
 	value.cmyk.k += other.value.cmyk.k;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y += other.value.yuv.y;
 	value.yuv.u += other.value.yuv.u;
 	value.yuv.v += other.value.yuv.v;
@@ -286,24 +310,26 @@ public:
     
     inline iterator& operator- (const iterator& other)  {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray -= other.value.gray;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r -= other.value.rgb.r;
 	value.rgb.g -= other.value.rgb.g;
 	value.rgb.b -= other.value.rgb.b;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c -= other.value.cmyk.c;
 	value.cmyk.m -= other.value.cmyk.m;
 	value.cmyk.y -= other.value.cmyk.y;
 	value.cmyk.k -= other.value.cmyk.k;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y -= other.value.yuv.y;
 	value.yuv.u -= other.value.yuv.u;
 	value.yuv.v -= other.value.yuv.v;
@@ -314,24 +340,26 @@ public:
     
     inline iterator& operator* (const int v) {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray *= v;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r *= v;
 	value.rgb.g *= v;
 	value.rgb.b *= v;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c *= v;
 	value.cmyk.m *= v;
 	value.cmyk.y *= v;
 	value.cmyk.k *= v;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y *= v;
 	value.yuv.u *= v;
 	value.yuv.v *= v;
@@ -342,24 +370,26 @@ public:
     
     inline iterator& operator/ (const int v) {
       switch (type) {
-      case BILEVEL:
-      case GRAY:
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
       case GRAY16:
 	value.gray /= v;
 	break;
-      case RGB:
+      case RGB8:
       case RGB16:
 	value.rgb.r /= v;
 	value.rgb.g /= v;
 	value.rgb.b /= v;
 	break;
-      case CMYK:
+      case CMYK8:
 	value.cmyk.c /= v;
 	value.cmyk.m /= v;
 	value.cmyk.y /= v;
 	value.cmyk.k /= v;
 	break;
-      case YUV:
+      case YUV8:
 	value.yuv.y /= v;
 	value.yuv.u /= v;
 	value.yuv.v /= v;
@@ -371,7 +401,7 @@ public:
     //prefix
     inline iterator& operator++ () {
       switch (type) {
-      case BILEVEL:
+      case GRAY1:
 	--bitpos; ++_x;
 	if (bitpos < 0 || _x == width) {
 	  bitpos = 7;
@@ -380,17 +410,35 @@ public:
 	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
 	}
 	break;
-      case GRAY:
+      case GRAY2:
+	bitpos -= 2; ++_x;
+	if (bitpos < 0 || _x == width) {
+	  bitpos = 7;
+	  if (_x == width)
+	    _x = 0;
+	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	}
+	break;
+      case GRAY4:
+	bitpos -= 4; ++_x;
+	if (bitpos < 0 || _x == width) {
+	  bitpos = 7;
+	  if (_x == width)
+	    _x = 0;
+	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	}
+	break;
+      case GRAY8:
 	ptr = (value_t*) ((u_int8_t*) ptr + 1);
 	break;
       case GRAY16:
 	ptr = (value_t*) ((u_int8_t*) ptr + 2); break;
-      case RGB:
-      case YUV:
+      case RGB8:
+      case YUV8:
 	ptr = (value_t*) ((u_int8_t*) ptr + 3); break;
       case RGB16:
 	ptr = (value_t*) ((u_int8_t*) ptr + 6); break;
-      case CMYK:
+      case CMYK8:
 	ptr = (value_t*) ((u_int8_t*) ptr + 4); break;
       }
       return *this;
@@ -398,61 +446,60 @@ public:
     
     inline iterator& operator-- () {
       switch (type) {
-      case BILEVEL:
+      case GRAY1:
 	++bitpos;
 	if (bitpos > 7) {
 	  bitpos = 0;
 	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
 	}
 	break;
-      case GRAY:
+      case GRAY2:
+	bitpos += 2;
+	if (bitpos > 7) {
+	  bitpos = 1;
+	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
+	}
+	break;
+      case GRAY4:
+	++bitpos;
+	if (bitpos > 7) {
+	  bitpos = 3;
+	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
+	}
+	break;
+      case GRAY8:
 	ptr = (value_t*) ((u_int8_t*) ptr - 1); break;
       case GRAY16:
 	ptr = (value_t*) ((u_int8_t*) ptr - 2); break;
-      case RGB:
-      case YUV:
+      case RGB8:
+      case YUV8:
 	ptr = (value_t*) ((u_int8_t*) ptr - 3); break;
       case RGB16:
 	ptr = (value_t*) ((u_int8_t*) ptr - 6); break;
-      case CMYK:
+      case CMYK8:
 	ptr = (value_t*) ((u_int8_t*) ptr - 4); break;
       }
       return *this;
     }
-
-    //postfix
-#if 0
-    inline iterator operator++ (int) {
-      iterator tmp = *this;
-      switch (type) {
-      default:
-	ptr = (value_t*) ((u_int8_t*) ptr + 1);
-      }
-      return tmp;
-    }
-    
-    inline iterator operator-- (int) {
-      iterator tmp = *this;
-      switch (type) {
-      default:
-	ptr = (value_t*) ((u_int8_t*) ptr - 1);
-      }
-      return tmp;
-    }
-#endif
     
     inline void set (const iterator& other) {
       switch (type) {
-      case BILEVEL:
+      case GRAY1:
 	ptr->gray |= (other.value.gray >> 7) << bitpos;
 	break;
-      case GRAY:
+      case GRAY2:
+	ptr->gray |= (other.value.gray >> 6) << (bitpos-1);
+	break;
+      case GRAY4:
+	ptr->gray |= (other.value.gray >> 4) << (bitpos-3);
+	break;
+      case GRAY8:
 	ptr->gray = other.value.gray;
 	break;
       case GRAY16:
 	ptr->gray16 = other.value.gray;
 	break;
-      case RGB:
+      case RGB8:
 	ptr->rgb.r = other.value.rgb.r;
 	ptr->rgb.g = other.value.rgb.g;
 	ptr->rgb.b = other.value.rgb.b;
@@ -462,13 +509,13 @@ public:
 	ptr->rgb16.g = other.value.rgb.g;
 	ptr->rgb16.b = other.value.rgb.b;
 	break;
-      case CMYK:
+      case CMYK8:
 	ptr->cmyk.c = other.value.cmyk.c;
 	ptr->cmyk.m = other.value.cmyk.m;
 	ptr->cmyk.y = other.value.cmyk.y;
 	ptr->cmyk.k = other.value.cmyk.k;
 	break;
-      case YUV:
+      case YUV8:
 	ptr->yuv.y = other.value.yuv.y;
 	ptr->yuv.u = other.value.yuv.u;
 	ptr->yuv.v = other.value.yuv.v;
