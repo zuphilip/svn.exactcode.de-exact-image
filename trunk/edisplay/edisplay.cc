@@ -421,16 +421,12 @@ bool Viewer::Load ()
 
 int main (int argc, char** argv)
 {
-  ArgumentList arglist;
+  ArgumentList arglist (true); // enable residual gathering
   
   // setup the argument list
   Argument<bool> arg_help ("", "help",
                            "display this help text and exit");
   arglist.Add (&arg_help);
-  
-  Argument<std::string> arg_input ("i", "input", "input file",
-                                   1, 99999);
-  arglist.Add (&arg_input);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
@@ -444,6 +440,6 @@ int main (int argc, char** argv)
       return 1;
     }
   
-  Viewer viewer(arg_input.Values());
+  Viewer viewer(arglist.Residuals());
   return viewer.Run ();
 }
