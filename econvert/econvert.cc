@@ -108,7 +108,7 @@ bool convert_split (const Argument<std::string>& arg)
 
 bool convert_colorspace (const Argument<std::string>& arg)
 {
-  const std::string& space = arg.Get(arg.Size()-1);
+  const std::string& space = arg.Get();
   std::cerr << "convert_colorspace: " << space << std::endl;
   
   // up
@@ -253,74 +253,85 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_help);
   
   Argument<std::string> arg_input ("i", "input", "input file",
-                                   1, 1);
+                                   0, 1, true, true);
   arg_input.Bind (convert_input);
   arglist.Add (&arg_input);
   
   Argument<std::string> arg_output ("o", "output", "output file",
-				    0, 1);
+				    0, 1, true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
   
   Argument<std::string> arg_split ("", "split",
 				   "filenames to save the images split into n parts",
-				   0, 999);
+				   0, 999, true, true);
   arg_split.Bind (convert_split);
   arglist.Add (&arg_split);
   
   Argument<std::string> arg_colorspace ("", "colorspace",
-					"convert image colorspace", 0, 10);
+					"convert image colorspace",
+					0, 1, true, true);
   arg_colorspace.Bind (convert_colorspace);
   arglist.Add (&arg_colorspace);
 
   Argument<bool> arg_normalize ("", "normalize",
-				"transform the image to span the full color range");
+				"transform the image to span the full color range",
+				0, 1, true, true);
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
 
   Argument<double> arg_near_scale ("", "near-scale",
-				   "scale image data using nearest neighbour sample", 0.0, 0, 1);
+				   "scale image data using nearest neighbour sample",
+				   0.0, 0, 1, true, true);
   arg_near_scale.Bind (convert_near_scale);
   arglist.Add (&arg_near_scale);
 
   Argument<double> arg_bilinear_scale ("", "bilinear-scale",
-			      "scale image data", 0.0, 0, 1);
+			      "scale image data",
+				       0.0, 0, 1, true, true);
   arg_bilinear_scale.Bind (convert_bilinear_scale);
   arglist.Add (&arg_bilinear_scale);
 
   Argument<double> arg_box_scale ("", "box-scale",
-				   "(down)scale image data using a box filter", 0.0, 0, 1);
+				   "(down)scale image data using a box filter",
+				  0.0, 0, 1, true, true);
   arg_box_scale.Bind (convert_box_scale);
   arglist.Add (&arg_box_scale);
 
   Argument<int> arg_rotate ("", "rotate",
-			    "rotation angle", 0, 0, 1);
+			    "rotation angle",
+			    0, 1, true, true);
   arg_rotate.Bind (convert_rotate);
   arglist.Add (&arg_rotate);
 
   Argument<bool> arg_flip ("", "flip",
-			   "flip the image vertically");
+			   "flip the image vertically",
+			   0, 1, true, true);
   arg_flip.Bind (convert_flip);
   arglist.Add (&arg_flip);
 
   Argument<bool> arg_flop ("", "flop",
-			   "flip the image horizontally");
+			   "flip the image horizontally",
+			   0, 1, true, true);
   arg_flop.Bind (convert_flop);
   arglist.Add (&arg_flop);
 
   Argument<int> arg_floyd ("", "floyd-steinberg",
-			   "Floyd Steinberg dithering using n shades", 0, 0, 1);
+			   "Floyd Steinberg dithering using n shades",
+			   0, 1, true, true);
   arg_floyd.Bind (convert_dither_floyd_steinberg);
   arglist.Add (&arg_floyd);
   
   Argument<int> arg_riemersma ("", "riemersma",
-			   "Riemersma dithering using n shades", 0, 0, 1);
+			       "Riemersma dithering using n shades",
+			       0, 1, true, true);
   arg_riemersma.Bind (convert_dither_riemersma);
   arglist.Add (&arg_riemersma);
 
 
   Argument<bool> arg_edge ("", "edge",
-                           "Edge detect");
+                           "Edge detect",
+			   0, 1, true, true);
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
