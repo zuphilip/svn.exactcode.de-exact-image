@@ -74,8 +74,8 @@ void box_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
 
-  new_image.New ((int)ceil(scalex * (double) image.w),
-		 (int)ceil(scaley * (double) image.h));
+  new_image.New ((int)(scalex * (double) image.w),
+		 (int)(scaley * (double) image.h));
   
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
@@ -98,8 +98,9 @@ void box_scale (Image& image, double scalex, double scaley)
 	
 	for (; sy < image.h && sy * scaley < dy + 1; ++sy) {
 	  for (int sx = 0; sx < image.w; ++sx) {
-	    boxes[(int)(sx*scalex)] += *src; ++src;
-	    ++count[(int)(sx*scalex)];
+	    int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	    boxes[dx] += *src; ++src;
+	    ++count[dx];
 	  }
 	}
 	
@@ -131,20 +132,20 @@ void box_scale (Image& image, double scalex, double scaley)
       count[x] = 0;
     }
 
-    for (; sy < image.h && sy * scaley < dy + 1; ++sy) {
+    for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
       //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
       for (int sx = 0; sx < image.w; ++sx) {
-	//	std::cout << "sx: " << sx << " -> " << (int)(sx*scalex) << std::endl;
-	boxes[(int)(sx*scalex)] += *src;
-	++src;
-	++count[(int)(sx*scalex)];
+	int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	//	std::cout << "sx: " << sx << " -> " << dx << std::endl;
+	boxes[dx] += *src; ++src;
+	++count[dx];
       }
     }
     // set box
     //    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
     for (int dx = 0; dx < new_image.w; ++dx) {
       //      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
-      //		<< ", count: " << count[dx] << std::endl;      
+      //       		<< ", count: " << count[dx] << std::endl;      
       dst.set (boxes[dx] / count[dx]);
       ++dst;
     }
