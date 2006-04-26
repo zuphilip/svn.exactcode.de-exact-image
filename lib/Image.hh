@@ -248,36 +248,6 @@ public:
       return *this;
     }
     
-    inline iterator& operator+ (const iterator& other) {
-      switch (type) {
-      case GRAY1:
-      case GRAY2:
-      case GRAY4:
-      case GRAY8:
-      case GRAY16:
-	value.gray += other.value.gray;
-	break;
-      case RGB8:
-      case RGB16:
-	value.rgb.r += other.value.rgb.r;
-	value.rgb.g += other.value.rgb.g;
-	value.rgb.b += other.value.rgb.b;
-	break;
-      case CMYK8:
-	value.cmyk.c += other.value.cmyk.c;
-	value.cmyk.m += other.value.cmyk.m;
-	value.cmyk.y += other.value.cmyk.y;
-	value.cmyk.k += other.value.cmyk.k;
-	break;
-      case YUV8:
-	value.yuv.y += other.value.yuv.y;
-	value.yuv.u += other.value.yuv.u;
-	value.yuv.v += other.value.yuv.v;
-	break;     
-      }
-      return *this;
-    }
-    
     inline iterator& operator+= (const iterator& other) {
       switch (type) {
       case GRAY1:
@@ -308,7 +278,12 @@ public:
       return *this;
     }
     
-    inline iterator& operator- (const iterator& other)  {
+    inline iterator& operator+ (const iterator& other) const {
+      iterator tmp = *this;
+      return tmp += other;
+    }
+    
+    inline iterator& operator-= (const iterator& other)  {
       switch (type) {
       case GRAY1:
       case GRAY2:
@@ -338,7 +313,12 @@ public:
       return *this;
     }
     
-    inline iterator& operator* (const int v) {
+    inline iterator& operator- (const iterator& other) const {
+      iterator tmp = *this;
+      return tmp -= other;
+    }
+    
+    inline iterator& operator*= (const int v) {
       switch (type) {
       case GRAY1:
       case GRAY2:
@@ -368,7 +348,12 @@ public:
       return *this;
     }
     
-    inline iterator& operator/ (const int v) {
+    inline iterator& operator* (const int v) const {
+      iterator tmp = *this;
+      return tmp *= v;
+    }
+    
+    inline iterator& operator/= (const int v) {
       switch (type) {
       case GRAY1:
       case GRAY2:
@@ -397,6 +382,11 @@ public:
       }
       return *this;
     }
+
+    inline iterator& operator/ (const int v) const {
+      iterator tmp = *this;
+      return tmp /= v;
+    }    
     
     //prefix
     inline iterator& operator++ () {

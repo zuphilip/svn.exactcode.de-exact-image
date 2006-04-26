@@ -46,19 +46,21 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
 
-  for (int y=0; y < new_image.h; ++y) {
+  for (int y = 0; y < new_image.h; ++y) {
     double by = .5+y / scaley;
-    int sy = std::min((int)by, image.h - 1);
-    int syy = std::min(sy+1, image.h - 1);
+    int sy = std::min((int)by, image.h-1);
     int ydist = (int) ((by - sy) * 256);
 
-    for (int x=0; x < new_image.w; ++x) {
+    int syy = std::min(sy+1, image.h-1);
+
+    for (int x = 0; x < new_image.w; ++x) {
       double bx = .5+x / scalex;
-      int sx = std::min((int)bx, image.w - 1);
-      int sxx = std::min(sx+1, image.w - 1);
+      int sx = std::min((int)bx, image.w-1);
       int xdist = (int) ((bx - sx) * 256);
 
-      if (x < 8 && y < 8) {
+      int sxx = std::min(sx+1, image.w-1);
+
+      if (false && x < 8 && y < 8) {
         std::cout << "sx: " << sx << ", sy: " << sy << ", sxx: " << sxx << ", syy: " << syy << std::endl;
         std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
       }
@@ -160,8 +162,23 @@ void box_scale (Image& image, double scalex, double scaley)
   image = new_image;
 }
 
+inline Image::iterator CubicConvolution (int distance,
+					 const Image::iterator& f0,
+					 const Image::iterator& f1,
+					 const Image::iterator& f2,
+					 const Image::iterator& f3) 
+{
+  Image::iterator it = f0;
+  it = ( /*(    f1 + f3 - f0   - f2 ) * distance * distance * distance
+	   + (f0*2 + f2 - f1*2 - f3 ) * distance * distance
+	   +*/ (  f2 - f1             ) * distance ) / (256)
+    + f1;
+  return it;
+}
+
 void bicubic_scale (Image& image, double scalex, double scaley)
 {
+
   Image new_image = image;
 
   new_image.New ((int)(scalex * (double) image.w),
@@ -172,29 +189,45 @@ void bicubic_scale (Image& image, double scalex, double scaley)
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
 
-  for (int y=0; y < new_image.h; ++y) {
-    double by = (double)y / scaley;
-    int sy = std::min((int)by, image.h - 1);
-    int syy = std::min(sy+1, image.h - 1);
-    int fyy = (int) ((by - sy) * 256);
-    int fy = 256 - fyy;
+  Image::iterator r0 = image.begin();
+  Image::iterator r1 = image.begin();
+  Image::iterator r2 = image.begin();
+  Image::iterator r3 = image.begin();
 
-    for (int x=0; x < new_image.w; ++x) {
-      double bx = (double)x / scalex;
+  for (int y = 0; y < new_image.h; ++y) {
+    double by = .5+y / scaley;
+    int sy = std::min((int)by, image.h-1);
+    int ydist = (int) ((by - sy) * 256);
+    
+    int sy0 = std::max(sy-1, 0);
+    int sy2 = std::min(sy+1, image.h-1);
+    int sy3 = std::min(sy+2, image.h-1);
+    
+    for (int x = 0; x < new_image.w; ++x) {
+      
+      double bx = .5+x / scalex;
       int sx = std::min((int)bx, image.w - 1);
-      int sxx = std::min(sx+1, image.w - 1);
-      int fxx = (int) ((bx - sx) * 256);
-      int fx = 256 - fxx;
-
-      if (false && x < 8 && y < 8) {
-        std::cout << "sx: " << sx << ", sy: " << sy << ", sxx: " << sxx << ", syy: " << syy << std::endl;
-        std::cout << "fx: " << fx << ", fy: " << fy << ", fxx: " << fxx << ", fyy: " << fyy << std::endl;
-      }
-
-      dst.set ( (*src.at (sx,  sy ) * fx  * fy +
-                 *src.at (sxx, sy ) * fxx * fy +
-                 *src.at (sx,  syy) * fx  * fyy +
-                 *src.at (sxx, syy) * fxx * fyy) / (256 * 256) );
+      int xdist = (int) ((bx - sx) * 256);
+      
+      int sx0 = std::max(sx-1, 0);
+      int sx2 = std::min(sx+1, image.w-1);
+      int sx3 = std::min(sx+2, image.w-1);
+      
+      //      xdist = ydist = 0;
+      r0 = CubicConvolution (xdist,
+			     *src.at(sx0,sy0), *src.at(sx,sy0),
+			     *src.at(sx2,sy0), *src.at(sx3,sy0));
+      r1 = CubicConvolution (xdist,
+			     *src.at(sx0,sy),  *src.at(sx,sy),
+			     *src.at(sx2,sy),  *src.at(sx3,sy));
+      r2 = CubicConvolution (xdist,
+			     *src.at(sx0,sy2), *src.at(sx,sy2),
+			     *src.at(sx2,sy2), *src.at(sx3,sy2));
+      r3 = CubicConvolution (xdist,
+			     *src.at(sx0,sy3), *src.at(sx,sy3),
+			     *src.at(sx2,sy3), *src.at(sx3,sy3));
+      
+      dst.set (CubicConvolution (ydist, r0, r1, r2, r3));
       ++dst;
     }
   }
