@@ -177,11 +177,12 @@ bool convert_scale (const Argument<double>& arg)
   
   if (scale < 0.5)
     box_scale (image, scale, scale);
+  if (scale == 2.0)
+    directional_average_scale_2x (image);
   else if (scale > 2)
     bilinear_scale (image, scale, scale);
   else
-    // TODO: use a more advanced one, trilinear or bicubic or so
-    bilinear_scale (image, scale, scale);
+    bicubic_scale (image, scale, scale);
   
   return true;
 }
@@ -197,6 +198,13 @@ bool convert_bilinear_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();
   bilinear_scale (image, scale, scale);
+  return true;
+}
+
+bool convert_bicubic_scale (const Argument<double>& arg)
+{
+  double scale = arg.Get();
+  bicubic_scale (image, scale, scale);
   return true;
 }
 
@@ -302,19 +310,25 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_scale);
   
   Argument<double> arg_near_scale ("", "near-scale",
-				   "scale image data using nearest neighbour sample",
+				   "scale image data to nearest neighbour",
 				   0.0, 0, 1, true, true);
   arg_near_scale.Bind (convert_near_scale);
   arglist.Add (&arg_near_scale);
 
   Argument<double> arg_bilinear_scale ("", "bilinear-scale",
-			      "scale image data",
+				       "scale image data with bi-linear filter",
 				       0.0, 0, 1, true, true);
   arg_bilinear_scale.Bind (convert_bilinear_scale);
   arglist.Add (&arg_bilinear_scale);
 
+  Argument<double> arg_bicubic_scale ("", "bicubic-scale",
+				      "scale image data with bi-cubic filter",
+				      0.0, 0, 1, true, true);
+  arg_bicubic_scale.Bind (convert_bicubic_scale);
+  arglist.Add (&arg_bicubic_scale);
+
   Argument<double> arg_box_scale ("", "box-scale",
-				   "(down)scale image data using a box filter",
+				   "(down)scale image data with box filter",
 				  0.0, 0, 1, true, true);
   arg_box_scale.Bind (convert_box_scale);
   arglist.Add (&arg_box_scale);
