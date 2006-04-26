@@ -171,9 +171,24 @@ bool convert_normalize (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_scale (const Argument<double>& arg)
+{
+  double scale = arg.Get();
+  
+  if (scale < 0.5)
+    box_scale (image, scale, scale);
+  else if (scale > 2)
+    bilinear_scale (image, scale, scale);
+  else
+    // TODO: use a more advanced one, trilinear or bicubic or so
+    bilinear_scale (image, scale, scale);
+  
+  return true;
+}
+
 bool convert_near_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();   
+  double scale = arg.Get();
   nearest_scale (image, scale, scale);
   return true;
 }
@@ -187,7 +202,7 @@ bool convert_bilinear_scale (const Argument<double>& arg)
 
 bool convert_box_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();   
+  double scale = arg.Get();
   box_scale (image, scale, scale);
   return true;
 }
@@ -279,7 +294,13 @@ int main (int argc, char* argv[])
 				0, 1, true, true);
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
-
+  
+  Argument<double> arg_scale ("", "scale",
+			      "scale image data using a method suitable for the specified factor",
+			      0.0, 0, 1, true, true);
+  arg_scale.Bind (convert_scale);
+  arglist.Add (&arg_scale);
+  
   Argument<double> arg_near_scale ("", "near-scale",
 				   "scale image data using nearest neighbour sample",
 				   0.0, 0, 1, true, true);
