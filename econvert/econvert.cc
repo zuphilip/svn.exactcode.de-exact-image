@@ -187,7 +187,7 @@ bool convert_scale (const Argument<double>& arg)
   return true;
 }
 
-bool convert_near_scale (const Argument<double>& arg)
+bool convert_nearest_scale (const Argument<double>& arg)
 {
   double scale = arg.Get();
   nearest_scale (image, scale, scale);
@@ -309,10 +309,10 @@ int main (int argc, char* argv[])
   arg_scale.Bind (convert_scale);
   arglist.Add (&arg_scale);
   
-  Argument<double> arg_near_scale ("", "near-scale",
+  Argument<double> arg_nearest_scale ("", "nearest-scale",
 				   "scale image data to nearest neighbour",
 				   0.0, 0, 1, true, true);
-  arg_near_scale.Bind (convert_near_scale);
+  arg_nearest_scale.Bind (convert_nearest_scale);
   arglist.Add (&arg_near_scale);
 
   Argument<double> arg_bilinear_scale ("", "bilinear-scale",
