@@ -30,6 +30,10 @@ void nearest_scale (Image& image, double scalex, double scaley)
   new_image.data = 0;
 }
 
+void directional_average_scale_2x (Image& image)
+{
+}
+
 void bilinear_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
@@ -43,26 +47,27 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   Image::iterator src = image.begin();
 
   for (int y=0; y < new_image.h; ++y) {
-    int sy = std::min((int) ((double)y / scaley), image.h - 1);
-    int syy = std::min((int) (((double)y+.5) / scaley +.5), image.h - 1);
-    int fy = 256 / (syy - sy);
-    int fyy = 256 - fy;
+    double by = .5+y / scaley;
+    int sy = std::min((int)by, image.h - 1);
+    int syy = std::min(sy+1, image.h - 1);
+    int ydist = (int) ((by - sy) * 256);
 
     for (int x=0; x < new_image.w; ++x) {
-      int sx = std::min((int) ((double)x / scalex), image.w - 1);
-      int sxx = std::min((int) (((double)x+.5) / scalex +.5), image.w - 1);
-      int fx = 256 / (sxx - sx);
-      int fxx = 256 - fx;
+      double bx = .5+x / scalex;
+      int sx = std::min((int)bx, image.w - 1);
+      int sxx = std::min(sx+1, image.w - 1);
+      int xdist = (int) ((bx - sx) * 256);
 
-      if (false && x < 8 && y < 8) {
+      if (x < 8 && y < 8) {
         std::cout << "sx: " << sx << ", sy: " << sy << ", sxx: " << sxx << ", syy: " << syy << std::endl;
-        std::cout << "fx: " << fx << ", fy: " << fy << ", fxx: " << fxx << ", fyy: " << fyy << std::endl;
+        std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
       }
 
-      dst.set ( (*src.at (sx,  sy ) * fx  * fy +
-                 *src.at (sxx, sy ) * fxx * fy +
-                 *src.at (sx,  syy) * fx  * fyy +
-                 *src.at (sxx, syy) * fxx * fyy) / (256 * 256) );
+      dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
+                 *src.at (sxx, sy ) * xdist       * (256-ydist) +
+                 *src.at (sx,  syy) * (256-xdist) * ydist +
+                 *src.at (sxx, syy) * xdist       * ydist) /
+		(256 * 256) );
       ++dst;
     }
   }
@@ -152,5 +157,47 @@ void box_scale (Image& image, double scalex, double scaley)
     
   }
   
+  image = new_image;
+}
+
+void bicubic_scale (Image& image, double scalex, double scaley)
+{
+  Image new_image = image;
+
+  new_image.New ((int)(scalex * (double) image.w),
+		 (int)(scaley * (double) image.h));
+  new_image.xres = (int) (scalex * image.xres);
+  new_image.yres = (int) (scaley * image.yres);
+
+  Image::iterator dst = new_image.begin();
+  Image::iterator src = image.begin();
+
+  for (int y=0; y < new_image.h; ++y) {
+    double by = (double)y / scaley;
+    int sy = std::min((int)by, image.h - 1);
+    int syy = std::min(sy+1, image.h - 1);
+    int fyy = (int) ((by - sy) * 256);
+    int fy = 256 - fyy;
+
+    for (int x=0; x < new_image.w; ++x) {
+      double bx = (double)x / scalex;
+      int sx = std::min((int)bx, image.w - 1);
+      int sxx = std::min(sx+1, image.w - 1);
+      int fxx = (int) ((bx - sx) * 256);
+      int fx = 256 - fxx;
+
+      if (false && x < 8 && y < 8) {
+        std::cout << "sx: " << sx << ", sy: " << sy << ", sxx: " << sxx << ", syy: " << syy << std::endl;
+        std::cout << "fx: " << fx << ", fy: " << fy << ", fxx: " << fxx << ", fyy: " << fyy << std::endl;
+      }
+
+      dst.set ( (*src.at (sx,  sy ) * fx  * fy +
+                 *src.at (sxx, sy ) * fxx * fy +
+                 *src.at (sx,  syy) * fx  * fyy +
+                 *src.at (sxx, syy) * fxx * fyy) / (256 * 256) );
+      ++dst;
+    }
+  }
+
   image = new_image;
 }
