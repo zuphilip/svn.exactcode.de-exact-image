@@ -215,6 +215,13 @@ bool convert_box_scale (const Argument<double>& arg)
   return true;
 }
 
+bool convert_ddt_scale (const Argument<double>& arg)
+{
+  double scale = arg.Get();
+  ddt_scale (image, scale, scale);
+  return true;
+}
+
 bool convert_rotate (const Argument<int>& arg)
 {
   int angle = arg.Get() % 360;
@@ -313,7 +320,7 @@ int main (int argc, char* argv[])
 				   "scale image data to nearest neighbour",
 				   0.0, 0, 1, true, true);
   arg_nearest_scale.Bind (convert_nearest_scale);
-  arglist.Add (&arg_near_scale);
+  arglist.Add (&arg_nearest_scale);
 
   Argument<double> arg_bilinear_scale ("", "bilinear-scale",
 				       "scale image data with bi-linear filter",
@@ -326,6 +333,12 @@ int main (int argc, char* argv[])
 				      0.0, 0, 1, true, true);
   arg_bicubic_scale.Bind (convert_bicubic_scale);
   arglist.Add (&arg_bicubic_scale);
+
+  Argument<double> arg_ddt_scale ("", "ddt-scale",
+				      "scale image data with data dependant triangulation",
+				      0.0, 0, 1, true, true);
+  arg_ddt_scale.Bind (convert_ddt_scale);
+  arglist.Add (&arg_ddt_scale);
 
   Argument<double> arg_box_scale ("", "box-scale",
 				   "(down)scale image data with box filter",

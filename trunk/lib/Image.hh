@@ -47,22 +47,22 @@ public:
   } value_t;
     
   typedef union {
-    u_int32_t gray;
+    int32_t gray;
     struct {
-      u_int32_t r;
-      u_int32_t g;
-      u_int32_t b;
+      int32_t r;
+      int32_t g;
+      int32_t b;
     } rgb;
     struct {
-      u_int32_t c;
-      u_int32_t m;
-      u_int32_t y;
-      u_int32_t k;
+      int32_t c;
+      int32_t m;
+      int32_t y;
+      int32_t k;
     } cmyk;
     struct {
-      u_int32_t y;
-      u_int32_t u;
-      u_int32_t v;
+      int32_t y;
+      int32_t u;
+      int32_t v;
     } yuv;
   } ivalue_t;
 
@@ -470,6 +470,32 @@ public:
 	ptr = (value_t*) ((u_int8_t*) ptr - 4); break;
       }
       return *this;
+    }
+    
+    // return Luminance
+    inline u_int16_t getL ()
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	return value.gray;
+	break;
+      case RGB8:
+      case RGB16:
+	return (u_int16_t) (.21267 * value.rgb.r +
+			    .71516 * value.rgb.g +
+			    .07217 * value.rgb.b);
+	break;
+      case CMYK8:
+	return value.cmyk.k; // TODO
+	break;
+      case YUV8:
+	return value.yuv.y;
+	break;
+      }
     }
     
     inline void set (const iterator& other) {
