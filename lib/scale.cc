@@ -61,7 +61,8 @@ void bilinear_scale (Image& image, double scalex, double scaley)
       int sxx = std::min(sx+1, image.w-1);
 
       if (false && x < 8 && y < 8) {
-        std::cout << "sx: " << sx << ", sy: " << sy << ", sxx: " << sxx << ", syy: " << syy << std::endl;
+        std::cout << "sx: " << sx << ", sy: " << sy
+		  << ", sxx: " << sxx << ", syy: " << syy << std::endl;
         std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
       }
 
@@ -178,7 +179,6 @@ inline Image::iterator CubicConvolution (int distance,
 
 void bicubic_scale (Image& image, double scalex, double scaley)
 {
-
   Image new_image = image;
 
   new_image.New ((int)(scalex * (double) image.w),
@@ -228,6 +228,70 @@ void bicubic_scale (Image& image, double scalex, double scaley)
 			     *src.at(sx2,sy3), *src.at(sx3,sy3));
       
       dst.set (CubicConvolution (ydist, r0, r1, r2, r3));
+      ++dst;
+    }
+  }
+
+  image = new_image;
+}
+
+void ddt_scale (Image& image, double scalex, double scaley)
+{
+  Image new_image = image;
+
+  new_image.New ((int)(scalex * (double) image.w),
+		 (int)(scaley * (double) image.h));
+  
+  new_image.xres = (int) (scalex * image.xres);
+  new_image.yres = (int) (scaley * image.yres);
+  
+  Image::iterator dst = new_image.begin();
+  Image::iterator src = image.begin();
+  Image::iterator src2 = src.at(0,1);
+  
+  // first scan the source image and build a direction map
+  char dir_map [image.h][image.w];
+  for (int y = 0; y < image.h-1; ++y) {
+    for (int x = 0; x < image.w-1; ++x) {
+      int a = (*src).getL(); ++src;
+      int b = (*src2).getL(); ++src2;
+      int c = (*src2).getL(); ++src2;
+      int d = (*src).getL(); ++src;
+      
+      // std::cout << "a: " << a << ", b: " << b << ", c: " << c << ", d: " << d << std::endl;
+      
+      if (abs(a-c) < abs(b-d))
+	dir_map[y][x] = '\\';
+      else
+	dir_map[y][x] = '/';
+      std::cout << dir_map[y][x];
+    }
+    std::cout << std::endl;
+  }
+  
+  for (int y = 0; y < new_image.h; ++y) {
+    double by = .5+y / scaley;
+    int sy = std::min((int)by, image.h-1);
+    int ydist = (int) ((by - sy) * 256);
+    if (sy == image.h-1) --sy;
+    
+    for (int x = 0; x < new_image.w; ++x) {
+      
+      double bx = .5+x / scalex;
+      int sx = std::min((int)bx, image.w - 1);
+      int xdist = (int) ((bx - sx) * 256);
+      if (sx == image.h-1) --sx;
+      
+      Image::iterator a = src.at (sx, sy);
+      Image::iterator d = a; ++d;
+      Image::iterator b = src.at (sx, sy+1);
+      Image::iterator c = b; ++c;
+      
+      dst.set ( (*a * (256-xdist) * (256-ydist) +
+                 *d * xdist       * (256-ydist) +
+                 *b * (256-xdist) * ydist +
+                 *c * xdist       * ydist) /
+		(256 * 256) );
       ++dst;
     }
   }
