@@ -306,7 +306,7 @@ int main (int argc, char* argv[])
 
   Argument<bool> arg_normalize ("", "normalize",
 				"transform the image to span the full color range",
-				0, 1, true, true);
+				0, 0, true, true);
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
   
@@ -354,13 +354,13 @@ int main (int argc, char* argv[])
 
   Argument<bool> arg_flip ("", "flip",
 			   "flip the image vertically",
-			   0, 1, true, true);
+			   0, 0, true, true);
   arg_flip.Bind (convert_flip);
   arglist.Add (&arg_flip);
 
   Argument<bool> arg_flop ("", "flop",
 			   "flip the image horizontally",
-			   0, 1, true, true);
+			   0, 0, true, true);
   arg_flop.Bind (convert_flop);
   arglist.Add (&arg_flop);
 
@@ -379,7 +379,7 @@ int main (int argc, char* argv[])
 
   Argument<bool> arg_edge ("", "edge",
                            "Edge detect",
-			   0, 1, true, true);
+			   0, 0, true, true);
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
