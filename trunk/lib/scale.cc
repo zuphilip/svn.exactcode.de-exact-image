@@ -264,20 +264,20 @@ void ddt_scale (Image& image, double scalex, double scaley)
 	dir_map[y][x] = '\\';
       else
 	dir_map[y][x] = '/';
-      std::cout << dir_map[y][x];
+      //std::cout << dir_map[y][x];
     }
-    std::cout << std::endl;
+    // std::cout << std::endl;
   }
   
   for (int y = 0; y < new_image.h; ++y) {
-    double by = .5+y / scaley;
+    double by = .0+y / scaley;
     int sy = std::min((int)by, image.h-1);
     int ydist = (int) ((by - sy) * 256);
     if (sy == image.h-1) --sy;
     
     for (int x = 0; x < new_image.w; ++x) {
       
-      double bx = .5+x / scalex;
+      double bx = .0+x / scalex;
       int sx = std::min((int)bx, image.w - 1);
       int xdist = (int) ((bx - sx) * 256);
       if (sx == image.h-1) --sx;
@@ -286,12 +286,43 @@ void ddt_scale (Image& image, double scalex, double scaley)
       Image::iterator d = a; ++d;
       Image::iterator b = src.at (sx, sy+1);
       Image::iterator c = b; ++c;
+      Image::iterator v;
       
-      dst.set ( (*a * (256-xdist) * (256-ydist) +
-                 *d * xdist       * (256-ydist) +
-                 *b * (256-xdist) * ydist +
-                 *c * xdist       * ydist) /
-		(256 * 256) );
+      // which triangle does the point fall into?
+      if (dir_map[sy][sx] == '/') {
+	if (xdist <= 256-ydist ) // left side triangle
+	  {
+	    v = (*a * (256-xdist) * (256-ydist) +
+		 *b * (256-xdist) * ydist +
+		 *d * xdist       * (256-ydist) +
+		 (*b+*d) * xdist * ydist / 2);
+	  }
+	else // right side triangle
+	  {
+	    v = (*b * (256-xdist) * ydist +
+		 *c * xdist       * ydist +
+		 *d * xdist       * (256-ydist) +
+		 (*b+*d) * (256-xdist) * (256-ydist) / 2);
+	  }
+      }
+      else {
+	if (xdist <= ydist) // left side triangle
+	  {
+	    v = (*a * (256-xdist) * (256-ydist) +
+		 *b * (256-xdist) * ydist +
+		 *c * xdist       * ydist +
+		 (*a+*c) * xdist * (256-ydist) /  2);
+	  }
+	else // right side triangle
+	  {
+	    v = (*a * (256-xdist) * (256-ydist) +
+		 *c * xdist       * ydist +
+		 *d * xdist       * (256-ydist) +
+		 (*a+*c) * (256-xdist) * ydist / 2);
+	  }
+      }
+      
+      dst.set (v / (256*256) );
       ++dst;
     }
   }
