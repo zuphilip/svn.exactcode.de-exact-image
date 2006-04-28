@@ -30,10 +30,6 @@ void nearest_scale (Image& image, double scalex, double scaley)
   new_image.data = 0;
 }
 
-void directional_average_scale_2x (Image& image)
-{
-}
-
 void bilinear_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
@@ -47,18 +43,16 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   Image::iterator src = image.begin();
 
   for (int y = 0; y < new_image.h; ++y) {
-    double by = .5+y / scaley;
-    int sy = std::min((int)by, image.h-1);
+    double by = (-1.0+image.h) * y / new_image.h;
+    int sy = (int)floor(by);
     int ydist = (int) ((by - sy) * 256);
-
-    int syy = std::min(sy+1, image.h-1);
+    int syy = sy+1;
 
     for (int x = 0; x < new_image.w; ++x) {
-      double bx = .5+x / scalex;
-      int sx = std::min((int)bx, image.w-1);
+      double bx = (-1.0+image.w) * x / new_image.w;
+      int sx = (int)floor(bx);
       int xdist = (int) ((bx - sx) * 256);
-
-      int sxx = std::min(sx+1, image.w-1);
+      int sxx = sx+1;
 
       if (false && x < 8 && y < 8) {
         std::cout << "sx: " << sx << ", sy: " << sy
@@ -258,30 +252,31 @@ void ddt_scale (Image& image, double scalex, double scaley)
       int c = (*src2).getL(); ++src2;
       int d = (*src).getL(); ++src;
       
-      // std::cout << "a: " << a << ", b: " << b << ", c: " << c << ", d: " << d << std::endl;
+      std::cout << "a: " << a << ", b: " << b
+		<< ", c: " << c << ", d: " << d << std::endl;
       
       if (abs(a-c) < abs(b-d))
 	dir_map[y][x] = '\\';
       else
 	dir_map[y][x] = '/';
-      //std::cout << dir_map[y][x];
+      std::cout << dir_map[y][x];
     }
-    // std::cout << std::endl;
+    std::cout << std::endl;
   }
   
   for (int y = 0; y < new_image.h; ++y) {
-    double by = .0+y / scaley;
-    int sy = std::min((int)by, image.h-1);
+    double by = (-1.0+image.h) * y / new_image.h;
+    int sy = (int)floor(by);
     int ydist = (int) ((by - sy) * 256);
-    if (sy == image.h-1) --sy;
     
     for (int x = 0; x < new_image.w; ++x) {
-      
-      double bx = .0+x / scalex;
-      int sx = std::min((int)bx, image.w - 1);
+      double bx = (-1.0+image.w) * x / new_image.w;
+      int sx = (int)floor(bx);
       int xdist = (int) ((bx - sx) * 256);
-      if (sx == image.h-1) --sx;
-      
+
+      std::cout << "bx: " << bx << ", by: " << by << ", x: " << x << ", y: " << y
+		<< ", sx: " << sx << ", sy: " << sy << std::endl;
+
       Image::iterator a = src.at (sx, sy);
       Image::iterator d = a; ++d;
       Image::iterator b = src.at (sx, sy+1);
@@ -290,8 +285,9 @@ void ddt_scale (Image& image, double scalex, double scaley)
       
       // which triangle does the point fall into?
       if (dir_map[sy][sx] == '/') {
-	if (xdist <= 256-ydist ) // left side triangle
+	if (xdist <= 256-ydist) // left side triangle
 	  {
+	    std::cout << "/-left" << std::endl;
 	    v = (*a * (256-xdist) * (256-ydist) +
 		 *b * (256-xdist) * ydist +
 		 *d * xdist       * (256-ydist) +
@@ -299,6 +295,7 @@ void ddt_scale (Image& image, double scalex, double scaley)
 	  }
 	else // right side triangle
 	  {
+	    std::cout << "/-right" << std::endl;
 	    v = (*b * (256-xdist) * ydist +
 		 *c * xdist       * ydist +
 		 *d * xdist       * (256-ydist) +
@@ -308,6 +305,7 @@ void ddt_scale (Image& image, double scalex, double scaley)
       else {
 	if (xdist <= ydist) // left side triangle
 	  {
+	    std::cout << "\\-left" << std::endl;
 	    v = (*a * (256-xdist) * (256-ydist) +
 		 *b * (256-xdist) * ydist +
 		 *c * xdist       * ydist +
@@ -315,6 +313,7 @@ void ddt_scale (Image& image, double scalex, double scaley)
 	  }
 	else // right side triangle
 	  {
+	    std::cout << "\\-right" << std::endl;
 	    v = (*a * (256-xdist) * (256-ydist) +
 		 *c * xdist       * ydist +
 		 *d * xdist       * (256-ydist) +
