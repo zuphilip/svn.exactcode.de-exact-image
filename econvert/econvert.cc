@@ -177,12 +177,8 @@ bool convert_scale (const Argument<double>& arg)
   
   if (scale < 0.5)
     box_scale (image, scale, scale);
-  if (scale == 2.0)
-    directional_average_scale_2x (image);
-  else if (scale > 2)
-    bilinear_scale (image, scale, scale);
   else
-    bicubic_scale (image, scale, scale);
+    ddt_scale (image, scale, scale);
   
   return true;
 }
