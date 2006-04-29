@@ -295,7 +295,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_split);
   
   Argument<std::string> arg_colorspace ("", "colorspace",
-					"convert image colorspace",
+					"convert image colorspace (BILEVEL, GRAY, GRAY2, GRAY4, RGB, YUV, CYMK)",
 					0, 1, true, true);
   arg_colorspace.Bind (convert_colorspace);
   arglist.Add (&arg_colorspace);
@@ -381,7 +381,10 @@ int main (int argc, char* argv[])
   
   
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+  if (!arglist.Read (argc, argv))
+    return 1;
+
+  if (arg_help.Get() == true)
     {
       std::cerr << "Exact image converter including a variety of fast algorithms."
 		<< std::endl
