@@ -11,6 +11,6 @@ public:
 
   ~TIFFLoader () { unregisterLoader (this); };
   
-  virtual bool readImage (const char* file, Image& image);
-  virtual bool writeImage (const char* file, Image& image);
+  virtual bool readImage (FILE* file, Image& image);
+  virtual bool writeImage (FILE* file, Image& image);
 };

@@ -26,10 +26,10 @@
 
 #include "Colorspace.hh"
 
-bool TIFFLoader::readImage (const char *file, Image& image)
+bool TIFFLoader::readImage (FILE* file, Image& image)
 {
   TIFF* in;
-  in = TIFFOpen(file, "r");
+  in = TIFFFdOpen(fileno(file), "", "r");
   if (!in)
     return false;
   
@@ -119,11 +119,13 @@ bool TIFFLoader::readImage (const char *file, Image& image)
     free (gmap);
     free (bmap);
   }
+
+  TIFFClose (in);
   
   return true;
 }
 
-bool TIFFLoader::writeImage (const char *file, Image& image)
+bool TIFFLoader::writeImage (FILE* file, Image& image)
 {
   TIFF *out;
   //char thing[1024];
@@ -135,7 +137,7 @@ bool TIFFLoader::writeImage (const char *file, Image& image)
   else
     compression = COMPRESSION_LZW;
 
-  out = TIFFOpen (file, "w");
+  out = TIFFFdOpen (fileno(file), "", "w");
   if (out == NULL)
     return false;
    
