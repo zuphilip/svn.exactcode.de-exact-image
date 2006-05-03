@@ -3,7 +3,10 @@
 class JPEGLoader : public ImageLoader {
 public:
   
-  JPEGLoader () { registerLoader ("jpg", this); };
+  JPEGLoader () {
+    registerLoader ("jpg", this);
+    registerLoader ("jpeg", this);
+  };
   virtual ~JPEGLoader () { unregisterLoader (this); };
 
   virtual bool readImage (FILE* filename, Image& image);
