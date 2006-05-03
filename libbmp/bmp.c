@@ -299,7 +299,7 @@ unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
   
   if (info_hdr.iSize == BIH_WIN4SIZE)
     bmp_type = BMPT_WIN4;
-  else if (info_hdr.iSizey == BIH_OS21SIZE)
+  else if (info_hdr.iSize == BIH_OS21SIZE)
     bmp_type = BMPT_OS21;
   else if (info_hdr.iSize == BIH_OS22SIZE || info_hdr.iSize == 16)
     bmp_type = BMPT_OS22;
