@@ -63,8 +63,6 @@ bool ImageLoader::Write (std::string file, Image& image) {
   if (codec.empty())
     codec = get_ext (file);
   
-  std::cerr << "codec: " << codec << ", file: " << file << std::endl;
-  
   FILE* fp;
   if (file != "-")
     fp = fopen (file.c_str(), "w");
