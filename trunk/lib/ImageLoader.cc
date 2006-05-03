@@ -13,50 +13,82 @@ std::string get_ext (const std::string& filename)
     return "";
 } 
 
+std::string get_codec (std::string& filename)
+{
+  // parse the filename extension
+  std::string::size_type idx_colon = filename.find (':');
+  if (idx_colon && idx_colon != std::string::npos) {
+    std::string codec = filename.substr (0, idx_colon);
+    filename.erase (0, idx_colon+1);
+    return codec;
+  }
+  else
+    return "";
+} 
 
-bool ImageLoader::Read (const std::string& file, Image& image) {
-  FILE* fp = fopen (file.c_str(), "r");
+bool ImageLoader::Read (std::string file, Image& image) {
+  std::string codec = get_codec (file);
+  if (codec.empty())
+    codec = get_ext (file);
+  
+  FILE* fp;
+  if (file != "-")
+    fp = fopen (file.c_str(), "r");
+  else
+    fp = stdin;
   
   if (!fp) {
     std::cerr << "Can not open file " << file.c_str() << std::endl;
     return false;
   }
   
-  std::string ext = get_ext (file);
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == ext)
+      if (it->ext == codec)
 	if (it->loader->readImage (fp, image)) {
-	  fclose (fp);
+	  if (file != "-")
+	    fclose (fp);
 	  return true; 
 	}
     }
-  fclose (fp);
+  if (file != "-")
+    fclose (fp);
   std::cerr << "No suitable decoder found for: " << file.c_str() << std::endl;
   return false;
 }
   
-bool ImageLoader::Write (const std::string& file, Image& image) {
-  FILE* fp = fopen (file.c_str(), "w");
+bool ImageLoader::Write (std::string file, Image& image) {
+  std::string codec = get_codec (file);
+  if (codec.empty())
+    codec = get_ext (file);
+  
+  std::cerr << "codec: " << codec << ", file: " << file << std::endl;
+  
+  FILE* fp;
+  if (file != "-")
+    fp = fopen (file.c_str(), "w");
+  else
+    fp = stdout;
   
   if (!fp) {
     std::cerr << "Can not write file " << file.c_str() << std::endl;
     return false;
   }
   
-  std::string ext = get_ext (file);
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == ext) 
+      if (it->ext == codec) 
 	if (it->loader->writeImage (fp, image)) {
-	  fclose (fp);
+	  if (file != "-")
+	    fclose (fp);
 	  return true;
 	}
     }
   
-  fclose (fp);
+  if (file != "-")
+    fclose (fp);
   std::cerr << "No suitable encoder found for: " << file.c_str() << std::endl;
   return false;
 }
