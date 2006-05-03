@@ -42,13 +42,13 @@ static void add_color_prof(jas_image_t* image)
   }
 }
 
-bool JPEG2000Loader::readImage (const char* filename, Image& im)
+bool JPEG2000Loader::readImage (FILE* file, Image& im)
 {
   jas_image_t *image;
   jas_stream_t *in;
 
-  if (!(in = jas_stream_fopen(filename, "rb"))) {
-    fprintf(stderr, "error: cannot open input image file %s\n", filename);
+  if (!(in = jas_stream_fdopen(fileno(file), "rb"))) {
+    fprintf(stderr, "error: cannot open input image file\n");
     return false;
   }
 
@@ -151,19 +151,20 @@ bool JPEG2000Loader::readImage (const char* filename, Image& im)
        	*data_ptr++ = v[k];
     }
   }
-
+  
+  im.data = data;
   jas_image_destroy (image);
   return true;
 }
 
 
-bool JPEG2000Loader::writeImage (const char* file, Image& im)
+bool JPEG2000Loader::writeImage (FILE* file, Image& im)
 {
   jas_image_t *image;
   jas_stream_t *out;
 
-  if (!(out = jas_stream_fopen(file, "w+b"))) {
-    fprintf(stderr, "err r: cannot open output image file %s\n", file);
+  if (!(out = jas_stream_fdopen(fileno(file), "w+b"))) {
+    fprintf(stderr, "error: cannot open output image file\n");
     return false;
   }
 

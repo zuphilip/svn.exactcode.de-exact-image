@@ -28,31 +28,24 @@ int check_if_png(char *file_name, FILE **fp)
 }
 #endif
 
-bool PNGLoader::readImage (const char* file, Image& image)
+bool PNGLoader::readImage (FILE* file, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
   png_uint_32 width, height;
   int bit_depth, color_type, interlace_type;
-  FILE *fp;
-  
-  if ((fp = fopen(file, "rb")) == NULL)
-    return 0;
   
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
 				   NULL /*user_error_ptr*/,
 				   NULL /*user_error_fn*/,
 				   NULL /*user_warning_fn*/);
   
-  if (png_ptr == NULL) {
-    fclose(fp);
+  if (png_ptr == NULL)
     return 0;
-  }
   
   /* Allocate/initialize the memory for image information.  REQUIRED. */
   info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
-    fclose(fp);
     png_destroy_read_struct(&png_ptr, png_infopp_NULL, png_infopp_NULL);
     return 0;
   }
@@ -65,13 +58,12 @@ bool PNGLoader::readImage (const char* file, Image& image)
   if (setjmp(png_jmpbuf(png_ptr))) {
     /* Free all of the memory associated with the png_ptr and info_ptr */
     png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
-    fclose(fp);
     /* If we get here, we had a problem reading the file */
     return 0;
   }
   
   /* Set up the input control if you are using standard C streams */
-  png_init_io(png_ptr, fp);
+  png_init_io(png_ptr, file);
   
   ///* If we have already read some of the signature */
   //png_set_sig_bytes(png_ptr, sig_read);
@@ -184,21 +176,14 @@ bool PNGLoader::readImage (const char* file, Image& image)
   /* clean up after the read, and free any memory allocated - REQUIRED */
   png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
   
-  /* close the file */
-  fclose(fp);
-  
   /* that's it */
   return true;
 }
 
-bool PNGLoader::writeImage (const char* file, Image& image)
+bool PNGLoader::writeImage (FILE* file, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
-
-  FILE *fp;
-  if ((fp = fopen(file, "wb")) == NULL)
-    return false;
   
   png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING,
 				    NULL /*user_error_ptr*/,
@@ -206,14 +191,12 @@ bool PNGLoader::writeImage (const char* file, Image& image)
 				    NULL /*user_warning_fn*/);
   
   if (png_ptr == NULL) {
-    fclose(fp);
     return false;
   }
   
   /* Allocate/initialize the memory for image information.  REQUIRED. */
   info_ptr = png_create_info_struct(png_ptr);
   if (info_ptr == NULL) {
-    fclose(fp);
     png_destroy_write_struct(&png_ptr, png_infopp_NULL);
     return false;
   }
@@ -226,7 +209,6 @@ bool PNGLoader::writeImage (const char* file, Image& image)
   if (setjmp(png_jmpbuf(png_ptr))) {
     /* Free all of the memory associated with the png_ptr and info_ptr */
     png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(fp);
     /* If we get here, we had a problem reading the file */
     return false;
   }
@@ -234,7 +216,7 @@ bool PNGLoader::writeImage (const char* file, Image& image)
   png_info_init (info_ptr);
   
   /* Set up the input control if you are using standard C streams */
-  png_init_io(png_ptr, fp);
+  png_init_io(png_ptr, file);
   
   ///* If we have already read some of the signature */
   //png_set_sig_bytes(png_ptr, sig_read);
@@ -275,9 +257,6 @@ bool PNGLoader::writeImage (const char* file, Image& image)
   
   /* clean up after the read, and free any memory allocated - REQUIRED */
   png_destroy_write_struct(&png_ptr, &info_ptr);
-  
-  /* close the file */
-  fclose(fp);
   
   return true;
 }

@@ -138,7 +138,7 @@ my_error_exit (j_common_ptr cinfo)
  * is passed in.  We want to return 1 on success, 0 on error.
  */
 
-bool JPEGLoader::readImage (const char* filename, Image& image)
+bool JPEGLoader::readImage (FILE* file, Image& image)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -150,7 +150,6 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
    */
   struct my_error_mgr jerr;
   /* More stuff */
-  FILE * infile;		/* source file */
   JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
 
   int row_stride;		/* physical row width in output buffer */
@@ -160,11 +159,6 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
    * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
    * requires it in order to read binary files.
    */
-
-  if ((infile = fopen(filename, "rb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", filename);
-    return false;
-  }
 
   /* Step 1: allocate and initialize JPEG decompression object */
 
@@ -177,7 +171,6 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
      * We need to clean up the JPEG object, close the input file, and return.
      */
     jpeg_destroy_decompress(&cinfo);
-    fclose(infile);
     return false;
   }
   /* Now we can initialize the JPEG decompression object. */
@@ -185,7 +178,7 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
 
   /* Step 2: specify data source (eg, a file) */
 
-  jpeg_stdio_src(&cinfo, infile);
+  jpeg_stdio_src(&cinfo, file);
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
@@ -267,29 +260,16 @@ bool JPEGLoader::readImage (const char* filename, Image& image)
 
   /* This is an important step since it will release a good deal of memory. */
   jpeg_destroy_decompress(&cinfo);
-
-  /* After finish_decompress, we can close the input file.
-   * Here we postpone it until after no more JPEG errors are possible,
-   * so as to simplify the setjmp error logic above.  (Actually, I don't
-   * think that jpeg_destroy can do an error exit, but why assume anything...)
-   */
-  fclose(infile);
-
+  
   /* At this point you may want to check to see whether any corrupt-data
    * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
    */
 
   /* And we're done! */
-#ifdef DEBUG
-  FILE* f = fopen ("test.raw", "w+");
-  fwrite (data, row_stride * cinfo.output_height, 1, f);
-  fclose(f);
-#endif
-
   return true;
 }
 
-bool JPEGLoader::writeImage (const char* file, Image& image)
+bool JPEGLoader::writeImage (FILE* file, Image& image)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -298,18 +278,11 @@ bool JPEGLoader::writeImage (const char* file, Image& image)
 
   JSAMPROW buffer[1];	/* pointer to JSAMPLE row[s] */
 
-  FILE * output_file;
-
   /* Initialize the JPEG compression object with default error handling. */
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 
-  /* Open the output file. */
-  if ((output_file = fopen(file, "wb")) == NULL) {
-    fprintf(stderr, "can't open %s\n", file);
-    return false;
-  }
-  jpeg_stdio_dest(&cinfo, output_file);
+  jpeg_stdio_dest(&cinfo, file);
 
   if (image.bps == 8 && image.spp == 3)
     cinfo.in_color_space = JCS_RGB;
@@ -349,10 +322,6 @@ bool JPEGLoader::writeImage (const char* file, Image& image)
 
   if (jerr.num_warnings)
     std::cout << jerr.num_warnings << " Warnings." << std::endl;
-
-  /* Close files, if we opened them */
-  if (output_file != stdout)
-    fclose(output_file);
 
   return true;
 }

@@ -6,6 +6,6 @@ public:
   JPEGLoader () { registerLoader ("jpg", this); };
   virtual ~JPEGLoader () { unregisterLoader (this); };
 
-  virtual bool readImage (const char* filename, Image& image);
-  virtual bool writeImage (const char* file, Image& image);
+  virtual bool readImage (FILE* filename, Image& image);
+  virtual bool writeImage (FILE* file, Image& image);
 };

@@ -2,6 +2,8 @@
 #ifndef IMAGELOADER_HH
 #define IMAGELOADER_HH
 
+#include <stdio.h>
+
 #include <vector>
 #include <iostream>
 
@@ -13,12 +15,12 @@ public:
   
   virtual ~ImageLoader () { };
   
-  virtual bool readImage (const char* file, Image& image) = 0;
-  virtual bool writeImage (const char* file, Image& image) = 0;
-  
   static bool Read (const std::string& file, Image& image);
   static bool Write (const std::string& file, Image& image);
-   
+
+  virtual bool readImage (FILE* file, Image& image) = 0;
+  virtual bool writeImage (FILE* file, Image& image) = 0;
+  
 protected:
   
   struct loader_ref {

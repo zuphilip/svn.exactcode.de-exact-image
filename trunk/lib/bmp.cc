@@ -6,7 +6,7 @@
 
 #include "Colorspace.hh"
 
-bool BMPLoader::readImage (const char* file, Image& image)
+bool BMPLoader::readImage (FILE* file, Image& image)
 {
   unsigned char* clr_tbl = 0;
   int clr_tbl_size = 0, clr_tbl_elems = 0;
@@ -43,7 +43,7 @@ bool BMPLoader::readImage (const char* file, Image& image)
   return true;
 }
 
-bool BMPLoader::writeImage (const char* file, Image& image)
+bool BMPLoader::writeImage (FILE* file, Image& image)
 {
   // return write_bmp (file, w, h, bps, spp, xres, yres);
   return false;
