@@ -15,8 +15,9 @@ public:
   
   virtual ~ImageLoader () { };
   
-  static bool Read (const std::string& file, Image& image);
-  static bool Write (const std::string& file, Image& image);
+  // not const string& because the filename is parsed and changed internally
+  static bool Read (std::string file, Image& image);
+  static bool Write (std::string file, Image& image);
 
   virtual bool readImage (FILE* file, Image& image) = 0;
   virtual bool writeImage (FILE* file, Image& image) = 0;
