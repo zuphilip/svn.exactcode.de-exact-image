@@ -36,7 +36,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -254,14 +253,11 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
   }
 }
 
-unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
+unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
 			 int* xres, int* yres,
 			 unsigned char** color_table, int* color_table_size,
 			 int* color_table_elements)
 {
-  int	fd;
-  struct stat instat;
-  
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
   enum BMPType bmp_type;
@@ -273,13 +269,7 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 
   unsigned char* data = 0;
   
-  fd = open(file, O_RDONLY|O_BINARY, 0);
-  if (fd < 0) {
-    fprintf(stderr, "Cannot open input file\n");
-    return 0;
-  }
-  
-  read (fd, file_hdr.bType, 2);
+  fread (file_hdr.bType, 1, 2, fd);
   if(file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
     fprintf(stderr, "File is not a BMP\n");
     goto bad;
@@ -288,27 +278,28 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   /* -------------------------------------------------------------------- */
   /*      Read the BMPFileHeader. We need iOffBits value only             */
   /* -------------------------------------------------------------------- */
-  lseek(fd, 10, SEEK_SET);
-  read(fd, &file_hdr.iOffBits, 4);
+  fseek(fd, 10, SEEK_SET);
+  fread(&file_hdr.iOffBits, 1, 4, fd);
 #ifdef __BIG_ENDIAN__
   TIFFSwabLong(&file_hdr.iOffBits);
 #endif
-  fstat(fd, &instat);
-  file_hdr.iSize = instat.st_size;
 
+  fseek(fd, 0, SEEK_END);
+  file_hdr.iSize = ftell(fd);
+  
   /* -------------------------------------------------------------------- */
   /*      Read the BMPInfoHeader.                                         */
   /* -------------------------------------------------------------------- */
   
-  lseek(fd, BFH_SIZE, SEEK_SET);
-  read(fd, &info_hdr.iSize, 4);
+  fseek(fd, BFH_SIZE, SEEK_SET);
+  fread(&info_hdr.iSize, 1, 4, fd);
 #ifdef __BIG_ENDIAN__
   TIFFSwabLong(&info_hdr.iSize);
 #endif
   
   if (info_hdr.iSize == BIH_WIN4SIZE)
     bmp_type = BMPT_WIN4;
-  else if (info_hdr.iSize == BIH_OS21SIZE)
+  else if (info_hdr.iSizey == BIH_OS21SIZE)
     bmp_type = BMPT_OS21;
   else if (info_hdr.iSize == BIH_OS22SIZE || info_hdr.iSize == 16)
     bmp_type = BMPT_OS22;
@@ -316,20 +307,20 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
     bmp_type = BMPT_WIN5;
   
   if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 || bmp_type == BMPT_OS22) {
-    read(fd, &info_hdr.iWidth, 4);
-    read(fd, &info_hdr.iHeight, 4);
-    read(fd, &info_hdr.iPlanes, 2);
-    read(fd, &info_hdr.iBitCount, 2);
-    read(fd, &info_hdr.iCompression, 4);
-    read(fd, &info_hdr.iSizeImage, 4);
-    read(fd, &info_hdr.iXPelsPerMeter, 4);
-    read(fd, &info_hdr.iYPelsPerMeter, 4);
-    read(fd, &info_hdr.iClrUsed, 4);
-    read(fd, &info_hdr.iClrImportant, 4);
-    read(fd, &info_hdr.iRedMask, 4);
-    read(fd, &info_hdr.iGreenMask, 4);
-    read(fd, &info_hdr.iBlueMask, 4);
-    read(fd, &info_hdr.iAlphaMask, 4);
+    fread(&info_hdr.iWidth, 1, 4, fd);
+    fread(&info_hdr.iHeight, 1, 4, fd);
+    fread(&info_hdr.iPlanes, 1, 2, fd);
+    fread(&info_hdr.iBitCount, 1, 2, fd);
+    fread(&info_hdr.iCompression, 1, 4, fd);
+    fread(&info_hdr.iSizeImage, 1, 4, fd);
+    fread(&info_hdr.iXPelsPerMeter, 1, 4, fd);
+    fread(&info_hdr.iYPelsPerMeter, 1, 4, fd);
+    fread(&info_hdr.iClrUsed, 1, 4, fd);
+    fread(&info_hdr.iClrImportant, 1, 4, fd);
+    fread(&info_hdr.iRedMask, 1, 4, fd);
+    fread(&info_hdr.iGreenMask, 1, 4, fd);
+    fread(&info_hdr.iBlueMask, 1, 4, fd);
+    fread(&info_hdr.iAlphaMask, 1, 4, fd);
 #ifdef __BIG_ENDIAN__
     TIFFSwabLong(&info_hdr.iWidth);
     TIFFSwabLong(&info_hdr.iHeight);
@@ -362,22 +353,22 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   if (bmp_type == BMPT_OS21) {
     int16  iShort;
     
-    read(fd, &iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #ifdef __BIG_ENDIAN__
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iWidth = iShort;
-    read(fd, &iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #ifdef __BIG_ENDIAN__
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iHeight = iShort;
-    read(fd, &iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #ifdef __BIG_ENDIAN__
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iPlanes = iShort;
-    read(fd, &iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #ifdef __BIG_ENDIAN__
     TIFFSwabShort(&iShort);
 #endif
@@ -391,7 +382,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       info_hdr.iBitCount != 24 && info_hdr.iBitCount != 32) {
     fprintf(stderr, "Cannot process BMP file with bit count %d\n",
 	    info_hdr.iBitCount);
-    close(fd);
     return 0;
   }
   
@@ -422,8 +412,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
       /*printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
 	n_clr_elems, clr_tbl_size); */
       
-      lseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
-      read(fd, clr_tbl, n_clr_elems * clr_tbl_size);
+      fseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
+      fread(clr_tbl, 1, n_clr_elems * clr_tbl_size, fd);
       
       /*for(clr = 0; clr < clr_tbl_size; ++clr) {
 	printf ("%d: r: %d g: %d b: %d\n",
@@ -497,11 +487,11 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	else
 	  offset = file_hdr.iOffBits + row * file_stride;
 	
-	if (lseek(fd, offset, SEEK_SET) == (off_t)-1) {
+	if (fseek(fd, offset, SEEK_SET) == (off_t)-1) {
 	  fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
 	}
 	
-	if (read(fd, data + stride*row, stride) < 0) {
+	if (fread(data + stride*row, 1, stride, fd) < 0) {
 	  fprintf(stderr, "scanline %lu: Read error\n",
 		  (unsigned long) row);
 	}
@@ -577,8 +567,8 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
 	goto bad1;
       }
       
-      lseek(fd, file_hdr.iOffBits, SEEK_SET);
-      read(fd, comprbuf, compr_size);
+      fseek(fd, file_hdr.iOffBits, SEEK_SET);
+      fread(comprbuf, 1, compr_size, fd);
       i = j = x = 0;
       
       while( j < uncompr_size && i < compr_size ) {
@@ -667,7 +657,6 @@ unsigned char* read_bmp (const char* file, int* w, int* h, int* bps, int* spp,
   clr_tbl = NULL;
   
  bad:
-  close(fd);
 
   return data;
 }
