@@ -94,7 +94,7 @@ bool convert_split (const Argument<std::string>& arg)
   int err = 0;
   for (int i = 0; i < arg.Size(); ++i)
     {
-      std::cout << "Writing file: " << arg.Get(i) << std::endl;
+      std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.data = image.data + i * split_image.Stride() * split_image.h;
       if (!ImageLoader::Write (arg.Get(i), split_image)) {
 	err = 1;
