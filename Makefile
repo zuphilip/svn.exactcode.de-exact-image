@@ -39,3 +39,7 @@ include gfx/Makefile
 include edisplay/Makefile
 endif
 endif
+
+check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
+	$(Q)cd testsuite; ./run ../$(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
+
