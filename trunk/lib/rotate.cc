@@ -214,6 +214,10 @@ void rot90 (Image& image, int angle)
   int x = image.w;
   image.w = image.h;
   image.h = x;
+  // resolution, likewise
+  x = image.xres;
+  image.xres = image.yres;
+  image.yres = x;
 }
 
 
@@ -238,7 +242,7 @@ void rotate (Image& image, int angle)
       rot90 (image, 90);
       break;
     case 270:
-      rot90 (image, 0);
+      rot90 (image, 270);
       break;
     default:
       std::cerr << "Rotation angle not yet supported." << std::endl;
