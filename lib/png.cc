@@ -81,14 +81,11 @@ bool PNGLoader::readImage (FILE* file, Image& image)
   image.bps = bit_depth;
   image.spp = info_ptr->channels;
   
-  png_uint_32 res_x, res_y;  
-  res_x = ((png_uint_32)((float)
-          png_get_x_pixels_per_meter(png_ptr, info_ptr) *.0254 +.5));
-
-  res_y = ((png_uint_32)((float)
-          png_get_y_pixels_per_meter(png_ptr, info_ptr) *.0254 +.5));
-  image.xres = res_x;
-  image.yres = res_y;
+  png_uint_32 res_x, res_y;
+  res_x = png_get_x_pixels_per_meter(png_ptr, info_ptr);
+  res_y = png_get_y_pixels_per_meter(png_ptr, info_ptr);
+  image.xres = (int)((2.54*res_x+.5) / 100);
+  image.yres = (int)((2.54*res_y+.5) / 100);
   
   /* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
    * byte into separate bytes (useful for paletted and grayscale images) */
@@ -234,7 +231,8 @@ bool PNGLoader::writeImage (FILE* file, Image& image)
 		PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		PNG_FILTER_TYPE_BASE);
   
-  png_set_pHYs (png_ptr, info_ptr, (int)(image.xres *.0254 +.5), (int)(image.yres *.0254 +.5),
+  png_set_pHYs (png_ptr, info_ptr,
+		(int)(image.xres*100/2.54), (int)(image.yres*100/2.54),
 		PNG_RESOLUTION_METER);
 
   /* The call to png_read_info() gives us all of the information from the
