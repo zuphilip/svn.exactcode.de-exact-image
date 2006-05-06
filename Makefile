@@ -5,8 +5,8 @@ X_BUILD_IMPLICIT=0
 include utility/Makefile
 X_BUILD_IMPLICIT=1
 
-CFLAGS = -Wall -O0 -ggdb
-CXXFLAGS = -Wall -O0 -ggdb
+CFLAGS = -Wall -O2 # -O0 -ggdb
+CXXFLAGS = -Wall -O2 # -O0 -ggdb
 
 # -frename-registers and -funroll-loops brings a lot performance on
 # my AMD Turion - about 20% time decrease (though it is included in -funroll-loops anyway) !!!
