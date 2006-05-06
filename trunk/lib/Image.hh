@@ -68,9 +68,13 @@ public:
 
   int w, h, bps, spp, xres, yres;
   unsigned char* data;
-      
+  
+  // quick "hack" to let --density save untouched jpeg coefficients
+  void* priv_data;
+  bool priv_data_valid;
+  
   Image ()
-    : data(0) {
+    : data(0), priv_data(0), priv_data_valid(false) {
   }
   
   ~Image () {

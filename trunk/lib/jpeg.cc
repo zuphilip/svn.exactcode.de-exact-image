@@ -143,7 +143,7 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
    */
-  struct jpeg_decompress_struct cinfo;
+  struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
   /* We use our private extension JPEG error handler.
    * Note that this struct must live as long as the main JPEG parameter
    * struct, to avoid dangling-pointer problems.
@@ -163,26 +163,26 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   /* Step 1: allocate and initialize JPEG decompression object */
 
   /* We set up the normal JPEG error routines, then override error_exit. */
-  cinfo.err = jpeg_std_error(&jerr.pub);
+  cinfo->err = jpeg_std_error(&jerr.pub);
   jerr.pub.error_exit = my_error_exit;
   /* Establish the setjmp return context for my_error_exit to use. */
   if (setjmp(jerr.setjmp_buffer)) {
     /* If we get here, the JPEG code has signaled an error.
      * We need to clean up the JPEG object, close the input file, and return.
      */
-    jpeg_destroy_decompress(&cinfo);
+    jpeg_destroy_decompress(cinfo);
     return false;
   }
   /* Now we can initialize the JPEG decompression object. */
-  jpeg_create_decompress(&cinfo);
+  jpeg_create_decompress(cinfo);
 
   /* Step 2: specify data source (eg, a file) */
 
-  jpeg_stdio_src(&cinfo, file);
+  jpeg_stdio_src(cinfo, file);
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
-  (void) jpeg_read_header(&cinfo, TRUE);
+  (void) jpeg_read_header(cinfo, TRUE);
   /* We can ignore the return value from jpeg_read_header since
    *   (a) suspension is not possible with the stdio data source, and
    *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
@@ -190,14 +190,12 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
    */
 
   /* Step 4: set parameters for decompression */
-
-  /* In this example, we don't need to change any of the defaults set by
-   * jpeg_read_header(), so we do nothing here.
-   */
-
+  
+  cinfo->buffered_image = TRUE;    /* select buffered-image mode */
+  
   /* Step 5: Start decompressor */
 
-  (void) jpeg_start_decompress(&cinfo);
+  (void) jpeg_start_decompress(cinfo);
   /* We can ignore the return value since suspension is not possible
    * with the stdio data source.
    */
@@ -209,30 +207,30 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
    * In this example, we need to make an output work buffer of the right size.
    */ 
   /* JSAMPLEs per row in output buffer */
-  row_stride = cinfo.output_width * cinfo.output_components;
+  row_stride = cinfo->output_width * cinfo->output_components;
 
-  image.w = cinfo.output_width;
-  image.h = cinfo.output_height;
-  image.spp = cinfo.output_components;
+  image.w = cinfo->output_width;
+  image.h = cinfo->output_height;
+  image.spp = cinfo->output_components;
   image.bps = 8;
 
   /* These three values are not used by the JPEG code, merely copied */
   /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
   /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
   /* ratio is defined by X_density/Y_density even when density_unit=0. */
-  switch (cinfo.density_unit)           /* JFIF code for pixel size units */
+  switch (cinfo->density_unit)           /* JFIF code for pixel size units */
   {
-    case 1: image.xres = cinfo.X_density;		/* Horizontal pixel density */
-            image.yres = cinfo.Y_density;		/* Vertical pixel density */
+    case 1: image.xres = cinfo->X_density;		/* Horizontal pixel density */
+            image.yres = cinfo->Y_density;		/* Vertical pixel density */
             break;
-    case 2: image.xres = cinfo.X_density * 254 / 100;
-            image.yres = cinfo.Y_density * 254 / 100;
+    case 2: image.xres = cinfo->X_density * 254 / 100;
+            image.yres = cinfo->Y_density * 254 / 100;
             break;
     default:
       image.xres = image.yres = 0;
   }
 
-  image.data = (unsigned char*) malloc (row_stride * cinfo.output_height);
+  image.data = (unsigned char*) malloc (row_stride * cinfo->output_height);
   
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
@@ -240,18 +238,23 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   /* Here we use the library's state variable cinfo.output_scanline as the
    * loop counter, so that we don't have to keep track ourselves.
    */
-  while (cinfo.output_scanline < cinfo.output_height) {
-    /* jpeg_read_scanlines expects an array of pointers to scanlines.
-     * Here the array is only one element long, but you could ask for
-     * more than one scanline at a time if that's more convenient.
-     */
-    buffer[0] = (JSAMPLE*) image.data + (cinfo.output_scanline*row_stride);
-    (void) jpeg_read_scanlines(&cinfo, buffer, 1);
+  while (! jpeg_input_complete(cinfo)) {
+    jpeg_start_output(cinfo, cinfo->input_scan_number);
+    while (cinfo->output_scanline < cinfo->output_height) {
+      /* jpeg_read_scanlines expects an array of pointers to scanlines.
+       * Here the array is only one element long, but you could ask for
+       * more than one scanline at a time if that's more convenient.
+       */
+      buffer[0] = (JSAMPLE*) image.data + (cinfo->output_scanline*row_stride);
+      (void) jpeg_read_scanlines(cinfo, buffer, 1);
+    }
+    jpeg_finish_output(cinfo);
   }
 
   /* Step 7: Finish decompression */
 
-  (void) jpeg_finish_decompress(&cinfo);
+#if 0
+  jpeg_finish_decompress(cinfo);
   /* We can ignore the return value since suspension is not possible
    * with the stdio data source.
    */
@@ -259,12 +262,18 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   /* Step 8: Release JPEG decompression object */
 
   /* This is an important step since it will release a good deal of memory. */
-  jpeg_destroy_decompress(&cinfo);
+  jpeg_destroy_decompress(cinfo);
   
   /* At this point you may want to check to see whether any corrupt-data
    * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
    */
-
+#else
+  if (image.priv_data) {
+    jpeg_finish_decompress((jpeg_decompress_struct*)image.priv_data);
+    jpeg_destroy_decompress((jpeg_decompress_struct*)image.priv_data);
+  }
+  image.priv_data = (void*) cinfo; // keep for writing, of course a "HACK"
+#endif
   /* And we're done! */
   return true;
 }
@@ -289,11 +298,43 @@ bool JPEGLoader::writeImage (FILE* file, Image& image)
   else if (image.bps == 8 && image.spp == 1)
     cinfo.in_color_space = JCS_GRAYSCALE;
   else {
-    std::cout << "Unhandled bps/spp combination." << std::endl;
+    std::cerr << "Unhandled bps/spp combination." << std::endl;
     jpeg_destroy_compress(&cinfo);
     return false;
   }
-
+  
+  if (image.priv_data && image.priv_data_valid) {
+    // write original DCT coefficients
+    
+    std::cerr << "Writing original DCT coefficients." << std::endl;
+    
+    struct jpeg_decompress_struct* srcinfo = (jpeg_decompress_struct*) image.priv_data;
+    
+    jpeg_copy_critical_parameters (srcinfo, &cinfo);
+    
+    cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
+    cinfo.density_unit = 1; /* 1 for dots/inch */
+    cinfo.X_density = image.xres;
+    cinfo.Y_density = image.yres;
+    
+    // extract the coefficients
+    jvirt_barray_ptr* src_coef_arrays = jpeg_read_coefficients(srcinfo);
+    
+    jpeg_write_coefficients(&cinfo, src_coef_arrays);
+    
+    /* Finish compression and release memory */
+    jpeg_finish_compress(&cinfo);
+    jpeg_destroy_compress(&cinfo);
+    
+    jpeg_finish_decompress(srcinfo);
+    jpeg_destroy_decompress(srcinfo);
+    image.priv_data = 0;
+    
+    return true;
+  }
+  
+  // really enecode
+  
   cinfo.image_width = image.w;
   cinfo.image_height = image.h;
   cinfo.input_components = image.spp;
