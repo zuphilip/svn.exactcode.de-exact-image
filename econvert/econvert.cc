@@ -269,6 +269,24 @@ bool convert_edge (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_resolution (const Argument<std::string>& arg)
+{
+  int xres, yres, n;
+  // parse
+  
+  // TODO: pretty C++ parser
+  if ((n = sscanf(arg.Get().c_str(), "%dx%d", &xres, &yres)))
+    {
+      if (n < 2)
+	yres = xres;
+      image.xres = xres;
+      image.yres = yres;
+      return true;
+    }
+  std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;
+  return false;
+}
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -379,6 +397,11 @@ int main (int argc, char* argv[])
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
+  Argument<std::string> arg_resolution ("", "resolution",
+					"set meta data resolution",
+					0, 1, true, true);
+  arg_resolution.Bind (convert_resolution);
+  arglist.Add (&arg_resolution);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
