@@ -290,6 +290,7 @@ bool JPEGLoader::writeImage (FILE* file, Image& image)
     cinfo.in_color_space = JCS_GRAYSCALE;
   else {
     std::cout << "Unhandled bps/spp combination." << std::endl;
+    jpeg_destroy_compress(&cinfo);
     return false;
   }
 
@@ -298,12 +299,14 @@ bool JPEGLoader::writeImage (FILE* file, Image& image)
   cinfo.input_components = image.spp;
   cinfo.data_precision = image.bps; 
 
-  cinfo.X_density = image.xres;
-  cinfo.X_density = image.yres;
-  cinfo.density_unit = 1; /* 1 for dots/inch */
-
   /* defaults depending on in_color_space */
   jpeg_set_defaults(&cinfo);
+  
+  cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
+  cinfo.density_unit = 1; /* 1 for dots/inch */
+  cinfo.X_density = image.xres;
+  cinfo.Y_density = image.yres;
+  
   jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
 
   /* Start compressor */
