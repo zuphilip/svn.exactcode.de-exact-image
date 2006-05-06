@@ -120,15 +120,12 @@ bool PNGLoader::readImage (FILE* file, Image& image)
    * even if the PNG file supplies a background, you are not required to
    * use it - you should use the (solid) application background if it has one.
    */
-  
-  png_color_16 my_background, *image_background;
-  
-  if (png_get_bKGD(png_ptr, info_ptr, &image_background))
+  png_color_16* image_background;
+  if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
     png_set_background(png_ptr, image_background,
 		       PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
-  else
-    png_set_background(png_ptr, &my_background,
-		       PNG_BACKGROUND_GAMMA_SCREEN, 0, 1.0);
+    image.spp = 3;
+  }
   
   /* If you want to shift the pixel values from the range [0,255] or
    * [0,65535] to the original [0,7] or [0,31], or whatever range the
@@ -141,10 +138,13 @@ bool PNGLoader::readImage (FILE* file, Image& image)
     png_set_shift(png_ptr, sig_bit);
   }
   
-  /* swap bytes of 16 bit files to least significant byte first */
-  // png_set_swap(png_ptr);
+#ifndef __BIG_ENDIAN__
+  /* swap bytes of 16 bit files to least significant byte first
+     we store them in CPU byte order in memory */
+  png_set_swap(png_ptr);
+#endif
 
-  /* Turn on interlace handling.  REQUIRED if you are not using
+  /* Turn on interlace handling.  REQURIED if you are not using
    * png_read_image().  To see how to handle interlacing passes,
    * see the png_read_row() method below:
    */
@@ -157,7 +157,6 @@ bool PNGLoader::readImage (FILE* file, Image& image)
   png_read_update_info(png_ptr, info_ptr);
 
   /* Allocate the memory to hold the image using the fields of info_ptr. */
-  
   int stride = png_get_rowbytes (png_ptr, info_ptr);
   
   image.data = (unsigned char*) malloc (stride * height);
@@ -222,6 +221,9 @@ bool PNGLoader::writeImage (FILE* file, Image& image)
   switch (image.spp) {
   case 1:
     color_type = PNG_COLOR_TYPE_GRAY;
+    break;
+  case 4:
+    color_type = PNG_COLOR_TYPE_RGB_ALPHA;
     break;
   default:
     color_type = PNG_COLOR_TYPE_RGB;
