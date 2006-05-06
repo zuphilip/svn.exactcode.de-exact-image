@@ -298,13 +298,15 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_help);
   
   Argument<std::string> arg_input ("i", "input",
-				   "input file or '-' for stdin, optionally prefixed with format:",
+				   "input file or '-' for stdin, optionally prefixed with format:"
+				   "\n\t\te.g: jpg:- or raw:rgb8-dump",
                                    0, 1, true, true);
   arg_input.Bind (convert_input);
   arglist.Add (&arg_input);
   
   Argument<std::string> arg_output ("o", "output",
-				    "output file or '-' for stdout, optinally prefix with format:",
+				    "output file or '-' for stdout, optinally prefix with format:"
+				    "\n\t\te.g. jpg:- or raw:rgb8-dump",
 				    0, 1, true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
