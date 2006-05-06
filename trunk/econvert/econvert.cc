@@ -297,24 +297,26 @@ int main (int argc, char* argv[])
 			   "display this help text and exit");
   arglist.Add (&arg_help);
   
-  Argument<std::string> arg_input ("i", "input", "input file",
+  Argument<std::string> arg_input ("i", "input",
+				   "input file or '-' for stdin, optionally prefixed with format:",
                                    0, 1, true, true);
   arg_input.Bind (convert_input);
   arglist.Add (&arg_input);
   
-  Argument<std::string> arg_output ("o", "output", "output file",
+  Argument<std::string> arg_output ("o", "output",
+				    "output file or '-' for stdout, optinally prefix with format:",
 				    0, 1, true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
   
   Argument<std::string> arg_split ("", "split",
-				   "filenames to save the images split into n parts",
+				   "filenames to save the images split in Y-direction into n parts",
 				   0, 999, true, true);
   arg_split.Bind (convert_split);
   arglist.Add (&arg_split);
   
   Argument<std::string> arg_colorspace ("", "colorspace",
-					"convert image colorspace (BILEVEL, GRAY, GRAY2, GRAY4, RGB, YUV, CYMK)",
+					"convert image colorspace (BILEVEL, GRAY, GRAY2, GRAY4,\n\t\tRGB, YUV, CYMK)",
 					0, 1, true, true);
   arg_colorspace.Bind (convert_colorspace);
   arglist.Add (&arg_colorspace);
@@ -326,7 +328,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_normalize);
   
   Argument<double> arg_scale ("", "scale",
-			      "scale image data using a method suitable for the specified factor",
+			      "scale image data using a method suitable for specified factor",
 			      0.0, 0, 1, true, true);
   arg_scale.Bind (convert_scale);
   arglist.Add (&arg_scale);
