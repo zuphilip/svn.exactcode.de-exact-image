@@ -41,4 +41,5 @@ private:
   // evas
   EvasCanvas* evas;
   EvasImage* evas_image;
+  EvasImage* evas_bgr_image;
 };

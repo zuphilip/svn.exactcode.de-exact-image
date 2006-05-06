@@ -6,7 +6,6 @@
 #include "Evas_Engine_Software_X11.h"
 
 #include <iostream>
-
 #include "ArgumentList.hh"
 using namespace Utility;
 
@@ -23,6 +22,18 @@ using namespace Utility;
 
 #include "edisplay.hh"
 
+
+static u_int8_t evas_bgr_image_data[] = {
+#ifndef __BIG_ENDIAN__
+  0x99, 0x99, 0x99, 0, 0x66, 0x66, 0x66, 0,
+  x066, 0x66, 0x66, 0, 0x99, 0x99, 0x99, 0
+#else
+  0, 0x99, 0x99, 0x99, 0, 0x66, 0x66, 0x66,
+  0, 0x66, 0x66, 0x66, 0, 0x99, 0x99, 0x99
+#endif
+};
+
+
 void Viewer::Zoom (double f)
 {
   int z = zoom;
@@ -38,6 +49,8 @@ void Viewer::Zoom (double f)
   
   evas_image->Resize (w, h);
   evas_image->ImageFill (0, 0, w, h);
+  
+  evas_bgr_image->Resize (w, h);
   
   // resize X window accordingly
   X11Window::Resize (dpy, win, w, h);
@@ -84,7 +97,6 @@ int Viewer::Run ()
 
   dpy = XOpenDisplay (NULL);
   if (!dpy) {
-    std::cout << "Error: cannot open display.\n" << std::endl;
     return false;
   }
 
@@ -170,6 +182,20 @@ int Viewer::Run ()
     evas->ImageCache (0);
     evas->FontCache (0);
   }
+  
+  evas_bgr_image = new EvasImage (*evas);
+  evas_bgr_image->SmoothScale(false);
+  evas_bgr_image->Layer (0);
+  evas_bgr_image->Move (0,0);
+
+  evas_bgr_image->ImageSize (2,2);
+  evas_bgr_image->ImageFill (0,0,24,24);
+  
+  evas_bgr_image->Resize (win_w,win_h);
+  
+  evas_bgr_image->DataUpdateAdd (0,0,2,2);
+  evas_bgr_image->SetData ((u_int8_t*)evas_bgr_image_data);
+  evas_bgr_image->Show ();
   
   if (!Load ())
     Next ();
@@ -300,14 +326,17 @@ int Viewer::Run ()
 	      break;
 	    }
 	}
-      
       evas->Render ();
       XFlush (dpy);
+      usleep (25000);
     }
   
   free (evas_image->Data());
   delete evas_image;
   evas_image = 0;
+  
+  delete evas_bgr_image;
+  evas_bgr_image = 0;
   
   delete evas;
   evas = 0;
@@ -354,7 +383,10 @@ bool Viewer::Load ()
     std::cerr << "Could not read the file " << *it << std::endl;
     return false;
   }
-  std::cerr << "Load: " << *it << std::endl;
+  std::cerr << "Loaded: '" << *it
+	    << "', " << image->w << "x" << image->h
+	    << " @ " << image->xres << "x" << image->yres
+	    << " dpi - spp: " << image->spp << ", bps: " << image->bps << std::endl;
   
   // convert colorspace
   if (image->bps == 16)
@@ -390,13 +422,17 @@ bool Viewer::Load ()
       dest_ptr[0] = src_ptr[2];
       dest_ptr[1] = src_ptr[1];
       dest_ptr[2] = src_ptr[0];
+      if (spp == 4)
+	dest_ptr[3] = src_ptr[3]; // alpha
 #else
       dest_ptr[1] = src_ptr[0];
       dest_ptr[2] = src_ptr[1];
       dest_ptr[3] = src_ptr[2];
+      if (spp == 4)
+	dest_ptr[0] = src_ptr[3]; // alpha
 #endif
     }
-
+  
   if (evas_image) {
     free (evas_image->Data());
     delete evas_image;
@@ -405,6 +441,7 @@ bool Viewer::Load ()
   evas_image->SmoothScale(false);
   evas_image->Layer (5);
   evas_image->Move (0,0);
+  evas_image->Alpha (spp == 4);
   
   evas_image->Resize (image->w,image->h);
   evas_image->ImageSize (image->w,image->h);
