@@ -281,6 +281,7 @@ bool convert_resolution (const Argument<std::string>& arg)
 	yres = xres;
       image.xres = xres;
       image.yres = yres;
+      image.priv_data_valid = true; // "HACK" to allow losssless jpeg, though not always valid
       return true;
     }
   std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;
@@ -392,13 +393,13 @@ int main (int argc, char* argv[])
 
 
   Argument<bool> arg_edge ("", "edge",
-                           "Edge detect",
+                           "edge detect filter",
 			   0, 0, true, true);
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
   Argument<std::string> arg_resolution ("", "resolution",
-					"set meta data resolution",
+					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
 					0, 1, true, true);
   arg_resolution.Bind (convert_resolution);
   arglist.Add (&arg_resolution);
