@@ -64,13 +64,13 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   uint16 config;
   TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
   
-  uint16 _xres;
-  if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres) == 0)
-    image.xres = _xres;
+  float _xres;
+  if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
+    image.xres = (int)_xres;
   
-  uint16 _yres;
-  if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres) == 0)
-    image.yres = _yres;
+  float _yres;
+  if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
+    image.yres = (int)_yres;
   
   int stride = image.Stride();
 
@@ -162,11 +162,15 @@ bool TIFFLoader::writeImage (FILE* file, Image& image)
   else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   
-  if (image.xres != 0)
-    TIFFSetField (out, TIFFTAG_XRESOLUTION, image.xres);
+  if (image.xres != 0) {
+    float _xres = image.yres;
+    TIFFSetField (out, TIFFTAG_XRESOLUTION, _xres);
+  }
   
-  if (image.yres != 0)
-    TIFFSetField (out, TIFFTAG_YRESOLUTION, image.yres);
+  if (image.yres != 0) {
+    float _yres = image.yres;
+    TIFFSetField (out, TIFFTAG_YRESOLUTION, _yres);
+  }
   
   TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");
   TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
