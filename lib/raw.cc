@@ -25,7 +25,7 @@
 bool RAWLoader::readImage (FILE* file, Image& image)
 {
   if (!image.data)
-    image.data = (u_int8_t*) malloc (image.Stride()*image.h);
+    image.data = (uint8_t*) malloc (image.Stride()*image.h);
   return fread (image.data, 1, image.Stride()*image.h, file) ==
          (size_t) image.Stride()*image.h;
 }

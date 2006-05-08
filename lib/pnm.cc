@@ -24,8 +24,8 @@ bool PNMLoader::readImage (FILE* file, Image& image)
   
   tuple* tuplerow = pnm_allocpamrow(&inpam);
   
-  image.data = (u_int8_t*) malloc (image.Stride()*image.h);
-  u_int8_t* ptr = image.data;
+  image.data = (uint8_t*) malloc (image.Stride()*image.h);
+  uint8_t* ptr = image.data;
   for (int row = 0; row < inpam.height; ++row) {
     pnm_readpamrow(&inpam, tuplerow);
     for (int col = 0; col < inpam.width; ++col)
@@ -36,17 +36,17 @@ bool PNMLoader::readImage (FILE* file, Image& image)
 	case 4:
 	  {
 	    int per_byte = 8 / image.bps;
-	    *ptr = *ptr << image.bps | (u_int8_t) tuplerow[col][plane];
+	    *ptr = *ptr << image.bps | (uint8_t) tuplerow[col][plane];
 	    if (col % per_byte == per_byte - 1)
 	    ++ptr;
 	  }
 	  break;
 	case 8:
-	  *ptr++ = (u_int8_t) tuplerow[col][plane];
+	  *ptr++ = (uint8_t) tuplerow[col][plane];
 	  break;
 	case 16:
 	  {
-	    u_int16_t* t = (u_int16_t*)ptr;
+	    uint16_t* t = (uint16_t*)ptr;
 	    *t = tuplerow[col][plane];
 	    ptr += 2;
 	  }
@@ -95,7 +95,7 @@ bool PNMLoader::writeImage (FILE* file, Image& image, int quality)
   
   tuple* tuplerow = pnm_allocpamrow(&outpam);
   
-  u_int8_t* ptr = image.data;
+  uint8_t* ptr = image.data;
   
   for (int row = 0; row < outpam.height; ++row) {
     for (int col = 0; col < outpam.width; ++col) {
@@ -118,7 +118,7 @@ bool PNMLoader::writeImage (FILE* file, Image& image, int quality)
 	  break;
 	case 16:
 	  {
-	    u_int16_t* t = (u_int16_t*)ptr;
+	    uint16_t* t = (uint16_t*)ptr;
 	    tuplerow[col][plane] = *t;
 	    ptr += 2;
 	  }

@@ -85,11 +85,11 @@ void box_scale (Image& image, double scalex, double scaley)
   /* handcrafted due popular request */
   if (new_image.bps == 8 && new_image.spp == 1)
     {
-      u_int8_t* src = image.data;
-      u_int8_t* dst = new_image.data;
+      uint8_t* src = image.data;
+      uint8_t* dst = new_image.data;
       
-      u_int32_t boxes[new_image.w];
-      u_int32_t count[new_image.w];
+      uint32_t boxes[new_image.w];
+      uint32_t count[new_image.w];
 
       int dy = 0;
       for (int sy = 0; dy < new_image.h && sy < image.h; ++dy) {
