@@ -7,5 +7,5 @@ public:
   virtual ~RAWLoader () { unregisterLoader (this); };
 
   virtual bool readImage (FILE* filename, Image& image);
-  virtual bool writeImage (FILE* file, Image& image);
+  virtual bool writeImage (FILE* file, Image& image, int quality);
 };

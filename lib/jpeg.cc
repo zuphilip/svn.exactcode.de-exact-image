@@ -278,12 +278,10 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool JPEGLoader::writeImage (FILE* file, Image& image)
+bool JPEGLoader::writeImage (FILE* file, Image& image, int quality)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
-
-  int quality = 80; /* TODO: allow atributes ... */
 
   JSAMPROW buffer[1];	/* pointer to JSAMPLE row[s] */
 
@@ -348,7 +346,7 @@ bool JPEGLoader::writeImage (FILE* file, Image& image)
   cinfo.X_density = image.xres;
   cinfo.Y_density = image.yres;
   
-  jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
+  jpeg_set_quality(&cinfo, quality, FALSE); /* do not limit to baseline-JPEG values */
 
   /* Start compressor */
   jpeg_start_compress(&cinfo, TRUE);

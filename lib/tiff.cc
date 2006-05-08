@@ -125,7 +125,7 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool TIFFLoader::writeImage (FILE* file, Image& image)
+bool TIFFLoader::writeImage (FILE* file, Image& image, int quality)
 {
   TIFF *out;
   //char thing[1024];

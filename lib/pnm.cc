@@ -66,7 +66,7 @@ bool PNMLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNMLoader::writeImage (FILE* file, Image& image)
+bool PNMLoader::writeImage (FILE* file, Image& image, int quality)
 {
   struct pam outpam;
   memset (&outpam, 0, sizeof(outpam));

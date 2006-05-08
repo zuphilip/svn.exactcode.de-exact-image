@@ -8,5 +8,5 @@ public:
   virtual ~PNGLoader () { unregisterLoader (this); };
 
   virtual bool readImage (FILE* file, Image& image);
-  virtual bool writeImage (FILE* file, Image& image);
+  virtual bool writeImage (FILE* file, Image& image, int quality);
 };
