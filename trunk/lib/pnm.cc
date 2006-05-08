@@ -93,13 +93,47 @@ bool PNMLoader::writeImage (FILE* file, Image& image)
   
   tuple* tuplerow = pnm_allocpamrow(&outpam);
   
+  u_int8_t* ptr = image.data;
+  
   for (int row = 0; row < outpam.height; ++row) {
-    for (int column = 0; column < outpam.width; ++column) {
+    for (int col = 0; col < outpam.width; ++col) {
       for (int plane = 0; plane < (int)outpam.depth; ++plane) {
-	
+	switch (image.bps) {
+	case 1:
+	case 2:
+	case 4:
+	  {
+	    int per_byte = 8 / image.bps;
+	    int subpos = col % per_byte;
+	    tuplerow[col][plane] = (*ptr >> 8 - image.bps*(subpos+1))
+	      & 0xff >> (8-image.bps);
+	    if (subpos == per_byte - 1)
+	      ++ptr;
+	  }
+	  break;
+	case 8:
+	  tuplerow[col][plane] = *ptr++;
+	  break;
+	case 16:
+	  {
+	    u_int16_t* t = (u_int16_t*)ptr;
+	    tuplerow[col][plane] = *t;
+	    ptr += 2;
+	  }
+	  break;
+	}
       }
     }
     pnm_writepamrow(&outpam, tuplerow);
+    
+    // remainder
+    if (image.bps < 8) {
+      int per_byte = 8 / image.bps;
+      int remainder = per_byte - outpam.width % per_byte;
+      if (remainder != per_byte) {
+	++ptr;
+      }
+    }
   }
   
   pnm_freepamrow(tuplerow);
