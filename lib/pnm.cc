@@ -1,6 +1,8 @@
 
 #include <stdlib.h>
+extern "C" {
 #include <pam.h>
+}
 
 #include <iostream>
 
