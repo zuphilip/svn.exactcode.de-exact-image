@@ -40,7 +40,7 @@ using namespace Utility;
 Image image; // the global Image we work on
 
 Argument<int> arg_quality ("", "quality",
-			   "compression qualiry setting used to write images",
+			   "quality setting used for writing compressed images",
 			   0, 1, true, true);
 
 bool convert_input (const Argument<std::string>& arg)
