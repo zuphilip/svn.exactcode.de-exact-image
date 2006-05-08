@@ -58,7 +58,7 @@ bool ImageLoader::Read (std::string file, Image& image) {
   return false;
 }
   
-bool ImageLoader::Write (std::string file, Image& image) {
+bool ImageLoader::Write (std::string file, Image& image, int quality) {
   std::string codec = get_codec (file);
   if (codec.empty())
     codec = get_ext (file);
@@ -78,7 +78,7 @@ bool ImageLoader::Write (std::string file, Image& image) {
   for (it = loader->begin(); it != loader->end(); ++it)
     {
       if (it->ext == codec) 
-	if (it->loader->writeImage (fp, image)) {
+	if (it->loader->writeImage (fp, image, quality)) {
 	  if (file != "-")
 	    fclose (fp);
 	  return true;

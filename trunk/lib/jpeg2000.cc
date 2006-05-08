@@ -158,7 +158,7 @@ bool JPEG2000Loader::readImage (FILE* file, Image& im)
 }
 
 
-bool JPEG2000Loader::writeImage (FILE* file, Image& im)
+bool JPEG2000Loader::writeImage (FILE* file, Image& im, int quality)
 {
   jas_image_t *image;
   jas_stream_t *out;

@@ -30,7 +30,7 @@ bool RAWLoader::readImage (FILE* file, Image& image)
          (size_t) image.Stride()*image.h;
 }
 
-bool RAWLoader::writeImage (FILE* file, Image& image)
+bool RAWLoader::writeImage (FILE* file, Image& image, int quality)
 {
   if (!image.data)
     return false;

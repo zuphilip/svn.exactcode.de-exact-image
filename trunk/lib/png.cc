@@ -176,7 +176,7 @@ bool PNGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNGLoader::writeImage (FILE* file, Image& image)
+bool PNGLoader::writeImage (FILE* file, Image& image, int quality)
 {
   png_structp png_ptr;
   png_infop info_ptr;
