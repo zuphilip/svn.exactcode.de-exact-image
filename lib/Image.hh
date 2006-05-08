@@ -2,6 +2,7 @@
 #ifndef IMAGE_HH
 #define IMAGE_HH
 
+#include <inttypes.h>
 #include <string>
 
 class Image
