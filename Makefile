@@ -11,13 +11,14 @@ CXXFLAGS = -Wall -O2 -s # -O0 -ggdb
 # -frename-registers and -funroll-loops brings a lot performance on
 # my AMD Turion - about 20% time decrease (though it is included in -funroll-loops anyway) !!!
 
-ifeq "$(X_ARCH)" "i686"
-CXXFLAGS += -mtune=pentium4 -march=i686
-endif
-
 # from the linux-kernel build system:
 cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
             > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+
+ifeq "$(X_ARCH)" "i686"
+CXXFLAGS += -march=i686
+CXXFLAGS += $(call cc-option,-mtune=pentium4,)
+endif
 
 CXXFLAGS += -O2 -funroll-loops -fomit-frame-pointer
 CXXFLAGS += $(call cc-option,-funswitch-loops,)
