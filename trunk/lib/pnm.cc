@@ -51,6 +51,15 @@ bool PNMLoader::readImage (FILE* file, Image& image)
 	  break;
 	}
       }
+    // remainder
+    if (image.bps < 8) {
+      int per_byte = 8 / image.bps;
+      int remainder = per_byte - inpam.width % per_byte;
+      if (remainder != per_byte) {
+	*ptr <<= remainder * image.bps;
+	++ptr;
+      }
+    }
   }
   pnm_freepamrow(tuplerow);
   
