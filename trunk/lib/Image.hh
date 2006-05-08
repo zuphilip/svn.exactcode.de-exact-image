@@ -21,28 +21,28 @@ public:
   } type_t;
 
   typedef union {
-    u_int8_t gray;
-    u_int16_t gray16;
+    uint8_t gray;
+    uint16_t gray16;
     struct {
-      u_int8_t r;
-      u_int8_t g;
-      u_int8_t b;
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
     } rgb;
     struct {
-      u_int16_t r;
-      u_int16_t g;
-      u_int16_t b;
+      uint16_t r;
+      uint16_t g;
+      uint16_t b;
     } rgb16;
     struct {
-      u_int8_t c;
-      u_int8_t m;
-      u_int8_t y;
-      u_int8_t k;
+      uint8_t c;
+      uint8_t m;
+      uint8_t y;
+      uint8_t k;
     } cmyk;
     struct {
-      u_int8_t y;
-      u_int8_t u;
-      u_int8_t v;
+      uint8_t y;
+      uint8_t u;
+      uint8_t v;
     } yuv;
   } value_t;
     
@@ -401,7 +401,7 @@ public:
 	  bitpos = 7;
 	  if (_x == width)
 	    _x = 0;
-	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	  ptr = (value_t*) ((uint8_t*) ptr + 1);
 	}
 	break;
       case GRAY2:
@@ -410,7 +410,7 @@ public:
 	  bitpos = 7;
 	  if (_x == width)
 	    _x = 0;
-	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	  ptr = (value_t*) ((uint8_t*) ptr + 1);
 	}
 	break;
       case GRAY4:
@@ -419,21 +419,21 @@ public:
 	  bitpos = 7;
 	  if (_x == width)
 	    _x = 0;
-	  ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	  ptr = (value_t*) ((uint8_t*) ptr + 1);
 	}
 	break;
       case GRAY8:
-	ptr = (value_t*) ((u_int8_t*) ptr + 1);
+	ptr = (value_t*) ((uint8_t*) ptr + 1);
 	break;
       case GRAY16:
-	ptr = (value_t*) ((u_int8_t*) ptr + 2); break;
+	ptr = (value_t*) ((uint8_t*) ptr + 2); break;
       case RGB8:
       case YUV8:
-	ptr = (value_t*) ((u_int8_t*) ptr + 3); break;
+	ptr = (value_t*) ((uint8_t*) ptr + 3); break;
       case RGB16:
-	ptr = (value_t*) ((u_int8_t*) ptr + 6); break;
+	ptr = (value_t*) ((uint8_t*) ptr + 6); break;
       case CMYK8:
-	ptr = (value_t*) ((u_int8_t*) ptr + 4); break;
+	ptr = (value_t*) ((uint8_t*) ptr + 4); break;
       }
       return *this;
     }
@@ -444,40 +444,40 @@ public:
 	++bitpos;
 	if (bitpos > 7) {
 	  bitpos = 0;
-	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
+	  ptr = (value_t*) ((uint8_t*) ptr - 1);
 	}
 	break;
       case GRAY2:
 	bitpos += 2;
 	if (bitpos > 7) {
 	  bitpos = 1;
-	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
+	  ptr = (value_t*) ((uint8_t*) ptr - 1);
 	}
 	break;
       case GRAY4:
 	++bitpos;
 	if (bitpos > 7) {
 	  bitpos = 3;
-	  ptr = (value_t*) ((u_int8_t*) ptr - 1);
+	  ptr = (value_t*) ((uint8_t*) ptr - 1);
 	}
 	break;
       case GRAY8:
-	ptr = (value_t*) ((u_int8_t*) ptr - 1); break;
+	ptr = (value_t*) ((uint8_t*) ptr - 1); break;
       case GRAY16:
-	ptr = (value_t*) ((u_int8_t*) ptr - 2); break;
+	ptr = (value_t*) ((uint8_t*) ptr - 2); break;
       case RGB8:
       case YUV8:
-	ptr = (value_t*) ((u_int8_t*) ptr - 3); break;
+	ptr = (value_t*) ((uint8_t*) ptr - 3); break;
       case RGB16:
-	ptr = (value_t*) ((u_int8_t*) ptr - 6); break;
+	ptr = (value_t*) ((uint8_t*) ptr - 6); break;
       case CMYK8:
-	ptr = (value_t*) ((u_int8_t*) ptr - 4); break;
+	ptr = (value_t*) ((uint8_t*) ptr - 4); break;
       }
       return *this;
     }
     
     // return Luminance
-    inline u_int16_t getL ()
+    inline uint16_t getL ()
     {
       switch (type) {
       case GRAY1:
@@ -489,7 +489,7 @@ public:
 	break;
       case RGB8:
       case RGB16:
-	return (u_int16_t) (.21267 * value.rgb.r +
+	return (uint16_t) (.21267 * value.rgb.r +
 			    .71516 * value.rgb.g +
 			    .07217 * value.rgb.b);
 	break;

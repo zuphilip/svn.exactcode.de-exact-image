@@ -23,7 +23,7 @@ using namespace Utility;
 #include "edisplay.hh"
 
 
-static u_int8_t evas_bgr_image_data[] = {
+static uint8_t evas_bgr_image_data[] = {
 #ifndef __BIG_ENDIAN__
   0x99, 0x99, 0x99, 0, 0x66, 0x66, 0x66, 0,
   0x66, 0x66, 0x66, 0, 0x99, 0x99, 0x99, 0
@@ -194,7 +194,7 @@ int Viewer::Run ()
   evas_bgr_image->Resize (win_w,win_h);
   
   evas_bgr_image->DataUpdateAdd (0,0,2,2);
-  evas_bgr_image->SetData ((u_int8_t*)evas_bgr_image_data);
+  evas_bgr_image->SetData ((uint8_t*)evas_bgr_image_data);
   evas_bgr_image->Show ();
   
   if (!Load ())
