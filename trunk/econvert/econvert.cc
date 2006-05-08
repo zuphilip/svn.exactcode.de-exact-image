@@ -39,6 +39,10 @@ using namespace Utility;
 
 Image image; // the global Image we work on
 
+Argument<int> arg_quality ("", "quality",
+			   "compression qualiry setting used to write images",
+			   0, 1, true, true);
+
 bool convert_input (const Argument<std::string>& arg)
 {
   if (image.data) {
@@ -60,7 +64,11 @@ bool convert_output (const Argument<std::string>& arg)
     return false;
   }
   
-  if (!ImageLoader::Write(arg.Get(), image)) {
+  int quality = 80;
+  if (arg_quality.Size())
+    quality = arg_quality.Get();
+  
+  if (!ImageLoader::Write(arg.Get(), image, quality)) {
     std::cerr << "Error writing output file." << std::endl;
     return false;
   }
@@ -74,11 +82,6 @@ bool convert_split (const Argument<std::string>& arg)
     return false;
   }
   
-  if (!ImageLoader::Write(arg.Get(), image)) {
-    std::cerr << "Error writing output file." << std::endl;
-    return false;
-  }
-
   Image split_image (image);
   
   // this is a bit ugly hacked for now
@@ -91,12 +94,16 @@ bool convert_split (const Argument<std::string>& arg)
     return false;
   }
   
+  int quality = 80;
+  if (arg_quality.Size())
+    quality = arg_quality.Get();
+  
   int err = 0;
   for (int i = 0; i < arg.Size(); ++i)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.data = image.data + i * split_image.Stride() * split_image.h;
-      if (!ImageLoader::Write (arg.Get(i), split_image)) {
+      if (!ImageLoader::Write (arg.Get(i), split_image, quality)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
       }
@@ -310,6 +317,9 @@ int main (int argc, char* argv[])
 				    0, 1, true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
+  
+  // global
+  arglist.Add (&arg_quality);
   
   Argument<std::string> arg_split ("", "split",
 				   "filenames to save the images split in Y-direction into n parts",
