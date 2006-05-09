@@ -1,6 +1,6 @@
 
 /*
- * The ExactImage libraries convert compativle command line frontend.
+ * The ExactImage library's convert compatible command line frontend.
  * Copyright (C) 2006 René Rebe, Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -40,8 +40,14 @@ using namespace Utility;
 Image image; // the global Image we work on
 
 Argument<int> arg_quality ("", "quality",
-			   "quality setting used for writing compressed images",
+			   "quality setting used for writing compressed images\n\t\t"
+			   "integer range 0-100, the default is 80",
 			   0, 1, true, true);
+
+Argument<std::string> arg_compression ("", "compress",
+				       "compression method for writing images e.g. G3, G4, Zip, ...\n\t\t"
+				       "depending on the output format, a reasonable setting by default",
+				       0, 1, true, true);
 
 bool convert_input (const Argument<std::string>& arg)
 {
@@ -67,8 +73,11 @@ bool convert_output (const Argument<std::string>& arg)
   int quality = 80;
   if (arg_quality.Size())
     quality = arg_quality.Get();
+  std::string compression = "";
+  if (arg_compression.Size())
+    compression = arg_compression.Get();
   
-  if (!ImageLoader::Write(arg.Get(), image, quality)) {
+  if (!ImageLoader::Write(arg.Get(), image, quality, compression)) {
     std::cerr << "Error writing output file." << std::endl;
     return false;
   }
@@ -97,13 +106,16 @@ bool convert_split (const Argument<std::string>& arg)
   int quality = 80;
   if (arg_quality.Size())
     quality = arg_quality.Get();
-  
+  std::string compression = "";
+  if (arg_compression.Size())
+    compression = arg_compression.Get();
+
   int err = 0;
   for (int i = 0; i < arg.Size(); ++i)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.data = image.data + i * split_image.Stride() * split_image.h;
-      if (!ImageLoader::Write (arg.Get(i), split_image, quality)) {
+      if (!ImageLoader::Write (arg.Get(i), split_image, quality, compression)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
       }
@@ -320,6 +332,7 @@ int main (int argc, char* argv[])
   
   // global
   arglist.Add (&arg_quality);
+  arglist.Add (&arg_compression);
   
   Argument<std::string> arg_split ("", "split",
 				   "filenames to save the images split in Y-direction into n parts",

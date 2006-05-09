@@ -43,7 +43,7 @@ bool BMPLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool BMPLoader::writeImage (FILE* file, Image& image, int quality)
+bool BMPLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   // return write_bmp (file, w, h, bps, spp, xres, yres);
   return false;

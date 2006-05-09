@@ -30,7 +30,7 @@ bool RAWLoader::readImage (FILE* file, Image& image)
          (size_t) image.Stride()*image.h;
 }
 
-bool RAWLoader::writeImage (FILE* file, Image& image, int quality)
+bool RAWLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   if (!image.data)
     return false;

@@ -158,7 +158,7 @@ bool JPEG2000Loader::readImage (FILE* file, Image& im)
 }
 
 
-bool JPEG2000Loader::writeImage (FILE* file, Image& im, int quality)
+bool JPEG2000Loader::writeImage (FILE* file, Image& im, int quality, const std::string& compress)
 {
   jas_image_t *image;
   jas_stream_t *out;
