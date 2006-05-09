@@ -68,7 +68,7 @@ bool PNMLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNMLoader::writeImage (FILE* file, Image& image, int quality)
+bool PNMLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   struct pam outpam;
   memset (&outpam, 0, sizeof(outpam));

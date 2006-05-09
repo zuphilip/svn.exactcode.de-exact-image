@@ -278,7 +278,7 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool JPEGLoader::writeImage (FILE* file, Image& image, int quality)
+bool JPEGLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;

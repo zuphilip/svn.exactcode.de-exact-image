@@ -22,6 +22,8 @@
 #include <tiffconf.h>
 #include <tiffio.h>
 
+#include <algorithm>
+
 #include "tiff.hh"
 
 #include "Colorspace.hh"
@@ -125,17 +127,36 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool TIFFLoader::writeImage (FILE* file, Image& image, int quality)
+bool TIFFLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   TIFF *out;
-  //char thing[1024];
-
   uint32 rowsperstrip = (uint32) - 1;
+  
   uint16 compression = COMPRESSION_NONE;
-  if (image.bps == 1)
-    compression = COMPRESSION_CCITTFAX4;
-  else
-    compression = COMPRESSION_LZW;
+  if (compress.empty()) {
+    if (image.bps == 1)
+      compression = COMPRESSION_CCITTFAX4;
+    else
+      compression = COMPRESSION_DEFLATE;
+  }
+  else {
+    std::string c (compress);
+    std::transform (c.begin(), c.end(), c.begin(), tolower);
+    
+    if (c == "g3" || c == "fax")
+      compression = COMPRESSION_CCITTFAX3;
+    else if (c == "g4" || c == "group4")
+      compression = COMPRESSION_CCITTFAX3;
+    else if (c == "lzw")
+      compression = COMPRESSION_LZW;
+    else if (c == "deflate" || c == "zip")
+      compression = COMPRESSION_DEFLATE;
+    else if (c == "none")
+      compression = COMPRESSION_NONE;
+    else
+      std::cerr << "Unrecognized compression option '" << compress << "'" << std::endl;
+  }
+  
 
   out = TIFFFdOpen (fileno(file), "", "w");
   if (out == NULL)

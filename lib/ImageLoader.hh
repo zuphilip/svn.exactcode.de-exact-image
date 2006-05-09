@@ -17,10 +17,12 @@ public:
   
   // not const string& because the filename is parsed and changed internally
   static bool Read (std::string file, Image& image);
-  static bool Write (std::string file, Image& image, int quality = 80);
+  static bool Write (std::string file, Image& image,
+		     int quality = 80, const std::string& compress = "");
 
   virtual bool readImage (FILE* file, Image& image) = 0;
-  virtual bool writeImage (FILE* file, Image& image, int quality) = 0;
+  virtual bool writeImage (FILE* file, Image& image,
+			   int quality, const std::string& compress) = 0;
   
 protected:
   

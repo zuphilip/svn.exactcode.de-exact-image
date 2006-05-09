@@ -176,7 +176,7 @@ bool PNGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNGLoader::writeImage (FILE* file, Image& image, int quality)
+bool PNGLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   png_structp png_ptr;
   png_infop info_ptr;
