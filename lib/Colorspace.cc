@@ -262,7 +262,11 @@ void colorspace_16_to_8 (Image& image)
   for (unsigned char* it = image.data;
        it < image.data + image.w*image.h*image.spp*2;)
     {
+#ifndef __BIG_ENDIAN__
       *output++ = it[1];
+#else
+      *output++ = it[0];
+#endif
       it += 2;
     }
   image.bps = 8; // converted 8bit data
