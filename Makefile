@@ -5,8 +5,10 @@ X_BUILD_IMPLICIT=0
 include utility/Makefile
 X_BUILD_IMPLICIT=1
 
-CFLAGS = -Wall -O2 -s # -O0 -ggdb
-CXXFLAGS = -Wall -O2 -s # -O0 -ggdb
+CFLAGS = -Wall -O2 -s
+CXXFLAGS = -Wall -O2 -s
+#CFLAGS = -Wall -O0 -ggdb
+#CXXFLAGS = -Wall -O0 -ggdb
 
 # -frename-registers and -funroll-loops brings a lot performance on
 # my AMD Turion - about 20% time decrease (though it is included in -funroll-loops anyway) !!!
@@ -20,7 +22,7 @@ CXXFLAGS += -march=i686
 CXXFLAGS += $(call cc-option,-mtune=pentium4,)
 endif
 
-CXXFLAGS += -O2 -funroll-loops -fomit-frame-pointer
+CXXFLAGS += -funroll-loops -fomit-frame-pointer
 CXXFLAGS += $(call cc-option,-funswitch-loops,)
 CXXFLAGS += $(call cc-option,-fpeel-loops,)
 CXXFLAGS += $(call cc-option,-ftracer,)
