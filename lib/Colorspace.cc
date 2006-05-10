@@ -165,6 +165,31 @@ void colorspace_gray8_to_rgb8 (Image& image)
   image.spp = 3; // converted data right now
 }
 
+void colorspace_grayX_to_rgb8 (Image& image)
+{
+  // sanity and for compiler optimization
+  if (image.spp != 1)
+    return;
+  
+  Image rgb_image;
+  rgb_image.bps = 8;
+  rgb_image.spp = 3;
+  rgb_image.data = 0;
+  rgb_image.New (image.w, image.h);
+  
+  Image::iterator it = image.begin();
+  Image::iterator rgb_it = rgb_image.begin();
+  
+  while (rgb_it != rgb_image.end()) {
+    *it;
+    rgb_it.setL (it.getL());
+    rgb_it.set (rgb_it);
+    ++it; ++rgb_it;
+  }
+  image = rgb_image;
+  rgb_image.data = 0;
+}
+
 void colorspace_gray1_to_gray2 (Image& image)
 {
   unsigned char* data = (unsigned char*) malloc (image.h*image.w/4);
