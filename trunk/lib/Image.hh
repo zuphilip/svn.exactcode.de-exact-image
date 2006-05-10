@@ -147,7 +147,7 @@ public:
 	bitpos = 7;
       }
       else {
-	ptr = (value_t*) image->data + stride * image->h + image->w;
+	ptr = (value_t*) (image->data + stride * image->h);
 	_x = width;
 	// TODO: bitpos= ...
       }
@@ -214,16 +214,16 @@ public:
     inline iterator& operator* () {
       switch (type) {
       case GRAY1:
-	value.gray = (ptr->gray & (0x01 << bitpos)) << (7 - bitpos); 
+	value.gray = (ptr->gray >> (bitpos-0) & 0x01) * 255;
 	break;
       case GRAY2:
-	value.gray = (ptr->gray & (0x03 << (bitpos-1))) << (7 - bitpos); 
+	value.gray = (ptr->gray >> (bitpos-1) & 0x03) * 255/3;
 	break;
       case GRAY4:
-	value.gray = (ptr->gray & (0x0F << (bitpos-3))) << (7 - bitpos); 
+	value.gray = (ptr->gray >> (bitpos-3) & 0x0f) * 255/15;
 	break;
-      case GRAY8:
-	value.gray = ptr->gray;
+    case GRAY8:
+    value.gray = ptr->gray;
 	break;
       case GRAY16:
 	value.gray = ptr->gray16;
@@ -442,21 +442,21 @@ public:
     inline iterator& operator-- () {
       switch (type) {
       case GRAY1:
-	++bitpos;
+	++bitpos; --_x;
 	if (bitpos > 7) {
 	  bitpos = 0;
 	  ptr = (value_t*) ((uint8_t*) ptr - 1);
 	}
 	break;
       case GRAY2:
-	bitpos += 2;
+	bitpos += 2; --_x;
 	if (bitpos > 7) {
 	  bitpos = 1;
 	  ptr = (value_t*) ((uint8_t*) ptr - 1);
 	}
 	break;
       case GRAY4:
-	++bitpos;
+	bitpos += 4; --_x;
 	if (bitpos > 7) {
 	  bitpos = 3;
 	  ptr = (value_t*) ((uint8_t*) ptr - 1);
@@ -503,6 +503,30 @@ public:
       }
     }
     
+    // return Luminance
+    inline void setL (uint16_t L)
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	value.gray = L;
+	break;
+      case RGB8:
+      case RGB16:
+	value.rgb.r = value.rgb.g = value.rgb.b = L;
+	break;
+      case CMYK8:
+	value.cmyk.k = L; // TODO
+	break;
+      case YUV8:
+	value.yuv.y = L;
+	value.yuv.u = value.yuv.v = 0;
+ 	break;
+      }
+    }
     inline void set (const iterator& other) {
       switch (type) {
       case GRAY1:
@@ -542,6 +566,24 @@ public:
 	ptr->yuv.v = other.value.yuv.v;
 	break;
       }
+    }
+    
+    bool operator != (const iterator& other)
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+	return ptr != other.ptr && _x != other._x;
+      case GRAY8:
+      case GRAY16:
+      case RGB8:
+      case RGB16:
+      case CMYK8:
+      case YUV8:
+	return ptr != other.ptr;
+      }
+
     }
   };
   
