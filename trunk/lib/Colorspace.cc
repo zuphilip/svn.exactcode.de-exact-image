@@ -360,7 +360,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   unsigned char* src = orig_data;
   unsigned char* dst = image.data;
 
-  // TODO: allow 16bit output if the palete contains that much dynamic
+  // TODO: allow 16bit output if the palette contains that much dynamic
 
   int bits_used = 0;
   int x = 0;
