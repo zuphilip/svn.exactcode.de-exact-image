@@ -147,14 +147,14 @@ bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::st
     return false;
   
   GifByteType
-    RedBuffer [image.w*image.h],
-    GreenBuffer [image.w*image.h],
-    BlueBuffer [image.w*image.h];
+    *RedBuffer = new GifByteType [image.w*image.h],
+    *GreenBuffer = new GifByteType [image.w*image.h],
+    *BlueBuffer = new GifByteType [image.w*image.h];
   GifByteType
     *rptr = RedBuffer,
     *gptr = GreenBuffer,
     *bptr = BlueBuffer;
-  
+ 
   for (Image::iterator it = image.begin(); it != image.end(); ++it) {
     uint16_t r, g, b;
     *it;
@@ -193,6 +193,8 @@ bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::st
     Ptr += image.w;
   }
   free (OutputBuffer);
+
+  delete (RedBuffer); delete (GreenBuffer); delete (BlueBuffer);
 
   EGifCloseFile(GifFile);
   return true;
