@@ -504,6 +504,34 @@ public:
     }
     
     // return Luminance
+    inline void getRGB(uint16_t* r, uint16_t* g, uint16_t* b)
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	*r = *g = *b = value.gray;
+	return;
+	break;
+      case RGB8:
+      case RGB16:
+	*r = value.rgb.r;
+	*g = value.rgb.g;
+	*b = value.rgb.b;
+	return;
+	break;
+      case CMYK8:
+	// TODO
+	break;
+      case YUV8:
+	// TODO
+	break;
+      }
+    }
+    
+    // return Luminance
     inline void setL (uint16_t L)
     {
       switch (type) {

@@ -17,7 +17,6 @@ static int InterlacedJumps[] = { 8, 8, 4, 2 };
 bool GIFLoader::readImage (FILE* file, Image& image)
 {
   GifFileType* GifFile;
-  GifByteType* Ptr;
   GifRecordType RecordType;
   GifByteType* Extension;
   ColorMapObject *ColorMap = NULL;
@@ -134,16 +133,56 @@ bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::st
       std::cerr << "Error preparing GIF file for writing." << std::endl;
       return false;
     }
-#if 0 // create palette
+  
+  int ColorMapSize = 256;
+  
+  // later use our own colormap generation
+  ColorMapObject* OutputColorMap = MakeMapObject(ColorMapSize, NULL);
+  if (!OutputColorMap)
+    return false;
+  
+  GifByteType* OutputBuffer =
+    (GifByteType*) malloc(image.w * image.h *  sizeof(GifByteType));
+  if (!OutputBuffer)
+    return false;
+  
+  GifByteType
+    RedBuffer [image.w*image.h],
+    GreenBuffer [image.w*image.h],
+    BlueBuffer [image.w*image.h];
+  GifByteType
+    *rptr = RedBuffer,
+    *gptr = GreenBuffer,
+    *bptr = BlueBuffer;
+  
+  for (Image::iterator it = image.begin(); it != image.end(); ++it) {
+    uint16_t r, g, b;
+    *it;
+    it.getRGB (&r, &g, &b);
+    *rptr++ = r;
+    *gptr++ = g;
+    *bptr++ = b;
+  }
+   
+  
+  if (QuantizeBuffer(image.w, image.h, &ColorMapSize,
+		     RedBuffer, GreenBuffer, BlueBuffer,
+		     OutputBuffer, OutputColorMap->Colors) == GIF_ERROR) {
+    return false;
+  }
+  
+  std::cerr << "Writing uncompressed GIF file with "
+	    << (int)ColorMapSize << " colors." << std::endl;
+  
   if (EGifPutScreenDesc(GifFile, image.w, image.h,
-			ExpColorMapSize, 0, OutputColorMap) == GIF_ERROR ||
+			ColorMapSize, 0, OutputColorMap) == GIF_ERROR ||
       EGifPutImageDesc(GifFile, 0, 0, image.w, image.h,
 		       FALSE, NULL) == GIF_ERROR)
     {
       std::cerr << "Error writing GIF header." << std::endl;
       return false;
     }
-  
+  Ptr = OutputBuffer;
   for (int i = 0; i < image.h; ++i) {
     if (EGifPutLine(GifFile, Ptr, image.w) == GIF_ERROR)
       {
@@ -153,9 +192,10 @@ bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::st
     
     Ptr += image.w;
   }
-#endif
+  free (OutputBuffer);
+
   EGifCloseFile(GifFile);
-  return false;
+  return true;
 }
 
 GIFLoader gif_loader;
