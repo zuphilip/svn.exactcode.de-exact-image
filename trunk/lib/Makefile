@@ -12,7 +12,7 @@ BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
 CPPFLAGS += -I lib/
-LDFLAGS += -ljpeg -ltiff -lpng -lnetpbm
+LDFLAGS += -ljpeg -ltiff -lpng -lnetpbm -lungif
 
 DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
 
