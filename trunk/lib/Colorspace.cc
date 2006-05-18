@@ -333,8 +333,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   {
     int i;
     for (i = 0; i < table_entries; ++i) {
-      if (rmap [i] != gmap[i] ||
-	  rmap [i] != bmap[i])
+      if (rmap[i]>>8 != gmap[i]>>8 != bmap[i]>>8 != i * 256 / (table_entries-1))
 	break;
     }
     
@@ -344,8 +343,8 @@ void colorspace_de_palette (Image& image, int table_entries,
     }
     
     // shortpath if the data is already 8bit gray
-    if (is_gray && image.bps == 8 && table_entries == 256) {
-      std::cerr << "is gray table and already 8bit data" << std::endl;
+    if (is_gray && (image.bps == 8 || image.bps == 4 || image.bps == 2) ) {
+      std::cerr << "is gray table" << std::endl;
       return;
     }
   }
