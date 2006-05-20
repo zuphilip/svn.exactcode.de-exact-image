@@ -31,6 +31,8 @@ bool ImageLoader::Read (std::string file, Image& image) {
   if (codec.empty())
     codec = get_ext (file);
   
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  
   FILE* fp;
   if (file != "-")
     fp = fopen (file.c_str(), "r");
@@ -63,6 +65,8 @@ bool ImageLoader::Write (std::string file, Image& image,
   std::string codec = get_codec (file);
   if (codec.empty())
     codec = get_ext (file);
+  
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
   FILE* fp;
   if (file != "-")

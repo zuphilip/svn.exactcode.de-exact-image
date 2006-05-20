@@ -4,7 +4,7 @@
 class DCRAWLoader : public ImageLoader {
 public:
   
-  DCRAWLoader () { registerLoader ("CR2", this); };
+  DCRAWLoader () { registerLoader ("cr2", this); };
   virtual ~DCRAWLoader () { unregisterLoader (this); };
 
   virtual bool readImage (FILE* file, Image& image);
