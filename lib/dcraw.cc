@@ -11,7 +11,7 @@ bool DCRAWLoader::readImage (FILE* file, Image& im)
   
   ifp = file;
   
-  int staytus = (identify(),!is_raw);
+  int status = (identify(),!is_raw);
   
   if (load_raw == kodak_ycbcr_load_raw) {
     height += height & 1;
