@@ -165,6 +165,31 @@ void colorspace_gray8_to_rgb8 (Image& image)
   image.spp = 3; // converted data right now
 }
 
+void colorspace_grayX_to_gray8 (Image& image)
+{
+  // sanity and for compiler optimization
+  if (image.spp != 1)
+    return;
+
+  Image gray8_image;
+  gray8_image.bps = 8;
+  gray8_image.spp = 3;
+  gray8_image.data = 0;
+  gray8_image.New (image.w, image.h);
+
+  Image::iterator it = image.begin();
+  Image::iterator gray8_it = gray8_image.begin();
+
+  while (gray8_it != gray8_image.end()) {
+    *it;
+    gray8_it.setL (it.getL());
+    gray8_it.set (gray8_it);
+    ++it; ++gray8_it;
+  }
+  image = gray8_image;
+  gray8_image.data = 0;
+}
+
 void colorspace_grayX_to_rgb8 (Image& image)
 {
   // sanity and for compiler optimization
@@ -283,8 +308,8 @@ void colorspace_gray1_to_gray8 (Image& image)
 
 void colorspace_16_to_8 (Image& image)
 {
-  unsigned char* output = image.data;
-  for (unsigned char* it = image.data;
+  uint8_t* output = image.data;
+  for (uint8_t* it = image.data;
        it < image.data + image.w*image.h*image.spp*2;)
     {
 #ifndef __BIG_ENDIAN__
@@ -295,6 +320,20 @@ void colorspace_16_to_8 (Image& image)
       it += 2;
     }
   image.bps = 8; // converted 8bit data
+}
+
+void colorspace_8_to_16 (Image& image)
+{
+  uint16_t* data = (uint16_t*) malloc (image.w*image.h*image.spp*2);
+  uint16_t* out_it = data;
+  for (uint8_t* it = image.data;
+       it < image.data + image.w*image.h*image.spp;)
+    {
+      *out_it++ = *it++ * 0xffff / 255;
+    }
+  free (image.data);
+  image.data = (uint8_t*) data;
+  image.bps = 16; // converted 16bit data
 }
 
 void colorspace_de_palette (Image& image, int table_entries,
