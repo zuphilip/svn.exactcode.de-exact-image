@@ -125,12 +125,14 @@ bool PNGLoader::readImage (FILE* file, Image& image)
    * even if the PNG file supplies a background, you are not required to
    * use it - you should use the (solid) application background if it has one.
    */
+#if 0
   png_color_16* image_background;
   if (png_get_bKGD(png_ptr, info_ptr, &image_background)) {
     png_set_background(png_ptr, image_background,
 		       PNG_BACKGROUND_GAMMA_FILE, 1, 1.0);
     image.spp = 3;
   }
+#endif
   
   /* If you want to shift the pixel values from the range [0,255] or
    * [0,65535] to the original [0,7] or [0,31], or whatever range the
