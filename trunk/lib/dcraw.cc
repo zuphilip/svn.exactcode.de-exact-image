@@ -59,13 +59,19 @@ bool DCRAWLoader::readImage (FILE* file, Image& im)
   im.spp = 3;
   im.New(width, height);
   
+  // the non-linear gamma by default
+  uint16_t lut [0x10000];
+  const double gamma = 1.8;
+  const double one_over_gamma = 1. / gamma;
+  for (int i = 0; i < 0x10000; ++i)
+    lut [i] = pow( (double) i / 0xFFFF, one_over_gamma) * 0xFFFF;
+  
   uint16_t* ptr = (uint16_t*) im.data;
   for (int row = 0; row < height; ++row)
     for (int col = 0; col < width; ++col)
       for (int c = 0; c < colors; ++c)
-	*ptr++ = image[row*width+col][c];
+	*ptr++ = lut[ image[row*width+col][c] ];
     
-  
   return true;
 }
 
