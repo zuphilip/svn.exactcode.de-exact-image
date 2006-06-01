@@ -342,10 +342,15 @@ bool JPEGLoader::writeImage (FILE* file, Image& image, int quality, const std::s
   jpeg_set_defaults(&cinfo);
   
   cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
-  cinfo.density_unit = 1; /* 1 for dots/inch */
-  cinfo.X_density = image.xres;
-  cinfo.Y_density = image.yres;
-  
+  if (image.xres == 0 || image.yres == 0) {
+    cinfo.density_unit = 0; /* unknown */
+    cinfo.X_density = cinfo.Y_density = 0;
+  }
+  else {
+    cinfo.density_unit = 1; /* 1 for dots/inch */
+    cinfo.X_density = image.xres;
+    cinfo.Y_density = image.yres;
+  }
   jpeg_set_quality(&cinfo, quality, FALSE); /* do not limit to baseline-JPEG values */
 
   /* Start compressor */
