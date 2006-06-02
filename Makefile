@@ -6,7 +6,7 @@ include utility/Makefile
 X_BUILD_IMPLICIT=1
 
 CFLAGS = -Wall -O2 -s
-CXXFLAGS = -Wall -O2 -s
+CXXFLAGS = -Wall -O2 -s -Wno-sign-compare
 #CFLAGS = -Wall -O0 -ggdb
 #CXXFLAGS = -Wall -O0 -ggdb
 
@@ -33,7 +33,7 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
-MODULES = libbmp lib econvert
+MODULES = libbmp lib econvert edentify
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
@@ -43,6 +43,6 @@ include edisplay/Makefile
 endif
 endif
 
-check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
+check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT) $(X_OUTARCH)/edentify/edentify$(X_EXEEXT)
 	$(Q)cd testsuite; ./run ../$(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
 
