@@ -77,18 +77,86 @@ int main (int argc, char* argv[])
   // for all residual arguments (image files)
   int errors = 0;
   const std::vector<std::string>& list = arglist.Residuals();
-  for (std::vector<std::string>::const_iterator it = list.begin();
-       it != list.end(); ++it)
+  for (std::vector<std::string>::const_iterator file = list.begin();
+       file != list.end(); ++file)
     {
-      if (!ImageLoader::Read(*it, image)) {
-	std::cout << "edentify: unable to open image '" << *it << "'." << std::endl;
+      if (!ImageLoader::Read(*file, image)) {
+	std::cout << "edentify: unable to open image '" << *file << "'." << std::endl;
 	continue;
       }
       
       if (arg_format.Size() > 0)
 	{
-	  std::cout << "TODO: implement format handling: '"
-		    << arg_format.Get() << "'" << std::endl;
+	  const std::string& format = arg_format.Get();
+	  
+	  for (std::string::const_iterator it = format.begin(); it != format.end(); ++it)
+	    {
+	      if (*it == '%') {
+		if (++it == format.end())
+		  --it; // print the % if at the end
+		switch (*it) {
+		  // case 'b': break; //   file size
+		  // case 'c': break; //   comment
+		  // case 'd': break; //   directory
+		  // case 'e': break; //   filename extension
+		  // case 'f': break; //   filename
+		  // %g   page geometry
+		case 'h': //  height
+		  std::cout << image.h; break;
+		case 'i': //   input filename
+		  std::cout << *file; break;
+		  //case 'k': break; //   number of unique colors
+		  // %l   label
+		  // %m   magick
+		  // %n   number of scenes
+		  // %o   output filename
+		  // %p   page number
+		  // %q   quantum depth
+		  // %r   image class and colorspace
+		  // %s   scene number
+		  // %t   top of filename
+		  // %u   unique temporary filename
+		case 'w': //   width
+		  std::cout << image.w; break;
+		case 'x': //   x resolution
+		  std::cout << image.xres << " PixelsPerInch"; break;
+		case 'y': //   y resolution
+		  std::cout << image.yres << " PixelsPerInch"; break;
+		case 'z': //   image depth
+		  std::cout << image.bps; break;
+		  // %D   image dispose method
+		  // %O   page offset
+		  // %P   page width and height
+		  // %Q   image compression quality
+		  // %T   image delay
+		  //  %@   bounding box
+		  // %#   signature
+		case '%':
+		  std::cout << *it; break;
+		default:
+		  if (it != format.begin())
+		    --it;
+		  std::cout << *it;
+		}
+	      }
+	      else if (*it == '\\')
+		{
+		  if (++it == format.end())
+		    --it; // print the \ if at the end
+		  switch (*it) {
+		  case 'n': std::cout << std::endl; break;
+		  case 't': std::cout << "\t"; break;
+		  case 'r': std::cout << "\r"; break;
+		  case '\\': std::cout << *it; break;
+		  default:
+		    if (it != format.begin())
+		      --it;
+		    std::cout << *it;
+		  }
+		}
+	      else
+		std::cout << *it;
+	    }
 	}
       else if (arg_verbose.Get())
 	{
@@ -98,7 +166,7 @@ int main (int argc, char* argv[])
 	// TODO: attach the loader to the image, would be nice for JPEG, JP2
 	// coefficent handling anyway, so we can querry the codec identity here
 	// placeholder <CODEC> ...
-	std::cout << *it << ": <CODEC> " << image.w << "x" << image.h;
+	std::cout << *file << ": <CODEC> " << image.w << "x" << image.h;
 	
 	if (image.xres && image.yres)
 	  std::cout << " @ " << image.xres << "x" << image.yres << "dpi ("
