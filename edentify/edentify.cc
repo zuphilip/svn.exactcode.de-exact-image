@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include "ArgumentList.hh"
+#include "File.hh"
 
 #include "Image.hh"
 #include "ImageLoader.hh"
@@ -97,9 +98,18 @@ int main (int argc, char* argv[])
 		switch (*it) {
 		  // case 'b': break; //   file size
 		  // case 'c': break; //   comment
-		  // case 'd': break; //   directory
-		  // case 'e': break; //   filename extension
-		  // case 'f': break; //   filename
+		case 'd': //   directory
+		case 'e': //   filename extension
+		case 'f': //   filename
+		  {
+		    Utility::File f (*file);
+		    switch (*it) {
+		    case 'd': std::cout << f.Dirname(); break;
+		    case 'e': std::cout << f.Extension(); break;
+		    case 'f': std::cout << f.Basename(); break;
+		    }
+		  }
+		  break;
 		  // %g   page geometry
 		case 'h': //  height
 		  std::cout << image.h; break;
