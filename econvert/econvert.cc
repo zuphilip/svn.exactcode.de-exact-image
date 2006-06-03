@@ -20,6 +20,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include "config.h"
+
 #include "ArgumentList.hh"
 
 #include "Image.hh"
@@ -451,9 +453,9 @@ int main (int argc, char* argv[])
 
   if (arg_help.Get() == true)
     {
-      std::cerr << "Exact image converter including a variety of fast algorithms."
-		<< std::endl
-                <<  " - Copyright 2005, 2006 by René Rebe and Archivista" << std::endl
+      std::cerr << "Exact image converter including a variety of fast algorithms (econvert)."
+		<< std::endl << "Version " VERSION
+                <<  " - Copyright (C) 2005, 2006 by René Rebe and Archivista" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);

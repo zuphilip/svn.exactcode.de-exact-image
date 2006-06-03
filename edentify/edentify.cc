@@ -20,6 +20,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include "config.h"
+
 #include "ArgumentList.hh"
 
 #include "Image.hh"
@@ -63,9 +65,9 @@ int main (int argc, char* argv[])
 
   if (arg_help.Get() == true || arglist.Residuals().empty())
     {
-      std::cerr << "Exact image identification."
-		<< std::endl
-                <<  " - Copyright 2006 by René Rebe and Archivista" << std::endl
+      std::cerr << "Exact image identification (edentify)."
+		<< std::endl << "Version " VERSION
+                <<  " - Copyright (C) 2006 by René Rebe and Archivista" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);

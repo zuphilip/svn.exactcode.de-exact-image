@@ -6,6 +6,8 @@
 #include "Evas_Engine_Software_X11.h"
 
 #include <iostream>
+
+#include "config.h"
 #include "ArgumentList.hh"
 using namespace Utility;
 
@@ -468,8 +470,8 @@ int main (int argc, char** argv)
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "Exact image viewer (edisplay)."
-                << std::endl
-                <<  " - Copyright 2006 by Ren Rebe" << std::endl
+                << std::endl << "Version " VERSION
+                <<  " - Copyright (C) 2006 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
