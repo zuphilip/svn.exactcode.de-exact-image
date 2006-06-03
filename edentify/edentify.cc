@@ -101,12 +101,14 @@ int main (int argc, char* argv[])
 		case 'd': //   directory
 		case 'e': //   filename extension
 		case 'f': //   filename
+		case 't': //   top of filename
 		  {
 		    Utility::File f (*file);
 		    switch (*it) {
 		    case 'd': std::cout << f.Dirname(); break;
 		    case 'e': std::cout << f.Extension(); break;
 		    case 'f': std::cout << f.Basename(); break;
+		    case 't': std::cout << f.BasenameWOExtension(); break;
 		    }
 		  }
 		  break;
@@ -121,10 +123,11 @@ int main (int argc, char* argv[])
 		  // %n   number of scenes
 		  // %o   output filename
 		  // %p   page number
-		  // %q   quantum depth
+		case 'q': //   quantum depth
+		  std::cout << image.bps; break; // TODO: report file container?
+		  break;
 		  // %r   image class and colorspace
 		  // %s   scene number
-		  // %t   top of filename
 		  // %u   unique temporary filename
 		case 'w': //   width
 		  std::cout << image.w; break;
