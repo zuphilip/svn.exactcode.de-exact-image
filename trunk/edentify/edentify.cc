@@ -139,7 +139,8 @@ int main (int argc, char* argv[])
 		  std::cout << image.bps; break;
 		  // %D   image dispose method
 		  // %O   page offset
-		  // %P   page width and height
+		case 'P': //   page width and height
+		  std::cout << image.w << "x" << image.h; break;
 		  // %Q   image compression quality
 		  // %T   image delay
 		  //  %@   bounding box
