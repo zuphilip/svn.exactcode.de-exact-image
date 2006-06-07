@@ -5,8 +5,8 @@ class TIFFLoader : public ImageLoader {
 public:
   
   TIFFLoader () {
-    registerLoader ("tif", this);
     registerLoader ("tiff", this);
+    registerLoader ("tif", this);
   };
 
   ~TIFFLoader () { unregisterLoader (this); };

@@ -29,15 +29,22 @@ protected:
   struct loader_ref {
     const char* ext;
     ImageLoader* loader;
+    bool primary_entry;
+    bool via_codec_only;
   };
   
   static std::vector<loader_ref>* loader;
   
-  static void registerLoader (const char* _ext, ImageLoader* _loader)
+  static void registerLoader (const char* _ext,
+			      ImageLoader* _loader,
+			      bool _via_codec_only = false)
   {
+    static ImageLoader* last_loader;
     if (!loader)
       loader = new std::vector<loader_ref>;
-    loader->push_back ( (loader_ref) {_ext, _loader}  );
+    loader->push_back ( (loader_ref) {_ext, _loader,
+			    _loader != last_loader, _via_codec_only}  );
+    last_loader = _loader;
   }
 
   static void unregisterLoader (ImageLoader* _loader)

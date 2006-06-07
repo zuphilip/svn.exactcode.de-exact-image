@@ -5,6 +5,7 @@ class DCRAWLoader : public ImageLoader {
 public:
   
   DCRAWLoader () {
+    registerLoader ("dcraw", this); // primary entry
     registerLoader ("crw", this); // Canon
     registerLoader ("cr2", this);
     registerLoader ("mrw", this); // Mniolta
@@ -16,7 +17,7 @@ public:
     registerLoader ("dcr", this); // Kodak
     registerLoader ("kdc", this); 
     registerLoader ("srf", this); // Sony
-    // registerLoader ("raw", this); // Panasonic, Casio, Leica, conflict with real "raw" handler :-(
+    registerLoader ("raw", this); // Panasonic, Casio, Leica
   };
   virtual ~DCRAWLoader () { unregisterLoader (this); };
 

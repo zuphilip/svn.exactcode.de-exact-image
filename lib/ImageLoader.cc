@@ -27,10 +27,13 @@ std::string get_codec (std::string& filename)
 } 
 
 bool ImageLoader::Read (std::string file, Image& image) {
-  std::string codec = get_codec (file);
-  if (codec.empty())
-    codec = get_ext (file);
+  bool bycodec = true;
   
+  std::string codec = get_codec (file);
+  if (codec.empty()) {
+    codec = get_ext (file);
+    bycodec = false;
+  }
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
   FILE* fp;
@@ -47,12 +50,18 @@ bool ImageLoader::Read (std::string file, Image& image) {
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == codec)
+      if (it->ext == codec) {
+	if (bycodec && !it->primary_entry)
+	  continue;
+	if (!bycodec && it->via_codec_only)
+	  continue;
+		
 	if (it->loader->readImage (fp, image)) {
 	  if (file != "-")
 	    fclose (fp);
 	  return true; 
 	}
+      }
     }
   if (file != "-")
     fclose (fp);
@@ -62,9 +71,13 @@ bool ImageLoader::Read (std::string file, Image& image) {
   
 bool ImageLoader::Write (std::string file, Image& image,
 			 int quality, const std::string& compress) {
+  bool bycodec = true;
+
   std::string codec = get_codec (file);
-  if (codec.empty())
+  if (codec.empty()) {
     codec = get_ext (file);
+    bycodec = false;
+  }
   
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
@@ -82,14 +95,19 @@ bool ImageLoader::Write (std::string file, Image& image,
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == codec) 
+      if (it->ext == codec) {
+	if (bycodec && !it->primary_entry)
+	  continue;
+	if (!bycodec && it->via_codec_only)
+	  continue;
+	
 	if (it->loader->writeImage (fp, image, quality, compress)) {
 	  if (file != "-")
 	    fclose (fp);
 	  return true;
 	}
+      }
     }
-  
   if (file != "-")
     fclose (fp);
   std::cerr << "No suitable encoder found for: " << file.c_str() << std::endl;
