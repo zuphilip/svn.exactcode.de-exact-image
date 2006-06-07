@@ -1,0 +1,28 @@
+
+Image formats:
+ - xpm
+ - ico (Windows Icon)
+ - (e)ps
+ - pcx
+ - all the others
+
+Loders:
+ - allow for jpeg scaling without recompression
+
+Algorithms:
+ - scaling!
+ - sharp, unsharp
+ - crop
+ - all the others
+
+Colorspaces:
+ - CMYK
+ - YUV
+ - sRGB vs. Adobe RGB
+ - ...
+
+Frontends:
+ - more complete edentify
+ - fix panning after resize in edisplay
+ - edisplay thumbnailing, slideshow, information blending
+
