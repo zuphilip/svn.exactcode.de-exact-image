@@ -4,8 +4,8 @@ class JPEGLoader : public ImageLoader {
 public:
   
   JPEGLoader () {
-    registerLoader ("jpg", this);
     registerLoader ("jpeg", this);
+    registerLoader ("jpg", this);
   };
   virtual ~JPEGLoader () { unregisterLoader (this); };
 
