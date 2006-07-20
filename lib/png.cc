@@ -1,5 +1,5 @@
 
-#include <byteorder.h>
+#include <endian.h>
 #include <stdlib.h>
 
 #include <png.h>
