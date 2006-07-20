@@ -8,7 +8,7 @@ with_options="x11 evas jasper"
 PACKAGE="exact-image"
 VERSION_MAJOR=0
 VERSION_MINOR=0
-VERSION_MICRO=13
+VERSION_MICRO=14
 
 init
 
