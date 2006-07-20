@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <endian.h>
 #include <byteswap.h>
 
 #define TIFFSwabShort(x) *x = bswap_16 (*x)
@@ -280,7 +281,7 @@ unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
   /* -------------------------------------------------------------------- */
   fseek(fd, 10, SEEK_SET);
   fread(&file_hdr.iOffBits, 1, 4, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
   TIFFSwabLong(&file_hdr.iOffBits);
 #endif
 
@@ -293,7 +294,7 @@ unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
   
   fseek(fd, BFH_SIZE, SEEK_SET);
   fread(&info_hdr.iSize, 1, 4, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
   TIFFSwabLong(&info_hdr.iSize);
 #endif
   
@@ -321,7 +322,7 @@ unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
     fread(&info_hdr.iGreenMask, 1, 4, fd);
     fread(&info_hdr.iBlueMask, 1, 4, fd);
     fread(&info_hdr.iAlphaMask, 1, 4, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabLong(&info_hdr.iWidth);
     TIFFSwabLong(&info_hdr.iHeight);
     TIFFSwabShort(&info_hdr.iPlanes);
@@ -354,22 +355,22 @@ unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
     int16  iShort;
     
     fread(&iShort, 1, 2, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iWidth = iShort;
     fread(&iShort, 1, 2, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iHeight = iShort;
     fread(&iShort, 1, 2, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iPlanes = iShort;
     fread(&iShort, 1, 2, fd);
-#ifdef __BIG_ENDIAN__
+#if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iBitCount = iShort;

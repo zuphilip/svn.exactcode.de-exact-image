@@ -1,4 +1,5 @@
 
+#include <byteorder.h>
 #include <stdlib.h>
 
 #include <png.h>
@@ -145,7 +146,7 @@ bool PNGLoader::readImage (FILE* file, Image& image)
     png_set_shift(png_ptr, sig_bit);
   }
   
-#ifndef __BIG_ENDIAN__
+#if __BYTE_ORDER != __BIG_ENDIAN
   /* swap bytes of 16 bit files to least significant byte first
      we store them in CPU byte order in memory */
   png_set_swap(png_ptr);

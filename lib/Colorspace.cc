@@ -1,4 +1,5 @@
 
+#include <endian.h>
 #include <iostream>
 
 #include "Image.hh"
@@ -312,7 +313,7 @@ void colorspace_16_to_8 (Image& image)
   for (uint8_t* it = image.data;
        it < image.data + image.w*image.h*image.spp*2;)
     {
-#ifndef __BIG_ENDIAN__
+#if __BYTE_ORDER != __BIG_ENDIAN
       *output++ = it[1];
 #else
       *output++ = it[0];
