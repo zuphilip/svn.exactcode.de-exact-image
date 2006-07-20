@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 evas libungif netpbm jasper lcms"
+with_options="x11 evas libjpeg libtiff libpng libungif netpbm jasper lcms"
 # feature_options="debug"
 
 PACKAGE="exact-image"
@@ -31,6 +31,10 @@ headercheck c++ iostream string iostream sstream fstream || \
 
 pkgcheck evas -config EVAS atleast 0.9.9
 pkgcheck x11 compile X11 atleast 11.0
+
+pkgcheck libjpeg header LIBJPEG cc jconfig.h
+pkgcheck libtiff header LIBTIFF c++ tiff.h
+pkgcheck libpng pkg-config LIBPNG atleast 1.2
 pkgcheck libungif header LIBUNGIF c++ gif_lib.h
 pkgcheck netpbm header NETPBM c++ pam.h
 pkgcheck jasper header JASPER c++ jasper/jasper.h

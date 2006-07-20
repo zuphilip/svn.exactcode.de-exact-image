@@ -1,8 +1,20 @@
 
-ifeq "$(WITHJASPER)" "1"
-LDFLAGS += -ljasper
+ifeq "$(WITHLIBJPEG)" "1"
+LDFLAGS += -ljpeg
 else
-NOT_SRCS += jpeg2000.cc
+NOT_SRCS += jpeg.cc
+endif
+
+ifeq "$(WITHLIBTIFF)" "1"
+LDFLAGS += -ltiff
+else
+NOT_SRCS += tiff.cc
+endif
+
+ifeq "$(WITHLIBPNG)" "1"
+LDFLAGS += -lpng
+else
+NOT_SRCS += png.cc
 endif
 
 ifeq "$(WITHLIBUNGIF)" "1"
@@ -17,6 +29,12 @@ else
 NOT_SRCS += pnm.cc
 endif
 
+ifeq "$(WITHJASPER)" "1"
+LDFLAGS += -ljasper
+else
+NOT_SRCS += jpeg2000.cc
+endif
+
 ifeq "$(WITHLCMS)" "1"
 LDFLAGS += -llcms
 endif
@@ -28,7 +46,6 @@ BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
 CPPFLAGS += -I lib/
-LDFLAGS += -ljpeg -ltiff -lpng
 
 DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
 
