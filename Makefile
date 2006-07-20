@@ -25,6 +25,11 @@ CXXFLAGS += -march=i686
 CXXFLAGS += $(call cc-option,-mtune=pentium4,)
 endif
 
+ifeq "$(X_ARCH)" "sparc64"
+CXXFLAGS += -mcpu=ultrasparc
+CXXFLAGS += $(call cc-option,-mtune=niagara,)
+endif
+
 CXXFLAGS += -funroll-loops -fomit-frame-pointer
 CXXFLAGS += $(call cc-option,-funswitch-loops,)
 CXXFLAGS += $(call cc-option,-fpeel-loops,)
