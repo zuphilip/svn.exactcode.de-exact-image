@@ -426,7 +426,6 @@ bool Viewer::Load ()
       if (spp == 4)
 	dest_ptr[3] = src_ptr[3]; // alpha
 #else
-#warning big endian
       dest_ptr[1] = src_ptr[0];
       dest_ptr[2] = src_ptr[1];
       dest_ptr[3] = src_ptr[2];
