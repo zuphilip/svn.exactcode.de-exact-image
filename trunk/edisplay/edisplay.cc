@@ -5,6 +5,7 @@
 #include "Evas.h"
 #include "Evas_Engine_Software_X11.h"
 
+#include <endian.h>
 #include <iostream>
 
 #include "config.h"
@@ -418,13 +419,14 @@ bool Viewer::Load ()
   const int spp = image->spp; 
   for (int y=0; y < image->h; ++y)
     for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-#ifndef __BIG_ENDIAN__
+#if 0
       dest_ptr[0] = src_ptr[2];
       dest_ptr[1] = src_ptr[1];
       dest_ptr[2] = src_ptr[0];
       if (spp == 4)
 	dest_ptr[3] = src_ptr[3]; // alpha
 #else
+#warning big endian
       dest_ptr[1] = src_ptr[0];
       dest_ptr[2] = src_ptr[1];
       dest_ptr[3] = src_ptr[2];
