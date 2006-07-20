@@ -10,6 +10,9 @@ CXXFLAGS = -Wall -O2 -s -Wno-sign-compare
 #CFLAGS = -Wall -O0 -ggdb
 #CXXFLAGS = -Wall -O0 -ggdb
 
+# for config.h
+CPPFLAGS += -I .
+
 # -frename-registers and -funroll-loops brings a lot performance on
 # my AMD Turion - about 20% time decrease (though it is included in -funroll-loops anyway) !!!
 
