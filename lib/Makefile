@@ -11,6 +11,12 @@ else
 NOT_SRCS += gif.cc
 endif
 
+ifeq "$(WITHNETPBM)" "1"
+LDFLAGS += -lnetpbm
+else
+NOT_SRCS += pnm.cc
+endif
+
 ifeq "$(WITHLCMS)" "1"
 LDFLAGS += -llcms
 endif
@@ -22,7 +28,7 @@ BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
 CPPFLAGS += -I lib/
-LDFLAGS += -ljpeg -ltiff -lpng -lnetpbm
+LDFLAGS += -ljpeg -ltiff -lpng
 
 DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
 
