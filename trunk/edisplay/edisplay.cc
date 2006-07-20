@@ -419,7 +419,7 @@ bool Viewer::Load ()
   const int spp = image->spp; 
   for (int y=0; y < image->h; ++y)
     for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-#if 0
+#if __BYTE_ORDER != __BIG_ENDIAN
       dest_ptr[0] = src_ptr[2];
       dest_ptr[1] = src_ptr[1];
       dest_ptr[2] = src_ptr[0];
