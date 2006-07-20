@@ -468,7 +468,7 @@ int main (int argc, char** argv)
   arglist.Add (&arg_help);
   
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+  if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
     {
       std::cerr << "Exact image viewer (edisplay)."
                 << std::endl << "Version " VERSION
