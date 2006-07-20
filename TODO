@@ -7,10 +7,11 @@ Image formats:
  - all the others
 
 Loders:
- - allow for jpeg scaling without recompression
+ - allow for jpeg scaling / orthogonal rotation without recompression
 
 Algorithms:
  - scaling!
+ - rotation
  - sharp, unsharp
  - crop
  - all the others
@@ -24,5 +25,6 @@ Colorspaces:
 Frontends:
  - more complete edentify
  - fix panning after resize in edisplay
+ - mouse panning in edisplay
  - edisplay thumbnailing, slideshow, information blending
 
