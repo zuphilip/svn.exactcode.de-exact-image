@@ -36,6 +36,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "config.h"
+#if HAVELCMS != 1
+#define NO_LCMS
+#endif
+
 /*
    NO_JPEG disables decoding of compressed Kodak DC120 files.
    NO_LCMS disables the "-p" option.
