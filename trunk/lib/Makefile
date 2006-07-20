@@ -6,7 +6,7 @@ NOT_SRCS += jpeg2000.cc
 endif
 
 ifeq "$(WITHLIBUNGIF)" "1"
-LDFLAGS += -llungif
+LDFLAGS += -lungif
 else
 NOT_SRCS += gif.cc
 endif
