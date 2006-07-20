@@ -28,7 +28,7 @@ using namespace Utility;
 
 
 static uint8_t evas_bgr_image_data[] = {
-#ifndef __BIG_ENDIAN__
+#if __BYTE_ORDER != __BIG_ENDIAN
   0x99, 0x99, 0x99, 0, 0x66, 0x66, 0x66, 0,
   0x66, 0x66, 0x66, 0, 0x99, 0x99, 0x99, 0
 #else
