@@ -1,0 +1,37 @@
+#!/bin/bash
+
+. config/functions
+
+with_options="x11 evas jasper"
+# feature_options="debug"
+
+PACKAGE="exact-image"
+VERSION_MAJOR=0
+VERSION_MINOR=0
+VERSION_MICRO=14
+
+init
+
+prefix="/usr/local"
+
+parse_options $*
+
+compile c++ available.c || status_error \
+	"A C++ compiler is not installed or does not work correctly.
+A C++ compiler is vital for macosd - so you need to install it first"
+
+compile c++ stl.c template.c template-specialization.c \
+        partial-template-specialization.c function-template.c \
+        || status_error \
+	"At least one of the advanced ANSI C++ tests failed.  Since these
+features are vital for macosd you need to update to a more recent compiler first."
+
+headercheck c++ iostream string iostream sstream fstream || \
+	status_error "Not all tested STL headers are present - please install them."
+
+pkgcheck evas -config EVAS atleast 0.9.9
+pkgcheck x11 compile X11 atleast 11.0
+pkgcheck jasper header JASPER c++ jasper/jasper.h
+
+save
+
