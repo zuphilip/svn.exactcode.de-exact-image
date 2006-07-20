@@ -7,6 +7,7 @@
 
 #include <endian.h>
 #include <iostream>
+#include <algorithm>
 
 #include "config.h"
 #include "ArgumentList.hh"
@@ -56,7 +57,9 @@ void Viewer::Zoom (double f)
   evas_bgr_image->Resize (w, h);
   
   // resize X window accordingly
-  X11Window::Resize (dpy, win, w, h);
+  X11Window::Resize (dpy, win,
+                     std::min(w,X11Window::Width(dpy, 0)),
+                     std::min(h,X11Window::Height(dpy, 0)));
 }
 
 void Viewer::Move (int _x, int _y)
