@@ -370,7 +370,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   
   // detect gray tables
   bool is_gray = false;
-  {
+  if (table_entries > 1) {
     int i;
     for (i = 0; i < table_entries; ++i) {
       if (rmap[i]>>8 != gmap[i]>>8 != bmap[i]>>8 != i * 256 / (table_entries-1))
