@@ -1,8 +1,0 @@
-#!/bin/bash
-
-if [ -z "$1" ]; then
-	echo "You need to specify an econvert."
-	exit
-fi
-
-echo $1
