@@ -20,6 +20,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include <algorithm>
+
 #include "config.h"
 
 #include "ArgumentList.hh"
@@ -295,12 +297,137 @@ bool convert_dither_riemersma (const Argument<int>& arg)
 
 bool convert_edge (const Argument<bool>& arg)
 {
+#if 0
   matrix_type matrix[] = { -1.0, 0.0,  1.0,
                            -2.0, 0.0,  2.0,
-                           -1.0, 0.0, -1.0};
+                           -1.0, 0.0, -1.0 };
 
   convolution_matrix (image, matrix, 3, 3, (matrix_type)3.0);
+  return true;
+#endif
 
+  //uint8_t* it = image.data;
+  uint8_t* new_data = (uint8_t*) malloc (image.Stride() * image.h);
+  memset (new_data, 0xff, image.Stride() * image.h);
+
+#define pix(d,x,y) d[image.Stride()*(y)+x]
+#define thr 12
+
+  for (int x = 0; x < image.w; ++x) {
+    for (int y = 0; y < image.h/5; ++y)
+      {
+	if ( std::abs ((int)pix(image.data,x,y) - pix(image.data,x,y+1)) > thr )
+	  pix(new_data,x,y) = 0;
+      }
+    for (int y = image.h-1; y >= image.h/4; --y)
+      {
+        if ( std::abs ((int)pix(image.data,x,y) - pix(image.data,x,y-1)) > thr )
+	  pix(new_data,x,y) = 0;
+      }
+  }
+
+  for (int y = 0; y < image.h; ++y) {
+    for (int x = 0; x < image.w/2; ++x)
+      {
+        if ( std::abs ((int)pix(image.data,x,y) - pix(image.data,x+1,y)) > thr )
+	  pix(new_data,x,y) = 0;
+      }
+    for (int x = image.w-1; x >= image.w/2; --x)
+      {
+        if ( std::abs ((int)pix(image.data,x,y) - pix(image.data,x-1,y)) > thr )
+	  pix(new_data,x,y) = 0;
+      }
+  }
+
+  // analyze phase
+  int *top, *bottom, *left, *right;
+  top = new int[image.w];
+  bottom = new int[image.w];
+  left = new int[image.h];
+  right = new int[image.h];
+
+  // top/bottom
+  for (int x = 1; x < image.w-1; ++x) {
+    top[x] = 0;
+    std::cout << x << ":";
+
+    for (int y = 0; y < image.h/5; ++y)
+      {
+        if (pix(new_data,x,y) == 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) == 0)
+	  {
+             std::cout << " top: " << y;
+             top[x] = y;
+             break;
+          }
+      }
+    bottom[x] = 0;
+    for (int y = image.h-1; y >= image.h/4; --y)
+      {
+        if (pix(new_data,x,y) == 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) == 0)
+	  {
+             std::cout << " bottom: " << y;
+             bottom[x] = y;
+             break;
+          }
+      }
+    std::cout << std::endl;
+  }
+
+  // sides
+  for (int y = 1; y < image.h-1; ++y) {
+    left[y] = 0;
+    std::cout << y << ":";
+    for (int x = 0; x < image.w/2; ++x)
+      {
+        if (pix(new_data,x,y) == 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) == 0)
+	  {
+             std::cout << " left: " << x;
+             left[y] = x;
+             break;
+          }
+      }
+    right[y] = 0;
+    for (int x = image.w-1; x >= image.w/2; --x)
+      {
+        if (pix(new_data,x,y) == 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) == 0)
+	  {
+             std::cout << " right: " << x;
+             right[y] = x;
+             break;
+          }
+      }
+    std::cout << std::endl;
+  }
+
+  free(new_data);
+
+  normalize (image, 100, 0);
+  colorspace_gray8_to_rgb8 (image);
+
+#define mark(x,y) { \
+	image.data[ image.Stride()* (y) + 3*(x) ] = 0xff; \
+	image.data[ image.Stride()* (y) + 3*(x) + 1 ] = 0xff; }
+
+  
+  for (int x = 1; x < image.w-1; ++x) {
+	if (top[x])
+          mark (x, top[x]);
+	if (bottom[x])
+          mark (x, bottom[x]);
+  }
+
+  for (int y = 1; y < image.h-1; ++y) {
+	if (left[y])
+          mark (left[y], y);
+	if (right[y])
+          mark (right[y], y);
+  }
+
+  delete[] top;
+  delete[] bottom;
+  delete[] left;
+  delete[] right;
+ 
   return true;
 }
 
