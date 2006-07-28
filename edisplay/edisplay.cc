@@ -64,8 +64,8 @@ void Viewer::Zoom (double f)
 
 void Viewer::Move (int _x, int _y)
 {
-  Evas_Coord x = evas_image->X() + _x * 10;
-  Evas_Coord y = evas_image->Y() + _y * 10;
+  Evas_Coord x = evas_image->X() + _x;
+  Evas_Coord y = evas_image->Y() + _y;
   
   Evas_Coord w = evas_image->Width();
   Evas_Coord h = evas_image->Height();
@@ -215,6 +215,7 @@ int Viewer::Run ()
       // TODO: move into X11 Helper ...
       
       XEvent ev;
+      int dnd_x, dnd_y;
       while (XCheckMaskEvent (dpy,
 			      ExposureMask |
 			      StructureNotifyMask |
@@ -224,38 +225,65 @@ int Viewer::Run ()
 			      ButtonReleaseMask |
 			      PointerMotionMask, &ev))
 	{
-	  //std::cout << "event" << std::endl;
 	  Evas_Button_Flags flags = EVAS_BUTTON_NONE;
-	  /* FIXME - Add flags for double & triple click! */
 	  switch (ev.type)
 	    {
 	    case ButtonPress:
 	      {
 		//evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
 		//evas->EventFeedMouseDown (ev.xbutton.button, flags);
-		if (ev.xbutton.state & ControlMask)
-		  switch (ev.xbutton.button) {
-		  case 4: Zoom (1.1); break;
-		  case 5: Zoom (1.0/1.1); break;
-		  }
-		else
-		  switch (ev.xbutton.button) {
-		  case 4: Move (0, 4); break;
-		  case 5: Move (0, -4); break;
-		  case 6: Move (4, 0); break;
-		  case 7: Move (-4, 0); break;
-		  }
+		switch (ev.xbutton.button) {
+		case 1:
+		  dnd_x = ev.xbutton.x;
+		  dnd_y = ev.xbutton.y;
+		  break;
+		case 4:
+		  if (ev.xbutton.state & ControlMask)
+		    Zoom (1.1);
+		  else
+		    Move (0, 40);
+		  break;
+		case 5:
+		  if (ev.xbutton.state & ControlMask)
+		    Zoom (1.0/1.1);
+		  else
+		    Move (0, -40);
+		  break;
+		case 6:
+		  Move (40, 0);
+		  break;
+		case 7:
+		  Move (-40, 0);
+		  break;
+		}
 	      }
 	      break;
 #if 0
 	    case ButtonRelease:
-	      evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
-	      evas->EventFeedMouseUp (ev.xbutton.button, flags);
-	      break;
-	    case MotionNotify:
-	      evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
+	      // evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
+	      // evas->EventFeedMouseUp (ev.xbutton.button, flags);
+	      switch (ev.xbutton.button) {
+	      case 1:
+		button1 = false;
+		break;
+	      }
 	      break;
 #endif
+	      
+	    case MotionNotify:
+	      // evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
+	      
+	      // dragged around:
+	      if (ev.xmotion.state & Button1Mask)
+		{
+		  int dx = ev.xmotion.x - dnd_x;
+		  int dy = ev.xmotion.y - dnd_y;
+		  dnd_x = ev.xmotion.x;
+		  dnd_y = ev.xmotion.y;
+		  Move (dx, dy);
+		}
+	      break;
+	    
 	    case KeyPress:
 	      //std::cout << "key: " << ev.xkey.keycode << std::endl;
 	      KeySym ks;	      
@@ -277,27 +305,27 @@ int Viewer::Run ()
 		  break;
 		  
 		case XK_Left:
-		  Move (4, 0);
+		  Move (40, 0);
 		  break;
 		
 		case XK_Right:
-		  Move (-4, 0);
+		  Move (-40, 0);
 		  break;
 		  
 		case XK_Up:
-		  Move (0, 4);
+		  Move (0, 40);
 		  break;
 		  
 		case XK_Down:
-		  Move (0, -4);
+		  Move (0, -40);
 		  break;
 		  
 		case XK_Page_Up:
-		  Move (0, 16);
+		  Move (0, 160);
 		  break;
 		  
 		case XK_Page_Down:
-		  Move (0, -16);
+		  Move (0, -160);
 		  break;
 
 		case XK_space:
