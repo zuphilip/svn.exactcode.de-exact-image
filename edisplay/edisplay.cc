@@ -26,7 +26,6 @@ using namespace Utility;
 
 #include "edisplay.hh"
 
-
 static uint8_t evas_bgr_image_data[] = {
 #if __BYTE_ORDER != __BIG_ENDIAN
   0x99, 0x99, 0x99, 0, 0x66, 0x66, 0x66, 0,
@@ -37,9 +36,18 @@ static uint8_t evas_bgr_image_data[] = {
 #endif
 };
 
+using std::cout;
+using std::cerr;
+using std::endl;
 
 void Viewer::Zoom (double f)
 {
+  // to keep the view centered
+  int xcent = ( (evas->OutputWidth() / 2) - evas_image->X() ) * 100 / zoom ;
+  int ycent = ( (evas->OutputHeight() / 2) - evas_image->Y() ) * 100 / zoom ;
+  
+  cout << "x: " << xcent << ", y: " << ycent << endl;
+  
   int z = zoom;
   zoom = (int) (f * zoom);
   
@@ -56,6 +64,11 @@ void Viewer::Zoom (double f)
   
   evas_bgr_image->Resize (w, h);
   
+  // recenter view
+  //using std::cout;
+  evas_image->Move (- (xcent * zoom / 100 - (evas->OutputWidth() / 2)),
+		    - (ycent * zoom / 100 - (evas->OutputHeight() / 2)) );
+
   // limit / clip accordingly
   Move (0, 0);
   
@@ -186,7 +199,7 @@ int Viewer::Run ()
   }
   
   evas_bgr_image = new EvasImage (*evas);
-  evas_bgr_image->SmoothScale(false);
+  evas_bgr_image->SmoothScale (false);
   evas_bgr_image->Layer (0);
   evas_bgr_image->Move (0,0);
 
@@ -281,10 +294,10 @@ int Viewer::Run ()
 	      break;
 	    
 	    case KeyPress:
-	      //std::cout << "key: " << ev.xkey.keycode << std::endl;
+	      //cout << "key: " << ev.xkey.keycode << endl;
 	      KeySym ks;	      
 	      XLookupString ((XKeyEvent*)&ev, 0, 0, &ks, NULL);
-	      //std::cout << "sym: " << ks << std::endl;
+	      //cout << "sym: " << ks << endl;
 	      switch (ks)
 		{
 		case XK_1:
@@ -330,6 +343,14 @@ int Viewer::Run ()
 
 		case XK_BackSpace:
 		  Previous ();
+		  break;
+		  
+		case XK_a:
+		  evas_image->SmoothScale (!evas_image->SmoothScale());
+		  // schedule the update
+		  evas->DamageRectangleAdd (0, 0,
+					    evas->OutputWidth(),
+					    evas->OutputHeight());
 		  break;
 		  
 		case XK_q:
@@ -414,13 +435,13 @@ bool Viewer::Load ()
   
   if (!ImageLoader::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
-    std::cerr << "Could not read the file " << *it << std::endl;
+    cerr << "Could not read the file " << *it << endl;
     return false;
   }
-  std::cerr << "Loaded: '" << *it
-	    << "', " << image->w << "x" << image->h
-	    << " @ " << image->xres << "x" << image->yres
-	    << " dpi - spp: " << image->spp << ", bps: " << image->bps << std::endl;
+  cerr << "Loaded: '" << *it
+       << "', " << image->w << "x" << image->h
+       << " @ " << image->xres << "x" << image->yres
+       << " dpi - spp: " << image->spp << ", bps: " << image->bps << endl;
   
   // convert colorspace
   if (image->bps == 16)
@@ -431,15 +452,15 @@ bool Viewer::Load ()
     colorspace_grayX_to_rgb8 (*image);
   
   if (image->bps != 8 || (image->spp != 3 && image->spp != 4)) {
-    std::cerr << "Unsupported colorspace. bps: " << image->bps
-	      << ", spp: " << image->spp << std::endl;
-    std::cerr << "If possible please send a test image to rene@exactcode.de."
-              << std::endl;
+    cerr << "Unsupported colorspace. bps: " << image->bps
+	 << ", spp: " << image->spp << endl;
+    cerr << "If possible please send a test image to rene@exactcode.de."
+	 << endl;
     return false;
   }
 
   if (image->data == 0) {
-    std::cerr << "image data not loaded?"<< std::endl;
+    cerr << "image data not loaded?"<< endl;
     return false;
   }
 
@@ -505,12 +526,12 @@ int main (int argc, char** argv)
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
     {
-      std::cerr << "Exact image viewer (edisplay)."
-                << std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2006 by René Rebe" << std::endl
-                << "Usage:" << std::endl;
+      cerr << "Exact image viewer (edisplay)."
+	   << endl << "Version " VERSION
+	   <<  " - Copyright (C) 2006 by René Rebe" << std::endl
+	   << "Usage:" << endl;
       
-      arglist.Usage (std::cerr);
+      arglist.Usage (cerr);
       return 1;
     }
   
