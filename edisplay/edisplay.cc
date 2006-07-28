@@ -453,7 +453,11 @@ bool Viewer::Load ()
   evas_image->DataUpdateAdd (0,0,image->w,image->h);
   evas_image->SetData (data);
   evas_image->Show ();
-  
+
+  std::string title = *it;
+  title.insert (0, "edisplay: ");
+  XStoreName (dpy, win, title.c_str());
+
   // position and resize
   zoom = 100;
   Zoom (1.0);
