@@ -346,6 +346,8 @@ int Viewer::Run ()
 					ev.xexpose.height);
 	      break;
 	    case ConfigureNotify:
+	      evas_bgr_image->Resize (ev.xconfigure.width,
+				      ev.xconfigure.height);
 	      evas->OutputSize (ev.xconfigure.width,
 				ev.xconfigure.height);
 	      evas->OutputViewport (0, 0,
