@@ -56,10 +56,13 @@ void Viewer::Zoom (double f)
   
   evas_bgr_image->Resize (w, h);
   
+  // limit / clip accordingly
+  Move (0, 0);
+  
   // resize X window accordingly
   X11Window::Resize (dpy, win,
-                     std::min(w,X11Window::Width(dpy, 0)),
-                     std::min(h,X11Window::Height(dpy, 0)));
+                     std::min(w, X11Window::Width(dpy, 0)),
+                     std::min(h, X11Window::Height(dpy, 0)));
 }
 
 void Viewer::Move (int _x, int _y)
@@ -71,22 +74,15 @@ void Viewer::Move (int _x, int _y)
   Evas_Coord h = evas_image->Height();
   
   // limit
-  if (_x < 0) {
-    if (x + w < evas->OutputWidth() )
+  if (x + w < evas->OutputWidth() )
       x = evas->OutputWidth() - w;
-  }
-  else  {
-    if (x > 0)
-      x = 0;
-  }
-      
-  if (_y < 0) {
-    if (y + h < evas->OutputHeight() )
-      y = evas->OutputHeight() - h;
-  } else {
-    if (y > 0)
-      y = 0;
-  }
+  if (x > 0)
+    x = 0;
+  
+  if (y + h < evas->OutputHeight() )
+    y = evas->OutputHeight() - h;
+  if (y > 0)
+    y = 0;
   
   evas_image->Move (x, y);
 }
@@ -355,6 +351,8 @@ int Viewer::Run ()
 	      evas->OutputViewport (0, 0,
 				    ev.xconfigure.width,
 				    ev.xconfigure.height);
+	      // limit/clip
+	      Move (0, 0);
 	      break;
 	    default:
 	      break;
