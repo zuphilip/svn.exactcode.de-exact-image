@@ -210,13 +210,15 @@ int Viewer::Run ()
   evas_bgr_image->SetData ((uint8_t*)evas_bgr_image_data);
   evas_bgr_image->Show ();
   
-  if (!Load ())
-    Next ();
+  bool image_loaded;
+  image_loaded = Load ();
+  if (!image_loaded)
+    image_loaded = Next ();
   
   XMapWindow (dpy, win);
 
   bool quit = false;
-  while (!quit)
+  while (image_loaded && !quit)
     {
       // process X11 events ...
       // TODO: move into X11 Helper ...
@@ -336,11 +338,11 @@ int Viewer::Run ()
 		  break;
 
 		case XK_space:
-		  Next ();
+		  image_loaded = Next ();
 		  break;
 
 		case XK_BackSpace:
-		  Previous ();
+		  image_loaded = Previous ();
 		  break;
 		  
 		case XK_a:
@@ -384,9 +386,11 @@ int Viewer::Run ()
       usleep (25000);
     }
   
-  free (evas_image->Data());
-  delete evas_image;
-  evas_image = 0;
+  if (evas_image) {
+    free (evas_image->Data());
+    delete evas_image;
+    evas_image = 0;
+  }
   
   delete evas_bgr_image;
   evas_bgr_image = 0;
@@ -397,7 +401,7 @@ int Viewer::Run ()
   return 0;
 }
 
-void Viewer::Next ()
+bool Viewer::Next ()
 {
   std::vector<std::string>::const_iterator ref_it = it;
   do {
@@ -406,12 +410,13 @@ void Viewer::Next ()
       it = images.begin();
     
     if (Load ())
-      return;
+      return true;
   }
   while (it != ref_it);
+  return false;
 }
 
-void Viewer::Previous ()
+bool Viewer::Previous ()
 {
   std::vector<std::string>::const_iterator ref_it = it;
   do {
@@ -419,9 +424,10 @@ void Viewer::Previous ()
       it = images.end();
     --it;
     if (Load ())
-      return;
+      return true;
   }
   while (it != ref_it);
+  return false;
 }
 
 bool Viewer::Load ()

@@ -12,8 +12,8 @@ public:
   }
   
   bool Load ();
-  void Next ();
-  void Previous ();
+  bool Next ();
+  bool Previous ();
 
   int Run ();
   
