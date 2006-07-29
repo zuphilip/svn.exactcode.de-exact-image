@@ -24,7 +24,5 @@ Colorspaces:
 
 Frontends:
  - more complete edentify
- - fix panning after resize in edisplay
- - mouse panning in edisplay
  - edisplay thumbnailing, slideshow, information blending
 
