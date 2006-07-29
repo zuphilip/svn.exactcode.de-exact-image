@@ -46,8 +46,6 @@ void Viewer::Zoom (double f)
   int xcent = ( (evas->OutputWidth() / 2) - evas_image->X() ) * 100 / zoom ;
   int ycent = ( (evas->OutputHeight() / 2) - evas_image->Y() ) * 100 / zoom ;
   
-  cout << "x: " << xcent << ", y: " << ycent << endl;
-  
   int z = zoom;
   zoom = (int) (f * zoom);
   
@@ -464,9 +462,19 @@ bool Viewer::Load ()
     return false;
   }
 
-  unsigned char* data = (unsigned char*) malloc (image->w*image->h*4);
+  if (!evas_image) {
+    evas_image = new EvasImage (*evas);
+    evas_image->SmoothScale (false);
+    evas_image->Layer (5);
+    evas_image->Move (0, 0);
+    evas_image->Resize (image->w,image->h);
+  } else {
+    evas_image->SetData (0);
+  }
+  
+  evas_data = (unsigned char*) realloc (evas_data, image->w*image->h*4);
   unsigned char* src_ptr = image->data;
-  unsigned char* dest_ptr = data;
+  unsigned char* dest_ptr = evas_data;
 
   const int spp = image->spp; 
   for (int y=0; y < image->h; ++y)
@@ -484,31 +492,24 @@ bool Viewer::Load ()
       if (spp == 4)
 	dest_ptr[0] = src_ptr[3]; // alpha
 #endif
-    }
+       }
   
-  if (evas_image) {
-    free (evas_image->Data());
-    delete evas_image;
-  }
-  evas_image = new EvasImage (*evas);
-  evas_image->SmoothScale(false);
-  evas_image->Layer (5);
-  evas_image->Move (0,0);
+  
   evas_image->Alpha (spp == 4);
-  
-  evas_image->Resize (image->w,image->h);
   evas_image->ImageSize (image->w,image->h);
-  evas_image->ImageFill (0,0,image->w,image->h);
-  evas_image->DataUpdateAdd (0,0,image->w,image->h);
-  evas_image->SetData (data);
+  evas_image->ImageFill (0, 0, image->w,image->h);
+  evas_image->SetData (evas_data);
+  evas_image->DataUpdateAdd (0, 0, image->w,image->h);
   evas_image->Show ();
-
+  
   std::string title = *it;
   title.insert (0, "edisplay: ");
   XStoreName (dpy, win, title.c_str());
-
-  // position and resize
+  
+  // position and resize, keep zoom
+#if 0
   zoom = 100;
+#endif
   Zoom (1.0);
   
   return true;

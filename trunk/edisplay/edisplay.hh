@@ -3,7 +3,7 @@ class Viewer {
 public:
   
   Viewer(const std::vector<std::string>& _images)
-    : images(_images), zoom(100), evas_image(0) {
+    : images(_images), evas_data(0), zoom(100), evas_image(0) {
     it = images.begin();
     image = new Image;
   }
@@ -28,6 +28,7 @@ private:
   
   // Image
   Image* image;
+  unsigned char* evas_data;
   
   int zoom;
   
