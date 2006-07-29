@@ -383,7 +383,7 @@ int Viewer::Run ()
 	}
       evas->Render ();
       XFlush (dpy);
-      usleep (25000);
+      usleep (10000);
     }
   
   if (evas_image) {
