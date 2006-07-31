@@ -76,8 +76,8 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   
   int stride = image.Stride();
 
-  // printf ("w: %d h: %d\n", *w, *h);
-  // printf ("spp: %d bps: %d stride: %d\n", *spp, *bps, stride);
+  // printf ("w: %d h: %d\n", _w, _h);
+  // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
 
   image.data = (unsigned char* ) malloc (stride * image.h);
   
@@ -117,9 +117,9 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   
   if (photometric == PHOTOMETRIC_PALETTE) {
     colorspace_de_palette (image, 1 << image.bps, rmap, gmap, bmap);
-    free (rmap);
-    free (gmap);
-    free (bmap);
+    /*    free (rmap);
+	  free (gmap);
+	  free (bmap); */
   }
 
   TIFFClose (in);
