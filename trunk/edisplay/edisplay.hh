@@ -22,6 +22,12 @@ protected:
   void Zoom (double factor);
   void Move (int _x, int _y);
   
+  int Window2ImageX (int x);
+  int Window2ImageY (int y);
+  
+  void UpdateOSD (const std::string& str1, const std::string& str2);
+  void AlphaOSD (int a);
+  
 private:
   const std::vector<std::string>& images;
   std::vector<std::string>::const_iterator it;
@@ -29,6 +35,11 @@ private:
   // Image
   Image* image;
   unsigned char* evas_data;
+  
+  // on screen display
+  EvasRectangle* evas_osd_rect;
+  EvasText* evas_osd_text1;
+  EvasText* evas_osd_text2;
   
   int zoom;
   

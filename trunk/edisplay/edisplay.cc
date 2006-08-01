@@ -6,11 +6,13 @@
 #include "Evas_Engine_Software_X11.h"
 
 #include <endian.h>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <sstream>
 
 #include "config.h"
 #include "ArgumentList.hh"
+#include "Timer.hh"
 using namespace Utility;
 
 // display stuff
@@ -46,11 +48,21 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+int Viewer::Window2ImageX (int x)
+{
+  return (x - evas_image->X() ) * 100 / zoom;
+}
+
+int Viewer::Window2ImageY (int y)
+{
+  return (y - evas_image->Y() ) * 100 / zoom;
+}
+
 void Viewer::Zoom (double f)
 {
   // to keep the view centered
-  int xcent = ( (evas->OutputWidth() / 2) - evas_image->X() ) * 100 / zoom ;
-  int ycent = ( (evas->OutputHeight() / 2) - evas_image->Y() ) * 100 / zoom ;
+  int xcent = Window2ImageX (evas->OutputWidth()/2);
+  int ycent = Window2ImageY (evas->OutputHeight()/2);
   
   int z = zoom;
   zoom = (int) (f * zoom);
@@ -102,6 +114,22 @@ void Viewer::Move (int _x, int _y)
     y = 0;
   
   evas_image->Move (x, y);
+}
+
+
+void Viewer::UpdateOSD (const std::string& str1, const std::string& str2)
+{
+  evas_osd_text1->Text (str1);
+  evas_osd_text2->Text (str2);
+  evas_osd_rect->Resize (std::max(evas_osd_text1->Width(), evas_osd_text2->Width()) + 4,
+			 evas_osd_text1->Height() + evas_osd_text2->Height() + 8);
+}
+
+void Viewer::AlphaOSD (int a)
+{
+  evas_osd_text1->Color (0xFF, 0xFF, 0xFF, a);
+  evas_osd_text2->Color (0xFF, 0xFF, 0xFF, a);
+  evas_osd_rect->Color (11, 11, 11, a/2);
 }
 
 int Viewer::Run ()
@@ -216,6 +244,27 @@ int Viewer::Run ()
   evas_bgr_image->SetData ((uint8_t*)evas_bgr_image_data);
   evas_bgr_image->Show ();
   
+  // OSD
+  
+  evas_osd_text1 = new EvasText (*evas);
+  evas_osd_text1->Layer (10);
+  evas_osd_text1->Move (4,4);
+  evas_osd_text1->Font ("Vera", 10);
+  evas_osd_text1->Show ();
+
+  evas_osd_text2 = new EvasText (*evas);
+  evas_osd_text2->Layer (10);
+  evas_osd_text2->Move (4,8 + evas_osd_text1->Height());
+  evas_osd_text2->Font ("Vera", 10);
+  evas_osd_text2->Show ();
+
+  evas_osd_rect = new EvasRectangle (*evas);
+  evas_osd_rect->Layer (5);
+  evas_osd_rect->Move (2,2);
+  evas_osd_rect->Show ();
+  
+  AlphaOSD (0);
+  
   bool image_loaded;
   image_loaded = Load ();
   if (!image_loaded)
@@ -224,6 +273,7 @@ int Viewer::Run ()
   XMapWindow (dpy, win);
 
   bool quit = false;
+  Utility::Timer timer;
   while (image_loaded && !quit)
     {
       // process X11 events ...
@@ -296,6 +346,31 @@ int Viewer::Run ()
 		  dnd_x = ev.xmotion.x;
 		  dnd_y = ev.xmotion.y;
 		  Move (dx, dy);
+		}
+	      else // no handled button, update OSD
+		{
+		  std::stringstream s1, s2;
+		  int x = Window2ImageX (ev.xmotion.x);
+		  int y = Window2ImageY (ev.xmotion.y);
+		  
+		  if (x <= image->w && y <= image->h) {
+		    uint16_t r, g, b;
+		    
+		    Image::iterator it = image->begin();
+		    it = it.at (x, y);
+		    (*it).getRGB (&r, &g, &b);
+		    
+		    s1 << "x: " << x << ", y: " << y;
+		    s2 << "r: " << std::hex << r << ", g: " << g << ", b: " << b;
+		  }
+		  else {
+		    s1 << "x: , y:";
+		    s2 << "r: , g: , b:";
+		  }
+		  
+		  UpdateOSD (s1.str(), s2.str());
+		  AlphaOSD (0xff);
+		  timer.Reset ();
 		}
 	      break;
 	    
@@ -387,6 +462,13 @@ int Viewer::Run ()
 	      break;
 	    }
 	}
+      const int d = timer.Delta ();
+      const int ps = timer.PerSecond ();
+      if (d > ps && d <= 2*ps) {
+	int a = std::max (0xFF - (d - ps) * 0xff / ps, 0);
+	AlphaOSD (a);
+      }
+      
       evas->Render ();
       XFlush (dpy);
       usleep (10000);
@@ -477,7 +559,7 @@ bool Viewer::Load ()
   if (!evas_image) {
     evas_image = new EvasImage (*evas);
     evas_image->SmoothScale (false);
-    evas_image->Layer (5);
+    evas_image->Layer (1);
     evas_image->Move (0, 0);
     evas_image->Resize (image->w,image->h);
   } else {
