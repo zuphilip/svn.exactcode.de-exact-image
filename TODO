@@ -11,7 +11,8 @@ Loders:
 
 Algorithms:
  - scaling!
- - rotation
+ - rotation, descew
+ - descreen
  - sharp, unsharp
  - crop
  - all the others
