@@ -129,7 +129,7 @@ void Viewer::AlphaOSD (int a)
 {
   evas_osd_text1->Color (0xFF, 0xFF, 0xFF, a);
   evas_osd_text2->Color (0xFF, 0xFF, 0xFF, a);
-  evas_osd_rect->Color (11, 11, 11, a/2);
+  evas_osd_rect->Color (0, 0, 0, std::max (a-64, 0));
 }
 
 int Viewer::Run ()
