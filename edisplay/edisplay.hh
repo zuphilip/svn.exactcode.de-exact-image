@@ -27,6 +27,9 @@ protected:
   
   void UpdateOSD (const std::string& str1, const std::string& str2);
   void AlphaOSD (int a);
+  void TickOSD ();
+
+  void SetOSDZoom ();
   
 private:
   const std::vector<std::string>& images;
@@ -40,6 +43,7 @@ private:
   EvasRectangle* evas_osd_rect;
   EvasText* evas_osd_text1;
   EvasText* evas_osd_text2;
+  Utility::Timer osd_timer;
   
   int zoom;
   

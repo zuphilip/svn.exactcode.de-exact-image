@@ -72,6 +72,8 @@ void Viewer::Zoom (double f)
   else if (zoom <= 0)
     zoom = 1;
   
+  SetOSDZoom ();
+  
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
   
@@ -123,13 +125,34 @@ void Viewer::UpdateOSD (const std::string& str1, const std::string& str2)
   evas_osd_text2->Text (str2);
   evas_osd_rect->Resize (std::max(evas_osd_text1->Width(), evas_osd_text2->Width()) + 4,
 			 evas_osd_text1->Height() + evas_osd_text2->Height() + 8);
+  AlphaOSD (0xFF);
+  osd_timer.Reset ();
 }
 
 void Viewer::AlphaOSD (int a)
 {
   evas_osd_text1->Color (0xFF, 0xFF, 0xFF, a);
   evas_osd_text2->Color (0xFF, 0xFF, 0xFF, a);
-  evas_osd_rect->Color (0, 0, 0, std::max (a-64, 0));
+  evas_osd_rect->Color (0, 0, 0, std::max (a-92, 0));
+}
+
+void Viewer::TickOSD ()
+{
+  const int d = osd_timer.Delta ();
+  const int ps = osd_timer.PerSecond ();
+  if (d > ps && d <= 2*ps) {
+    int a = std::max (0xFF - (d - ps) * 0xff / ps, 0);
+    AlphaOSD (a);
+  }
+}
+
+void Viewer::SetOSDZoom ()
+{
+  std::stringstream s1, s2;
+  s1 << "Zoom: " << zoom << "%";
+  s2 << "Anti-alias: " << (evas_image->SmoothScale() ? "yes" : "no");
+  
+  UpdateOSD (s1.str(), s2.str());
 }
 
 int Viewer::Run ()
@@ -369,8 +392,6 @@ int Viewer::Run ()
 		  }
 		  
 		  UpdateOSD (s1.str(), s2.str());
-		  AlphaOSD (0xff);
-		  timer.Reset ();
 		}
 	      break;
 	    
@@ -432,6 +453,8 @@ int Viewer::Run ()
 		  evas->DamageRectangleAdd (0, 0,
 					    evas->OutputWidth(),
 					    evas->OutputHeight());
+		  
+		  SetOSDZoom ();
 		  break;
 		  
 		case XK_q:
@@ -462,13 +485,7 @@ int Viewer::Run ()
 	      break;
 	    }
 	}
-      const int d = timer.Delta ();
-      const int ps = timer.PerSecond ();
-      if (d > ps && d <= 2*ps) {
-	int a = std::max (0xFF - (d - ps) * 0xff / ps, 0);
-	AlphaOSD (a);
-      }
-      
+      TickOSD ();
       evas->Render ();
       XFlush (dpy);
       usleep (10000);
