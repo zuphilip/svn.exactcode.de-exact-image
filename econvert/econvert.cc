@@ -297,6 +297,9 @@ bool convert_dither_riemersma (const Argument<int>& arg)
 
 bool convert_edge (const Argument<bool>& arg)
 {
+  using std::cout;
+  using std::endl;
+
 #if 0
   matrix_type matrix[] = { -1.0, 0.0,  1.0,
                            -2.0, 0.0,  2.0,
@@ -339,64 +342,70 @@ bool convert_edge (const Argument<bool>& arg)
       }
   }
 
-  // analyze phase
+  // analyze phase, mark first contrast change coordinates
   int *top, *bottom, *left, *right;
   top = new int[image.w];
   bottom = new int[image.w];
   left = new int[image.h];
   right = new int[image.h];
 
+  // area defines
+  const int top_border = std::min (32, image.h/5);
+  const int left_border = image.w/2;
+  const int right_border = image.w/2;
+  const int bottom_border = image.h/4;
+
   // top/bottom
   for (int x = 1; x < image.w-1; ++x) {
     top[x] = 0;
-    std::cout << x << ":";
+    //cout << x << ":";
 
-    for (int y = 0; y < image.h/5; ++y)
+    for (int y = 0; y < top_border; ++y)
       {
         if (pix(new_data,x,y) == 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) == 0)
 	  {
-             std::cout << " top: " << y;
+             //cout << " top: " << y;
              top[x] = y;
              break;
           }
       }
     bottom[x] = 0;
-    for (int y = image.h-1; y >= image.h/4; --y)
+    for (int y = image.h-1; y >= bottom_border; --y)
       {
         if (pix(new_data,x,y) == 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) == 0)
 	  {
-             std::cout << " bottom: " << y;
+             //cout << " bottom: " << y;
              bottom[x] = y;
              break;
           }
       }
-    std::cout << std::endl;
+    //cout << endl;
   }
 
   // sides
   for (int y = 1; y < image.h-1; ++y) {
     left[y] = 0;
-    std::cout << y << ":";
-    for (int x = 0; x < image.w/2; ++x)
+    //cout << y << ":";
+    for (int x = 0; x < left_border; ++x)
       {
         if (pix(new_data,x,y) == 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) == 0)
 	  {
-             std::cout << " left: " << x;
+             //cout << " left: " << x;
              left[y] = x;
              break;
           }
       }
     right[y] = 0;
-    for (int x = image.w-1; x >= image.w/2; --x)
+    for (int x = image.w-1; x >= right_border; --x)
       {
         if (pix(new_data,x,y) == 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) == 0)
 	  {
-             std::cout << " right: " << x;
+             //cout << " right: " << x;
              right[y] = x;
              break;
           }
       }
-    std::cout << std::endl;
+    //cout << endl;
   }
 
   free(new_data);
@@ -408,20 +417,34 @@ bool convert_edge (const Argument<bool>& arg)
 	image.data[ image.Stride()* (y) + 3*(x) ] = 0xff; \
 	image.data[ image.Stride()* (y) + 3*(x) + 1 ] = 0xff; }
 
-  
+  int* hori_histogramm = new int [image.w];
+  int* vert_histogramm = new int [image.h];
+
   for (int x = 1; x < image.w-1; ++x) {
-	if (top[x])
+	if (top[x]) {
+	  vert_histogramm[top[x]]++;
           mark (x, top[x]);
-	if (bottom[x])
+	}
+	if (bottom[x]) {
+	  vert_histogramm[bottom[x]]++;
           mark (x, bottom[x]);
+	}
   }
 
   for (int y = 1; y < image.h-1; ++y) {
-	if (left[y])
+	if (left[y]) {
+	  hori_histogramm[left[y]]++;
           mark (left[y], y);
-	if (right[y])
+	}
+	if (right[y]) {
+	  hori_histogramm[right[y]]++;
           mark (right[y], y);
+	}
   }
+  for (int x = 1; x < image.w-1; ++x)
+    cout << x << ": " << hori_histogramm[x] << endl;
+  for (int y = 1; y < image.h-1; ++y)
+    cout << y << ": " << vert_histogramm[y] << endl;
 
   delete[] top;
   delete[] bottom;
