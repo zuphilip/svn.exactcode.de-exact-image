@@ -34,7 +34,7 @@ static uint8_t evas_bgr_image_data[] = {
   LG, 0, DG, 0,
   DG, 0, LG, 0
 #else
-  0, LG, 0, LG
+  0, LG, 0, DG,
   0, DG, 0, LG
 #endif
 };
