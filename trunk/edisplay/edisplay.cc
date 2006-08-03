@@ -4,6 +4,7 @@
 
 #include "Evas.h"
 #include "Evas_Engine_Software_X11.h"
+#include "Evas_Engine_GL_X11.h"
 
 #include <endian.h>
 #include <algorithm>
@@ -155,7 +156,7 @@ void Viewer::SetOSDZoom ()
   UpdateOSD (s1.str(), s2.str());
 }
 
-int Viewer::Run ()
+int Viewer::Run (bool opengl)
 {
   // TODO: move to the X11Helper ...
   
@@ -220,25 +221,51 @@ int Viewer::Run ()
   XSync(dpy, False);
   
   evas = new EvasCanvas ();
-  evas->OutputMethod ("software_x11");
-  evas->OutputSize (win_w, win_h);
-  evas->OutputViewport (0, 0, win_w, win_h);
-  
-  Evas_Engine_Info_Software_X11 *einfo;
-  
-  einfo = (Evas_Engine_Info_Software_X11*) evas->EngineInfo ();
-  
-  /* the following is specific to the engine */
-  einfo->info.display = dpy;
-  einfo->info.visual = visual;
-  einfo->info.colormap = attr.colormap;
-  einfo->info.drawable = win;
-  einfo->info.depth = depth;
-  einfo->info.rotation = 0;
-  einfo->info.debug = 0;
-  
-  evas->EngineInfo ( (Evas_Engine_Info*)einfo );
-  
+  if (!opengl)
+    {
+      evas->OutputMethod ("software_x11");
+      evas->OutputSize (win_w, win_h);
+      evas->OutputViewport (0, 0, win_w, win_h);
+      
+      Evas_Engine_Info_Software_X11* einfo;
+      
+      einfo = (Evas_Engine_Info_Software_X11*) evas->EngineInfo ();
+      
+      /* the following is specific to the engine */
+      einfo->info.display = dpy;
+      einfo->info.visual = visual;
+      einfo->info.colormap = attr.colormap;
+      einfo->info.drawable = win;
+      einfo->info.depth = depth;
+      einfo->info.rotation = 0;
+      einfo->info.debug = 0;
+      
+      evas->EngineInfo ( (Evas_Engine_Info*)einfo );
+    }
+  else
+    {
+      evas->OutputMethod ("gl_x11");
+      evas->OutputSize (win_w, win_h);
+      evas->OutputViewport (0, 0, win_w, win_h);
+      
+      Evas_Engine_Info_GL_X11* einfo;
+      
+      einfo = (Evas_Engine_Info_GL_X11*) evas->EngineInfo ();
+      
+      /* the following is specific to the engine */
+      einfo->info.display = dpy;
+      einfo->info.visual =
+	einfo->func.best_visual_get (dpy, DefaultScreen(dpy));
+      einfo->info.colormap =
+	einfo->func.best_colormap_get(dpy,DefaultScreen(dpy));
+
+      einfo->info.colormap = attr.colormap;
+      einfo->info.drawable = win;
+      einfo->info.depth = depth;
+      
+      evas->EngineInfo ( (Evas_Engine_Info*)einfo );
+    }
+
   /* Setup */
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TTF/");
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TrueType/");
@@ -634,6 +661,9 @@ int main (int argc, char** argv)
   Argument<bool> arg_help ("", "help",
                            "display this help text and exit");
   arglist.Add (&arg_help);
+  Argument<bool> arg_gl ("", "gl",
+			 "Utilize OpenGL for rendering");
+  arglist.Add (&arg_gl);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
@@ -648,5 +678,5 @@ int main (int argc, char** argv)
     }
   
   Viewer viewer(arglist.Residuals());
-  return viewer.Run ();
+  return viewer.Run (arg_gl.Get());
 }

@@ -15,7 +15,7 @@ public:
   bool Next ();
   bool Previous ();
 
-  int Run ();
+  int Run (bool opengl = false);
   
 protected:
   
