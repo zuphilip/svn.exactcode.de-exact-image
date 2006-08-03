@@ -259,7 +259,7 @@ int Viewer::Run (bool opengl)
       einfo->info.colormap =
 	einfo->func.best_colormap_get(dpy,DefaultScreen(dpy));
 
-      einfo->info.colormap = attr.colormap;
+      einfo->info.colormap = einfo->func.best_colormap_get(dpy, DefaultScreen(dpy));
       einfo->info.drawable = win;
       einfo->info.depth = depth;
       
