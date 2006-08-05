@@ -222,8 +222,8 @@ public:
       case GRAY4:
 	value.gray = (ptr->gray >> (bitpos-3) & 0x0f) * 255/15;
 	break;
-    case GRAY8:
-    value.gray = ptr->gray;
+      case GRAY8:
+	value.gray = ptr->gray;
 	break;
       case GRAY16:
 	value.gray = ptr->gray16;
@@ -283,7 +283,7 @@ public:
       return *this;
     }
     
-    inline iterator& operator+ (const iterator& other) const {
+    inline iterator operator+ (const iterator& other) const {
       iterator tmp = *this;
       return tmp += other;
     }
@@ -353,7 +353,7 @@ public:
       return *this;
     }
     
-    inline iterator& operator* (const int v) const {
+    inline iterator operator* (const int v) const {
       iterator tmp = *this;
       return tmp *= v;
     }
