@@ -2,4 +2,6 @@
 
 void flipX (Image& image);
 void flipY (Image& image);
-void rotate (Image& image, int angle);
+
+void shear (Image& image, double xangle, double yangle);
+void rotate (Image& image, double angle);

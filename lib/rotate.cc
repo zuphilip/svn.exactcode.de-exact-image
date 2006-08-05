@@ -90,6 +90,7 @@ void flipX (Image& image)
 
 void flipY (Image& image)
 {
+  // TODO: 16bps
   int bytes = (image.w*image.spp*image.bps + 7) / 8;
   for (int y = 0; y < image.h / 2; ++y)
     {
@@ -104,6 +105,16 @@ void flipY (Image& image)
 	  *row1++ = *row2;
 	  *row2++ = v;
 	}
+    }
+}
+
+void shear (Image& image, double xangle, double yangle)
+{
+  if (xangle != 0.0)
+    {
+    }
+  if (yangle != 0.0)
+    {
     }
 }
 
@@ -221,30 +232,56 @@ void rot90 (Image& image, int angle)
 }
 
 
-void rotate (Image& image, int angle)
+void rotate (Image& image, double angle)
 {
-  int rot = angle % 360;
+  double rot = fmod (angle, 360);
   if (rot < 0)
     rot += 360;
   
-  switch (rot)
-    {
-    case 0:
-      ; // NOP
-      break;
-    case 180: 
-      {
-	flipX (image);
-	flipY (image);
-      }
-      break;
-    case 90:
-      rot90 (image, 90);
-      break;
-    case 270:
-      rot90 (image, 270);
-      break;
-    default:
-      std::cerr << "Rotation angle not yet supported." << std::endl;
-    } 
+  if (rot == 0.0)
+    return;
+  
+  if (rot == 180.0) {
+    flipX (image);
+    flipY (image);
+    return;
+  }
+ 
+  if (rot == 270.0) {
+    rot90 (image, 270);
+    return;
+  }
+  
+  uint8_t* rot_data = (uint8_t*) malloc (image.w*image.h);
+  
+  angle = angle / 180 * M_PI;
+  
+  const int xcent = image.w/2;
+  const int ycent = image.h/2;
+  
+  // trivial code just for testing, to be optimized
+  
+  Image orig_image = image;
+  
+  image.data = (uint8_t*) malloc (image.Stride()*image.h);
+  Image::iterator it = image.begin();
+  Image::iterator orig_it = orig_image.begin();
+  
+  for(int y = 0; y < image.h; ++y)
+      for(int x = 0; x < image.w; ++x)
+	{
+	  int ox =   (x-xcent) * cos(angle) + (y-ycent) * sin(angle);
+	  int oy = - (x-xcent) * sin(angle) + (y-ycent) * cos(angle);
+	  
+	  ox += xcent;
+	  oy += ycent;
+	  
+	  if (ox > 0 && oy > 0 && ox < image.w && oy < image.h) {
+	    it.set (*orig_it.at (ox, oy));
+	  }
+	  else
+	    it.setL (0xff);
+	  
+	  ++it;
+	}
 }
