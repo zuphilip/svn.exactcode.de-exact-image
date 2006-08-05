@@ -232,7 +232,7 @@ void rot90 (Image& image, int angle)
 }
 
 
-void rotate (Image& image, double angle)
+void rotate (Image& image, double angle, Image::iterator background)
 {
   double rot = fmod (angle, 360);
   if (rot < 0)
@@ -251,15 +251,13 @@ void rotate (Image& image, double angle)
     rot90 (image, 270);
     return;
   }
-  
-  uint8_t* rot_data = (uint8_t*) malloc (image.w*image.h);
+
+  // trivial code just for testing, to be optimized
   
   angle = angle / 180 * M_PI;
   
   const int xcent = image.w/2;
   const int ycent = image.h/2;
-  
-  // trivial code just for testing, to be optimized
   
   Image orig_image = image;
   
@@ -293,14 +291,14 @@ void rotate (Image& image, double angle)
 	    
 	    it.set ( (
 		      *orig_it.at (oxx,  oyy ) * (256-xdist) * (256-ydist) +
-		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist)  +
+		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist) +
 		      *orig_it.at (oxx,  oyy2) * (256-xdist) * ydist +
 		      *orig_it.at (oxx2, oyy2) * xdist       * ydist
 		      ) /
 		     (256 * 256) );
 	  }
 	  else
-	    it.setL (0xff);
+	    it.set (background);
 	  
 	  ++it;
 	}
