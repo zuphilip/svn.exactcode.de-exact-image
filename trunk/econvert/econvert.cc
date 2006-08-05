@@ -42,6 +42,7 @@
 using namespace Utility;
 
 Image image; // the global Image we work on
+Image::iterator background_color; // the background color
 
 Argument<int> arg_quality ("", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
@@ -288,7 +289,7 @@ bool convert_flop (const Argument<bool>& arg)
 
 bool convert_rotate (const Argument<double>& arg)
 {
-  rotate (image, arg.Get());
+  rotate (image, arg.Get(), background_color);
   return true;
 }
 
@@ -741,9 +742,43 @@ bool convert_resolution (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_background (const Argument<std::string>& arg)
+{
+  // parse
+  /*
+    name                 (identify -list color to see names)
+    #RGB                 (R,G,B are hex numbers, 4 bits each)
+    #RRGGBB              (8 bits each)
+    #RRRGGGBBB           (12 bits each)
+    #RRRRGGGGBBBB        (16 bits each)
+    #RGBA                (4 bits each)
+    #RRGGBBOO            (8 bits each)
+    #RRRGGGBBBOOO        (12 bits each)
+    #RRRRGGGGBBBBOOOO    (16 bits each)
+    rgb(r,g,b)           0-255 for each of rgb
+    rgba(r,g,b,a)        0-255 for each of rgb and 0-1 for alpha
+    cmyk(c,m,y,k)        0-255 for each of cmyk
+    cmyka(c,m,y,k,a)     0-255 for each of cmyk and 0-1 for alpha
+  */
+  
+  std::string a = arg.Get();
+  
+  // TODO: pretty C++ parser
+  if (a.size() && a[0] == '#')
+    {
+      
+      return true;
+    }
+  
+  std::cerr << "Error parsing color: '" << a << "'" << std::endl;
+  return false;
+}
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
+  background_color.type = Image::RGB8;
+  background_color.setL (255);
   
   // setup the argument list
   Argument<bool> arg_help ("", "help",
@@ -864,6 +899,12 @@ int main (int argc, char* argv[])
 					0, 1, true, true);
   arg_resolution.Bind (convert_resolution);
   arglist.Add (&arg_resolution);
+
+  Argument<std::string> arg_background ("", "background",
+					"background color used for operations",
+					0, 1, true, true);
+  arg_background.Bind (convert_background);
+  arglist.Add (&arg_background);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
