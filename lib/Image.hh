@@ -547,11 +547,13 @@ public:
 	value.rgb.r = value.rgb.g = value.rgb.b = L;
 	break;
       case CMYK8:
-	value.cmyk.k = L; // TODO
+	// TODO:
+	value.cmyk.c = value.cmyk.m = value.cmyk.y = 0;
+	value.cmyk.k = L;
 	break;
       case YUV8:
-	value.yuv.y = L;
 	value.yuv.u = value.yuv.v = 0;
+	value.yuv.y = L;
  	break;
       }
     }
