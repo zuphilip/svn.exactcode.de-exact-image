@@ -273,14 +273,31 @@ void rotate (Image& image, double angle)
   for(int y = 0; y < image.h; ++y)
       for(int x = 0; x < image.w; ++x)
 	{
-	  int ox =   (x-xcent) * cached_cos + (y-ycent) * cached_sin;
-	  int oy = - (x-xcent) * cached_sin + (y-ycent) * cached_cos;
+	  double ox =   (x-xcent) * cached_cos + (y-ycent) * cached_sin;
+	  double oy = - (x-xcent) * cached_sin + (y-ycent) * cached_cos;
 	  
 	  ox += xcent;
 	  oy += ycent;
 	  
-	  if (ox > 0 && oy > 0 && ox < image.w && oy < image.h) {
-	    it.set (*orig_it.at (ox, oy));
+	  if (ox >= 0 && oy >= 0 &&
+	      ox < image.w && oy < image.h) {
+	    
+	    int oxx = (int)floor(ox);
+	    int oyy = (int)floor(oy);
+	    
+	    int oxx2 = std::min (oxx+1, image.w);
+	    int oyy2 = std::min (oyy+1, image.h);
+	    
+	    int xdist = (int) ((ox - oxx) * 256);
+	    int ydist = (int) ((oy - oyy) * 256);
+	    
+	    it.set ( (
+		      *orig_it.at (oxx,  oyy ) * (256-xdist) * (256-ydist) +
+		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist)  +
+		      *orig_it.at (oxx,  oyy2) * (256-xdist) * ydist +
+		      *orig_it.at (oxx2, oyy2) * xdist       * ydist
+		      ) /
+		     (256 * 256) );
 	  }
 	  else
 	    it.setL (0xff);
