@@ -267,11 +267,14 @@ void rotate (Image& image, double angle)
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   
+  double cached_sin = sin (angle);;
+  double cached_cos = cos (angle);
+
   for(int y = 0; y < image.h; ++y)
       for(int x = 0; x < image.w; ++x)
 	{
-	  int ox =   (x-xcent) * cos(angle) + (y-ycent) * sin(angle);
-	  int oy = - (x-xcent) * sin(angle) + (y-ycent) * cos(angle);
+	  int ox =   (x-xcent) * cached_cos + (y-ycent) * cached_sin;
+	  int oy = - (x-xcent) * cached_sin + (y-ycent) * cached_cos;
 	  
 	  ox += xcent;
 	  oy += ycent;
