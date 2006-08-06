@@ -74,19 +74,44 @@ bool OpenEXRLoader::readImage (FILE* file, Image& image)
 bool OpenEXRLoader::writeImage (FILE* file, Image& image,
 				int quality, const std::string& compress)
 {
-  RgbaChannels type = WRITE_RGBA;
+  RgbaChannels type;
+  switch (image.spp) {
+  case 1:
+    type = WRITE_Y; break;
+  case 2:
+    type = WRITE_YA; break;
+  case 3:
+    type = WRITE_RGB; break;
+  case 4:
+    type = WRITE_RGBA; break;
+    break;
+  default:
+    std::cerr << "Unsupported image format." << std::endl;
+    return false;
+  }
+      
+    
   Box2i displayWindow (V2i (0, 0), V2i (image.w - 1, image.h - 1));
-  RgbaOutputFile exrfile ("testsuite/openexr/GoldenGate.exr",
+  RgbaOutputFile exrfile ("test.exr",
 			  image.w, image.h, type);
   
   Array2D<Rgba> pixels (1, image.w); // working data
   
+  uint16_t* it = (uint16_t*) image.data;
   for (int y = 0; y < image.h; ++y)
     {
-      
       exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);
+      
+      for (int x = 0; x < image.w; ++x) {
+	pixels[0][x].r = (double)*it++ / 0xFFFF;
+	pixels[0][x].g = (double)*it++ / 0xFFFF;
+	pixels[0][x].b = (double)*it++ / 0xFFFF;
+	pixels[0][x].a = (double)*it++ / 0xFFFF;
+      }
+      
       exrfile.writePixels (1);
     }
+  
   return true;
 }
 
