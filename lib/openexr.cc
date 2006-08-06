@@ -18,8 +18,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <ImfIO.h>
+
+#include <ImfInputFile.h>
+#include <ImfOutputFile.h>
+
 #include <ImfRgbaFile.h>
 #include <ImfArray.h>
+#include <IexThrowErrnoExc.h>
 
 #include <algorithm>
 
@@ -33,9 +39,88 @@ using namespace Imath;
 using std::cout;
 using std::endl;
 
+class C_IStream : public IStream
+{
+public:
+  C_IStream (FILE *file, const char fileName[])
+    : IStream (fileName), _file (file) {
+  }
+  
+  virtual bool read (char c[], int n)
+  {
+    if (n != (int)fread (c, 1, n, _file))
+      {
+	if (ferror (_file))
+	  Iex::throwErrnoExc();
+	else
+	  throw Iex::InputExc ("Unexpected end of file.");
+      }
+    return feof (_file);
+  }
+    
+  virtual Int64 tellg ()
+  {
+    return ftell (_file);
+  }
+  
+  virtual void seekg (Int64 pos)
+  {
+    clearerr (_file);
+    fseek(_file, pos, SEEK_SET);
+  }
+  
+  virtual void clear ()
+  {
+    clearerr (_file);
+  }
+  
+private:
+  FILE* _file;
+};
+
+class C_OStream : public OStream
+{
+public:
+  C_OStream (FILE *file, const char fileName[])
+    : OStream (fileName), _file (file) {
+  }
+  
+  virtual void write (const char c[], int n)
+  {
+    if (n != (int)fwrite (c, 1, n, _file))
+      {
+	if (ferror (_file))
+	  Iex::throwErrnoExc();
+	else
+	  throw Iex::InputExc ("Unexpected end of file.");
+      }
+  }
+    
+  virtual Int64 tellp ()
+  {
+    return ftell (_file);
+  }
+  
+  virtual void seekp (Int64 pos)
+  {
+    clearerr (_file);
+    fseek(_file, pos, SEEK_SET);
+  }
+  
+  virtual void clear ()
+  {
+    clearerr (_file);
+  }
+  
+private:
+  FILE* _file;
+};
+
 bool OpenEXRLoader::readImage (FILE* file, Image& image)
 {
-  RgbaInputFile exrfile ("testsuite/openexr/GoldenGate.exr");
+  C_IStream istream (file, "");
+  
+  RgbaInputFile exrfile (istream);
   Box2i dw = exrfile.dataWindow ();
   
   image.spp = 4;
@@ -48,7 +133,6 @@ bool OpenEXRLoader::readImage (FILE* file, Image& image)
   uint16_t* it = (uint16_t*) image.data;
   for (int y = 0; y < image.h; ++y)
     {
-      cout << "> " << y << endl;
       exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);
       exrfile.readPixels (y, y);
       
@@ -63,8 +147,7 @@ bool OpenEXRLoader::readImage (FILE* file, Image& image)
 	b = std::min (std::max (b,0.0),1.0) * 0xFFFF;
 	a = std::min (std::max (a,0.0),1.0) * 0xFFFF;
 	
-	
-	*it++ = r; *it++ = g; *it++ = b; *it++ = a;
+	*it++ = (int) r; *it++ = (int)g; *it++ = (int)b; *it++ = (int)a;
       }
     }
   
@@ -90,10 +173,13 @@ bool OpenEXRLoader::writeImage (FILE* file, Image& image,
     return false;
   }
       
-    
+  
   Box2i displayWindow (V2i (0, 0), V2i (image.w - 1, image.h - 1));
-  RgbaOutputFile exrfile ("test.exr",
-			  image.w, image.h, type);
+  
+  C_OStream ostream (file, "");
+    
+  Header header (image.w, image.h);
+  RgbaOutputFile exrfile (ostream, header, type);
   
   Array2D<Rgba> pixels (1, image.w); // working data
   
