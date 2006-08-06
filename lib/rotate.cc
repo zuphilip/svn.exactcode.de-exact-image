@@ -234,20 +234,20 @@ void rot90 (Image& image, int angle)
 
 void rotate (Image& image, double angle, Image::iterator background)
 {
-  double rot = fmod (angle, 360);
-  if (rot < 0)
-    rot += 360;
+  angle = fmod (angle, 360);
+  if (angle < 0)
+    angle += 360;
   
-  if (rot == 0.0)
+  if (angle == 0.0)
     return;
   
-  if (rot == 180.0) {
+  if (angle == 180.0) {
     flipX (image);
     flipY (image);
     return;
   }
  
-  if (rot == 270.0) {
+  if (angle == 270.0) {
     rot90 (image, 270);
     return;
   }
