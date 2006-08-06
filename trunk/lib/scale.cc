@@ -236,34 +236,39 @@ void ddt_scale (Image& image, double scalex, double scaley)
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   
-  new_image.xres = (int) (scalex * image.xres);
-  new_image.yres = (int) (scaley * image.yres);
-  
-  Image::iterator dst = new_image.begin();
-  Image::iterator src = image.begin();
-  Image::iterator src2 = src.at(0,1);
+  new_image.xres = (int)(scalex * image.xres);
+  new_image.yres = (int)(scaley * image.yres);
   
   // first scan the source image and build a direction map
   char dir_map [image.h][image.w];
+  
+  Image::iterator src_a = image.begin();
+  Image::iterator src_b = src_a.at (0, 1);
+  Image::iterator src_c = src_b.at (1, 0);
+  Image::iterator src_d = src_c.at (1, 1);
   for (int y = 0; y < image.h-1; ++y) {
     for (int x = 0; x < image.w-1; ++x) {
-      int a = (*src).getL(); ++src;
-      int b = (*src2).getL(); ++src2;
-      int c = (*src2).getL(); ++src2;
-      int d = (*src).getL(); ++src;
+      int a = (*src_a).getL(); ++src_a;
+      int b = (*src_b).getL(); ++src_b;
+      int c = (*src_c).getL(); ++src_c;
+      int d = (*src_d).getL(); ++src_d;
       
-      std::cout << "a: " << a << ", b: " << b
-		<< ", c: " << c << ", d: " << d << std::endl;
+      //std::cout << "x: " << x << ", y: " << y << std::endl;
+      //std::cout << "a: " << a << ", b: " << b
+      //	  << ", c: " << c << ", d: " << d << std::endl;
       
       if (abs(a-c) < abs(b-d))
 	dir_map[y][x] = '\\';
       else
 	dir_map[y][x] = '/';
-      std::cout << dir_map[y][x];
+      //std::cout << dir_map[y][x];
     }
-    std::cout << std::endl;
+    ++src_a; ++src_b; ++src_c; ++src_d;
+    //std::cout << std::endl;
   }
-  
+
+  Image::iterator dst = new_image.begin();
+  Image::iterator src = image.begin();
   for (int y = 0; y < new_image.h; ++y) {
     double by = (-1.0+image.h) * y / new_image.h;
     int sy = (int)floor(by);
@@ -273,51 +278,61 @@ void ddt_scale (Image& image, double scalex, double scaley)
       double bx = (-1.0+image.w) * x / new_image.w;
       int sx = (int)floor(bx);
       int xdist = (int) ((bx - sx) * 256);
-
+      
+      /*
       std::cout << "bx: " << bx << ", by: " << by << ", x: " << x << ", y: " << y
 		<< ", sx: " << sx << ", sy: " << sy << std::endl;
-
+      */
+      
       Image::iterator a = src.at (sx, sy);
-      Image::iterator d = a; ++d;
       Image::iterator b = src.at (sx, sy+1);
       Image::iterator c = b; ++c;
+      Image::iterator d = a; ++d;
       Image::iterator v;
       
       // which triangle does the point fall into?
-      if (dir_map[sy][sx] == '/') {
+      if (false && dir_map[sy][sx] == '/') {
 	if (xdist <= 256-ydist) // left side triangle
 	  {
-	    std::cout << "/-left" << std::endl;
-	    v = (*a * (256-xdist) * (256-ydist) +
+	    // std::cout << "/-left" << std::endl;
+	    v = (
+		 *a * (256-xdist) * (256-ydist) +
 		 *b * (256-xdist) * ydist +
 		 *d * xdist       * (256-ydist) +
-		 (*b+*d) * xdist * ydist / 2);
+		 (*b+*d) /2 * xdist * ydist
+		 );
 	  }
 	else // right side triangle
 	  {
-	    std::cout << "/-right" << std::endl;
-	    v = (*b * (256-xdist) * ydist +
+	    //std::cout << "/-right" << std::endl;
+	    v = (
+		 *b * (256-xdist) * ydist +
 		 *c * xdist       * ydist +
 		 *d * xdist       * (256-ydist) +
-		 (*b+*d) * (256-xdist) * (256-ydist) / 2);
+		 (*b+*d) /2 * (256-xdist) * (256-ydist)
+		 );
 	  }
       }
       else {
 	if (xdist <= ydist) // left side triangle
 	  {
-	    std::cout << "\\-left" << std::endl;
-	    v = (*a * (256-xdist) * (256-ydist) +
+	    //std::cout << "\\-left" << std::endl;
+	    v = (
+		 *a * (256-xdist) * (256-ydist) +
 		 *b * (256-xdist) * ydist +
 		 *c * xdist       * ydist +
-		 (*a+*c) * xdist * (256-ydist) /  2);
+		 (*a+*c) /2 * xdist * (256-ydist)
+		 );
 	  }
 	else // right side triangle
 	  {
-	    std::cout << "\\-right" << std::endl;
-	    v = (*a * (256-xdist) * (256-ydist) +
+	    //std::cout << "\\-right" << std::endl;
+	    v = (
+		 *a * (256-xdist) * (256-ydist) +
 		 *c * xdist       * ydist +
 		 *d * xdist       * (256-ydist) +
-		 (*a+*c) * (256-xdist) * ydist / 2);
+		 (*a+*c) /2 * (256-xdist) * ydist
+		 );
 	  }
       }
       
