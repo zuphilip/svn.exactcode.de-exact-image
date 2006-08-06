@@ -35,6 +35,13 @@ else
 NOT_SRCS += jpeg2000.cc
 endif
 
+ifeq "$(WITHOPENEXR)" "1"
+CPPFLAGS += $(OPENEXRINCS)
+LDFLAGS += $(OPENEXRLIBS)
+else
+NOT_SRCS += openexr.cc
+endif
+
 ifeq "$(WITHLCMS)" "1"
 LDFLAGS += -llcms
 endif
