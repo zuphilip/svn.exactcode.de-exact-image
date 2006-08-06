@@ -315,18 +315,19 @@ bool convert_dither_riemersma (const Argument<int>& arg)
 
 bool convert_edge (const Argument<bool>& arg)
 {
-  using std::cout;
-  using std::endl;
-
-#if 0
   matrix_type matrix[] = { -1.0, 0.0,  1.0,
                            -2.0, 0.0,  2.0,
                            -1.0, 0.0, -1.0 };
 
   convolution_matrix (image, matrix, 3, 3, (matrix_type)3.0);
   return true;
-#endif
+}
 
+bool convert_descew (const Argument<bool>& arg)
+{
+  using std::cout;
+  using std::endl;
+  
   //uint8_t* it = image.data;
   uint8_t* new_data = (uint8_t*) malloc (image.Stride() * image.h);
 
@@ -893,6 +894,12 @@ int main (int argc, char* argv[])
 			   0, 0, true, true);
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
+  
+  Argument<bool> arg_descew ("", "descew",
+			     "descew digitalized paper",
+			     0, 0, true, true);
+  arg_edge.Bind (convert_descew);
+  arglist.Add (&arg_descew);
   
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
