@@ -515,6 +515,8 @@ bool convert_descew (const Argument<bool>& arg)
   std::vector<std::pair<int,int> > points;
   std::map<int,int> angles;
   
+  double left_angle, right_angle, bottom_angle;
+  
   const int mindist = 32;
   
   points.clear();
@@ -564,7 +566,7 @@ bool convert_descew (const Argument<bool>& arg)
 	  double dx = p2.first - p1.first;
 	  double dy = p2.second - p1.second;
 	  if (dy > mindist) {
-	    int angle = (int)(atan (dx/dy) / M_PI * 180 * 100);
+	    int angle = (int)(-atan (dx/dy) / M_PI * 180 * 100);
 	    angles[angle] ++;
 	  }
 	}
@@ -580,7 +582,9 @@ bool convert_descew (const Argument<bool>& arg)
 	high = it;
       }
     }
-    cout << "Left angle: " << (double)high->first / 100 << endl;
+    
+    left_angle = (double)high->first / 100;
+    cout << "Left angle: " << left_angle << endl;
   }
 
   points.clear();
@@ -629,7 +633,7 @@ bool convert_descew (const Argument<bool>& arg)
 	  double dx = p2.first - p1.first;
 	  double dy = p2.second - p1.second;
 	  if (dy > mindist) {
-	    int angle = (int)(atan (dx/dy) / M_PI * 180 * 100);
+	    int angle = (int)(-atan (dx/dy) / M_PI * 180 * 100);
 	    angles[angle] ++;
 	  }
 	}
@@ -645,7 +649,8 @@ bool convert_descew (const Argument<bool>& arg)
 	high = it;
       }
     }
-    cout << "Right angle: " << (double)high->first / 100 << endl;
+    right_angle = (double)high->first / 100;
+    cout << "Right angle: " << right_angle << endl;
   }
   
   // ----------
@@ -697,7 +702,7 @@ bool convert_descew (const Argument<bool>& arg)
 	  double dy = p2.second - p1.second;
 	  
 	  if (dx > mindist) {
-	    int angle = (int) (-atan (dy/dx) / M_PI * 180 * 100);
+	    int angle = (int)(atan (dy/dx) / M_PI * 180 * 100);
 	    angles[angle] ++;
 	  }
 	}
@@ -713,7 +718,9 @@ bool convert_descew (const Argument<bool>& arg)
 	high = it;
       }
     }
-    cout << "Bottom angle: " << (double)high->first / 100 << endl;
+    
+    bottom_angle = (double)high->first / 100;
+    cout << "Bottom angle: " << bottom_angle << endl;
   }
   
   delete[] top;
@@ -721,6 +728,25 @@ bool convert_descew (const Argument<bool>& arg)
   delete[] left;
   delete[] right;
  
+  double angle = .0;
+  int n = 0;
+  
+  if (left_angle != .0) {
+    angle -= left_angle; ++n;
+  }
+
+  if (right_angle != .0) {
+    angle -= right_angle; ++n;
+  }
+  
+  if (bottom_angle != .0) {
+    angle -= bottom_angle; ++n;
+  }
+  angle /= n;
+  
+  cout << "rotating: " << angle << endl;
+  rotate (image, angle, background_color);
+  
   return true;
 }
 
@@ -898,7 +924,7 @@ int main (int argc, char* argv[])
   Argument<bool> arg_descew ("", "descew",
 			     "descew digitalized paper",
 			     0, 0, true, true);
-  arg_edge.Bind (convert_descew);
+  arg_descew.Bind (convert_descew);
   arglist.Add (&arg_descew);
   
   Argument<std::string> arg_resolution ("", "resolution",
