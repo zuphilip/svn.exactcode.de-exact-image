@@ -101,7 +101,7 @@ public:
   void New (int _w, int _h) {
     w = _w;
     h = _h;
-    data = (unsigned char*) malloc (Stride() * h);
+    data = (unsigned char*) realloc (data, Stride() * h);
   }
   
   int Stride () const {

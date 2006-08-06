@@ -38,18 +38,34 @@ bool OpenEXRLoader::readImage (FILE* file, Image& image)
   RgbaInputFile exrfile ("testsuite/openexr/GoldenGate.exr");
   Box2i dw = exrfile.dataWindow ();
   
-  image.w = dw.max.x - dw.min.x + 1;
-  image.h = dw.max.y - dw.min.y + 1;
+  image.spp = 4;
+  image.bps = 16;
+  
+  image.New (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1);
+  
   Array2D<Rgba> pixels (1, image.w); // working data
   
-  while (dw.min.y <= dw.max.y)
+  uint16_t* it = (uint16_t*) image.data;
+  for (int y = 0; y < image.h; ++y)
     {
-      cout << "> " << dw.min.y << endl;
-      exrfile.setFrameBuffer (&pixels[0][0] - dw.min.x - dw.min.y * image.w,
-			      1, image.w);
-      exrfile.readPixels (dw.min.y, std::min (dw.min.y + 1, dw. max.y));
-      // process pixels
-      dw.min.y += 1;
+      cout << "> " << y << endl;
+      exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);
+      exrfile.readPixels (y, y);
+      
+      for (int x = 0; x < image.w; ++x) {
+	double r = pixels[0][x].r;
+	double g = pixels[0][x].g;
+	double b = pixels[0][x].b;
+	double a = pixels[0][x].a;
+	
+	r = std::min (std::max (r,0.0),1.0) * 0xFFFF;
+	g = std::min (std::max (g,0.0),1.0) * 0xFFFF;
+	b = std::min (std::max (b,0.0),1.0) * 0xFFFF;
+	a = std::min (std::max (a,0.0),1.0) * 0xFFFF;
+	
+	
+	*it++ = r; *it++ = g; *it++ = b; *it++ = a;
+      }
     }
   
   return true;
@@ -68,8 +84,7 @@ bool OpenEXRLoader::writeImage (FILE* file, Image& image,
   for (int y = 0; y < image.h; ++y)
     {
       
-      exrfile.setFrameBuffer (&pixels[0][0] - y * image.w,
-			      1, image.w);
+      exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);
       exrfile.writePixels (1);
     }
   return true;
