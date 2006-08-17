@@ -158,6 +158,13 @@ bool convert_colorspace (const Argument<std::string>& arg)
     return false;
   }
 
+  // no image data, e.g. loading raw images
+  if (!image.data) {
+		image.spp = spp;
+		image.bps = bps;
+		return true;
+  }
+
   // up
   if (image.bps == 1 && bps == 2)
     colorspace_gray1_to_gray2 (image);
@@ -769,6 +776,25 @@ bool convert_resolution (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_size (const Argument<std::string>& arg)
+{
+  int w, h, n;
+  // parse
+  
+  // TODO: pretty C++ parser
+  if ((n = sscanf(arg.Get().c_str(), "%dx%d", &w, &h)) == 2)
+    {
+      image.w = w;
+      image.h = h;
+		  if (image.data) free (image.data);
+			image.data = 0;
+      return true;
+    }
+  std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;
+  return false;
+}
+
+
 bool convert_background (const Argument<std::string>& arg)
 {
   // parse
@@ -847,7 +873,7 @@ int main (int argc, char* argv[])
 				0, 0, true, true);
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
-  
+
   Argument<double> arg_scale ("", "scale",
 			      "scale image data using a method suitable for specified factor",
 			      0.0, 0, 1, true, true);
@@ -932,6 +958,12 @@ int main (int argc, char* argv[])
 					0, 1, true, true);
   arg_resolution.Bind (convert_resolution);
   arglist.Add (&arg_resolution);
+
+  Argument<std::string> arg_size ("", "size",
+			      "width and height of raw images whose dimensions are unknown",
+			      0, 1, true, true);
+  arg_size.Bind (convert_size);
+  arglist.Add (&arg_size);
 
   Argument<std::string> arg_background ("", "background",
 					"background color used for operations",
