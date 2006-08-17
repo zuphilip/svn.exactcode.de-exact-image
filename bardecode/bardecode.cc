@@ -15,10 +15,6 @@
  * 
  */
 
-       #include <sys/types.h>
-       #include <sys/stat.h>
-       #include <fcntl.h>
-
 #include <math.h>
 
 #include <iostream>
@@ -42,6 +38,25 @@
 #include "floyd-steinberg.h"
 
 #include <functional>
+
+// barcode library
+extern "C" { // missing in the library :-(
+#include "barcode.h"
+
+typedef struct tagBITMAP
+{
+	int bmType;
+  int bmWidth;
+  int bmHeight;
+  int bmWidthBytes;
+  unsigned char bmPlanes;
+  unsigned char bmBitsPixel;
+  void* bmBits;
+} BITMAP;
+
+int STReadBarCodeFromBitmap (void *hBarcode, BITMAP *pBitmap, float resolution,
+                             char ***bc, char ***bc_type, short photometric);
+}
 
 using namespace Utility;
 
@@ -85,15 +100,20 @@ int main (int argc, char* argv[])
   if (image.spp == 3)
     colorspace_rgb8_to_gray8 (image);
 
+	// testing showed the library does not like 2bps ...
+  if (image.bps == 2)
+    colorspace_gray2_to_gray4 (image);
+
   // we have a 1-8 bits per pixel GRAY image, now
   // build custom allocated bitmap to conform to the barcode library constraits
-  // (4 byte row allignment ...)
+  // (4 byte row allignment ...) - yes, this sucks majorly
 
-  int stride = image.w / 8;
+  int stride = image.Stride ();
   std::cerr << "Stride: " << stride << std::endl;
   stride += stride % 4 > 0 ? 4 - stride % 4 : 0;
   std::cerr << "Stride: " << stride << std::endl;
 
+#if 0
   uint8_t* bitmap = (uint8_t*) malloc (stride * image.h);
   uint8_t* bitmap_ptr = bitmap;
 
@@ -115,8 +135,48 @@ int main (int argc, char* argv[])
 	    *bitmap_ptr = z << remainder;
     bitmap_ptr = bitmap + stride * y;
   }
+#endif
 
-
+  // call into the barcode library
+  void* hBarcode = hBarcode = STCreateBarCodeSession ();
   
+  uint16 i = 1;
+  STSetParameter(hBarcode, ST_READ_CODE39, &i);
+	STSetParameter(hBarcode, ST_READ_CODE128, &i);
+	STSetParameter(hBarcode, ST_READ_CODE25, &i);
+	STSetParameter(hBarcode, ST_READ_EAN13, &i);
+	STSetParameter(hBarcode, ST_READ_EAN8, &i);
+	STSetParameter(hBarcode, ST_READ_UPCA, &i);
+	STSetParameter(hBarcode, ST_READ_UPCE, &i);
+
+  BITMAP bbitmap;
+  bbitmap.bmType = 1; // fixed
+  bbitmap.bmWidth = image.w;
+  bbitmap.bmHeight = image.h;
+  bbitmap.bmWidthBytes = image.Stride(); //stride;
+  bbitmap.bmPlanes = 1; // fixed
+  bbitmap.bmBitsPixel = image.bps; // 1; // check if something else works as well
+  bbitmap.bmBits = image.data; // bitmap;
+
+  std::cerr << "w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
+            << ", bps: " << image.bps << ", stride: " << image.Stride()
+            << std::endl;
+
+  char **bar_codes;
+	char **bar_codes_type;
+
+  int photometric = 1; // 0 == photometric min is black, but this appears to be buggy ???
+	int	bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
+	                                         &bar_codes, &bar_codes_type,
+	                                         photometric);
+
+  for (i = 0; i < bar_count; ++i)
+	{
+		uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
+		STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
+		printf ("%s\n", bar_codes[i]) ;
+	}
+
+  STFreeBarCodeSession (hBarcode);
   return 0;
 }
