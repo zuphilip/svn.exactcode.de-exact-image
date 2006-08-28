@@ -171,6 +171,11 @@ inline Image::iterator CubicConvolution (int distance,
   return it;
 }
 
+/* 0 0 0 0
+   0 4 0 0
+   0 0 -13.5 6
+   0 0 6.1 -2.45 */
+
 void bicubic_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
