@@ -6,7 +6,7 @@ BINARY_EXT = $(X_EXEEXT)
 
 CPPFLAGS += -I . -I lib -I gfx
 
-DEPS += $(X_OUTARCH)/gfx/X11Helper$(X_OBJEXT) $(X_OUTARCH)/gfx/EvasHelper$(X_OBJEXT) $(X_OUTARCH)/utility/Timer$(X_OBJEXT)
+DEPS += $(X_OUTARCH)/gfx/X11Helper$(X_OBJEXT) $(X_OUTARCH)/gfx/EvasHelper$(X_OBJEXT) $(X_OUTARCH)/utility/Timer$(X_OBJEXT) $(codecs_BINARY)
 
 include build/bottom.make
 
