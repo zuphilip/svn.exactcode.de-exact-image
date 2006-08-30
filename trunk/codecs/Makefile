@@ -52,9 +52,9 @@ BINARY = lib
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
-CPPFLAGS += -I lib/
+CPPFLAGS += -I codecs/
 
-DEPS =
+DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
 
 include build/bottom.make
 

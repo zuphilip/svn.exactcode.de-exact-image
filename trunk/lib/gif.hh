@@ -1,5 +1,5 @@
 
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 class GIFLoader : public ImageLoader {
 public:

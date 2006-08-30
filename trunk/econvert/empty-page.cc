@@ -18,7 +18,7 @@
 #include <iostream>
 
 #include "Image.hh"
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 #include "ArgumentList.hh"
 

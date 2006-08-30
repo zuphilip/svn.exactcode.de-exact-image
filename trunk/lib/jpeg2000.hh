@@ -1,5 +1,5 @@
 
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 class JPEG2000Loader : public ImageLoader {
 public:
