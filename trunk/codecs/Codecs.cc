@@ -1,5 +1,6 @@
 
 #include "Codecs.hh"
+#include <iostream>
 
 std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 

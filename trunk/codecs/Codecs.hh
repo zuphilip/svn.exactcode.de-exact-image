@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 #include <vector>
-#include <iostream>
+#include <iosfwd>
 
 #include "Image.hh"
 
@@ -15,11 +15,20 @@ public:
   
   virtual ~ImageCodec () { };
   
+  // NEW API, allowing the use of any STL i/o stream derived source
+  static bool Read (std::istream& stream, Image& image,
+		    const std::string& codec = "");
+  static bool Write (std::ostream& stream, Image& image,
+		     const std::string& codec = "",
+		     int quality = 80, const std::string& compress = "");
+  
+  // OLD API, only left for compatibility
   // not const string& because the filename is parsed and changed internally
   static bool Read (std::string file, Image& image);
   static bool Write (std::string file, Image& image,
 		     int quality = 80, const std::string& compress = "");
-
+  
+  // per codec methods
   virtual bool readImage (FILE* file, Image& image) = 0;
   virtual bool writeImage (FILE* file, Image& image,
 			   int quality, const std::string& compress) = 0;
