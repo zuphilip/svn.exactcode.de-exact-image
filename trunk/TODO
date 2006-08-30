@@ -8,6 +8,8 @@ Image formats:
  - all the others
 
 General:
+ - make Loaders (-> Codecs) read write from c++ streams - so users can
+   extend it beyond current limits (that is from memory and network streams)
  - Exif, XMP and ordinary, classic comment support 
 
 Loders:
