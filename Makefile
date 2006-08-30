@@ -41,7 +41,7 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
-MODULES = libbmp lib econvert edentify
+MODULES = libbmp codecs lib econvert edentify api
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
