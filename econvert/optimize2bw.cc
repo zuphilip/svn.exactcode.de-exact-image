@@ -23,7 +23,7 @@
 #include "ArgumentList.hh"
 
 #include "Image.hh"
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 #include "Colorspace.hh"
 #include "Matrix.hh"

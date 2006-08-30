@@ -1,4 +1,4 @@
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 class RAWLoader : public ImageLoader {
 public:
