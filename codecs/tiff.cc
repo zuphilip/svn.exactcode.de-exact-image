@@ -22,11 +22,12 @@
 #include <tiffconf.h>
 #include <tiffio.h>
 
-#include <algorithm>
-
 #include "tiff.hh"
 
 #include "Colorspace.hh"
+
+#include <algorithm>
+#include <iostream>
 
 bool TIFCodec::readImage (FILE* file, Image& image)
 {
