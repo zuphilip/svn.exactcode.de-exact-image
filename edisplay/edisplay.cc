@@ -571,7 +571,7 @@ bool Viewer::Load ()
     image->data = 0;
   }
   
-  if (!ImageLoader::Read(*it, *image)) {
+  if (!ImageCodec::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
     cerr << "Could not read the file " << *it << endl;
     return false;

@@ -3,7 +3,7 @@
 
 #include "dcraw.h"
 
-bool DCRAWLoader::readImage (FILE* file, Image& im)
+bool DCRAWCodec::readImage (FILE* file, Image& im)
 {
 #ifndef NO_LCMS
   char *cam_profile = NULL, *out_profile = NULL;
@@ -75,10 +75,10 @@ bool DCRAWLoader::readImage (FILE* file, Image& im)
   return true;
 }
 
-bool DCRAWLoader::writeImage (FILE* file, Image& image,
+bool DCRAWCodec::writeImage (FILE* file, Image& image,
 			    int quality, const std::string& compress)
 {
   return false;
 }
 
-DCRAWLoader dcraw_loader;
+DCRAWCodec dcraw_loader;

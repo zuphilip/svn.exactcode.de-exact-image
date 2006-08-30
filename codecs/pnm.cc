@@ -8,7 +8,7 @@ extern "C" {
 
 #include "pnm.hh"
 
-bool PNMLoader::readImage (FILE* file, Image& image)
+bool PNMCodec::readImage (FILE* file, Image& image)
 {
   struct pam inpam;
   memset (&inpam, 0, sizeof(inpam));
@@ -68,7 +68,7 @@ bool PNMLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNMLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool PNMCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   struct pam outpam;
   memset (&outpam, 0, sizeof(outpam));
@@ -143,4 +143,4 @@ bool PNMLoader::writeImage (FILE* file, Image& image, int quality, const std::st
   return true;
 }
 
-PNMLoader pnm_loader;
+PNMCodec pnm_loader;

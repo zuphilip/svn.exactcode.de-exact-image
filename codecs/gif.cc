@@ -14,7 +14,7 @@ static int InterlacedOffset[] = { 0, 4, 2, 1 };
 /* be read - offsets and jumps... */
 static int InterlacedJumps[] = { 8, 8, 4, 2 };
 
-bool GIFLoader::readImage (FILE* file, Image& image)
+bool GIFCodec::readImage (FILE* file, Image& image)
 {
   GifFileType* GifFile;
   GifRecordType RecordType;
@@ -123,7 +123,7 @@ bool GIFLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool GIFCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   GifFileType* GifFile;
   GifByteType* Ptr;
@@ -200,4 +200,4 @@ bool GIFLoader::writeImage (FILE* file, Image& image, int quality, const std::st
   return true;
 }
 
-GIFLoader gif_loader;
+GIFCodec gif_loader;

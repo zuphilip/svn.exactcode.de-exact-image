@@ -28,7 +28,7 @@
 
 #include "Colorspace.hh"
 
-bool TIFFLoader::readImage (FILE* file, Image& image)
+bool TIFCodec::readImage (FILE* file, Image& image)
 {
   TIFF* in;
   in = TIFFFdOpen(fileno(file), "", "r");
@@ -127,7 +127,7 @@ bool TIFFLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool TIFFLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool TIFCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   TIFF *out;
   uint32 rowsperstrip = (uint32) - 1;
@@ -210,4 +210,4 @@ bool TIFFLoader::writeImage (FILE* file, Image& image, int quality, const std::s
   return true;
 }
 
-TIFFLoader tiff_loader;
+TIFCodec tif_loader;
