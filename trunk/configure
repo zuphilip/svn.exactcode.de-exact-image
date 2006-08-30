@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 evas libjpeg libtiff libpng libungif netpbm jasper openexr lcms"
+with_options="x11 evas libjpeg libtiff libpng libungif netpbm jasper openexr lcms swig"
 # feature_options="debug"
 
 PACKAGE="exact-image"
@@ -40,6 +40,8 @@ pkgcheck netpbm header NETPBM c++ pam.h
 pkgcheck jasper header JASPER c++ jasper/jasper.h
 pkgcheck OpenEXR pkg-config OPENEXR atleast 1.2.0
 pkgcheck lcms pkg-config LCMS atleast 1.10
+
+pkgcheck swig shell SWIG 'swig -version 2>/dev/null | sed -n "s/SWIG Version \(.*\)/\1/p"' atleast 1.3.0
 
 save
 
