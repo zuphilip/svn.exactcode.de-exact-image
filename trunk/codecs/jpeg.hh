@@ -1,13 +1,13 @@
 #include "Codecs.hh"
 
-class JPEGLoader : public ImageLoader {
+class JPEGCodec : public ImageCodec {
 public:
   
-  JPEGLoader () {
-    registerLoader ("jpeg", this);
-    registerLoader ("jpg", this);
+  JPEGCodec () {
+    registerCodec ("jpeg", this);
+    registerCodec ("jpg", this);
   };
-  virtual ~JPEGLoader () { unregisterLoader (this); };
+  virtual ~JPEGCodec () { unregisterCodec (this); };
 
   virtual bool readImage (FILE* filename, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);

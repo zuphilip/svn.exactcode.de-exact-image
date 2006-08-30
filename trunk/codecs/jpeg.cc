@@ -138,7 +138,7 @@ my_error_exit (j_common_ptr cinfo)
  * is passed in.  We want to return 1 on success, 0 on error.
  */
 
-bool JPEGLoader::readImage (FILE* file, Image& image)
+bool JPEGCodec::readImage (FILE* file, Image& image)
 {
   /* This struct contains the JPEG decompression parameters and pointers to
    * working space (which is allocated as needed by the JPEG library).
@@ -278,7 +278,7 @@ bool JPEGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool JPEGLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool JPEGCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -373,4 +373,4 @@ bool JPEGLoader::writeImage (FILE* file, Image& image, int quality, const std::s
   return true;
 }
 
-JPEGLoader jpeg_loader;
+JPEGCodec jpeg_loader;

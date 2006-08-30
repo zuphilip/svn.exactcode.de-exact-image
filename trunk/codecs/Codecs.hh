@@ -9,11 +9,11 @@
 
 #include "Image.hh"
 
-class ImageLoader
+class ImageCodec
 {
 public:
   
-  virtual ~ImageLoader () { };
+  virtual ~ImageCodec () { };
   
   // not const string& because the filename is parsed and changed internally
   static bool Read (std::string file, Image& image);
@@ -28,18 +28,18 @@ protected:
   
   struct loader_ref {
     const char* ext;
-    ImageLoader* loader;
+    ImageCodec* loader;
     bool primary_entry;
     bool via_codec_only;
   };
   
   static std::vector<loader_ref>* loader;
   
-  static void registerLoader (const char* _ext,
-			      ImageLoader* _loader,
+  static void registerCodec (const char* _ext,
+			      ImageCodec* _loader,
 			      bool _via_codec_only = false)
   {
-    static ImageLoader* last_loader;
+    static ImageCodec* last_loader;
     if (!loader)
       loader = new std::vector<loader_ref>;
     loader->push_back ( (loader_ref) {_ext, _loader,
@@ -47,7 +47,7 @@ protected:
     last_loader = _loader;
   }
 
-  static void unregisterLoader (ImageLoader* _loader)
+  static void unregisterCodec (ImageCodec* _loader)
   {
     // TODO, remove
     if (loader->empty()) {

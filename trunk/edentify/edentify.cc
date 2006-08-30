@@ -81,7 +81,7 @@ int main (int argc, char* argv[])
   for (std::vector<std::string>::const_iterator file = list.begin();
        file != list.end(); ++file)
     {
-      if (!ImageLoader::Read(*file, image)) {
+      if (!ImageCodec::Read(*file, image)) {
 	std::cout << "edentify: unable to open image '" << *file << "'." << std::endl;
 	continue;
       }

@@ -29,7 +29,7 @@ int check_if_png(char *file_name, FILE **fp)
 }
 #endif
 
-bool PNGLoader::readImage (FILE* file, Image& image)
+bool PNGCodec::readImage (FILE* file, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
@@ -184,7 +184,7 @@ bool PNGLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNGLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool PNGCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   png_structp png_ptr;
   png_infop info_ptr;
@@ -269,4 +269,4 @@ bool PNGLoader::writeImage (FILE* file, Image& image, int quality, const std::st
   return true;
 }
 
-PNGLoader png_loader;
+PNGCodec png_loader;

@@ -1,7 +1,7 @@
 
 #include "Codecs.hh"
 
-std::vector<ImageLoader::loader_ref>* ImageLoader::loader = 0;
+std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 
 std::string get_ext (const std::string& filename)
 {
@@ -26,7 +26,7 @@ std::string get_codec (std::string& filename)
     return "";
 } 
 
-bool ImageLoader::Read (std::string file, Image& image) {
+bool ImageCodec::Read (std::string file, Image& image) {
   bool bycodec = true;
   
   std::string codec = get_codec (file);
@@ -69,7 +69,7 @@ bool ImageLoader::Read (std::string file, Image& image) {
   return false;
 }
   
-bool ImageLoader::Write (std::string file, Image& image,
+bool ImageCodec::Write (std::string file, Image& image,
 			 int quality, const std::string& compress) {
   bool bycodec = true;
 

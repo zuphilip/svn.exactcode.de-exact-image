@@ -61,7 +61,7 @@ bool convert_input (const Argument<std::string>& arg)
     image.data = 0;
   }
 
-  if (!ImageLoader::Read(arg.Get(), image)) {
+  if (!ImageCodec::Read(arg.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return false;
   }
@@ -82,7 +82,7 @@ bool convert_output (const Argument<std::string>& arg)
   if (arg_compression.Size())
     compression = arg_compression.Get();
   
-  if (!ImageLoader::Write(arg.Get(), image, quality, compression)) {
+  if (!ImageCodec::Write(arg.Get(), image, quality, compression)) {
     std::cerr << "Error writing output file." << std::endl;
     return false;
   }
@@ -120,7 +120,7 @@ bool convert_split (const Argument<std::string>& arg)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.data = image.data + i * split_image.Stride() * split_image.h;
-      if (!ImageLoader::Write (arg.Get(i), split_image, quality, compression)) {
+      if (!ImageCodec::Write (arg.Get(i), split_image, quality, compression)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
       }

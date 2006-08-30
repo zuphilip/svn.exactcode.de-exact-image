@@ -42,7 +42,7 @@ static void add_color_prof(jas_image_t* image)
   }
 }
 
-bool JPEG2000Loader::readImage (FILE* file, Image& im)
+bool JPEG2000Codec::readImage (FILE* file, Image& im)
 {
   jas_image_t *image;
   jas_stream_t *in;
@@ -158,7 +158,7 @@ bool JPEG2000Loader::readImage (FILE* file, Image& im)
 }
 
 
-bool JPEG2000Loader::writeImage (FILE* file, Image& im, int quality, const std::string& compress)
+bool JPEG2000Codec::writeImage (FILE* file, Image& im, int quality, const std::string& compress)
 {
   jas_image_t *image;
   jas_stream_t *out;
@@ -224,4 +224,4 @@ bool JPEG2000Loader::writeImage (FILE* file, Image& im, int quality, const std::
   return true;
 }
 
-JPEG2000Loader jpeg2000_loader;
+JPEG2000Codec jpeg2000_loader;

@@ -116,7 +116,7 @@ private:
   FILE* _file;
 };
 
-bool OpenEXRLoader::readImage (FILE* file, Image& image)
+bool OpenEXRCodec::readImage (FILE* file, Image& image)
 {
   C_IStream istream (file, "");
   
@@ -154,7 +154,7 @@ bool OpenEXRLoader::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool OpenEXRLoader::writeImage (FILE* file, Image& image,
+bool OpenEXRCodec::writeImage (FILE* file, Image& image,
 				int quality, const std::string& compress)
 {
   RgbaChannels type;
@@ -201,4 +201,4 @@ bool OpenEXRLoader::writeImage (FILE* file, Image& image,
   return true;
 }
 
-OpenEXRLoader openexr_loader;
+OpenEXRCodec openexr_loader;

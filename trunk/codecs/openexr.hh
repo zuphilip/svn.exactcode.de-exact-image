@@ -1,14 +1,14 @@
 
 #include "Codecs.hh"
 
-class OpenEXRLoader : public ImageLoader {
+class OpenEXRCodec : public ImageCodec {
 public:
   
-  OpenEXRLoader () {
-    registerLoader ("exr", this);
+  OpenEXRCodec () {
+    registerCodec ("exr", this);
   };
 
-  ~OpenEXRLoader () { unregisterLoader (this); };
+  ~OpenEXRCodec () { unregisterCodec (this); };
   
   virtual bool readImage (FILE* file, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);

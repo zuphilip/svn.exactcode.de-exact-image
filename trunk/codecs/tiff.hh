@@ -1,15 +1,16 @@
 
 #include "Codecs.hh"
 
-class TIFFLoader : public ImageLoader {
+// not TIFFCodec due the TIFFCodec in libtiff itself ...
+class TIFCodec : public ImageCodec {
 public:
   
-  TIFFLoader () {
-    registerLoader ("tiff", this);
-    registerLoader ("tif", this);
+  TIFCodec () {
+    registerCodec ("tiff", this);
+    registerCodec ("tif", this);
   };
 
-  ~TIFFLoader () { unregisterLoader (this); };
+  ~TIFCodec () { unregisterCodec (this); };
   
   virtual bool readImage (FILE* file, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);

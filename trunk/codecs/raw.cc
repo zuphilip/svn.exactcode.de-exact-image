@@ -22,7 +22,7 @@
 
 #include "raw.hh"
 
-bool RAWLoader::readImage (FILE* file, Image& image)
+bool RAWCodec::readImage (FILE* file, Image& image)
 {
   if (!image.data)
     image.data = (uint8_t*) malloc (image.Stride()*image.h);
@@ -30,7 +30,7 @@ bool RAWLoader::readImage (FILE* file, Image& image)
          (size_t) image.Stride()*image.h;
 }
 
-bool RAWLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool RAWCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   if (!image.data)
     return false;
@@ -39,4 +39,4 @@ bool RAWLoader::writeImage (FILE* file, Image& image, int quality, const std::st
          (size_t) image.Stride()*image.h;
 }
 
-RAWLoader raw_loader;
+RAWCodec raw_loader;

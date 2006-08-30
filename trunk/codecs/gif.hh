@@ -1,11 +1,11 @@
 
 #include "Codecs.hh"
 
-class GIFLoader : public ImageLoader {
+class GIFCodec : public ImageCodec {
 public:
   
-  GIFLoader () { registerLoader ("gif", this); };
-  virtual ~GIFLoader () { unregisterLoader (this); };
+  GIFCodec () { registerCodec ("gif", this); };
+  virtual ~GIFCodec () { unregisterCodec (this); };
 
   virtual bool readImage (FILE* file, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);

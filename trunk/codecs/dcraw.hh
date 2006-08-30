@@ -1,25 +1,25 @@
 
 #include "Codecs.hh"
 
-class DCRAWLoader : public ImageLoader {
+class DCRAWCodec : public ImageCodec {
 public:
   
-  DCRAWLoader () {
-    registerLoader ("dcraw", this); // primary entry
-    registerLoader ("crw", this); // Canon
-    registerLoader ("cr2", this);
-    registerLoader ("mrw", this); // Mniolta
-    registerLoader ("nef", this); // Nikon
-    registerLoader ("orf", this); // Olympus
-    registerLoader ("raf", this); // Fuji
-    registerLoader ("pef", this); // Pentax
-    registerLoader ("x3f", this); // Sigma
-    registerLoader ("dcr", this); // Kodak
-    registerLoader ("kdc", this); 
-    registerLoader ("srf", this); // Sony
-    registerLoader ("raw", this); // Panasonic, Casio, Leica
+  DCRAWCodec () {
+    registerCodec ("dcraw", this); // primary entry
+    registerCodec ("crw", this); // Canon
+    registerCodec ("cr2", this);
+    registerCodec ("mrw", this); // Mniolta
+    registerCodec ("nef", this); // Nikon
+    registerCodec ("orf", this); // Olympus
+    registerCodec ("raf", this); // Fuji
+    registerCodec ("pef", this); // Pentax
+    registerCodec ("x3f", this); // Sigma
+    registerCodec ("dcr", this); // Kodak
+    registerCodec ("kdc", this); 
+    registerCodec ("srf", this); // Sony
+    registerCodec ("raw", this); // Panasonic, Casio, Leica
   };
-  virtual ~DCRAWLoader () { unregisterLoader (this); };
+  virtual ~DCRAWCodec () { unregisterCodec (this); };
 
   virtual bool readImage (FILE* file, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);

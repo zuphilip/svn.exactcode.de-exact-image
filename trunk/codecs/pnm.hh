@@ -1,16 +1,16 @@
 
 #include "Codecs.hh"
 
-class PNMLoader : public ImageLoader {
+class PNMCodec : public ImageCodec {
 public:
   
-  PNMLoader () {
-    registerLoader ("pnm", this);
-    registerLoader ("ppm", this);
-    registerLoader ("pgm", this);
-    registerLoader ("pbm", this);
+  PNMCodec () {
+    registerCodec ("pnm", this);
+    registerCodec ("ppm", this);
+    registerCodec ("pgm", this);
+    registerCodec ("pbm", this);
   };
-  virtual ~PNMLoader () { unregisterLoader (this); };
+  virtual ~PNMCodec () { unregisterCodec (this); };
 
   virtual bool readImage (FILE* file, Image& image);
   virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);
