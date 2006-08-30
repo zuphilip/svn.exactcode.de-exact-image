@@ -51,6 +51,10 @@ include edisplay/Makefile
 endif
 endif
 
+ifeq "$(WITHSWIG)" "1"
+include api/Makefile
+endif
+
 check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT) $(X_OUTARCH)/edentify/edentify$(X_EXEEXT)
 	$(Q)cd testsuite; ./run ../$(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
 
