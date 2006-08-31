@@ -14,7 +14,20 @@ static int InterlacedOffset[] = { 0, 4, 2, 1 };
 /* be read - offsets and jumps... */
 static int InterlacedJumps[] = { 8, 8, 4, 2 };
 
-bool GIFCodec::readImage (FILE* file, Image& image)
+static int GIFInputFunc (GifFileType* t, GifByteType* mem, int len)
+{
+  std::istream* stream = (std::istream*)t->UserData;
+  return stream->readsome ((char*)mem, len);
+}
+
+static int GIFOutputFunc (GifFileType* t, const GifByteType* mem, int len)
+{
+  std::ostream* stream = (std::ostream*)t->UserData;
+  stream->write ((char*)mem, len);
+  return len;
+}
+
+bool GIFCodec::readImage (std::istream* stream, Image& image)
 {
   GifFileType* GifFile;
   GifRecordType RecordType;
@@ -22,7 +35,7 @@ bool GIFCodec::readImage (FILE* file, Image& image)
   ColorMapObject *ColorMap = NULL;
   int ExtCode;
   
-  if ((GifFile = DGifOpenFileHandle(fileno(file))) == NULL)
+  if ((GifFile = DGifOpen (stream, &GIFInputFunc)) == NULL)
     {
       PrintGifError();
       return false;
@@ -123,12 +136,13 @@ bool GIFCodec::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool GIFCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress)
 {
   GifFileType* GifFile;
   GifByteType* Ptr;
   
-  if ((GifFile = EGifOpenFileHandle(fileno(file))) == NULL)
+  if ((GifFile = EGifOpen (stream, &GIFOutputFunc)) == NULL)
     {
       std::cerr << "Error preparing GIF file for writing." << std::endl;
       return false;

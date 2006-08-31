@@ -22,21 +22,23 @@
 
 #include "raw.hh"
 
-bool RAWCodec::readImage (FILE* file, Image& image)
+bool RAWCodec::readImage (std::istream* stream, Image& image)
 {
   if (!image.data)
     image.data = (uint8_t*) malloc (image.Stride()*image.h);
-  return fread (image.data, 1, image.Stride()*image.h, file) ==
-         (size_t) image.Stride()*image.h;
+  return stream->readsome ((char*)image.data, image.Stride()*image.h)
+    == (size_t) image.Stride()*image.h;
 }
 
-bool RAWCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool RAWCodec::writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress)
 {
   if (!image.data)
     return false;
 
-  return fwrite (image.data, 1, image.Stride()*image.h, file) ==
-         (size_t) image.Stride()*image.h;
+  return stream->write ((char*)image.data, image.Stride()*image.h)
+    /* ==
+       (size_t) image.Stride()*image.h*/;
 }
 
 RAWCodec raw_loader;
