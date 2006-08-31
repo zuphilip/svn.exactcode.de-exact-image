@@ -21,6 +21,7 @@
 
 #include <tiffconf.h>
 #include <tiffio.h>
+#include <tiffio.hxx>
 
 #include "tiff.hh"
 
@@ -32,7 +33,8 @@
 bool TIFCodec::readImage (std::istream* stream, Image& image)
 {
   TIFF* in;
-  in = TIFFFdOpen(fileno(file), "", "r");
+  
+  in = TIFFStreamOpen ("", stream);
   if (!in)
     return false;
   
@@ -160,7 +162,7 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
   
 
-  out = TIFFFdOpen (fileno(file), "", "w");
+  out = TIFFStreamOpen ("", stream);
   if (out == NULL)
     return false;
    
