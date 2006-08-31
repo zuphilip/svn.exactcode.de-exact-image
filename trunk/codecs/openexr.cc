@@ -39,57 +39,63 @@ using namespace Imath;
 using std::cout;
 using std::endl;
 
-class C_IStream : public IStream
+class STDIStream : public IStream
 {
 public:
-  C_IStream (FILE *file, const char fileName[])
-    : IStream (fileName), _file (file) {
+  STDIStream (std::istream* stream, const char fileName[])
+    : IStream (fileName), _stream (stream) {
   }
   
   virtual bool read (char c[], int n)
   {
-    if (n != (int)fread (c, 1, n, _file))
+    try {
+    _stream->read (c, n);
+    }
+    catch (...)
       {
-	if (ferror (_file))
+	if (!*_stream)
 	  Iex::throwErrnoExc();
 	else
 	  throw Iex::InputExc ("Unexpected end of file.");
       }
-    return feof (_file);
+    return _stream->eof();
   }
     
   virtual Int64 tellg ()
   {
-    return ftell (_file);
+    return _stream->tellg ();
   }
   
   virtual void seekg (Int64 pos)
   {
-    clearerr (_file);
-    fseek(_file, pos, SEEK_SET);
+    _stream->clear ();
+    _stream->seekg (pos);
   }
   
   virtual void clear ()
   {
-    clearerr (_file);
+    _stream->clear ();
   }
   
 private:
-  FILE* _file;
+  std::istream* _stream;
 };
 
-class C_OStream : public OStream
+class STDOStream : public OStream
 {
 public:
-  C_OStream (FILE *file, const char fileName[])
-    : OStream (fileName), _file (file) {
+  STDOStream (std::ostream* stream, const char fileName[])
+    : OStream (fileName),  _stream (stream) {
   }
   
   virtual void write (const char c[], int n)
   {
-    if (n != (int)fwrite (c, 1, n, _file))
+    try {
+      _stream->write (c, n);
+    }
+    catch (...)
       {
-	if (ferror (_file))
+	if (!*_stream)
 	  Iex::throwErrnoExc();
 	else
 	  throw Iex::InputExc ("Unexpected end of file.");
@@ -98,27 +104,27 @@ public:
     
   virtual Int64 tellp ()
   {
-    return ftell (_file);
+    return _stream->tellp ();
   }
   
   virtual void seekp (Int64 pos)
   {
-    clearerr (_file);
-    fseek(_file, pos, SEEK_SET);
+    _stream->clear ();
+    _stream->seekp (pos);
   }
   
   virtual void clear ()
   {
-    clearerr (_file);
+    _stream->clear ();
   }
   
 private:
-  FILE* _file;
+  std::ostream* _stream;
 };
 
-bool OpenEXRCodec::readImage (FILE* file, Image& image)
+bool OpenEXRCodec::readImage (std::istream* stream, Image& image)
 {
-  C_IStream istream (file, "");
+  STDIStream istream (stream, "");
   
   RgbaInputFile exrfile (istream);
   Box2i dw = exrfile.dataWindow ();
@@ -154,8 +160,8 @@ bool OpenEXRCodec::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool OpenEXRCodec::writeImage (FILE* file, Image& image,
-				int quality, const std::string& compress)
+bool OpenEXRCodec::writeImage (std::ostream* stream, Image& image,
+			       int quality, const std::string& compress)
 {
   RgbaChannels type;
   switch (image.spp) {
@@ -176,7 +182,7 @@ bool OpenEXRCodec::writeImage (FILE* file, Image& image,
   
   Box2i displayWindow (V2i (0, 0), V2i (image.w - 1, image.h - 1));
   
-  C_OStream ostream (file, "");
+  STDOStream ostream (stream, "");
     
   Header header (image.w, image.h);
   RgbaOutputFile exrfile (ostream, header, type);

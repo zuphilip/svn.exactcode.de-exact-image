@@ -1,6 +1,8 @@
 
 #include "Codecs.hh"
+
 #include <iostream>
+#include <fstream>
 
 std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 
@@ -27,26 +29,13 @@ std::string get_codec (std::string& filename)
     return "";
 } 
 
-bool ImageCodec::Read (std::string file, Image& image) {
+// NEW API
+
+bool ImageCodec::Read (std::istream* stream, Image& image,
+		       const std::string& codec)
+{
+  // TODO:
   bool bycodec = true;
-  
-  std::string codec = get_codec (file);
-  if (codec.empty()) {
-    codec = get_ext (file);
-    bycodec = false;
-  }
-  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
-  
-  FILE* fp;
-  if (file != "-")
-    fp = fopen (file.c_str(), "r");
-  else
-    fp = stdin;
-  
-  if (!fp) {
-    std::cerr << "Can not open file " << file.c_str() << std::endl;
-    return false;
-  }
   
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
@@ -57,41 +46,22 @@ bool ImageCodec::Read (std::string file, Image& image) {
 	if (!bycodec && it->via_codec_only)
 	  continue;
 		
-	if (it->loader->readImage (fp, image)) {
-	  if (file != "-")
-	    fclose (fp);
+	if (it->loader->readImage (stream, image)) {
 	  return true; 
 	}
       }
     }
-  if (file != "-")
-    fclose (fp);
-  std::cerr << "No suitable decoder found for: " << file.c_str() << std::endl;
+  
+  std::cerr << "No suitable decoder found." << std::endl;
   return false;
 }
-  
-bool ImageCodec::Write (std::string file, Image& image,
-			 int quality, const std::string& compress) {
-  bool bycodec = true;
 
-  std::string codec = get_codec (file);
-  if (codec.empty()) {
-    codec = get_ext (file);
-    bycodec = false;
-  }
-  
-  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
-  
-  FILE* fp;
-  if (file != "-")
-    fp = fopen (file.c_str(), "w");
-  else
-    fp = stdout;
-  
-  if (!fp) {
-    std::cerr << "Can not write file " << file.c_str() << std::endl;
-    return false;
-  }
+bool ImageCodec::Write (std::ostream* stream, Image& image,
+			const std::string& codec,
+			int quality, const std::string& compress)
+{
+  // TODO:
+  bool bycodec = true;
   
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
@@ -102,15 +72,58 @@ bool ImageCodec::Write (std::string file, Image& image,
 	if (!bycodec && it->via_codec_only)
 	  continue;
 	
-	if (it->loader->writeImage (fp, image, quality, compress)) {
-	  if (file != "-")
-	    fclose (fp);
+	if (it->loader->writeImage (stream, image, quality, compress)) {
 	  return true;
 	}
       }
     }
+  
+  std::cerr << "No suitable encoder found." << std::endl;
+}
+
+// OLD API
+
+bool ImageCodec::Read (std::string file, Image& image)
+{
+  std::string codec = get_codec (file);
+  if (codec.empty())
+    codec = get_ext (file);
+  
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  
+  std::istream* s;
   if (file != "-")
-    fclose (fp);
-  std::cerr << "No suitable encoder found for: " << file.c_str() << std::endl;
-  return false;
+    s = new std::ifstream (file.c_str());
+  else
+    s = &std::cin;
+  
+  if (!*s) {
+    std::cerr << "Can not open file " << file.c_str() << std::endl;
+    return false;
+  }
+  
+  return Read (s, image, codec);
+}
+  
+bool ImageCodec::Write (std::string file, Image& image,
+			int quality, const std::string& compress)
+{
+  std::string codec = get_codec (file);
+  if (codec.empty())
+    codec = get_ext (file);
+  
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  
+  std::ostream* s;
+  if (file != "-")
+    s = new std::ofstream (file.c_str());
+  else
+    s = &std::cout;
+  
+  if (!*s) {
+    std::cerr << "Can not write file " << file.c_str() << std::endl;
+    return false;
+  }
+  
+  return Write (s, image, codec, quality, compress);
 }

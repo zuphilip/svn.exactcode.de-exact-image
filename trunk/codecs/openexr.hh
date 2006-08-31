@@ -10,6 +10,7 @@ public:
 
   ~OpenEXRCodec () { unregisterCodec (this); };
   
-  virtual bool readImage (FILE* file, Image& image);
-  virtual bool writeImage (FILE* file, Image& image, int quality, const std::string& compress);
+  virtual bool readImage (std::istream* stream, Image& image);
+  virtual bool writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress);
 };

@@ -29,7 +29,7 @@ int check_if_png(char *file_name, FILE **fp)
 }
 #endif
 
-bool PNGCodec::readImage (FILE* file, Image& image)
+bool PNGCodec::readImage (std::istream* stream, Image& image)
 {
   png_structp png_ptr;
   png_infop info_ptr;
@@ -184,7 +184,8 @@ bool PNGCodec::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool PNGCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress)
 {
   png_structp png_ptr;
   png_infop info_ptr;

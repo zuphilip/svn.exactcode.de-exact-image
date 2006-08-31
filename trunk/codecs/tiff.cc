@@ -29,7 +29,7 @@
 #include <algorithm>
 #include <iostream>
 
-bool TIFCodec::readImage (FILE* file, Image& image)
+bool TIFCodec::readImage (std::istream* stream, Image& image)
 {
   TIFF* in;
   in = TIFFFdOpen(fileno(file), "", "r");
@@ -128,7 +128,8 @@ bool TIFCodec::readImage (FILE* file, Image& image)
   return true;
 }
 
-bool TIFCodec::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
+bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress)
 {
   TIFF *out;
   uint32 rowsperstrip = (uint32) - 1;
