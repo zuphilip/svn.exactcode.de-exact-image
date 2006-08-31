@@ -6,7 +6,7 @@ NOT_SRCS += jpeg.cc
 endif
 
 ifeq "$(WITHLIBTIFF)" "1"
-LDFLAGS += -ltiff
+LDFLAGS += -ltiff -ltiffxx
 else
 NOT_SRCS += tiff.cc
 endif

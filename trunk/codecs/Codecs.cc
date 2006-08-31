@@ -35,7 +35,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 		       const std::string& codec)
 {
   // TODO:
-  bool bycodec = true;
+  bool bycodec = false;
   
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
@@ -61,7 +61,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
 			int quality, const std::string& compress)
 {
   // TODO:
-  bool bycodec = true;
+  bool bycodec = false;
   
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
