@@ -29,6 +29,27 @@ int check_if_png(char *file_name, FILE **fp)
 }
 #endif
 
+void stdstream_read_data(png_structp png_ptr,
+			 png_bytep data, png_size_t length)
+{
+  std::istream* stream = (std::istream*) png_get_io_ptr (png_ptr);
+  stream->read ((char*)data, length);
+}
+
+void stdstream_write_data(png_structp png_ptr,
+			  png_bytep data, png_size_t length)
+{
+  std::ostream* stream = (std::ostream*) png_get_io_ptr (png_ptr);
+  stream->write ((char*)data, length);
+}
+
+void stdstream_flush_data(png_structp png_ptr)
+{
+  std::ostream* stream = (std::ostream*) png_get_io_ptr (png_ptr);
+  stream = stream;
+}
+
+
 bool PNGCodec::readImage (std::istream* stream, Image& image)
 {
   png_structp png_ptr;
@@ -63,8 +84,8 @@ bool PNGCodec::readImage (std::istream* stream, Image& image)
     return 0;
   }
   
-  /* Set up the input control if you are using standard C streams */
-  png_init_io(png_ptr, file);
+  /* Set up our STL stream input control */ 
+  png_set_read_fn (png_ptr, stream, &stdstream_read_data);
   
   ///* If we have already read some of the signature */
   //png_set_sig_bytes(png_ptr, sig_read);
@@ -220,8 +241,8 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   png_info_init (info_ptr);
   
-  /* Set up the input control if you are using standard C streams */
-  png_init_io(png_ptr, file);
+  /* Set up our STL stream output control */ 
+  png_set_write_fn (png_ptr, stream, &stdstream_write_data, &stdstream_flush_data);
   
   ///* If we have already read some of the signature */
   //png_set_sig_bytes(png_ptr, sig_read);
