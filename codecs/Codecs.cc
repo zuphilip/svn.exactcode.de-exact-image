@@ -102,7 +102,10 @@ bool ImageCodec::Read (std::string file, Image& image)
     return false;
   }
   
-  return Read (s, image, codec);
+  bool res = Read (s, image, codec);
+  if (s != &std::cin)
+    delete s;
+  return res;
 }
   
 bool ImageCodec::Write (std::string file, Image& image,
@@ -125,5 +128,8 @@ bool ImageCodec::Write (std::string file, Image& image,
     return false;
   }
   
-  return Write (s, image, codec, quality, compress);
+  bool res = Write (s, image, codec, quality, compress);
+  if (s != &std::cout)
+    delete s;
+  return res;
 }
