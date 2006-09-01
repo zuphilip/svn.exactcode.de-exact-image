@@ -118,7 +118,7 @@ bool JPEG2000Loader::readImage (FILE* file, Image& im)
   std::cout << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
-  unsigned char* data = (unsigned char*) malloc (im.h * im.h * im.spp);
+  unsigned char* data = (unsigned char*) malloc (im.w * im.h * im.spp);
   unsigned char* data_ptr = data;
 
   jas_matrix_t *jasdata[3];
