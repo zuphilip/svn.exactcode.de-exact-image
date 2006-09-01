@@ -126,7 +126,6 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   }
 
   TIFFClose (in);
-  
   return true;
 }
 
