@@ -23,6 +23,7 @@
 
 extern "C" {
 #include <jpeglib.h>
+#include <jerror.h>
 }
 
 /*
@@ -61,7 +62,7 @@ struct my_error_mgr {
   jmp_buf setjmp_buffer;	/* for return to caller */
 };
 
-typedef struct my_error_mgr * my_error_ptr;
+typedef struct my_error_mgr* my_error_ptr;
 
 /*
  * Here's the routine that will replace the standard error_exit method:
@@ -80,6 +81,181 @@ my_error_exit (j_common_ptr cinfo)
   /* Return control to the setjmp point */
   longjmp(myerr->setjmp_buffer, 1);
 }
+
+/* *** source manager *** */
+
+typedef struct {
+  struct jpeg_source_mgr pub;	/* public fields */
+
+  std::istream* stream;
+  JOCTET* buffer;		/* start of buffer */
+  bool start_of_file;	/* have we gotten any data yet? */
+} cpp_src_mgr;
+
+
+#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
+
+static void init_source (j_decompress_ptr cinfo)
+{
+  cpp_src_mgr* src = (cpp_src_mgr*) cinfo->src;
+  src->start_of_file = true;
+}
+
+boolean fill_input_buffer (j_decompress_ptr cinfo)
+{
+  cpp_src_mgr* src = (cpp_src_mgr*) cinfo->src;
+  
+  size_t nbytes = src->stream->tellg ();
+  src->stream->read ((char*)src->buffer, INPUT_BUF_SIZE);
+  nbytes = (size_t)src->stream->tellg () - nbytes;
+  
+  if (nbytes <= 0) {
+    if (src->start_of_file)	/* Treat empty input file as fatal error */
+      ERREXIT(cinfo, JERR_INPUT_EMPTY);
+    WARNMS(cinfo, JWRN_JPEG_EOF);
+    /* Insert a fake EOI marker */
+    src->buffer[0] = (JOCTET) 0xFF;
+    src->buffer[1] = (JOCTET) JPEG_EOI;
+    nbytes = 2;
+  }
+  
+  src->pub.next_input_byte = src->buffer;
+  src->pub.bytes_in_buffer = nbytes;
+  src->start_of_file = FALSE;
+  
+  return TRUE;
+}
+
+
+void skip_input_data (j_decompress_ptr cinfo, long num_bytes)
+{
+  cpp_src_mgr* src = (cpp_src_mgr*) cinfo->src;
+
+  if (num_bytes > 0) {
+    while (num_bytes > (long) src->pub.bytes_in_buffer) {
+      num_bytes -= (long) src->pub.bytes_in_buffer;
+      (void) fill_input_buffer(cinfo);
+      /* note we assume that fill_input_buffer will never return FALSE,
+       * so suspension need not be handled.
+       */
+    }
+    src->pub.next_input_byte += (size_t) num_bytes;
+    src->pub.bytes_in_buffer -= (size_t) num_bytes;
+  }
+}
+
+void term_source (j_decompress_ptr cinfo)
+{
+  /* no work necessary here */
+}
+
+
+void cpp_stream_src (j_decompress_ptr cinfo, std::istream* stream)
+{
+  cpp_src_mgr* src;
+
+  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+    cinfo->src = (struct jpeg_source_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  sizeof(cpp_src_mgr));
+    src = (cpp_src_mgr*) cinfo->src;
+    src->buffer = (JOCTET *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  INPUT_BUF_SIZE * sizeof(JOCTET));
+  }
+
+  src = (cpp_src_mgr*) cinfo->src;
+  src->pub.init_source = init_source;
+  src->pub.fill_input_buffer = fill_input_buffer;
+  src->pub.skip_input_data = skip_input_data;
+  src->pub.resync_to_restart = jpeg_resync_to_restart; /* use default method */
+  src->pub.term_source = term_source;
+  
+  src->stream = stream;
+  
+  src->pub.bytes_in_buffer = 0; /* forces fill_input_buffer on first read */
+  src->pub.next_input_byte = NULL; /* until buffer loaded */
+}
+
+
+/* *** destination manager *** */
+
+typedef struct {
+  struct jpeg_destination_mgr pub; /* public fields */
+
+  std::ostream* stream;		/* target stream */
+  JOCTET* buffer;		/* start of buffer */
+} cpp_dest_mgr;
+
+#define OUTPUT_BUF_SIZE  4096	/* choose an efficiently fwrite'able size */
+
+
+void init_destination (j_compress_ptr cinfo)
+{
+  cpp_dest_mgr* dest = (cpp_dest_mgr*) cinfo->dest;
+
+  /* Allocate the output buffer --- it will be released when done with image */
+  dest->buffer = (JOCTET *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
+				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
+
+  dest->pub.next_output_byte = dest->buffer;
+  dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
+}
+
+boolean empty_output_buffer (j_compress_ptr cinfo)
+{
+  cpp_dest_mgr* dest = (cpp_dest_mgr*) cinfo->dest;
+
+  dest->stream->write ((char*)dest->buffer, OUTPUT_BUF_SIZE);
+  if (!*dest->stream)
+    ERREXIT(cinfo, JERR_FILE_WRITE);
+
+  dest->pub.next_output_byte = dest->buffer;
+  dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
+
+  return TRUE;
+}
+
+
+void term_destination (j_compress_ptr cinfo)
+{
+  cpp_dest_mgr* dest = (cpp_dest_mgr*) cinfo->dest;
+  size_t datacount = OUTPUT_BUF_SIZE - dest->pub.free_in_buffer;
+
+  /* Write any data remaining in the buffer */
+  if (datacount > 0) {
+    dest->stream->write ((char*)dest->buffer, datacount);
+    if (*dest->stream)
+      ERREXIT(cinfo, JERR_FILE_WRITE);
+  }
+  dest->stream->flush ();
+  
+  /* Make sure we wrote the output file OK */
+  if (!*dest->stream)
+    ERREXIT(cinfo, JERR_FILE_WRITE);
+}
+
+
+void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
+{
+  cpp_dest_mgr* dest;
+  
+  /* first time for this JPEG object? */
+  if (cinfo->dest == NULL) {
+    cinfo->dest = (struct jpeg_destination_mgr *)
+      (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
+				  sizeof(cpp_dest_mgr));
+  }
+  
+  dest = (cpp_dest_mgr*) cinfo->dest;
+  dest->pub.init_destination = init_destination;
+  dest->pub.empty_output_buffer = empty_output_buffer;
+  dest->pub.term_destination = term_destination;
+  dest->stream = stream;
+}
+
+/* *** back on-topic *** */
 
 bool JPEGCodec::readImage (std::istream* stream, Image& image)
 {
@@ -105,12 +281,11 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   }
   
   jpeg_create_decompress (cinfo);
-
-  /* Step 2: specify data source (eg, a file) */
-  jpeg_source_mgr src;
-  // TODO: src
-  cinfo->src = &src;
   
+  /* Step 2: specify data source (eg, a file) */
+  
+  cpp_stream_src (cinfo, stream);
+
   /* Step 3: read file parameters with jpeg_read_header() */
 
   jpeg_read_header(cinfo, TRUE);
@@ -204,9 +379,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 
-  jpeg_destination_mgr dest;
-  // TODO: dest
-  cinfo.dest = &dest;
+  cpp_stream_dest (&cinfo, stream);
   
   if (image.bps == 8 && image.spp == 3)
     cinfo.in_color_space = JCS_RGB;
