@@ -75,7 +75,6 @@ static int cpp_jas_read (jas_stream_obj_t* obj, char* buf, int cnt)
 
 static int cpp_jas_write (jas_stream_obj_t* obj, char* buf, int cnt)
 {
-  std::cerr << __FUNCTION__ << std::endl;
   std::ostream* stream = (std::ostream*) obj;
   stream->write (buf, cnt);
   return cnt;
@@ -205,7 +204,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   std::cout << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
-  unsigned char* data = (unsigned char*) malloc (im.h * im.h * im.spp);
+  unsigned char* data = (unsigned char*) malloc (im.w * im.h * im.spp);
   unsigned char* data_ptr = data;
 
   jas_matrix_t *jasdata[3];
@@ -222,9 +221,9 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   }
 
   int v [3];
-  for( int y = 0; y < im.h; ++y ) {
-    for( int x = 0; x < im.w; ++x ) {
-       for( int k = 0; k < im.spp; ++k ) {
+  for (int y = 0; y < im.h; ++y) {
+    for (int x = 0; x < im.w; ++x) {
+       for (int k = 0; k < im.spp; ++k) {
          v[k] = jas_matrix_get (jasdata[k], y, x);
          // if the precision of the component is not supported, scale it
          int prec = jas_image_cmptprec(image, k);
@@ -234,8 +233,8 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
 	   v[k] >>= prec - 8;
        }
 
-       for( int k = 0; k < im.spp; ++k )
-       	*data_ptr++ = v[k];
+       for (int k = 0; k < im.spp; ++k)
+	 *data_ptr++ = v[k];
     }
   }
   
