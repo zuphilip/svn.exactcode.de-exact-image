@@ -532,7 +532,7 @@ public:
       }
     }
     
-    // return Luminance
+    // set Luminance
     inline void setL (uint16_t L)
     {
       switch (type) {
@@ -558,6 +558,35 @@ public:
  	break;
       }
     }
+    
+    // set RGB
+    inline void setRGB(uint16_t r, uint16_t g, uint16_t b)
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	value.gray = (int) (.21267 * r + .71516 * g + .07217 * b);
+	return;
+	break;
+      case RGB8:
+      case RGB16:
+	value.rgb.r = r;
+	value.rgb.g = g;
+	value.rgb.b = b;
+	return;
+	break;
+      case CMYK8:
+	// TODO
+	break;
+      case YUV8:
+	// TODO
+	break;
+      }
+    }
+    
     inline void set (const iterator& other) {
       switch (type) {
       case GRAY1:
