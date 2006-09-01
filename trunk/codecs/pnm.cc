@@ -92,6 +92,28 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
   Image::iterator it = image.begin ();
   if (mode <= '3') // ascii / plain text
     {
+      for (int y = 0; y < image.h; ++y)
+	{
+	  for (int x = 0; x < image.w; ++x)
+	    {
+	      if (image.spp == 1) {
+		int i;
+		*stream >> i;
+		
+		i = i * (255 / maxval);
+		it.setL (i);
+	      }
+	      else {
+		uint16_t r, g, b;
+		*stream >> r >> g >> b;
+		
+		it.setRGB (r, g, b);
+	      }
+	      
+	      it.set (it);
+	      ++it;
+	    }
+	}
     }
   else // binary data
     {
