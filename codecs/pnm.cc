@@ -11,67 +11,126 @@
  */
 
 #include <iostream>
+#include <string>
+#include <sstream>
 
 #include "pnm.hh"
 
-bool PNMCodec::readImage (std::istream* stream, Image& image)
+int getNextHeaderNumber (std::istream* stream)
 {
-#if 0
-  struct pam inpam;
-  memset (&inpam, 0, sizeof(inpam));
-  pnm_readpaminit(file, &inpam, sizeof(inpam));
-
-  image.h = inpam.height;
-  image.w = inpam.width;
-  image.spp = inpam.depth;
-  image.bps = 1;
-  image.xres = image.yres = 0;
-  while ( (1<<image.bps) < (int)inpam.maxval)
-    ++image.bps;
+  std::string s;
   
-  tuple* tuplerow = pnm_allocpamrow(&inpam);
-  
-  image.data = (uint8_t*) malloc (image.Stride()*image.h);
-  uint8_t* ptr = image.data;
-  for (int row = 0; row < inpam.height; ++row) {
-    pnm_readpamrow(&inpam, tuplerow);
-    for (int col = 0; col < inpam.width; ++col)
-      for (int plane = 0; plane < (int)inpam.depth; ++plane) {
-	switch (image.bps) {
-	case 1:
-	case 2:
-	case 4:
-	  {
-	    int per_byte = 8 / image.bps;
-	    *ptr = *ptr << image.bps | (uint8_t) tuplerow[col][plane];
-	    if (col % per_byte == per_byte - 1)
-	    ++ptr;
-	  }
-	  break;
-	case 8:
-	  *ptr++ = (uint8_t) tuplerow[col][plane];
-	  break;
-	case 16:
-	  {
-	    uint16_t* t = (uint16_t*)ptr;
-	    *t = tuplerow[col][plane];
-	    ptr += 2;
-	  }
-	  break;
-	}
-      }
-    // remainder
-    if (image.bps < 8) {
-      int per_byte = 8 / image.bps;
-      int remainder = per_byte - inpam.width % per_byte;
-      if (remainder != per_byte) {
-	*ptr <<= remainder * image.bps;
-	++ptr;
-      }
+  int c = stream->peek ();
+  switch (c) {
+  case '\n':
+  case '\r':
+    stream->get (); // consume silently
+    // comment line?
+    if (stream->peek () == '#') {
+      std::string str;
+      std::getline (*stream, str); // consume comment line
     }
   }
-  pnm_freepamrow(tuplerow);
-#endif
+  
+  int i;
+  *stream >> i;
+  return i;
+}
+
+bool PNMCodec::readImage (std::istream* stream, Image& image)
+{
+  // check signature
+  if (stream->peek () != 'P')
+    return false;
+  
+  image.bps = 0;
+  
+  stream->get(); // consume P
+  char mode = stream->peek();
+  switch (mode) {
+  case '1':
+  case '4':
+    image.bps = 1;
+  case '2':
+  case '5':
+    image.spp = 1;
+    break;
+  case '3':
+  case '6':
+    image.spp = 3;
+    break;
+  default:
+    stream->unget(); // P
+    return false;
+  }
+  stream->get(); // consume format number
+  
+  image.h = getNextHeaderNumber (stream);
+  image.w = getNextHeaderNumber (stream);
+  
+  int maxval = 1;
+  if (image.bps != 1) {
+    maxval = getNextHeaderNumber (stream);
+  }
+  
+  image.bps = 1;
+  while ( (1 << image.bps) < maxval)
+    ++image.bps;
+  
+  // not stored in the format :-(
+  image.xres = image.yres = 0;
+  
+  // allocate data, if necessary
+  image.New (image.w, image.h);
+  
+  // consume the left over spaces and newline 'till the data begins
+  {
+    std::string str;
+    std::getline (*stream, str);
+  }
+  
+  Image::iterator it = image.begin ();
+  if (mode <= '3') // ascii / plain text
+    {
+    }
+  else // binary data
+    {
+      char payload [3*2]; // max space we read for a pixel 3 pixel at 16 bit == 2 bytes
+      int size = image.spp * (image.bps > 8 ? 2 : 1);
+      
+      for (int y = 0; y < image.h; ++y)
+	{
+	  for (int x = 0; x < image.w; ++x)
+	    {
+	      stream->read (payload, size);
+	      
+	      if (image.spp == 1) {
+		int i = payload [0] * (255 / maxval);
+		
+		it.setL (i);
+	      }
+	      else {
+		uint16_t r, g, b;
+		
+		if (size == 3) {
+		  r = payload [0];
+		  g = payload [1];
+		  b = payload [2];
+		}
+		else {
+		  r = (payload [0] << 8) + payload [1];
+		  g = (payload [2] << 8) + payload [3];
+		  b = (payload [4] << 8) + payload [5];
+		}
+		it.setRGB (r, g, b);
+	      }
+	      
+	      it.set (it);
+	      ++it;
+	    }
+	}
+    }
+
   return true;
 }
 
