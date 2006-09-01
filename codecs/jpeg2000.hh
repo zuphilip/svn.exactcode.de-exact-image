@@ -8,5 +8,6 @@ public:
   virtual ~JPEG2000Codec () { unregisterCodec (this); };
 
   virtual bool readImage (std::istream* stream, Image& im);
-  virtual bool writeImage (std::ostream* stream, Image& im, int quality, const std::string& compress);
+  virtual bool writeImage (std::ostream* stream, Image& im,
+			   int quality, const std::string& compress);
 };

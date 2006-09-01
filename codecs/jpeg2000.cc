@@ -42,21 +42,108 @@ static void add_color_prof(jas_image_t* image)
   }
 }
 
+static jas_stream_t* jas_stream_create()
+{
+  jas_stream_t* stream;
+  
+  if (!(stream = (jas_stream_t*) jas_malloc(sizeof(jas_stream_t)))) {
+    return 0;
+  }
+  stream->openmode_ = 0;
+  stream->bufmode_ = 0;
+  stream->flags_ = 0;
+  stream->bufbase_ = 0;
+  stream->bufstart_ = 0;
+  stream->bufsize_ = 0;
+  stream->ptr_ = 0;
+  stream->cnt_ = 0;
+  stream->ops_ = 0;
+  stream->obj_ = 0;
+  stream->rwcnt_ = 0;
+  stream->rwlimit_ = -1;
+  
+  return stream;
+}
+
+static int cpp_jas_read (jas_stream_obj_t* obj, char* buf, int cnt)
+{
+  std::cerr << __FUNCTION__ << std::endl;
+  std::istream* stream = (std::istream*) obj;
+  stream->read (buf, cnt);
+  return cnt;
+}
+
+static int cpp_jas_write (jas_stream_obj_t* obj, char* buf, int cnt)
+{
+  std::cerr << __FUNCTION__ << std::endl;
+  std::ostream* stream = (std::ostream*) obj;
+  stream->write (buf, cnt);
+  return cnt;
+}
+
+static long cpp_jas_seek (jas_stream_obj_t* obj, long offset, int origin)
+{
+  std::cerr << __FUNCTION__ << std::endl;
+  /*
+  std::istream* stream = (std::istream*) obj;
+  stream->read (buf, cnt);
+  return cnt;
+  */
+}
+
+static int cpp_jas_close (jas_stream_obj_t* obj)
+{
+  std::cerr << __FUNCTION__ << std::endl;
+  // NOP, nothing to do
+}
+
+static jas_stream_ops_t cpp_jas_stream_ops = {
+  cpp_jas_read,
+  cpp_jas_write,
+  cpp_jas_seek,
+  cpp_jas_close
+};
+
+static void jas_stream_initbuf (jas_stream_t* stream)
+{
+  stream->bufbase_ = (unsigned char*) jas_malloc (JAS_STREAM_BUFSIZE + JAS_STREAM_MAXPUTBACK);
+  if (stream->bufbase_) {
+    stream->bufmode_ |= JAS_STREAM_FREEBUF;
+    stream->bufsize_ = JAS_STREAM_BUFSIZE;
+  }
+  else {
+    stream->bufbase_ = stream->tinybuf_;
+    stream->bufsize_ = 1;
+  }
+  
+  stream->bufstart_ = &stream->bufbase_ [JAS_STREAM_MAXPUTBACK];
+  stream->ptr_ = stream->bufstart_;
+  stream->cnt_ = 0;
+  stream->bufmode_ |= JAS_STREAM_BUFMODEMASK;
+}
+
 bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
 {
-  jas_image_t *image;
-  jas_stream_t *in;
-
-  if (!(in = jas_stream_fdopen(fileno(file), "rb"))) {
-    fprintf(stderr, "error: cannot open input image file\n");
+  jas_image_t* image;
+  jas_stream_t* in;
+  
+  if (!(in = jas_stream_create ())) {
+    fprintf(stderr, "error: cannot create stream\n");
     return false;
   }
-
+  
+  // fill stream details
+  in->openmode_ = JAS_STREAM_BINARY | JAS_STREAM_READ;
+  in->obj_ = stream;
+  in->ops_ = &cpp_jas_stream_ops;
+  
+  jas_stream_initbuf (in);
+  
   if (!(image = jp2_decode(in, 0))) {
     fprintf(stderr, "error: cannot load image data\n");
     return false;
   }
-
+  
   add_color_prof(image);
 
   jas_stream_close (in);
@@ -161,14 +248,21 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
 bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
 				const std::string& compress)
 {
-  jas_image_t *image;
-  jas_stream_t *out;
-
-  if (!(out = jas_stream_fdopen(fileno(file), "w+b"))) {
-    fprintf(stderr, "error: cannot open output image file\n");
+  jas_image_t* image;
+  jas_stream_t* out;
+  
+  if (!(out = jas_stream_create ())) {
+    fprintf(stderr, "error: cannot create stream\n");
     return false;
   }
-
+  
+  // fill stream details
+  out->openmode_ = JAS_STREAM_BINARY | JAS_STREAM_WRITE;
+  out->obj_ = stream;
+  out->ops_ = &cpp_jas_stream_ops;
+  
+  jas_stream_initbuf (out);
+  
   jas_image_cmptparm_t compparms[3];
 
   for (int i = 0; i < im.spp; ++i) {
@@ -181,7 +275,7 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
     compparms[i].prec = im.bps;
     compparms[i].sgnd = false;
   }
-
+  
   if (!(image = jas_image_create(im.spp, compparms,
                                  im.spp==3?JAS_CLRSPC_SRGB:JAS_CLRSPC_SGRAY))) {
     std::cout << "error creating jasper image" << std::endl;
