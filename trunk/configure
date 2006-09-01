@@ -2,13 +2,13 @@
 
 . config/functions
 
-with_options="x11 evas libjpeg libtiff libpng libungif netpbm jasper openexr lcms swig"
+with_options="x11 evas libjpeg libtiff libpng libungif jasper openexr lcms swig"
 # feature_options="debug"
 
 PACKAGE="exact-image"
 VERSION_MAJOR=0
-VERSION_MINOR=0
-VERSION_MICRO=16
+VERSION_MINOR=1
+VERSION_MICRO=0
 
 init
 
@@ -36,7 +36,6 @@ pkgcheck libjpeg header LIBJPEG cc jconfig.h
 pkgcheck libtiff header LIBTIFF c++ tiff.h
 pkgcheck libpng pkg-config LIBPNG atleast 1.2
 pkgcheck libungif header LIBUNGIF c++ gif_lib.h
-pkgcheck netpbm header NETPBM c++ pam.h
 pkgcheck jasper header JASPER c++ jasper/jasper.h
 pkgcheck OpenEXR pkg-config OPENEXR atleast 1.2.0
 pkgcheck lcms pkg-config LCMS atleast 1.10
