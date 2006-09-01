@@ -21,67 +21,17 @@
 
 #include <iostream>
 
-/*
- * Include file for users of JPEG library.
- * You will need to have included system headers that define at least
- * the typedefs FILE and size_t before you can include jpeglib.h.
- * (stdio.h is sufficient on ANSI-conforming systems.)
- * You may also wish to include "jerror.h".
- */
-
 extern "C" {
 #include <jpeglib.h>
 }
 
 /*
- * <setjmp.h> is used for the optional error recovery mechanism shown in
- * the second part of the example.
+ * <setjmp.h> is used for the optional error recovery mechanism
  */
 
 #include <setjmp.h>
 
 #include "jpeg.hh"
-
-/******************** JPEG COMPRESSION SAMPLE INTERFACE *******************/
-
-/* This half of the example shows how to feed data into the JPEG compressor.
- * We present a minimal version that does not worry about refinements such
- * as error recovery (the JPEG code will just exit() if it gets an error).
- */
-
-
-/*
- * IMAGE DATA FORMATS:
- *
- * The standard input image format is a rectangular array of pixels, with
- * each pixel having the same number of "component" values (color channels).
- * Each pixel row is an array of JSAMPLEs (which typically are unsigned chars).
- * If you are working with color data, then the color values for each pixel
- * must be adjacent in the row; for example, R,G,B,R,G,B,R,G,B,... for 24-bit
- * RGB color.
- *
- * For this example, we'll assume that this data structure matches the way
- * our application has stored the image in memory, so we can just pass a
- * pointer to our image buffer.  In particular, let's say that the image is
- * RGB color and is described by:
- */
-
-/******************** JPEG DECOMPRESSION SAMPLE INTERFACE *******************/
-
-/* This half of the example shows how to read data from the JPEG decompressor.
- * It's a bit more refined than the above, in that we show:
- *   (a) how to modify the JPEG library's standard error-reporting behavior;
- *   (b) how to allocate workspace using the library's memory manager.
- *
- * Just to make this example a little different from the first one, we'll
- * assume that we do not intend to put the whole image into an in-memory
- * buffer, but to send it line-by-line someplace else.  We need a one-
- * scanline-high JSAMPLE array as a work buffer, and we will let the JPEG
- * memory manager allocate it for us.  This approach is actually quite useful
- * because we don't need to remember to deallocate the buffer separately: it
- * will go away automatically when the JPEG object is cleaned up.
- */
-
 
 /*
  * ERROR HANDLING:
@@ -100,8 +50,7 @@ extern "C" {
  * establish the return point.  We want the replacement error_exit to do a
  * longjmp().  But we need to make the setjmp buffer accessible to the
  * error_exit routine.  To do this, we make a private extension of the
- * standard JPEG error handler object.  (If we were using C++, we'd say we
- * were making a subclass of the regular error handler.)
+ * standard JPEG error handler object.
  *
  * Here's the extended error handler struct:
  */
@@ -132,34 +81,15 @@ my_error_exit (j_common_ptr cinfo)
   longjmp(myerr->setjmp_buffer, 1);
 }
 
-
-/*
- * Sample routine for JPEG decompression.  We assume that the source file name
- * is passed in.  We want to return 1 on success, 0 on error.
- */
-
 bool JPEGCodec::readImage (std::istream* stream, Image& image)
 {
-  /* This struct contains the JPEG decompression parameters and pointers to
-   * working space (which is allocated as needed by the JPEG library).
-   */
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
-  /* We use our private extension JPEG error handler.
-   * Note that this struct must live as long as the main JPEG parameter
-   * struct, to avoid dangling-pointer problems.
-   */
+  
   struct my_error_mgr jerr;
-  /* More stuff */
+  
   JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
-
   int row_stride;		/* physical row width in output buffer */
   
-  /* In this example we want to open the input file before doing anything else,
-   * so that the setjmp() error recovery below can assume the file is open.
-   * VERY IMPORTANT: use "b" option to fopen() if you are on a machine that
-   * requires it in order to read binary files.
-   */
-
   /* Step 1: allocate and initialize JPEG decompression object */
 
   /* We set up the normal JPEG error routines, then override error_exit. */
@@ -170,42 +100,29 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
     /* If we get here, the JPEG code has signaled an error.
      * We need to clean up the JPEG object, close the input file, and return.
      */
-    jpeg_destroy_decompress(cinfo);
+    jpeg_destroy_decompress (cinfo);
     return false;
   }
-  /* Now we can initialize the JPEG decompression object. */
-  jpeg_create_decompress(cinfo);
+  
+  jpeg_create_decompress (cinfo);
 
   /* Step 2: specify data source (eg, a file) */
-
-  jpeg_stdio_src(cinfo, file);
-
+  jpeg_source_mgr src;
+  // TODO: src
+  cinfo->src = &src;
+  
   /* Step 3: read file parameters with jpeg_read_header() */
 
-  (void) jpeg_read_header(cinfo, TRUE);
-  /* We can ignore the return value from jpeg_read_header since
-   *   (a) suspension is not possible with the stdio data source, and
-   *   (b) we passed TRUE to reject a tables-only JPEG file as an error.
-   * See libjpeg.doc for more info.
-   */
-
+  jpeg_read_header(cinfo, TRUE);
+  
   /* Step 4: set parameters for decompression */
   
-  cinfo->buffered_image = TRUE;    /* select buffered-image mode */
+  cinfo->buffered_image = TRUE; /* select buffered-image mode */
   
   /* Step 5: Start decompressor */
 
-  (void) jpeg_start_decompress(cinfo);
-  /* We can ignore the return value since suspension is not possible
-   * with the stdio data source.
-   */
-
-  /* We may need to do some setup of our own at this point before reading
-   * the data.  After jpeg_start_decompress() we have the correct scaled
-   * output image dimensions available, as well as the output colormap
-   * if we asked for color quantization.
-   * In this example, we need to make an output work buffer of the right size.
-   */ 
+  (void) jpeg_start_decompress (cinfo);
+  
   /* JSAMPLEs per row in output buffer */
   row_stride = cinfo->output_width * cinfo->output_components;
 
@@ -235,9 +152,6 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
 
-  /* Here we use the library's state variable cinfo.output_scanline as the
-   * loop counter, so that we don't have to keep track ourselves.
-   */
   while (! jpeg_input_complete(cinfo)) {
     jpeg_start_output(cinfo, cinfo->input_scan_number);
     while (cinfo->output_scanline < cinfo->output_height) {
@@ -274,11 +188,11 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   }
   image.priv_data = (void*) cinfo; // keep for writing, of course a "HACK"
 #endif
-  /* And we're done! */
+  
   return true;
 }
 
-bool JPEGCodec::writeImage (std::istream* stream, Image& image, int quality,
+bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			    const std::string& compress)
 {
   struct jpeg_compress_struct cinfo;
@@ -290,8 +204,10 @@ bool JPEGCodec::writeImage (std::istream* stream, Image& image, int quality,
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
 
-  jpeg_stdio_dest(&cinfo, file);
-
+  jpeg_destination_mgr dest;
+  // TODO: dest
+  cinfo.dest = &dest;
+  
   if (image.bps == 8 && image.spp == 3)
     cinfo.in_color_space = JCS_RGB;
   else if (image.bps == 8 && image.spp == 1)
