@@ -1,5 +1,5 @@
 /*
- * C++ GMP library.
+ * C++ BMP library.
  * Copyright (c) 2006 Rene Rebe <rene@exactcode.de>
  *
  * loosely based on (in the past more so, but more and more parts got rewritten):
@@ -629,11 +629,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   // convert to RGB color-space - we do not handle palete images internally
   
   // no color table anyway or RGB* ?
-  std::cerr << "spp: " << image.spp << " table: " << (long)clr_tbl << std::endl;
   if (clr_tbl && image.spp < 3)
     {
-      std::cerr << "de palette" << std::endl;
-      
       uint16_t* rmap = new uint16_t [1 << image.bps];
       uint16_t* gmap = new uint16_t [1 << image.bps];
       uint16_t* bmap = new uint16_t [1 << image.bps];
