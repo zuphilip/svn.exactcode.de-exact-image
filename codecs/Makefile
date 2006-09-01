@@ -54,7 +54,5 @@ DEPS =
 
 CPPFLAGS += -I codecs/
 
-DEPS = $(X_OUTARCH)/libbmp/bmp$(X_OBJEXT)
-
 include build/bottom.make
 
