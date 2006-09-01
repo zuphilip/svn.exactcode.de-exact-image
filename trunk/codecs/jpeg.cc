@@ -226,7 +226,7 @@ void term_destination (j_compress_ptr cinfo)
   /* Write any data remaining in the buffer */
   if (datacount > 0) {
     dest->stream->write ((char*)dest->buffer, datacount);
-    if (*dest->stream)
+    if (!*dest->stream)
       ERREXIT(cinfo, JERR_FILE_WRITE);
   }
   dest->stream->flush ();
