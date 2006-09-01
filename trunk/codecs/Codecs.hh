@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 #include <vector>
+#include <algorithm>
 #include <iosfwd>
 
 #include "Image.hh"
@@ -58,7 +59,14 @@ protected:
 
   static void unregisterCodec (ImageCodec* _loader)
   {
-    // TODO, remove
+    // remove from array
+    std::vector<loader_ref>::iterator it;
+    for (it = loader->begin(); it != loader->end();)
+      if (it->loader == _loader)
+	it = loader->erase (it);
+      else
+	++it;
+    
     if (loader->empty()) {
       delete loader;
       loader = 0;
