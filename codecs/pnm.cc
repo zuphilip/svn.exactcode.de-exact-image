@@ -96,8 +96,11 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   std::string c (compress);
   std::transform (c.begin(), c.end(), c.begin(), tolower);
+  if (c == "plain")
+    c = "ascii";
+
   
-  if (compress != "ascii")
+  if (c != "ascii")
     format += 3;
   
   *stream << "P" << format << std::endl;
@@ -107,13 +110,12 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // maxval
   int maxval = (1 << image.bps) - 1;
-  std::cerr << "Maxval: " << maxval << std::endl;
   
   if (image.bps > 1)
     *stream << maxval << std::endl;
   
   Image::iterator it = image.begin ();
-  if (compress == "ascii")
+  if (c == "ascii")
     {
       for (int y = 0; y < image.h; ++y)
 	{
@@ -139,7 +141,50 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   else
     {
+      char payload [3*2]; // max space we consume 3 pixel at 16 bit == 2 bytes
+      int size = image.spp * (image.bps > 8 ? 2 : 1);
+      
+      for (int y = 0; y < image.h; ++y)
+	{
+	  for (int x = 0; x < image.w; ++x)
+	    {
+	      *it;
+	      
+	      if (image.spp == 1) {
+		int i = it.getL() / (255 / maxval);
+		
+		if (size == 1)
+		  payload [0] = i;
+		else {
+		  payload [0] = i >> 8;
+		  payload [1] = i & 0xff;
+		}
+	      }
+	      else {
+		uint16_t r, g, b;
+		it.getRGB (&r, &g, &b);
+		
+		if (size == 3) {
+		  payload [0] = r;
+		  payload [1] = g;
+		  payload [2] = b;
+		}
+		else {
+		  payload [0] = r >> 8;
+		  payload [1] = r & 0xFF;
+		  payload [2] = g >> 8;
+		  payload [3] = g & 0xFF;
+		  payload [4] = b >> 8;
+		  payload [5] = b & 0xFF;
+		}
+	      }
+	      ++it;
+	      stream->write (payload, size);
+	    }
+	}
     }
+  
+  stream->flush ();
   
   return true;
 }
