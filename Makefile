@@ -41,7 +41,7 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
-MODULES = lib codecs econvert edentify
+MODULES = libbmp lib econvert edentify
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
@@ -49,10 +49,6 @@ ifeq "$(WITHEVAS)" "1"
 include gfx/Makefile
 include edisplay/Makefile
 endif
-endif
-
-ifeq "$(WITHSWIG)" "1"
-include api/Makefile
 endif
 
 check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT) $(X_OUTARCH)/edentify/edentify$(X_EXEEXT)

@@ -101,7 +101,7 @@ public:
   void New (int _w, int _h) {
     w = _w;
     h = _h;
-    data = (unsigned char*) realloc (data, Stride() * h);
+    data = (unsigned char*) malloc (Stride() * h);
   }
   
   int Stride () const {
@@ -118,8 +118,7 @@ public:
     case 24: return RGB8;
     case 48: return RGB16;
     default:
-      //std::cerr << "Unknown type" << std::endl;
-      ;
+      std::cerr << "Unknown type" << std::endl;
     }
   }
   

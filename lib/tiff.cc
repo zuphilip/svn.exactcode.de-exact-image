@@ -21,20 +21,17 @@
 
 #include <tiffconf.h>
 #include <tiffio.h>
-#include <tiffio.hxx>
+
+#include <algorithm>
 
 #include "tiff.hh"
 
 #include "Colorspace.hh"
 
-#include <algorithm>
-#include <iostream>
-
-bool TIFCodec::readImage (std::istream* stream, Image& image)
+bool TIFFLoader::readImage (FILE* file, Image& image)
 {
   TIFF* in;
-  
-  in = TIFFStreamOpen ("", stream);
+  in = TIFFFdOpen(fileno(file), "", "r");
   if (!in)
     return false;
   
@@ -130,8 +127,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   return true;
 }
 
-bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
-			   const std::string& compress)
+bool TIFFLoader::writeImage (FILE* file, Image& image, int quality, const std::string& compress)
 {
   TIFF *out;
   uint32 rowsperstrip = (uint32) - 1;
@@ -162,7 +158,7 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
   
 
-  out = TIFFStreamOpen ("", stream);
+  out = TIFFFdOpen (fileno(file), "", "w");
   if (out == NULL)
     return false;
    
@@ -214,4 +210,4 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   return true;
 }
 
-TIFCodec tif_loader;
+TIFFLoader tiff_loader;

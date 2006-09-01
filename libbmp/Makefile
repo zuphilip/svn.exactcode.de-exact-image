@@ -1,11 +1,11 @@
 
 include build/top.make
 
-BINARY = api
+BINARY = libbmp
 BINARY_EXT = $(X_LIBEXT)
-DEPS = $(lib_BINARY) $(codecs_BINARY)
+DEPS =
 
-CPPFLAGS += -I api
+CPPFLAGS += -I libbmp/
 
 include build/bottom.make
 

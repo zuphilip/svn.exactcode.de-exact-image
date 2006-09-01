@@ -4,13 +4,7 @@ Image formats:
  - ico (Windows Icon)
  - (e)ps
  - pcx
- - targa
  - all the others
-
-General:
- - make Loaders (-> Codecs) read write from c++ streams - so users can
-   extend it beyond current limits (that is from memory and network streams)
- - Exif, XMP and ordinary, classic comment support 
 
 Loders:
  - allow for jpeg scaling / orthogonal rotation without recompression

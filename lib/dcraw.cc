@@ -3,15 +3,13 @@
 
 #include "dcraw.h"
 
-bool DCRAWCodec::readImage (std::istream* stream, Image& im)
+bool DCRAWLoader::readImage (FILE* file, Image& im)
 {
 #ifndef NO_LCMS
   char *cam_profile = NULL, *out_profile = NULL;
 #endif
   
-  // TODO: macro hackery to brdige C stream to C++ streams
-  //ifp = file;
-  
+  ifp = file;
   identify();
   
   if (!is_raw)
@@ -77,10 +75,10 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im)
   return true;
 }
 
-bool DCRAWCodec::writeImage (std::ostream* stream, Image& image,
-			     int quality, const std::string& compress)
+bool DCRAWLoader::writeImage (FILE* file, Image& image,
+			    int quality, const std::string& compress)
 {
   return false;
 }
 
-DCRAWCodec dcraw_loader;
+DCRAWLoader dcraw_loader;

@@ -24,7 +24,7 @@ using namespace Utility;
 // imaging stuff
 
 #include "Image.hh"
-#include "Codecs.hh"
+#include "ImageLoader.hh"
 #include "Colorspace.hh"
 
 #include "edisplay.hh"
@@ -90,13 +90,11 @@ void Viewer::Zoom (double f)
 
   // limit / clip accordingly
   Move (0, 0);
-
-  if (true) {
-    // resize X window accordingly
-    X11Window::Resize (dpy, win,
-		       std::min(w, X11Window::Width(dpy, 0)),
-		       std::min(h, X11Window::Height(dpy, 0)));
-  }
+  
+  // resize X window accordingly
+  X11Window::Resize (dpy, win,
+                     std::min(w, X11Window::Width(dpy, 0)),
+                     std::min(h, X11Window::Height(dpy, 0)));
 }
 
 void Viewer::Move (int _x, int _y)
@@ -273,7 +271,7 @@ int Viewer::Run (bool opengl)
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TrueType/");
   evas->FontPathPrepend ("/opt/e17/share/evas/data/");
   
-  if (true) {
+  if (false) {
     evas->ImageCache (1024 * 1024);
     evas->FontCache (256 * 1024);
   }
@@ -571,7 +569,7 @@ bool Viewer::Load ()
     image->data = 0;
   }
   
-  if (!ImageCodec::Read(*it, *image)) {
+  if (!ImageLoader::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
     cerr << "Could not read the file " << *it << endl;
     return false;
@@ -647,9 +645,9 @@ bool Viewer::Load ()
   XStoreName (dpy, win, title.c_str());
   
   // position and resize, keep zoom
-  if (false) {
-    zoom = 100;
-  }
+#if 0
+  zoom = 100;
+#endif
   Zoom (1.0);
   
   return true;

@@ -1,29 +1,52 @@
 /*
- * C++ GMP library.
+ * Stand alone BMP library.
  * Copyright (c) 2006 Rene Rebe <rene@exactcode.de>
  *
- * loosely based on (in the past more so, but more and more parts got rewritten):
+ * based on:
  *
  * Project:  libtiff tools
  * Purpose:  Convert Windows BMP files in TIFF.
  * Author:   Andrey Kiselev, dron@remotesensing.org
  *
+ ******************************************************************************
+ * Copyright (c) 2004, Andrey Kiselev <dron@remotesensing.org>
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and 
+ * its documentation for any purpose is hereby granted without fee, provided
+ * that (i) the above copyright notices and this permission notice appear in
+ * all copies of the software and related documentation, and (ii) the names of
+ * Sam Leffler and Silicon Graphics may not be used in any advertising or
+ * publicity relating to the software without the specific, prior written
+ * permission of Sam Leffler and Silicon Graphics.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND, 
+ * EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY 
+ * WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  
+ * 
+ * IN NO EVENT SHALL SAM LEFFLER OR SILICON GRAPHICS BE LIABLE FOR
+ * ANY SPECIAL, INCIDENTAL, INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
+ * OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+ * WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF 
+ * LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE 
+ * OF THIS SOFTWARE.
  */
 
-#include <iostream>
-
-#include "bmp.hh"
-
-#include "Colorspace.hh"
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <endian.h>
 #include <byteswap.h>
 
 #define TIFFSwabShort(x) *x = bswap_16 (*x)
 #define TIFFSwabLong(x) *x = bswap_32 (*x)
+
+#define _TIFFmalloc malloc
+#define _TIFFfree free
 
 #include <inttypes.h>
 
@@ -32,18 +55,7 @@ typedef uint16_t uint16;
 typedef int32_t int32;
 typedef uint32_t uint32;
 
-#define _TIFFmalloc malloc
-#define _TIFFfree free
-
-int last_bit_set (int v)
-{
-  unsigned int i;
-  for (i = sizeof (int) * 8 - 1; i > 0; --i) {
-    if (v & (1L << i))
-      return i;
-  }
-  return 0;
-}
+#include "bmp.h"
 
 #ifndef O_BINARY
 # define O_BINARY 0
@@ -113,7 +125,7 @@ typedef struct                  /* This structure contains the x, y, and z */
 				/* correspond */
   BMPCIEXYZ   iCIERed;        /* to the red, green, and blue endpoints for */
   BMPCIEXYZ   iCIEGreen;      /* a specified logical color space. */
-  BMPCIEXYZ   iCIEBlue;
+  BMPCIEXYZ	iCIEBlue;
 } BMPCIEXYZTriple;
 
 typedef struct
@@ -242,20 +254,23 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
   }
 }
 
-bool BMPCodec::readImage (std::istream* stream, Image& image)
+unsigned char* read_bmp (FILE* fd, int* w, int* h, int* bps, int* spp,
+			 int* xres, int* yres,
+			 unsigned char** color_table, int* color_table_size,
+			 int* color_table_elements)
 {
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
   enum BMPType bmp_type;
   
-  uint32  clr_tbl_size = 0, n_clr_elems = 3;
-  unsigned char *clr_tbl = 0;
+  uint32  clr_tbl_size, n_clr_elems = 3;
+  unsigned char *clr_tbl;
   
   uint32	row, stride;
 
   unsigned char* data = 0;
   
-  stream->read ((char*)&file_hdr.bType, 2);
+  fread (file_hdr.bType, 1, 2, fd);
   if(file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
     fprintf(stderr, "File is not a BMP\n");
     goto bad;
@@ -264,21 +279,21 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   /* -------------------------------------------------------------------- */
   /*      Read the BMPFileHeader. We need iOffBits value only             */
   /* -------------------------------------------------------------------- */
-  stream->seekg (10);
-  stream->read ((char*)&file_hdr.iOffBits, 4);
+  fseek(fd, 10, SEEK_SET);
+  fread(&file_hdr.iOffBits, 1, 4, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
   TIFFSwabLong(&file_hdr.iOffBits);
 #endif
 
-  stream->seekg (0, std::ios::end);
-  file_hdr.iSize = stream->tellg ();
+  fseek(fd, 0, SEEK_END);
+  file_hdr.iSize = ftell(fd);
   
   /* -------------------------------------------------------------------- */
   /*      Read the BMPInfoHeader.                                         */
   /* -------------------------------------------------------------------- */
   
-  stream->seekg (BFH_SIZE);
-  stream->read ((char*)&info_hdr.iSize, 4);
+  fseek(fd, BFH_SIZE, SEEK_SET);
+  fread(&info_hdr.iSize, 1, 4, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
   TIFFSwabLong(&info_hdr.iSize);
 #endif
@@ -293,20 +308,20 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     bmp_type = BMPT_WIN5;
   
   if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 || bmp_type == BMPT_OS22) {
-    stream->read((char*)&info_hdr.iWidth, 4);
-    stream->read((char*)&info_hdr.iHeight, 4);
-    stream->read((char*)&info_hdr.iPlanes, 2);
-    stream->read((char*)&info_hdr.iBitCount, 2);
-    stream->read((char*)&info_hdr.iCompression, 4);
-    stream->read((char*)&info_hdr.iSizeImage, 4);
-    stream->read((char*)&info_hdr.iXPelsPerMeter, 4);
-    stream->read((char*)&info_hdr.iYPelsPerMeter, 4);
-    stream->read((char*)&info_hdr.iClrUsed, 4);
-    stream->read((char*)&info_hdr.iClrImportant, 4);
-    stream->read((char*)&info_hdr.iRedMask, 4);
-    stream->read((char*)&info_hdr.iGreenMask, 4);
-    stream->read((char*)&info_hdr.iBlueMask, 4);
-    stream->read((char*)&info_hdr.iAlphaMask, 4);
+    fread(&info_hdr.iWidth, 1, 4, fd);
+    fread(&info_hdr.iHeight, 1, 4, fd);
+    fread(&info_hdr.iPlanes, 1, 2, fd);
+    fread(&info_hdr.iBitCount, 1, 2, fd);
+    fread(&info_hdr.iCompression, 1, 4, fd);
+    fread(&info_hdr.iSizeImage, 1, 4, fd);
+    fread(&info_hdr.iXPelsPerMeter, 1, 4, fd);
+    fread(&info_hdr.iYPelsPerMeter, 1, 4, fd);
+    fread(&info_hdr.iClrUsed, 1, 4, fd);
+    fread(&info_hdr.iClrImportant, 1, 4, fd);
+    fread(&info_hdr.iRedMask, 1, 4, fd);
+    fread(&info_hdr.iGreenMask, 1, 4, fd);
+    fread(&info_hdr.iBlueMask, 1, 4, fd);
+    fread(&info_hdr.iAlphaMask, 1, 4, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabLong(&info_hdr.iWidth);
     TIFFSwabLong(&info_hdr.iHeight);
@@ -324,8 +339,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     TIFFSwabLong(&info_hdr.iAlphaMask);
 #endif
     n_clr_elems = 4;
-    image.xres = (int) ((2.54 * info_hdr.iXPelsPerMeter + .05) / 100);
-    image.yres = (int) ((2.54 * info_hdr.iYPelsPerMeter + .05) / 100);
+    *xres = ((double)info_hdr.iXPelsPerMeter * 2.54 + 0.05) / 100;
+    *yres = ((double)info_hdr.iYPelsPerMeter * 2.54 + 0.05) / 100;
   }
   
   if (bmp_type == BMPT_OS22) {
@@ -339,22 +354,22 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   if (bmp_type == BMPT_OS21) {
     int16  iShort;
     
-    stream->read ((char*)&iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iWidth = iShort;
-    stream->read ((char*)&iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iHeight = iShort;
-    stream->read ((char*)&iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
     info_hdr.iPlanes = iShort;
-    stream->read ((char*)&iShort, 2);
+    fread(&iShort, 1, 2, fd);
 #if __BYTE_ORDER == __BIG_ENDIAN
     TIFFSwabShort(&iShort);
 #endif
@@ -371,23 +386,23 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     return 0;
   }
   
-  image.w = info_hdr.iWidth;
-  image.h = (info_hdr.iHeight > 0) ? info_hdr.iHeight : -info_hdr.iHeight;
+  *w = info_hdr.iWidth;
+  *h = (info_hdr.iHeight > 0) ? info_hdr.iHeight : -info_hdr.iHeight;
   
   switch (info_hdr.iBitCount)
     {
     case 1:
     case 4:
     case 8:
-      image.spp = 1;
-      image.bps = info_hdr.iBitCount;
+      *spp = 1;
+      *bps = info_hdr.iBitCount;
 
       /* Allocate memory for colour table and read it. */
       if (info_hdr.iClrUsed)
-	clr_tbl_size = ((uint32)(1 << image.bps) < info_hdr.iClrUsed) ?
-	  1 << image.bps : info_hdr.iClrUsed;
+	clr_tbl_size = ((uint32)(1 << *bps) < info_hdr.iClrUsed) ?
+	  1 << *bps : info_hdr.iClrUsed;
       else
-	clr_tbl_size = 1 << image.bps;
+	clr_tbl_size = 1 << *bps;
       clr_tbl = (unsigned char *)
 	_TIFFmalloc(n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
@@ -398,8 +413,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       /*printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
 	n_clr_elems, clr_tbl_size); */
       
-      stream->seekg (BFH_SIZE + info_hdr.iSize);
-      stream->read ((char*)clr_tbl, n_clr_elems * clr_tbl_size);
+      fseek(fd, BFH_SIZE + info_hdr.iSize, SEEK_SET);
+      fread(clr_tbl, 1, n_clr_elems * clr_tbl_size, fd);
       
       /*for(clr = 0; clr < clr_tbl_size; ++clr) {
 	printf ("%d: r: %d g: %d b: %d\n",
@@ -412,20 +427,20 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     
     case 16:
     case 24:
-      image.spp = 3;
-      image.bps = info_hdr.iBitCount / image.spp;
+      *spp = 3;
+      *bps = info_hdr.iBitCount / *spp;
       break;
     
     case 32:
-      image.spp = 3;
-      image.bps = 8;
+      *spp = 3;
+      *bps = 8;
       break;
     
     default:
       break;
     }
   
-  stride = (image.w * image.spp * image.bps + 7) / 8;
+  stride = (*w * *spp * *bps + 7) / 8;
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
   
@@ -446,11 +461,11 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   switch (info_hdr.iCompression) {
   case BMPC_BITFIELDS:
     // we convert those to RGB for easier use
-    image.bps = 8;
-    stride = (image.w * image.spp * image.bps + 7) / 8;
+    *bps = 8;
+    stride = (*w * *spp * *bps + 7) / 8;
   case BMPC_RGB:
     {
-      uint32 file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
+      uint32 file_stride = ((*w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
       /*printf ("bitcount: %d, stride: %d, file stride: %d\n",
 	      info_hdr.iBitCount, stride, file_stride);
@@ -458,29 +473,26 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       printf ("red mask: %x, green mask: %x, blue mask: %x\n",
       info_hdr.iRedMask, info_hdr.iGreenMask, info_hdr.iBlueMask); */
       
-      data = (unsigned char*) _TIFFmalloc (stride * image.h);
+      data = _TIFFmalloc (stride * *h);
       
       if (!data) {
 	fprintf(stderr, "Can't allocate space for image buffer\n");
 	goto bad1;
       }
       
-      for (row = 0; row < image.h; row++) {
-	std::istream::streampos offset;
+      for (row = 0; row < *h; row++) {
+	uint32 offset;
 	
 	if (info_hdr.iHeight > 0)
-	  offset = file_hdr.iOffBits + (image.h - row - 1) * file_stride;
+	  offset = file_hdr.iOffBits + (*h - row - 1) * file_stride;
 	else
 	  offset = file_hdr.iOffBits + row * file_stride;
 	
-	stream->seekg (offset);
-	/*
-	  if (stream->tellg () != offset) {
+	if (fseek(fd, offset, SEEK_SET) == (off_t)-1) {
 	  fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
-	  }
-	*/
+	}
 	
-	if (stream->read ((char*)data + stride*row, stride) < 0) {
+	if (fread(data + stride*row, 1, stride, fd) < 0) {
 	  fprintf(stderr, "scanline %lu: Read error\n",
 		  (unsigned long) row);
 	}
@@ -488,6 +500,16 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	// convert to RGB
 	if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
+	    int last_bit_set (int v)
+	    {
+	      unsigned int i;
+	      for (i = sizeof (int) * 8 - 1; i > 0; --i) {
+		if (v & (1L << i))
+		  return i;
+	      }
+	      return 0;
+	    }
+	    
 	    unsigned char* row_ptr = data + stride*row;
 	    unsigned char* r16_ptr = row_ptr + file_stride - 2;
 	    unsigned char* rgb_ptr = row_ptr + stride - 3;
@@ -514,7 +536,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	      }
 	  }
 	else
-	  rearrangePixels(data + stride*row, image.w, info_hdr.iBitCount);
+	  rearrangePixels(data + stride*row, *w, info_hdr.iBitCount);
       }
     }
     break;
@@ -533,7 +555,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       printf ("RLE%s compressed\n", info_hdr.iCompression == BMPC_RLE4 ? "4" : "8");
       
       compr_size = file_hdr.iSize - file_hdr.iOffBits;
-      uncompr_size = image.w * image.h;
+      uncompr_size = *w * *h;
       
       comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
       if (!comprbuf) {
@@ -546,15 +568,15 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	goto bad1;
       }
       
-      stream->seekg (file_hdr.iOffBits);
-      stream->read ((char*)comprbuf, compr_size);
+      fseek(fd, file_hdr.iOffBits, SEEK_SET);
+      fread(comprbuf, 1, compr_size, fd);
       i = j = x = 0;
       
       while( j < uncompr_size && i < compr_size ) {
 	if ( comprbuf[i] ) {
 	  runlength = comprbuf[i++];
 	  for ( k = 0;
-		runlength > 0 && j < uncompr_size && i < compr_size && x < image.w;
+		runlength > 0 && j < uncompr_size && i < compr_size && x < *w;
 		++k, ++x) {
 	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
@@ -578,7 +600,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
 	    i++;
 	    if ( i < compr_size - 1 ) {
-	      j += comprbuf[i] + comprbuf[i+1] * image.w;
+	      j += comprbuf[i] + comprbuf[i+1] * *w;
 	      i += 2;
 	    }
 	    else
@@ -613,66 +635,29 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       }
       
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
-      for (row = 0; row < image.h; ++row) {
-	memcpy (data + row * image.w, uncomprbuf + (image.h - 1 - row) * image.w, image.w);
-	rearrangePixels(data + row * image.w, image.w, info_hdr.iBitCount);
+      for (row = 0; row < *h; ++row) {
+	memcpy (data + row * *w, uncomprbuf + (*h - 1 - row) * *w, *w);
+	rearrangePixels(data + row * *w, *w, info_hdr.iBitCount);
       }
       
       _TIFFfree(uncomprbuf);
-      image.bps = 8;
+      *bps = 8;
     }
     break;
   } /* switch */
   
-  image.data = data;
-  
-  // convert to RGB color-space - we do not handle palete images internally
-  
-  // no color table anyway or RGB* ?
-  std::cerr << "spp: " << image.spp << " table: " << (long)clr_tbl << std::endl;
-  if (clr_tbl && image.spp < 3)
-    {
-      std::cerr << "de palette" << std::endl;
-      
-      uint16_t* rmap = new uint16_t [1 << image.bps];
-      uint16_t* gmap = new uint16_t [1 << image.bps];
-      uint16_t* bmap = new uint16_t [1 << image.bps];
-      
-      for (int i = 0; i < (1 << image.bps); ++i) {
-	// BMP maps have BGR order ...
-	rmap[i] = clr_tbl [i * n_clr_elems + 2] << 8;
-	gmap[i] = clr_tbl [i * n_clr_elems + 1] << 8;
-	bmap[i] = clr_tbl [i * n_clr_elems + 0] << 8;
-      }
-      
-      colorspace_de_palette (image, clr_tbl_size, rmap, gmap, bmap);
-      
-      delete (rmap);
-      delete (gmap);
-      delete (bmap);
-      
-      _TIFFfree(clr_tbl);
-      clr_tbl = NULL;
-    }
-  
-  return true;
+  /* export the table */
+  *color_table = clr_tbl;
+  *color_table_size = clr_tbl_size;
+  *color_table_elements = n_clr_elems;
+  goto bad;
   
  bad1:
   if (clr_tbl)
     _TIFFfree(clr_tbl);
   clr_tbl = NULL;
   
-  return false;
-  
  bad:
-  return false;
-}
 
-bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
-			   const std::string& compress)
-{
-  // TODO: implement at some rainy afternooon ,-)
-  return false;
+  return data;
 }
-
-BMPCodec bmp_loader;

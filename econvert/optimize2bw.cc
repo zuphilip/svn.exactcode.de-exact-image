@@ -23,7 +23,7 @@
 #include "ArgumentList.hh"
 
 #include "Image.hh"
-#include "Codecs.hh"
+#include "ImageLoader.hh"
 
 #include "Colorspace.hh"
 #include "Matrix.hh"
@@ -86,7 +86,7 @@ int main (int argc, char* argv[])
     }
   
   Image image;
-  if (!ImageCodec::Read (arg_input.Get(), image)) {
+  if (!ImageLoader::Read (arg_input.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
@@ -217,7 +217,7 @@ int main (int argc, char* argv[])
     
   colorspace_gray8_to_gray1 (image, threshold);
 
-  if (!ImageCodec::Write(arg_output.Get(), image)) {
+  if (!ImageLoader::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
     return 1;
   }

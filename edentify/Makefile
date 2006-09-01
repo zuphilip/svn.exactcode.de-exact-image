@@ -6,7 +6,7 @@ include build/top.make
 BINARY = $(basename $(notdir $(wildcard $(X_MODULE)/*.cc)))
 
 BINARY_EXT = $(X_EXEEXT)
-DEPS = $(lib_BINARY) $(codecs_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(X_OUTARCH)/utility/File$(X_OBJEXT)
+DEPS = $(lib_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(X_OUTARCH)/utility/File$(X_OBJEXT)
 
 CPPFLAGS += -I utility
 

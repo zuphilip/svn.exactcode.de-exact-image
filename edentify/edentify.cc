@@ -26,7 +26,7 @@
 #include "File.hh"
 
 #include "Image.hh"
-#include "Codecs.hh"
+#include "ImageLoader.hh"
 
 #include "Colorspace.hh"
 
@@ -81,7 +81,7 @@ int main (int argc, char* argv[])
   for (std::vector<std::string>::const_iterator file = list.begin();
        file != list.end(); ++file)
     {
-      if (!ImageCodec::Read(*file, image)) {
+      if (!ImageLoader::Read(*file, image)) {
 	std::cout << "edentify: unable to open image '" << *file << "'." << std::endl;
 	continue;
       }
