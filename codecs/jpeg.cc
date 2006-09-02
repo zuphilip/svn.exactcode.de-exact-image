@@ -259,6 +259,16 @@ void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
 
 bool JPEGCodec::readImage (std::istream* stream, Image& image)
 {
+  {
+    // quick magic check
+    char buf [10];
+    stream->read (buf, sizeof (buf));
+    stream->seekg (0);
+    
+    if (buf[6] != 'J' || buf[7] != 'F' || buf[8] != 'I' || buf[9] != 'F')
+      return false;
+  }
+  
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
   
   struct my_error_mgr jerr;
