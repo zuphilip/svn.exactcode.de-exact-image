@@ -20,52 +20,23 @@
  * can even be used from C as well as SWIG script language bindings.
  *
  * We decided to map the library internals in an non-OO (Object
- * Oriented) way in order to archive most flexible external
- * language choice possible.
+ * Oriented) way in order to archive the most flexible external
+ * language choice possible and not to hold of refactoring from
+ * time to time.
  *
  * (People demanding a detailed and Object Oriented interface
  *  can still choose to use the fine grained intern C++ API
- *  [which however is not set in stone yet].)
+ *  [which however is not set in stone {at least not yet}].)
  */
 
-#ifdef SWIG
-%module exactimage
-%{
-#endif
+class Image; // just forward, never ever care about the internal layout
 
-#include <iostream>
+// decode image from memory location with size n
+Image* decodeImage (const char* data, int n);
 
-class Image; // just forward
+// encode image to memory, the data is newly allocated and returned
+char* encodeImage (Image* image);
 
-// from / to memory
-bool decodeImage (Image& image, const char* filename);
-bool ecodeImage (Image& image, const char* filename);
-
-// from / to file
-bool decodeImageFile (Image& image, const char* filename);
-bool ecodeImageFile (Image& image, const char* filename);
-
-// TODO: splitImage
-//       colorspaceImage
-//       normalizeImage
-//       scaleImage
-//       scaleNearestImage
-//       scaleBilinearImage
-//       scaleBicubicImage
-//       scaleBoxImage
-//       scaleDDTImage
-//       shearImage
-
-//       flipImage
-//       flopImage
-//       rotateImage
-
-//       ditherFloydSteinbergImage
-//       ditherRiemersmaImage
-
-//       edgeImage 
-//       descewImage
-
-#ifdef SWIG
- %}
-#endif
+// decode image from file named
+Image* decodeImageFile (const char* filename);
+bool encodeImageFile (Image* image, const char* filename);
