@@ -23,12 +23,6 @@ else
 NOT_SRCS += gif.cc
 endif
 
-ifeq "$(WITHNETPBM)" "1"
-LDFLAGS += -lnetpbm
-else
-NOT_SRCS += pnm.cc
-endif
-
 ifeq "$(WITHJASPER)" "1"
 LDFLAGS += -ljasper
 else
