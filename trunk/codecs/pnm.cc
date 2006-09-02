@@ -65,8 +65,8 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
   }
   stream->get(); // consume format number
   
-  image.h = getNextHeaderNumber (stream);
   image.w = getNextHeaderNumber (stream);
+  image.h = getNextHeaderNumber (stream);
   
   int maxval = 1;
   if (image.bps != 1) {
