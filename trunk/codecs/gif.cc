@@ -29,6 +29,14 @@ static int GIFOutputFunc (GifFileType* t, const GifByteType* mem, int len)
 
 bool GIFCodec::readImage (std::istream* stream, Image& image)
 {
+  { // quick magic check
+    char buf [3];
+    stream->read (buf, sizeof (buf));
+    stream->seekg (0);
+    if (buf[0] != 'G' || buf[1] != 'I' || buf[2] != 'F')
+      return false;
+  }
+  
   GifFileType* GifFile;
   GifRecordType RecordType;
   GifByteType* Extension;

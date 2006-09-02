@@ -121,6 +121,15 @@ static void jas_stream_initbuf (jas_stream_t* stream)
 
 bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
 {
+  {
+    // quick magic check
+    char buf [6];
+    stream->read (buf, sizeof (buf));
+    stream->seekg (0);
+    if (buf[4] != 'j' || buf[5] != 'P')
+      return false;
+  }
+  
   jas_image_t* image;
   jas_stream_t* in;
   

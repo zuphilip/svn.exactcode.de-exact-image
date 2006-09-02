@@ -257,8 +257,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   
   stream->read ((char*)&file_hdr.bType, 2);
   if(file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
-    fprintf(stderr, "File is not a BMP\n");
-    goto bad;
+    stream->seekg (0);
+    return false;
   }
   
   /* -------------------------------------------------------------------- */
