@@ -32,53 +32,59 @@ std::string get_codec (std::string& filename)
 // NEW API
 
 bool ImageCodec::Read (std::istream* stream, Image& image,
-		       const std::string& codec)
+		       std::string codec)
 {
-  // TODO:
-  bool bycodec = false;
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == codec) {
-	if (bycodec && !it->primary_entry)
-	  continue;
-	if (!bycodec && it->via_codec_only)
-	  continue;
-		
-	if (it->loader->readImage (stream, image)) {
-	  return true; 
+      if (codec.empty()) // try via magic
+	{
+	  // use primary entry to only try each codec once
+	  if (it->primary_entry && !it->via_codec_only) {
+	    if (it->loader->readImage (stream, image))
+	      return true;
+	    stream->seekg (0); // TODO: remove once the codecs are clean
+	  }
 	}
-      }
+      else // manual codec spec
+	{
+	  if (it->primary_entry && it->ext == codec) {
+	    return it->loader->readImage (stream, image);
+	  }
+	}
     }
   
-  std::cerr << "No suitable decoder found." << std::endl;
+  std::cerr << "No matching codec found." << std::endl;
   return false;
 }
 
 bool ImageCodec::Write (std::ostream* stream, Image& image,
-			const std::string& codec,
+			std::string codec, std::string ext,
 			int quality, const std::string& compress)
 {
-  // TODO:
-  bool bycodec = false;
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
   
+
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
-      if (it->ext == codec) {
-	if (bycodec && !it->primary_entry)
-	  continue;
-	if (!bycodec && it->via_codec_only)
-	  continue;
-	
-	if (it->loader->writeImage (stream, image, quality, compress)) {
-	  return true;
+      if (codec.empty()) // match extension
+	{
+	  if (it->ext == ext)
+	    return (it->loader->writeImage (stream, image, quality, compress));
 	}
-      }
+      else // manual codec spec
+	{
+	  if (it->primary_entry && it->ext == codec) {
+	    return (it->loader->writeImage (stream, image, quality, compress));
+	  }
+	}
     }
   
-  std::cerr << "No suitable encoder found." << std::endl;
+  std::cerr << "No matching codec found." << std::endl;
 }
 
 // OLD API
@@ -86,10 +92,6 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
 bool ImageCodec::Read (std::string file, Image& image)
 {
   std::string codec = get_codec (file);
-  if (codec.empty())
-    codec = get_ext (file);
-  
-  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
   std::istream* s;
   if (file != "-")
@@ -112,10 +114,7 @@ bool ImageCodec::Write (std::string file, Image& image,
 			int quality, const std::string& compress)
 {
   std::string codec = get_codec (file);
-  if (codec.empty())
-    codec = get_ext (file);
-  
-  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  std::string ext = get_ext (file);
   
   std::ostream* s;
   if (file != "-")
@@ -128,7 +127,7 @@ bool ImageCodec::Write (std::string file, Image& image,
     return false;
   }
   
-  bool res = Write (s, image, codec, quality, compress);
+  bool res = Write (s, image, codec, ext, quality, compress);
   if (s != &std::cout)
     delete s;
   return res;

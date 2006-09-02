@@ -1,4 +1,5 @@
 
+
 #ifndef IMAGELOADER_HH
 #define IMAGELOADER_HH
 
@@ -18,9 +19,9 @@ public:
   
   // NEW API, allowing the use of any STL i/o stream derived source
   static bool Read (std::istream* stream, Image& image,
-		    const std::string& codec = "");
+		    std::string codec = "");
   static bool Write (std::ostream* stream, Image& image,
-		     const std::string& codec = "",
+		     std::string codec = "", std::string ext = "",
 		     int quality = 80, const std::string& compress = "");
   
   // OLD API, only left for compatibility
