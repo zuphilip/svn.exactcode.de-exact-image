@@ -1145,6 +1145,8 @@ void CLASS fuji_load_raw()
   free (pixel);
 }
 
+#if 0
+
 void CLASS jpeg_thumb (FILE *tfp)
 {
   char *thumb = (char*) malloc (thumb_length);
@@ -1194,6 +1196,8 @@ void CLASS rollei_thumb (FILE *tfp)
   }
   free (thumb);
 }
+
+#endif
 
 void CLASS rollei_load_raw()
 {
@@ -2226,6 +2230,8 @@ void CLASS foveon_decoder (unsigned size, unsigned code)
   foveon_decoder (size, code+1);
 }
 
+#if 0
+
 void CLASS foveon_thumb (FILE *tfp)
 {
   int bwide, row, col, bit=-1, c, i;
@@ -2264,6 +2270,8 @@ void CLASS foveon_thumb (FILE *tfp)
       }
   }
 }
+
+#endif
 
 void CLASS foveon_load_camf()
 {
@@ -2834,6 +2842,8 @@ void CLASS foveon_interpolate()
 
 /* END GPL BLOCK */
 
+#if 0
+
 /*
    Seach from the current directory up to the root looking for
    a ".badpixels" file, and fix those pixels now.
@@ -2892,6 +2902,8 @@ void CLASS bad_pixels()
   if (fixed) fputc ('\n', stderr);
   fclose (fp);
 }
+
+#endif
 
 void CLASS pseudoinverse (double (*in)[3], double (*out)[3], int size)
 {
@@ -3898,6 +3910,7 @@ void CLASS romm_coeff (float romm_cam[3][3])
 
 void CLASS parse_mos (int offset)
 {
+#if 0 // TODO
   char data[40];
   int skip, from, i, c, neut[4], planes=0, frot=0;
   static const char *mod[] = { "Aptus","Valeo","Volare" };
@@ -3953,6 +3966,7 @@ void CLASS parse_mos (int offset)
   if (planes)
     filters = (planes == 1) * 0x01010101 *
 	(uchar) "\x94\x61\x16\x49"[(flip/90 + frot) & 3];
+#endif
 }
 
 int CLASS parse_tiff_ifd (int base, int level)
@@ -4383,6 +4397,8 @@ void CLASS parse_minolta()
   data_offset = offset;
 }
 
+#if 0
+
 /*
    Many cameras have a "debug mode" that writes JPEG and raw
    at the same time.  The raw file has no header, so try to
@@ -4431,6 +4447,8 @@ void CLASS parse_external_jpeg()
   free (jname);
   ifp = save;
 }
+
+#endif
 
 /*
    CIFF block 0x1030 contains an 8x8 white sample.
@@ -5334,8 +5352,10 @@ nucore:
       if (fsize == table[i].fsize) {
 	strcpy (make,  table[i].make );
 	strcpy (model, table[i].model);
+#if 0
 	if (table[i].withjpeg)
 	  parse_external_jpeg();
+#endif
       }
   parse_mos(8);
   parse_mos(3472);
