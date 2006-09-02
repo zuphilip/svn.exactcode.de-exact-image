@@ -126,6 +126,17 @@ bool OpenEXRCodec::readImage (std::istream* stream, Image& image)
 {
   STDIStream istream (stream, "");
   
+  {
+    // quick magic check
+    char buf [3];
+    stream->read (buf, sizeof (buf));
+    stream->seekg (0);
+    
+    // inaccurate, but enough for now
+    if (buf[0] != 'v' || buf[1] != '/' || buf[2] != '1')
+      return false;
+  }
+  
 try {
   RgbaInputFile exrfile (istream);
   Box2i dw = exrfile.dataWindow ();
