@@ -8,27 +8,6 @@
 
 #include <iostream>
 
-#if 0
-#define PNG_BYTES_TO_CHECK 4
-int check_if_png(char *file_name, FILE **fp)
-{
-   char buf[PNG_BYTES_TO_CHECK];
-
-   /* Open the prospective PNG file. */
-   if ((*fp = fopen(file_name, "rb")) == NULL)
-      return 0;
-
-   /* Read in some of the signature bytes */
-   if (fread(buf, 1, PNG_BYTES_TO_CHECK, *fp) != PNG_BYTES_TO_CHECK)
-      return 0;
-
-   /* Compare the first PNG_BYTES_TO_CHECK bytes of the signature.
-      Return nonzero (true) if they match */
-
-   return(!png_sig_cmp(buf, (png_size_t)0, PNG_BYTES_TO_CHECK));
-}
-#endif
-
 void stdstream_read_data(png_structp png_ptr,
 			 png_bytep data, png_size_t length)
 {
@@ -52,6 +31,15 @@ void stdstream_flush_data(png_structp png_ptr)
 
 bool PNGCodec::readImage (std::istream* stream, Image& image)
 {
+  { // quick magic check
+    char buf [4];
+    stream->read (buf, sizeof (buf));
+    int cmp = png_sig_cmp ((png_byte*)buf, (png_size_t)0, sizeof (buf));
+    stream->seekg (0);
+    if (cmp != 0)
+      return false;
+  }
+  
   png_structp png_ptr;
   png_infop info_ptr;
   png_uint_32 width, height;
