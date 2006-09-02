@@ -126,6 +126,7 @@ bool OpenEXRCodec::readImage (std::istream* stream, Image& image)
 {
   STDIStream istream (stream, "");
   
+try {
   RgbaInputFile exrfile (istream);
   Box2i dw = exrfile.dataWindow ();
   
@@ -158,6 +159,9 @@ bool OpenEXRCodec::readImage (std::istream* stream, Image& image)
     }
   
   return true;
+ } catch (...) {
+  return false;
+ }
 }
 
 bool OpenEXRCodec::writeImage (std::ostream* stream, Image& image,

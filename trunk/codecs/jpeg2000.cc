@@ -67,7 +67,6 @@ static jas_stream_t* jas_stream_create()
 
 static int cpp_jas_read (jas_stream_obj_t* obj, char* buf, int cnt)
 {
-  std::cerr << __FUNCTION__ << std::endl;
   std::istream* stream = (std::istream*) obj;
   stream->read (buf, cnt);
   return cnt;
@@ -82,7 +81,7 @@ static int cpp_jas_write (jas_stream_obj_t* obj, char* buf, int cnt)
 
 static long cpp_jas_seek (jas_stream_obj_t* obj, long offset, int origin)
 {
-  std::cerr << __FUNCTION__ << std::endl;
+  std::cerr << __FUNCTION__ << " implement me ,-)" << std::endl;
   /*
   std::istream* stream = (std::istream*) obj;
   stream->read (buf, cnt);
@@ -92,7 +91,6 @@ static long cpp_jas_seek (jas_stream_obj_t* obj, long offset, int origin)
 
 static int cpp_jas_close (jas_stream_obj_t* obj)
 {
-  std::cerr << __FUNCTION__ << std::endl;
   // NOP, nothing to do
 }
 

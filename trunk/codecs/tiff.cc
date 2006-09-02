@@ -34,6 +34,19 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
 {
   TIFF* in;
   
+  // quick magic check
+  {
+    char a, b;
+    a = stream->get ();
+    b = stream->peek ();
+    stream->putback (a);
+    
+    int magic = (a << 8) | b;
+    
+    if (magic != TIFF_BIGENDIAN && magic != TIFF_LITTLEENDIAN)
+      return false;
+  }
+  
   in = TIFFStreamOpen ("", stream);
   if (!in)
     return false;

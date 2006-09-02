@@ -85,6 +85,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
     }
   
   std::cerr << "No matching codec found." << std::endl;
+  return false;
 }
 
 // OLD API
