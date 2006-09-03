@@ -39,7 +39,10 @@ void deleteImage (Image* image);
 
 
 // decode image from memory data of size n
-bool decodeImage (Image* image, const char* data, int n);
+#ifdef SWIG
+%apply (char *STRING, int LENGTH) { (char *data, int n) };
+#endif
+bool decodeImage (Image* image, char* data, int n);
 
 // decode image from given filename
 bool decodeImageFile (Image* image, const char* filename);
@@ -47,9 +50,15 @@ bool decodeImageFile (Image* image, const char* filename);
 
 // encode image to memory, the data is newly allocated and returned
 // return 0 i the image could not be decoded
-char* encodeImage (Image* image, const char* codec, int quality,
-		   const char* compression);
 
+#ifdef SWIG
+%cstring_output_allocate_size( char ** s, int *slen, free(*$1))
+#endif
+void encodeImage (char **s, int *slen,
+		  Image* image, const char* codec, int quality,
+		  const char* compression);
+
+// encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,
 		      int quality, const char* compression);
 

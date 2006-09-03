@@ -1,5 +1,6 @@
 
 #include <string>
+#include <vector>
 #include <sstream>
 #include <iostream>
 
@@ -20,7 +21,7 @@ void deleteImage (Image* image)
   delete image;
 }
 
-bool decodeImage (Image* image, const char* data, int n)
+bool decodeImage (Image* image, char* data, int n)
 {
   const std::string str (data, n); 
   std::istringstream stream (str);
@@ -33,15 +34,34 @@ bool decodeImageFile (Image* image, const char* filename)
   return ImageCodec::Read (filename, *image);
 }
 
-char* encodeImage (Image* image, const char* codec, int quality,
-		   const char* compression)
+void encodeImage (char **s, int *slen,
+		  Image* image, const char* codec, int quality,
+		  const char* compression)
 {
-  std::string str;
-  std::ostringstream stream (str);
-    
-  ImageCodec::Write (&stream, *image, codec, "", quality, compression);
+  std::ostringstream stream (""); // empty string to start with
   
-  return 0;
+  /*
+  ImageCodec::Write (&stream, *image, codec, "", quality, compression);
+  */
+  
+  stream << '1';
+  stream << '2';
+  stream << '\0';
+  stream << '1';
+  stream << '2';
+  
+  stream.flush();
+  
+  std::cerr << "c++> size: " << stream.str().size() << std::endl;
+  
+  char* payload = (char*) malloc (stream.str().size());
+  
+  memcpy (payload, stream.str().c_str(), stream.str().size());
+  
+  *s = payload;
+  *slen = stream.str().size();
+  
+  std::cerr << "size: " << *slen << std::endl;
 }
 
 
