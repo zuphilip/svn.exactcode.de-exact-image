@@ -45,7 +45,10 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 	  if (it->primary_entry && !it->via_codec_only) {
 	    if (it->loader->readImage (stream, image))
 	      return true;
-	    stream->seekg (0); // TODO: remove once the codecs are clean
+	    
+	    // TODO: remove once the codecs are clean
+	    stream->clear ();
+	    stream->seekg (0);
 	  }
 	}
       else // manual codec spec
