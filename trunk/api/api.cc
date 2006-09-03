@@ -8,41 +8,44 @@
 
 #include <api.hh>
 
-Image* decodeImage (const char* data, int n)
+Image* newImage ()
+{
+  return new Image;
+}
+
+void deleteImage (Image* image)
+{
+  delete image;
+}
+
+bool decodeImage (Image* image, const char* data, int n)
 {
   const std::string str (data, n); 
   std::istringstream stream (str);
   
-  Image* image = new Image;
-  if (ImageCodec::Read (&stream, *image))
-    return image;
+  return ImageCodec::Read (&stream, *image);
+}
+
+bool decodeImageFile (Image* image, const char* filename)
+{
+  return ImageCodec::Read (filename, *image);
+}
+
+char* encodeImage (Image* image, const char* codec, int quality,
+		   const char* compression)
+{
+  std::string str;
+  std::ostringstream stream (str);
+    
+  ImageCodec::Write (&stream, *image, codec, "", yquality, compression);
   
-  delete image;
   return 0;
 }
 
-char* encodeImage (Image* image, const char* codec, int quality, const char* compression)
+
+bool encodeImageFile (Image* image, const char* filename,
+		      int quality, const char* compression)
 {
-  /*
-    std::string str ();
-  std::ostringstream stream (str);
-  
-  ImageCodec::Write (&stream, *image, codec, ""; quality, compression);
-  
-  return "";
-  */
+  return ImageCodec::Write (filename, *image, quality, compression);
 }
 
-Image* decodeImageFile (const char* filename)
-{
-  Image* image = new Image;
-  ImageCodec::Read (filename, *image);
-  
-  return image;
-}
-
-bool encodeImageFile (Image* image, const char* filename)
-{
-}
-
-  

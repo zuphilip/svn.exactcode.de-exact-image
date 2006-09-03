@@ -31,12 +31,24 @@
 
 class Image; // just forward, never ever care about the internal layout
 
-// decode image from memory location with size n
-Image* decodeImage (const char* data, int n);
+// instanciate new image class
+Image* newImage ();
+
+// destroy image instance
+void deleteImage (Image* image);
+
+
+// decode image from memory data of size n
+bool decodeImage (Image* image, const char* data, int n);
+
+// decode image from given filename
+bool decodeImageFile (Image* image, const char* filename);
+
 
 // encode image to memory, the data is newly allocated and returned
-char* encodeImage (Image* image);
+// return 0 i the image could not be decoded
+char* encodeImage (Image* image, const char* codec, int quality,
+		   const char* compression);
 
-// decode image from file named
-Image* decodeImageFile (const char* filename);
-bool encodeImageFile (Image* image, const char* filename);
+bool encodeImageFile (Image* image, const char* filename,
+		      int quality, const char* compression);
