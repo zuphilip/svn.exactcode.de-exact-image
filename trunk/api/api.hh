@@ -63,3 +63,6 @@ int imageHeight (Image* image);
 
 int imageXres (Image* image);
 int imageYres (Image* image);
+
+// image manipulation
+void imageRotate (Image* image, double angle);
