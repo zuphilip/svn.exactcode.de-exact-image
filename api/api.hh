@@ -52,3 +52,14 @@ char* encodeImage (Image* image, const char* codec, int quality,
 
 bool encodeImageFile (Image* image, const char* filename,
 		      int quality, const char* compression);
+
+
+// image properties
+int imageChannels (Image* image);
+int imageChannelDepth (Image* image);
+
+int imageWidth (Image* image);
+int imageHeight (Image* image);
+
+int imageXres (Image* image);
+int imageYres (Image* image);
