@@ -7,7 +7,7 @@ with_options="x11 evas libjpeg libtiff libpng libungif jasper openexr lcms swig 
 
 PACKAGE="exact-image"
 VERSION_MAJOR=0
-VERSION_MINOR=1
+VERSION_MINOR=2
 VERSION_MICRO=0
 
 init
