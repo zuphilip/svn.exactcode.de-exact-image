@@ -1,6 +1,9 @@
 
 %module ExactImage
+%include "cstring.i"
+
 %{
+
 #include "api.hh"
 %}
 
