@@ -40,19 +40,8 @@ void encodeImage (char **s, int *slen,
 {
   std::ostringstream stream (""); // empty string to start with
   
-  /*
   ImageCodec::Write (&stream, *image, codec, "", quality, compression);
-  */
-  
-  stream << '1';
-  stream << '2';
-  stream << '\0';
-  stream << '1';
-  stream << '2';
-  
   stream.flush();
-  
-  std::cerr << "c++> size: " << stream.str().size() << std::endl;
   
   char* payload = (char*) malloc (stream.str().size());
   
@@ -60,8 +49,6 @@ void encodeImage (char **s, int *slen,
   
   *s = payload;
   *slen = stream.str().size();
-  
-  std::cerr << "size: " << *slen << std::endl;
 }
 
 
