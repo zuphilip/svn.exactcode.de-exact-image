@@ -64,18 +64,16 @@ bool decodeImageFile (Image* image, const char* filename);
  // else
  //   $result = &PL_sv_undef;
  // argvi++;
-  %typemap(in, numinputs=0) (char** s, int* slen) (char* a, int b) {
+%typemap(in, numinputs=0) (char** s, int* slen) (char* a, int b) {
   $1 = &a;
   $2 = &b;
 }
 %typemap(argout) (char** s, int* slen) {
-  printf ("here in SWIG: %p, %d\n", *$1, *$2);
-  
-  $target = sv_newmortal();
+  $result = sv_newmortal();
   if (*$1 && *$2) {
-    sv_setpvn ($target, *$1, *$2);
+    sv_setpvn ($result, *$1, *$2);
   } else {
-    sv_setsv($target, &PL_sv_undef);
+    sv_setsv($result, &PL_sv_undef);
   }
   argvi++;
   XSRETURN(argvi);
