@@ -9,6 +9,7 @@
 void nearest_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
+  new_image.data = 0;
 
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
@@ -33,7 +34,8 @@ void nearest_scale (Image& image, double scalex, double scaley)
 void bilinear_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
-
+  new_image.data = 0;
+  
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
@@ -75,6 +77,7 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 void box_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
+  new_image.data = 0;
 
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
@@ -179,7 +182,8 @@ inline Image::iterator CubicConvolution (int distance,
 void bicubic_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
-
+  new_image.data = 0;
+  
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
@@ -237,7 +241,8 @@ void bicubic_scale (Image& image, double scalex, double scaley)
 void ddt_scale (Image& image, double scalex, double scaley)
 {
   Image new_image = image;
-
+  new_image.data = 0;
+  
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   
