@@ -27,13 +27,13 @@
 #include "ArgumentList.hh"
 
 #include "Image.hh"
-#include "ImageLoader.hh"
+#include "Codecs.hh"
 
 #include "Colorspace.hh"
 
 #include "scale.hh"
 #include "rotate.hh"
-#include "Matrix.hh"
+// #include "Matrix.hh"
 #include "riemersma.h"
 #include "floyd-steinberg.h"
 
@@ -61,9 +61,7 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
-Image image; // the global Image we work on
-
-decodeBarcodes (Image& image)
+void decodeBarcodes (Image& image)
 {
   // the barcode library does not support such a high bit-depth
   if (image.bps == 16)
@@ -74,8 +72,8 @@ decodeBarcodes (Image& image)
     colorspace_rgb8_to_gray8 (image);
   
   // testing showed the library does not like 2bps, so upscale it
-  if (image.bps == 2)
-    colorspace_gray2_to_gray4 (image);
+//  if (image.bps == 2)
+//    colorspace_gray2_to_gray4 (image);
 
   // we have a 1, 4 or 8 bits per pixel GRAY image, now
 
@@ -115,7 +113,7 @@ decodeBarcodes (Image& image)
 #endif
 
   // call into the barcode library
-  void* hBarcode = hBarcode = STCreateBarCodeSession ();
+  void* hBarcode = STCreateBarCodeSession ();
   
   uint16 i = 1;
   STSetParameter(hBarcode, ST_READ_CODE39, &i);
@@ -154,5 +152,4 @@ decodeBarcodes (Image& image)
   }
   
   STFreeBarCodeSession (hBarcode);
-  return 0;
 }
