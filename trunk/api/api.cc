@@ -144,10 +144,24 @@ bool imageIsEmpty (Image* image, double percent, int margin)
 
 #include "bardecode.hh"
 
-void imageDecodeBarcodes (Image* image, const char* codes,
-			  int min_length, int max_length)
+char** imageDecodeBarcodes (Image* image, const char* codes,
+			    int min_length, int max_length)
 {
-  decodeBarcodes (*image, codes, min_length, max_length);
+  std::vector<std::string> ret = 
+    decodeBarcodes (*image, codes, min_length, max_length);
+  
+  char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
+  
+  int i = 0;
+  for (std::vector<std::string>::iterator it = ret.begin();
+       it != ret.end(); ++it, ++i)
+    {
+      cret[i] = (char*)malloc (it->length()+1);
+      strcpy (cret[i], it->c_str());
+    }
+  cret[i] = 0;
+  
+  return (char**)cret;
 }
 
 #endif

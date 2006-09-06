@@ -61,8 +61,8 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
-void decodeBarcodes (Image& image, const std::string& codes,
-		     int min_length, int max_length)
+std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
+					 int min_length, int max_length)
 {
   uint16_t i;
   
@@ -182,10 +182,12 @@ void decodeBarcodes (Image& image, const std::string& codes,
   bbitmap.bmPlanes = 1; // the library is documented to only take 1
   bbitmap.bmBitsPixel = image.bps; // 1, 4 and 8 appeared to work
   bbitmap.bmBits = image.data; // our class' bitmap data
-
+  
+  /*
   std::cerr << "w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
             << ", bps: " << image.bps << ", stride: " << image.Stride()
             << std::endl;
+  */
   
   char** bar_codes;
   char** bar_codes_type;
@@ -195,11 +197,16 @@ void decodeBarcodes (Image& image, const std::string& codes,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
   
+  std::vector<std::string> ret;
+  
   for (i = 0; i < bar_count; ++i) {
     uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
     STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
-    printf ("%s[%s]\n", bar_codes[i], bar_codes_type[i]);
+    //printf ("%s[%s]\n", bar_codes[i], bar_codes_type[i]);
+    ret.push_back (bar_codes[i]);
+    ret.push_back (bar_codes_type[i]);
   }
   
   STFreeBarCodeSession (hBarcode);
+  return ret;
 }
