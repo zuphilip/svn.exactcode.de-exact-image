@@ -144,9 +144,10 @@ bool imageIsEmpty (Image* image, double percent, int margin)
 
 #include "bardecode.hh"
 
-void imageDecodeBarcodes (Image* image)
+void imageDecodeBarcodes (Image* image, const char* codes,
+			  int min_length, int max_length)
 {
-  decodeBarcodes (*image);
+  decodeBarcodes (*image, codes, min_length, max_length);
 }
 
 #endif
