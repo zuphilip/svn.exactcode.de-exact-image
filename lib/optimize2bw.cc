@@ -30,7 +30,7 @@
 #include "optimize2bw.hh"
 
 void optimize2bw (Image& image, int low, int high,
-		  int threshold, int sloppy_threshold,
+		  int sloppy_threshold,
 		  int radius, double standard_deviation)
 {
   // convert to RGB to gray - TODO: more cases
@@ -88,7 +88,4 @@ void optimize2bw (Image& image, int low, int high,
     
     convolution_matrix (image, matrix, width, width, divisor);
   }
-  
-  // convert to 1-bit (threshold)
-  colorspace_gray8_to_gray1 (image, threshold);
 }
