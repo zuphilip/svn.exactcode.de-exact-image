@@ -154,11 +154,8 @@ char** imageDecodeBarcodes (Image* image, const char* codes,
   
   int i = 0;
   for (std::vector<std::string>::iterator it = ret.begin();
-       it != ret.end(); ++it, ++i)
-    {
-      cret[i] = (char*)malloc (it->length()+1);
-      strcpy (cret[i], it->c_str());
-    }
+       it != ret.end(); ++it)
+    cret[i++] = strdup (it->c_str());
   cret[i] = 0;
   
   return (char**)cret;
