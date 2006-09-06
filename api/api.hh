@@ -119,5 +119,9 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 
 #ifdef WITHBARDECODE
 // commercial bardecode
-void imageDecodeBarcodes (Image* image);
+// codes is the string of barcode to look for, | seperated, like:
+// CODE39|CODE128|CODE25|EAN13|EAN8|UPCA|UPCE
+// case doesn't care
+void imageDecodeBarcodes (Image* image, const char* codes,
+			  int min_length, int max_length);
 #endif

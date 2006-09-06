@@ -61,8 +61,11 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
-void decodeBarcodes (Image& image)
+void decodeBarcodes (Image& image, const std::string& codes,
+		     int min_length, int max_length)
 {
+  uint16_t i;
+  
   // the barcode library does not support such a high bit-depth
   if (image.bps == 16)
     colorspace_16_to_8 (image);
@@ -115,15 +118,62 @@ void decodeBarcodes (Image& image)
   // call into the barcode library
   void* hBarcode = STCreateBarCodeSession ();
   
-  uint16 i = 1;
-  STSetParameter(hBarcode, ST_READ_CODE39, &i);
-  STSetParameter(hBarcode, ST_READ_CODE128, &i);
-  STSetParameter(hBarcode, ST_READ_CODE25, &i);
-  STSetParameter(hBarcode, ST_READ_EAN13, &i);
-  STSetParameter(hBarcode, ST_READ_EAN8, &i);
-  STSetParameter(hBarcode, ST_READ_UPCA, &i);
-  STSetParameter(hBarcode, ST_READ_UPCE, &i);
-
+  i = 0;
+  STSetParameter (hBarcode, ST_READ_CODE39, &i);
+  STSetParameter (hBarcode, ST_READ_CODE128, &i);
+  STSetParameter (hBarcode, ST_READ_CODE25, &i);
+  STSetParameter (hBarcode, ST_READ_EAN13, &i);
+  STSetParameter (hBarcode, ST_READ_EAN8, &i);
+  STSetParameter (hBarcode, ST_READ_UPCA, &i);
+  STSetParameter (hBarcode, ST_READ_UPCE, &i);
+  i = 1;
+  
+  // parse the code list
+  std::string c (codes);
+  std::transform (c.begin(), c.end(), c.begin(), tolower);
+  std::string::size_type it = 0;
+  std::string::size_type it2;
+  do
+    {
+      it2 = c.find ('|', it);
+      std::string code;
+      if (it2 !=std::string::npos) {
+	code = c.substr (it, it2-it);
+	it = it2 + 1;
+      }
+      else
+	code = c.substr (it);
+      
+      if (!code.empty())
+	{
+	  if (code == "code39")
+	    STSetParameter(hBarcode, ST_READ_CODE39, &i);
+	  else if (code == "code128")
+	    STSetParameter(hBarcode, ST_READ_CODE128, &i);
+	  else if (code == "code25")
+	    STSetParameter(hBarcode, ST_READ_CODE25, &i);
+	  else if (code == "ean13")
+	    STSetParameter(hBarcode, ST_READ_EAN13, &i);
+	  else if (code == "ean8")
+	    STSetParameter(hBarcode, ST_READ_EAN8, &i);
+	  else if (code == "upca")
+	    STSetParameter(hBarcode, ST_READ_UPCA, &i);
+	  else if (code == "upce")
+	    STSetParameter(hBarcode, ST_READ_UPCE, &i);
+	  else
+	    std::cerr << "Unrecognized barcode type: " << code << std::endl;
+	}
+    }
+  while (it2 != std::string::npos);
+  
+  i = min_length;
+  STSetParameter (hBarcode, ST_MIN_LEN, &i);
+  i = max_length;
+  STSetParameter (hBarcode, ST_MAX_LEN, &i);
+  
+  i = 1;
+  STSetParameter(hBarcode, ST_MULTIPLE_READ, &i);
+  
   BITMAP bbitmap;
   bbitmap.bmType = 1; // bitmap type version, fixed v1
   bbitmap.bmWidth = image.w;
@@ -139,16 +189,16 @@ void decodeBarcodes (Image& image)
   
   char** bar_codes;
   char** bar_codes_type;
-
+  
   int photometric = 1; // 0 == photometric min is black, but this appears to be buggy ???
   int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
-
+  
   for (i = 0; i < bar_count; ++i) {
     uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
     STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
-    printf ("%s\n", bar_codes[i]) ;
+    printf ("%s[%s]\n", bar_codes[i], bar_codes_type[i]);
   }
   
   STFreeBarCodeSession (hBarcode);
