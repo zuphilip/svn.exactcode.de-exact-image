@@ -1,4 +1,7 @@
 
+#ifndef MATRIX_HH
+#define MATRIX_HH
+
 // any matrix and devisior
 // on my AMD Turion speed is: double > int > float
 // and in 32bit mode: double > float > int ?
@@ -54,3 +57,5 @@ void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
   free (image.data);
   image.data = data2;
 }
+
+#endif
