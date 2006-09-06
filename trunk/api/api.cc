@@ -10,6 +10,11 @@
 #include <rotate.hh>
 #include <scale.hh>
 
+#include <Colorspace.hh>
+
+#include <optimize2bw.hh>
+#include <empty-page.hh>
+
 #include <api.hh>
 
 Image* newImage ()
@@ -112,10 +117,7 @@ void imageRotate (Image* image, double angle)
 
 void imageScale (Image* image, double factor)
 {
-  if (factor > 1.0)
-    bilinear_scale (*image, factor, factor);
-  else
-    box_scale (*image, factor, factor);
+  bilinear_scale (*image, factor, factor);
 }
 
 void imageBoxScale (Image* image, double factor)
@@ -125,11 +127,14 @@ void imageBoxScale (Image* image, double factor)
 
 void imageOptimize2BW (Image* image)
 {
-  
+  optimize2bw (*image);
+  // optmize does not do this itself anymore
+  colorspace_gray8_to_gray1 (*image);
 }
 
 bool imageIsEmpty (Image* image)
 {
+  return detect_empty_page (*image);
 }
 
 #ifdef WITHBARDECODE
