@@ -22,14 +22,13 @@
 
 #include "ArgumentList.hh"
 
+#include "empty-page.hh"
+
 using namespace Utility;
 
 /* TODO: for more accurance one could introduce a hot-spot area that
    has a higher weight than the other (outer) region to more reliably
    detect crossed but otherwise empty pages */
-
-/* TODO: include color / gray -> bi-level optimization and other file
-   loading */
 
 int main (int argc, char* argv[])
 {
@@ -69,53 +68,26 @@ int main (int argc, char* argv[])
   }
   
   Image image;
-  if (!ImageCodec::Read(arg_input.Get(), image)) {
+  if (!ImageCodec::Read (arg_input.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
     return 1;
   }
   
-  // if not 1-bit optimize
-  if (image.spp != 1 || image.bps != 1)
-    {
-      std::cerr << "Non-bilevel image - needs optimzation, to be done."
-		<< std::endl;
-      
-      return 2;
-    }
+  int set_pixels;
+  const double percent = arg_percent.Get();
+  bool is_empty = detect_empty_page (image, percent, margin, &set_pixels);
   
-  // count bits and decide based on that
+  double image_percent = (float) set_pixels / (image.w * image.h) * 100;
+  std::cerr << "The image has " << set_pixels
+	    << " dark pixels from a total of "
+	    << image.w * image.h
+	    << " (" << image_percent << "%)." << std::endl;
   
-  // create a bit table for fast lookup
-  int bits_set[256] = { 0 };
-  for (int i = 0; i < 256; i++) {
-    int bits = 0;
-    for (int j = i; j != 0; j >>= 1) {
-      bits += (j & 0x01);
-    }
-    bits_set[i] = bits;
-  }
-  
-  int stride = (image.w * image.bps * image.spp + 7) / 8;
-  
-  // count pixels
-  int pixels = 0;
-  for (int row = margin; row < image.h-margin; row++) {
-    for (int x = margin/8; x < stride - margin/8; x++) {
-      int b = bits_set [ image.data[stride*row + x] ];
-      // it is a bits_set table - and we want the zeros ...
-      pixels += 8-b;
-    }
-  }
-
-  float percentage = (float)pixels/(image.w*image.h) * 100;
-  std::cout << "The image has " << pixels << " dark pixels from a total of "
-	    << image.w*image.h << " (" << percentage << "%)." << std::endl;
-  
-  if (percentage > arg_percent.Get()) {
-    std::cout << "non-empty" << std::endl;
+  if (!is_empty) {
+    std::cerr << "non-empty" << std::endl;
     return 1;
   }
-
-  std::cout << "empty" << std::endl;
+  
+  std::cerr << "empty" << std::endl;
   return 0;
 }

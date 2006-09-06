@@ -67,12 +67,10 @@ bool detect_empty_page (Image& image, double percent, int margin,
     }
   }
 
-  float percentage = (float)pixels/(image.w*image.h) * 100;
-  std::cerr << "The image has " << pixels << " dark pixels from a total of "
-	    << image.w*image.h << " (" << percentage << "%)." << std::endl;
+  float image_percent = (float)pixels/(image.w*image.h) * 100;
   
   if (set_pixels)
     *set_pixels = pixels;
   
-  return percentage > percent;
+  return image_percent < percent;
 }
