@@ -7,7 +7,7 @@
 // and in 32bit mode: double > float > int ?
 typedef double matrix_type;
 
-void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
+inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
   unsigned char *data2 = (unsigned char *) malloc (image.w * image.h);
