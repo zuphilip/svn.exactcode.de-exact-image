@@ -8,7 +8,7 @@ with_options="x11 evas libjpeg libtiff libpng libungif jasper openexr lcms barde
 PACKAGE="exact-image"
 VERSION_MAJOR=0
 VERSION_MINOR=2
-VERSION_MICRO=1
+VERSION_MICRO=2
 
 init
 
@@ -45,6 +45,13 @@ if pkgcheck bardecode shell BARDECODE \
     '[ -e external/bardecode.a -a -e external/barcode.h ] && echo yes'; then
     var_append BARDECODEINCS " " "-I external"
     var_append BARDECODELIBS " " "external/bardecode.a"
+else
+	cat <<-EOT
+
+		For barcode recognition, please place the commercial library
+		from http://www.bardecode.com/ into the external/ directory.
+
+EOT
 fi
 
 pkgcheck swig shell SWIG 'swig -version 2>/dev/null | sed -n "s/SWIG Version \(.*\)/\1/p"' atleast 1.3.0
