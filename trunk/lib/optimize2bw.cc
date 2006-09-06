@@ -81,10 +81,8 @@ void optimize2bw (Image& image, int low, int high,
       }
       std::cerr << std::endl;
     }
-    std::cerr << "Divisor: " << divisor << std::endl;
-
+    
     const int sloppy_thr = sloppy_threshold;
-    std::cout << "Lazy threshold: " << sloppy_thr << std::endl;
     
     convolution_matrix (image, matrix, width, width, divisor);
   }
