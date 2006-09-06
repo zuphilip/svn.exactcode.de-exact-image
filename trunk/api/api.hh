@@ -29,6 +29,8 @@
  *  [which however is not set in stone {at least not yet}].)
  */
 
+#include "config.h"
+
 class Image; // just forward, never ever care about the internal layout
 
 // instanciate new image class
@@ -99,5 +101,19 @@ int imageHeight (Image* image);
 int imageXres (Image* image);
 int imageYres (Image* image);
 
+void imageSetXres (Image* image, int xres);
+void imageSetYres (Image* image, int yres);
+
+
 // image manipulation
 void imageRotate (Image* image, double angle);
+void imageScale (Image* image, double factor);
+void imageBoxScale (Image* image, double factor);
+
+void imageOptimize2BW (Image* image);
+
+bool imageIsEmpty (Image* image);
+
+#ifdef WITHBARDECODE
+void imageDecodeBarcodes (Image* image);
+#endif
