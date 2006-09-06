@@ -40,80 +40,57 @@
 #include <functional>
 
 // barcode library
-extern "C" { // missing in the library :-(
+extern "C" { // missing in the library header ...
 #include "barcode.h"
-
-typedef struct tagBITMAP
-{
-	int bmType;
-  int bmWidth;
-  int bmHeight;
-  int bmWidthBytes;
-  unsigned char bmPlanes;
-  unsigned char bmBitsPixel;
-  void* bmBits;
-} BITMAP;
-
-int STReadBarCodeFromBitmap (void *hBarcode, BITMAP *pBitmap, float resolution,
-                             char ***bc, char ***bc_type, short photometric);
+  
+  typedef struct tagBITMAP
+  {
+    int bmType;
+    int bmWidth;
+    int bmHeight;
+    int bmWidthBytes;
+    unsigned char bmPlanes;
+    unsigned char bmBitsPixel;
+    void* bmBits;
+  } BITMAP;
+  
+  // missing in the library header ...
+  int STReadBarCodeFromBitmap (void *hBarcode, BITMAP *pBitmap, float resolution,
+			       char ***bc, char ***bc_type, short photometric);
 }
 
 using namespace Utility;
 
 Image image; // the global Image we work on
 
-int main (int argc, char* argv[])
+decodeBarcodes (Image& image)
 {
-  ArgumentList arglist (true); // enable residual gathering
-  
-  // setup the argument list
-  Argument<bool> arg_help ("", "help",
-			   "display this help text and exit");
-  arglist.Add (&arg_help);
-  
-  // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true ||
-      arglist.Residuals().size() != 1)
-    {
-      std::cerr << "Bardecode frontend with ExactImage image i/o backend."
-		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2006 by René Rebe for Archivista" << std::endl
-                << "Usage:" << std::endl;
-      
-      arglist.Usage (std::cerr);
-      return 1;
-    }
-  
-  // read the image
-  Image image;
-  const std::string filename = arglist.Residuals() [0];
-
-  if (!ImageLoader::Read (filename, image)) {
-    std::cerr << "Error reading input file." << std::endl;
-    return false;
-  }
-
-  // the barcode library only supports b/w images
+  // the barcode library does not support such a high bit-depth
   if (image.bps == 16)
     colorspace_16_to_8 (image);
-  // convert any RGB to GRAY
+  
+  // the library interface only handles one channel data
   if (image.spp == 3)
     colorspace_rgb8_to_gray8 (image);
-
-	// testing showed the library does not like 2bps ...
+  
+  // testing showed the library does not like 2bps, so upscale it
   if (image.bps == 2)
     colorspace_gray2_to_gray4 (image);
 
-  // we have a 1-8 bits per pixel GRAY image, now
-  // build custom allocated bitmap to conform to the barcode library constraits
-  // (4 byte row allignment ...) - yes, this sucks majorly
+  // we have a 1, 4 or 8 bits per pixel GRAY image, now
 
+#if 0
+  // The bardecode library is documented to require a 4 byte row
+  // allignment. To conform this a custom allocated bitmap would
+  // be required which would either require a complete Image class
+  // rewrite or a extremely costly allocation and copy at this
+  // location. Testing showed it worked without this allignment.
+  
   int stride = image.Stride ();
   std::cerr << "Stride: " << stride << std::endl;
   stride += stride % 4 > 0 ? 4 - stride % 4 : 0;
   std::cerr << "Stride: " << stride << std::endl;
 
-#if 0
   uint8_t* bitmap = (uint8_t*) malloc (stride * image.h);
   uint8_t* bitmap_ptr = bitmap;
 
@@ -132,7 +109,7 @@ int main (int argc, char* argv[])
     }
     int remainder = 8 - image.w % 8;
     if (remainder != 8)
-	    *bitmap_ptr = z << remainder;
+      *bitmap_ptr = z << remainder;
     bitmap_ptr = bitmap + stride * y;
   }
 #endif
@@ -142,41 +119,40 @@ int main (int argc, char* argv[])
   
   uint16 i = 1;
   STSetParameter(hBarcode, ST_READ_CODE39, &i);
-	STSetParameter(hBarcode, ST_READ_CODE128, &i);
-	STSetParameter(hBarcode, ST_READ_CODE25, &i);
-	STSetParameter(hBarcode, ST_READ_EAN13, &i);
-	STSetParameter(hBarcode, ST_READ_EAN8, &i);
-	STSetParameter(hBarcode, ST_READ_UPCA, &i);
-	STSetParameter(hBarcode, ST_READ_UPCE, &i);
+  STSetParameter(hBarcode, ST_READ_CODE128, &i);
+  STSetParameter(hBarcode, ST_READ_CODE25, &i);
+  STSetParameter(hBarcode, ST_READ_EAN13, &i);
+  STSetParameter(hBarcode, ST_READ_EAN8, &i);
+  STSetParameter(hBarcode, ST_READ_UPCA, &i);
+  STSetParameter(hBarcode, ST_READ_UPCE, &i);
 
   BITMAP bbitmap;
-  bbitmap.bmType = 1; // fixed
+  bbitmap.bmType = 1; // bitmap type version, fixed v1
   bbitmap.bmWidth = image.w;
   bbitmap.bmHeight = image.h;
-  bbitmap.bmWidthBytes = image.Stride(); //stride;
-  bbitmap.bmPlanes = 1; // fixed
-  bbitmap.bmBitsPixel = image.bps; // 1; // check if something else works as well
-  bbitmap.bmBits = image.data; // bitmap;
+  bbitmap.bmWidthBytes = image.Stride();
+  bbitmap.bmPlanes = 1; // the library is documented to only take 1
+  bbitmap.bmBitsPixel = image.bps; // 1, 4 and 8 appeared to work
+  bbitmap.bmBits = image.data; // our class' bitmap data
 
   std::cerr << "w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
             << ", bps: " << image.bps << ", stride: " << image.Stride()
             << std::endl;
-
-  char **bar_codes;
-	char **bar_codes_type;
+  
+  char** bar_codes;
+  char** bar_codes_type;
 
   int photometric = 1; // 0 == photometric min is black, but this appears to be buggy ???
-	int	bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
-	                                         &bar_codes, &bar_codes_type,
-	                                         photometric);
+  int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
+					   &bar_codes, &bar_codes_type,
+					   photometric);
 
-  for (i = 0; i < bar_count; ++i)
-	{
-		uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
-		STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
-		printf ("%s\n", bar_codes[i]) ;
-	}
-
+  for (i = 0; i < bar_count; ++i) {
+    uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
+    STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
+    printf ("%s\n", bar_codes[i]) ;
+  }
+  
   STFreeBarCodeSession (hBarcode);
   return 0;
 }
