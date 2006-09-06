@@ -1,0 +1,2 @@
+
+void decodeBarcodes (Image& image);
