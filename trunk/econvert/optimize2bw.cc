@@ -29,6 +29,8 @@
 #include "Matrix.hh"
 #include "scale.hh"
 
+#include "optimize2bw.hh"
+
 using namespace Utility;
 
 int main (int argc, char* argv[])
@@ -91,90 +93,35 @@ int main (int argc, char* argv[])
     return 1;
   }
   
-  std::cerr << "xres: " << image.xres << ", yres: " << image.yres << std::endl;
-  
-  // convert to RGB to gray - TODO: more cases
-  if (image.spp == 3 && image.bps == 8) {
-    std::cerr << "RGB -> Gray convertion" << std::endl;
-    
-    colorspace_rgb8_to_gray8 (image);
-  }
-  else if (image.spp != 1 && image.bps != 8)
-    {
-      std::cerr << "Can't yet handle " << image.spp << " samples with "
-		<< image.bps << " bits per sample." << std::endl;
-      return 1;
-    }
- 
-  int lowest = 0, highest = 0;
+  int low = 0;
+  int high = 0;
+  int sloppy_threshold = 0;
+  int radius = 3;
+  double sd = 2.1;
   
   if (arg_low.Get() != 0) {
-    lowest = arg_low.Get();
-    std::cerr << "Low value overwritten: " << lowest << std::endl;
+    low = arg_low.Get();
+    std::cerr << "Low value overwritten: " << low << std::endl;
   }
   
   if (arg_high.Get() != 0) {
-    highest = arg_high.Get();
-    std::cerr << "High value overwritten: " << highest << std::endl;
+    high = arg_high.Get();
+    std::cerr << "High value overwritten: " << high << std::endl;
   }
   
-  normalize (image, lowest, highest);
-  
-  // Convolution Matrix (unsharp mask a-like)
-  {
-    // compute kernel (convolution matrix to move over the iamge)
-    
-    int radius = 3;
-    if (arg_radius.Get() != 0) {
-      radius = arg_radius.Get();
-      std::cerr << "Radius: " << radius << std::endl;
-    }
-    
-    const int width = radius * 2 + 1;
-    matrix_type divisor = 0;
-    float sd = 2.1;
-    
-    if (arg_sd.Get() != 0) {
-      sd = arg_sd.Get();
-      std::cerr << "SD overwritten: " << sd << std::endl;
-    }
-    
-    matrix_type *matrix = new matrix_type[width * width];
-    
-    std::cout << std::fixed << std::setprecision(3);
-    for (int y = -radius; y <= radius; y++) {
-      for (int x = -radius; x <= radius; x++) {
-	matrix_type v = (matrix_type) (exp (-((float)x*x + (float)y*y) / (2. * sd * sd)) * 5);
-	divisor += v;
-	
-	matrix[x + radius + (y+radius)*width] = v;
-      }
-    }
-    
-    // sub from image *2 and print
-    for (int y = -radius; y <= radius; y++) {
-      for (int x = -radius; x <= radius; x++) {
-	matrix_type* m = &matrix[x + radius + (y+radius)*width];
-	
-	*m *= -1;
-	if (x == 0 && y == 0)
-	  *m += 2*divisor;
-	
-	std::cout << *m << " ";
-      }
-      std::cout << std::endl;
-    }
-    std::cout << "Divisor: " << divisor << std::endl;
-
-    const int sloppy_thr = arg_lazy_thr.Get();
-    std::cout << "Lazy threshold: " << sloppy_thr << std::endl;
-    
-    convolution_matrix (image, matrix, width, width, divisor);
+  if (arg_radius.Get() != 0) {
+    radius = arg_radius.Get();
+    std::cerr << "Radius: " << radius << std::endl;
   }
   
+  if (arg_sd.Get() != 0) {
+    sd = arg_sd.Get();
+    std::cerr << "SD overwritten: " << sd << std::endl;
+  }
+    
+  optimize2bw (image, low, high, sloppy_threshold, radius, sd);
   
   // scale image using interpolation
-  
   double scale = arg_scale.Get ();
   int dpi = arg_dpi.Get ();
 
@@ -202,21 +149,25 @@ int main (int argc, char* argv[])
   
   std::cerr << "Scale: " << scale << std::endl;
   
-  if (scale > 0.0) {
-    bilinear_scale (image, scale, scale);
-  }
+  if (scale > 0.0)
+    {
+      if (scale < 1.0)
+	box_scale (image, scale, scale);
+      else
+	bilinear_scale (image, scale, scale);
+    }
+  
   
   // convert to 1-bit (threshold)
-  
   int threshold = 170;
     
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
     std::cerr << "Threshold: " << threshold << std::endl;
   }
-    
+  
   colorspace_gray8_to_gray1 (image, threshold);
-
+  
   if (!ImageCodec::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
     return 1;

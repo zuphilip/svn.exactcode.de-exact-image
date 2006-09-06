@@ -20,6 +20,8 @@
 #include "Image.hh"
 #include "Codecs.hh"
 
+#include "Colorspace.hh"
+
 #include "empty-page.hh"
 #include "optimize2bw.hh"
 
@@ -34,10 +36,12 @@ bool detect_empty_page (Image& image, double percent, int margin,
   if (margin % 8 != 0)
     margin -= margin % 8;
   
-  
   // if not 1-bit optimize
-  if (image.spp != 1 || image.bps != 1)
+  if (image.spp != 1 || image.bps != 1) {
     optimize2bw (image);
+    // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
+    colorspace_gray8_to_gray1 (image);
+  }
     
   // count bits and decide based on that
   
