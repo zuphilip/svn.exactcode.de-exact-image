@@ -8,7 +8,8 @@ DEPS = $(lib_BINARY) $(codecs_BINARY) $($(X_MODULE)_OUTPUT)/api-perl-wrap.cc
 CPPFLAGS += -I api $(PERLINCS)
 
 $($(X_MODULE)_OUTPUT)/api-perl-wrap.cc: $(X_MODULE)/api.hh $(X_MODULE)/api-swig.hh
-	swig -perl -c++ -outdir $($(X_MODULE)_OUTPUT) -o '$@' $(X_MODULE)/api-swig.hh
+	$(Q)echo "  SWIG      $($(X_MODULE)_OUTPUT)"
+	$(Q)swig -perl -c++ -outdir $($(X_MODULE)_OUTPUT) -o '$@' $(X_MODULE)/api-swig.hh
 
 # we have an own install
 _X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)

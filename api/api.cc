@@ -8,6 +8,7 @@
 #include <Codecs.hh>
 
 #include <rotate.hh>
+#include <scale.hh>
 
 #include <api.hh>
 
@@ -90,6 +91,15 @@ int imageYres (Image* image)
   return image->yres;
 }
 
+void imageSetXres (Image* image, int xres)
+{
+  image->xres = xres;
+}
+
+void imageSetYres (Image* image, int yres)
+{
+  image->yres = yres;
+}
 
 // image manipulation
 
@@ -99,3 +109,36 @@ void imageRotate (Image* image, double angle)
 {
   rotate (*image, angle, background);
 }
+
+void imageScale (Image* image, double factor)
+{
+  if (factor > 1.0)
+    bilinear_scale (*image, factor, factor);
+  else
+    box_scale (*image, factor, factor);
+}
+
+void imageBoxScale (Image* image, double factor)
+{
+  box_scale (*image, factor, factor);
+}
+
+void imageOptimize2BW (Image* image)
+{
+  
+}
+
+bool imageIsEmpty (Image* image)
+{
+}
+
+#ifdef WITHBARDECODE
+
+#include "bardecode.hh"
+
+void imageDecodeBarcodes (Image* image)
+{
+  decodeBarcodes (*image);
+}
+
+#endif
