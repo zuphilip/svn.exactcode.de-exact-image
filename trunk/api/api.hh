@@ -110,10 +110,14 @@ void imageRotate (Image* image, double angle);
 void imageScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 
-void imageOptimize2BW (Image* image);
-
-bool imageIsEmpty (Image* image);
+// advanced all-in-one algorithms
+void imageOptimize2BW (Image* image, int low, int high,
+		       int threshold,
+		       int radius, double standard_deviation);
+// remeber the margin must be a multiple of 8!
+bool imageIsEmpty (Image* image, double percent, int margin);
 
 #ifdef WITHBARDECODE
+// commercial bardecode
 void imageDecodeBarcodes (Image* image);
 #endif

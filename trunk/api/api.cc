@@ -125,16 +125,19 @@ void imageBoxScale (Image* image, double factor)
   box_scale (*image, factor, factor);
 }
 
-void imageOptimize2BW (Image* image)
+void imageOptimize2BW (Image* image, int low, int high,
+		       int threshold,
+		       int radius, double sd)
 {
-  optimize2bw (*image);
-  // optmize does not do this itself anymore
-  colorspace_gray8_to_gray1 (*image);
+  optimize2bw (*image, low, high, 0, // sloppy thr
+	       radius, sd);
+  // optimize does not do this itself anymore
+  colorspace_gray8_to_gray1 (*image, threshold);
 }
 
-bool imageIsEmpty (Image* image)
+bool imageIsEmpty (Image* image, double percent, int margin)
 {
-  return detect_empty_page (*image);
+  return detect_empty_page (*image, percent, margin);
 }
 
 #ifdef WITHBARDECODE
