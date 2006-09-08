@@ -466,7 +466,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       }
       
       for (row = 0; row < image.h; row++) {
-	std::istream::streampos offset;
+	std::istream::pos_type offset;
 	
 	if (info_hdr.iHeight > 0)
 	  offset = file_hdr.iOffBits + (image.h - row - 1) * file_stride;
