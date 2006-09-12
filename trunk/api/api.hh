@@ -117,7 +117,7 @@ void imageOptimize2BW (Image* image, int low, int high,
 // remeber the margin must be a multiple of 8!
 bool imageIsEmpty (Image* image, double percent, int margin);
 
-#ifdef WITHBARDECODE
+#if WITHBARDECODE == 1
 // commercial bardecode
 // codes is the string of barcode to look for, | seperated, like:
 // CODE39|CODE128|CODE25|EAN13|EAN8|UPCA|UPCE

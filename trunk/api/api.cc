@@ -140,7 +140,7 @@ bool imageIsEmpty (Image* image, double percent, int margin)
   return detect_empty_page (*image, percent, margin);
 }
 
-#ifdef WITHBARDECODE
+#if WITHBARDECODE == 1
 
 #include "bardecode.hh"
 
