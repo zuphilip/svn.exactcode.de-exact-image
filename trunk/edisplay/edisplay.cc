@@ -272,6 +272,7 @@ int Viewer::Run (bool opengl)
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TTF/");
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TrueType/");
   evas->FontPathPrepend ("/opt/e17/share/evas/data/");
+  evas->FontPathPrepend ("/usr/X11/share/fonts/TTF/");
   
   if (true) {
     evas->ImageCache (1024 * 1024);
