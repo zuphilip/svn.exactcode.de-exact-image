@@ -246,6 +246,11 @@ void rotate (Image& image, double angle, Image::iterator background)
     flipY (image);
     return;
   }
+
+  if (angle == 90.0) {
+    rot90 (image, 90);
+    return;
+  }
  
   if (angle == 270.0) {
     rot90 (image, 270);
