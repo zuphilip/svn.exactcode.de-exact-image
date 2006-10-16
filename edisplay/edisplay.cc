@@ -477,6 +477,25 @@ int Viewer::Run (bool opengl)
 		  image_loaded = Previous ();
 		  break;
 		  
+		case XK_Tab:
+		  ++channel;
+		  if (channel > 3)
+		    channel = 0;
+		  ImageToEvas ();
+		  {
+		    std::string s1, s2;
+		    s1 = "Color channel";
+		    switch (channel) {
+		    case 1: s2 = "R"; break;
+		    case 2: s2 = "G"; break;
+		    case 3: s2 = "B"; break;
+		    default: s2 = "NONE";
+		    }
+		    s2 = "dropout: " + s2;
+		    UpdateOSD (s1, s2);
+		  }
+		  break;
+		  
 		case XK_a:
 		  evas_image->SmoothScale (!evas_image->SmoothScale());
 		  // schedule the update
@@ -572,6 +591,9 @@ bool Viewer::Load ()
     image->data = 0;
   }
   
+  // reset channel filter
+  channel = 0;
+  
   if (!ImageCodec::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
     cerr << "Could not read the file " << *it << endl;
@@ -602,7 +624,18 @@ bool Viewer::Load ()
     cerr << "image data not loaded?"<< endl;
     return false;
   }
+  
+  ImageToEvas ();
+  
+  std::string title = *it;
+  title.insert (0, "edisplay: ");
+  XStoreName (dpy, win, title.c_str());
+  
+  return true;
+}
 
+void Viewer::ImageToEvas ()
+{
   if (!evas_image) {
     evas_image = new EvasImage (*evas);
     evas_image->SmoothScale (false);
@@ -618,23 +651,45 @@ bool Viewer::Load ()
   unsigned char* dest_ptr = evas_data;
 
   const int spp = image->spp; 
-  for (int y=0; y < image->h; ++y)
-    for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-#if __BYTE_ORDER != __BIG_ENDIAN
-      dest_ptr[0] = src_ptr[2];
-      dest_ptr[1] = src_ptr[1];
-      dest_ptr[2] = src_ptr[0];
-      if (spp == 4)
-	dest_ptr[3] = src_ptr[3]; // alpha
-#else
-      dest_ptr[1] = src_ptr[0];
-      dest_ptr[2] = src_ptr[1];
-      dest_ptr[3] = src_ptr[2];
-      if (spp == 4)
-	dest_ptr[0] = src_ptr[3]; // alpha
-#endif
-       }
   
+  if (channel == 0)
+    {
+      for (int y=0; y < image->h; ++y)
+	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+	  
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  dest_ptr[0] = src_ptr[2];
+	  dest_ptr[1] = src_ptr[1];
+	  dest_ptr[2] = src_ptr[0];
+	  if (spp == 4)
+	    dest_ptr[3] = src_ptr[3]; // alpha
+#else
+	  dest_ptr[1] = src_ptr[0];
+	  dest_ptr[2] = src_ptr[1];
+	  dest_ptr[3] = src_ptr[2];
+	  if (spp == 4)
+	    dest_ptr[0] = src_ptr[3]; // alpha
+#endif
+	}
+    }
+  else
+    {
+      for (int y=0; y < image->h; ++y)
+	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+	  
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  dest_ptr[0] = 0;
+	  dest_ptr[1] = 0;
+	  dest_ptr[2] = 0;
+	  dest_ptr[3-channel] = src_ptr[channel-1];
+#else
+	  dest_ptr[1] = 0;
+	  dest_ptr[2] = 0;
+	  dest_ptr[3] = 0;
+	  dest_ptr[channel] = src_ptr[channel-1];
+#endif
+	}
+    }
   
   evas_image->Alpha (spp == 4);
   evas_image->ImageSize (image->w,image->h);
@@ -643,17 +698,11 @@ bool Viewer::Load ()
   evas_image->DataUpdateAdd (0, 0, image->w,image->h);
   evas_image->Show ();
   
-  std::string title = *it;
-  title.insert (0, "edisplay: ");
-  XStoreName (dpy, win, title.c_str());
-  
   // position and resize, keep zoom
   if (false) {
     zoom = 100;
   }
   Zoom (1.0);
-  
-  return true;
 }
 
 int main (int argc, char** argv)

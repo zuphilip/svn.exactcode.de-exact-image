@@ -19,6 +19,8 @@ public:
   
 protected:
   
+  void ImageToEvas ();
+  
   void Zoom (double factor);
   void Move (int _x, int _y);
   
@@ -46,6 +48,7 @@ private:
   Utility::Timer osd_timer;
   
   int zoom;
+  int channel;
   
   // X11 stuff
   Display* dpy;
