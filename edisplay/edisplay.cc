@@ -479,16 +479,19 @@ int Viewer::Run (bool opengl)
 		  
 		case XK_Tab:
 		  ++channel;
-		  if (channel > 3)
+		  if (channel > 6)
 		    channel = 0;
 		  ImageToEvas ();
 		  {
 		    std::string s1, s2;
 		    s1 = "Color channel";
 		    switch (channel) {
-		    case 1: s2 = "R"; break;
-		    case 2: s2 = "G"; break;
-		    case 3: s2 = "B"; break;
+		    case 1: s2 = "just R"; break;
+		    case 2: s2 = "just G"; break;
+		    case 3: s2 = "just B"; break;
+		    case 4: s2 = "R intensity"; break;
+		    case 5: s2 = "G intensity"; break;
+		    case 6: s2 = "B intensity"; break;
 		    default: s2 = "NONE";
 		    }
 		    s2 = "dropout: " + s2;
@@ -674,19 +677,21 @@ void Viewer::ImageToEvas ()
     }
   else
     {
+      bool intensity = channel > 3;
+      int ch = (channel-1) % 3;
+      
       for (int y=0; y < image->h; ++y)
 	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  
 #if __BYTE_ORDER != __BIG_ENDIAN
-	  dest_ptr[0] = 0;
-	  dest_ptr[1] = 0;
-	  dest_ptr[2] = 0;
-	  dest_ptr[3-channel] = src_ptr[channel-1];
+	  dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
+	    intensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[2-ch] = src_ptr[ch];
 #else
-	  dest_ptr[1] = 0;
-	  dest_ptr[2] = 0;
-	  dest_ptr[3] = 0;
-	  dest_ptr[channel] = src_ptr[channel-1];
+	  dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
+	    insensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[1+ch] = src_ptr[ch];
 #endif
 	}
     }
