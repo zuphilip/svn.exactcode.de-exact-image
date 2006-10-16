@@ -693,7 +693,7 @@ void Viewer::ImageToEvas ()
 	    dest_ptr[2-ch] = src_ptr[ch];
 #else
 	  dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
-	    insensity ? src_ptr[ch] : 0;
+	    intensity ? src_ptr[ch] : 0;
 	  if (!intensity)
 	    dest_ptr[1+ch] = src_ptr[ch];
 #endif
