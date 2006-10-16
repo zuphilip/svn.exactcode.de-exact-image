@@ -477,10 +477,14 @@ int Viewer::Run (bool opengl)
 		  image_loaded = Previous ();
 		  break;
 		  
+		case XK_ISO_Left_Tab:
+		  channel -= 2; // +1 below ...
 		case XK_Tab:
 		  ++channel;
 		  if (channel > 6)
 		    channel = 0;
+		  else if (channel < 0)
+		    channel = 6;
 		  ImageToEvas ();
 		  {
 		    std::string s1, s2;
