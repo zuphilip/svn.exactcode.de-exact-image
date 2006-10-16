@@ -27,6 +27,22 @@ void deleteImage (Image* image)
   delete image;
 }
 
+Image* copyImage (Image* other)
+{
+  Image* im = new Image;
+  *im = *other;
+  
+  // currently for historic reasons the copy semantic is a bit unhandy here
+  other->data = im->data;
+  im->data = 0;
+  im->New (im->w, im->h);
+  
+  // copy pixel data
+  memcpy (im->data, other->data, im->Stride() * im->h);
+  
+  return im;
+}
+
 bool decodeImage (Image* image, char* data, int n)
 {
   const std::string str (data, n); 

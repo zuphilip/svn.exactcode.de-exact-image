@@ -39,6 +39,9 @@ Image* newImage ();
 // destroy image instance
 void deleteImage (Image* image);
 
+// copy the image's pixel and meta data
+Image* copyImage (Image* image);
+
 
 // decode image from memory data of size n
 #ifdef SWIG
