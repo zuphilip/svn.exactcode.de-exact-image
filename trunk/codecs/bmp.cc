@@ -126,7 +126,7 @@ typedef struct
   uint16	iReserved1;     /* Reserved, set as 0 */
   uint16	iReserved2;     /* Reserved, set as 0 */
   uint32	iOffBits;       /* Offset of the image from file start in bytes */
-} BMPFileHeader;
+}  __attribute__((packed)) BMPFileHeader;
 
 /* File header size in bytes: */
 const int       BFH_SIZE = 14;
@@ -180,7 +180,7 @@ typedef struct
 			 * in 16^16 format. */
   int32	iGammaGreen;    /* Toned response curve for green. */
   int32	iGammaBlue;     /* Toned response curve for blue. */
-} BMPInfoHeader;
+}  __attribute__((packed)) BMPInfoHeader;
 
 /*
  * Info header size in bytes:
@@ -203,22 +203,21 @@ typedef struct
 } BMPColorEntry;
 
 /*
- * Image data in BMP file stored in BGR (or ABGR) format. We should rearrange
+ * Image data in BMP file stored in BGR (or ABGR) format. We rearrange
  * pixels to RGB (RGBA) format.
  */
 static void
 rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
 {
   char tmp;
-  uint32 i;
   
-  switch(bit_count) {
+  switch (bit_count) {
     
   case 16:    /* FIXME: need a sample file */
     break;
     
   case 24:
-    for (i = 0; i < width; i++, buf += 3) {
+    for (int i = 0; i < width; i++, buf += 3) {
       tmp = *buf;
       *buf = *(buf + 2);
       *(buf + 2) = tmp;
@@ -228,7 +227,7 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
   case 32:
     {
       unsigned char* buf1 = buf;
-      for (i = 0; i < width; i++, buf += 4) {
+      for (int i = 0; i < width; i++, buf += 4) {
 	tmp = *buf;
 	*buf1++ = *(buf + 2);
 	*buf1++ = *(buf + 1);
@@ -247,13 +246,12 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
   enum BMPType bmp_type;
+
+  uint32 row, stride;
   
   uint32  clr_tbl_size = 0, n_clr_elems = 3;
   unsigned char *clr_tbl = 0;
-  
-  uint32	row, stride;
-
-  unsigned char* data = 0;
+  uint8_t* data = 0;
   
   stream->read ((char*)&file_hdr.bType, 2);
   if(file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
@@ -270,6 +268,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   TIFFSwabLong(&file_hdr.iOffBits);
 #endif
 
+  // fix the iSize, in early BMP file this is pure garbage
   stream->seekg (0, std::ios::end);
   file_hdr.iSize = stream->tellg ();
   
@@ -292,7 +291,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   else
     bmp_type = BMPT_WIN5;
   
-  if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 || bmp_type == BMPT_OS22) {
+  if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
+      bmp_type == BMPT_OS22) {
     stream->read((char*)&info_hdr.iWidth, 4);
     stream->read((char*)&info_hdr.iHeight, 4);
     stream->read((char*)&info_hdr.iPlanes, 2);
@@ -425,7 +425,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       break;
     }
   
-  stride = (image.w * image.spp * image.bps + 7) / 8;
+  stride = image.Stride ();
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
   
@@ -447,7 +447,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   case BMPC_BITFIELDS:
     // we convert those to RGB for easier use
     image.bps = 8;
-    stride = (image.w * image.spp * image.bps + 7) / 8;
+  
   case BMPC_RGB:
     {
       uint32 file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
@@ -458,7 +458,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       printf ("red mask: %x, green mask: %x, blue mask: %x\n",
       info_hdr.iRedMask, info_hdr.iGreenMask, info_hdr.iBlueMask); */
       
-      data = (unsigned char*) _TIFFmalloc (stride * image.h);
+      data = (uint8_t*) _TIFFmalloc (stride * image.h);
       
       if (!data) {
 	fprintf(stderr, "Can't allocate space for image buffer\n");
@@ -668,8 +668,105 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  // TODO: implement at some rainy afternooon ,-)
-  return false;
+  if (image.bps != 8 || image.spp != 3) {
+    std::cerr << "only writing 24bit BMP is supported right now" << std::endl;
+    return false;
+  }
+  
+  BMPFileHeader file_hdr;
+  BMPInfoHeader info_hdr;
+  enum BMPType bmp_type;
+
+  int stride = image.Stride ();
+  
+  uint32  clr_tbl_size = 0, n_clr_elems = 3;
+  unsigned char *clr_tbl = 0;
+  
+  memset (&file_hdr, 0, sizeof (file_hdr));
+  memset (&info_hdr, 0, sizeof (info_hdr));
+
+  // BMPFileHeader
+
+  file_hdr.bType[0] = 'B';
+  file_hdr.bType[1] = 'M';
+  
+  // BMPInfoHeader
+  
+  info_hdr.iSize = BIH_WIN5SIZE;
+  info_hdr.iWidth = image.w;
+  info_hdr.iHeight = image.h;
+  info_hdr.iPlanes = 1;
+  info_hdr.iBitCount = image.spp * image.bps;
+  info_hdr.iCompression = BMPC_RGB;
+  info_hdr.iSizeImage  = image.Stride()*image.h; // TODO: compressed size
+  info_hdr.iXPelsPerMeter = (int32) (image.xres * 100 / 2.54);
+  info_hdr.iYPelsPerMeter = (int32) (image.yres * 100 / 2.54);
+  info_hdr.iClrUsed = 0; // TODO
+  info_hdr.iClrImportant = 0; // TODO
+  info_hdr.iRedMask = 0;
+  info_hdr.iGreenMask = 0; // TODO
+  info_hdr.iBlueMask = 0; // TODO
+  info_hdr.iAlphaMask = 0; // TODO
+
+  // BMP image payload needs to be 4 byte alligned :-(
+  int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
+  
+  file_hdr.iOffBits = BFH_SIZE + BIH_WIN5SIZE;
+  file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
+  
+  std::cout << "size: " << file_hdr.iSize << ", offset: " << file_hdr.iOffBits << std::endl;
+  std::cout << "w: " << info_hdr.iWidth << ", h: " << info_hdr.iHeight << std::endl;
+  
+  // swab non byte fields
+#if __BYTE_ORDER == __BIG_ENDIAN
+  TIFFSwabLong(&file_hdr.uSize);
+  TIFFSwabLong(&file_hdr.iOffBits);
+  
+  TIFFSwabLong(&info_hdr.iSize);
+  TIFFSwabLong(&info_hdr.iWidth);
+  TIFFSwabLong(&info_hdr.iHeight);
+  TIFFSwabShort(&info_hdr.iPlanes);
+  TIFFSwabShort(&info_hdr.iBitCount);
+  TIFFSwabLong(&info_hdr.iCompression);
+  TIFFSwabLong(&info_hdr.iSizeImage);
+  TIFFSwabLong(&info_hdr.iXPelsPerMeter);
+  TIFFSwabLong(&info_hdr.iYPelsPerMeter);
+  TIFFSwabLong(&info_hdr.iClrUsed);
+  TIFFSwabLong(&info_hdr.iClrImportant);
+  TIFFSwabLong(&info_hdr.iRedMask);
+  TIFFSwabLong(&info_hdr.iGreenMask);
+  TIFFSwabLong(&info_hdr.iBlueMask);
+  TIFFSwabLong(&info_hdr.iAlphaMask);
+#endif
+
+  // write header meta info
+  stream->write ((char*)&file_hdr, BFH_SIZE);
+  stream->write ((char*)&info_hdr, BIH_WIN5SIZE);
+  
+  // write image data
+  switch (info_hdr.iCompression) {
+  case BMPC_RGB:
+    {
+      uint8_t payload [file_stride];
+      
+      for (int row = image.h-1; row >=0; --row)
+	{
+	  memcpy (payload, image.data + stride*row, stride);
+	  rearrangePixels (payload, image.w, info_hdr.iBitCount);
+	  
+	  if (!stream->write ((char*)payload, file_stride) ) {
+	    std::cerr << "scanline " << row << " write error" << std::endl;
+	  }
+	}
+    }
+    break;
+    
+  default:
+    std::cerr << "unsupported compression method writing bmp" << std::endl;
+    return false;
+  } /* switch */
+  
+  return true;
 }
 
 BMPCodec bmp_loader;
