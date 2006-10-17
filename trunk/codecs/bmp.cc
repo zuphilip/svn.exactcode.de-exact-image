@@ -714,9 +714,6 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   file_hdr.iOffBits = BFH_SIZE + BIH_WIN5SIZE;
   file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
   
-  std::cout << "size: " << file_hdr.iSize << ", offset: " << file_hdr.iOffBits << std::endl;
-  std::cout << "w: " << info_hdr.iWidth << ", h: " << info_hdr.iHeight << std::endl;
-  
   // swab non byte fields
 #if __BYTE_ORDER == __BIG_ENDIAN
   TIFFSwabLong(&file_hdr.uSize);
