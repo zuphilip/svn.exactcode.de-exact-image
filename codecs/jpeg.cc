@@ -106,7 +106,12 @@ boolean fill_input_buffer (j_decompress_ptr cinfo)
   cpp_src_mgr* src = (cpp_src_mgr*) cinfo->src;
   
   size_t nbytes = src->stream->tellg ();
+
   src->stream->read ((char*)src->buffer, INPUT_BUF_SIZE);
+  // if only a partial buffer was read, reset the state to be able
+  // to get the new file position
+  if (!*src->stream)
+    src->stream->clear();
   nbytes = (size_t)src->stream->tellg () - nbytes;
   
   if (nbytes <= 0) {
