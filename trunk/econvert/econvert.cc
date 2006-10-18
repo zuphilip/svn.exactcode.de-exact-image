@@ -1,4 +1,3 @@
-
 /*
  * The ExactImage library's convert compatible command line frontend.
  * Copyright (C) 2006 René Rebe, Archivista
@@ -975,7 +974,8 @@ int main (int argc, char* argv[])
   if (!arglist.Read (argc, argv))
     return 1;
 
-  if (arg_help.Get() == true)
+  // print the usage if no argument was given or help requested
+  if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "Exact image converter including a variety of fast algorithms (econvert)."
 		<< std::endl << "Version " VERSION
