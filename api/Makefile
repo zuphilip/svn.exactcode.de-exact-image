@@ -1,4 +1,3 @@
-
 include build/top.make
 
 BINARY = ExactImage
@@ -24,4 +23,3 @@ install:: $($(X_MODULE)_BINARY)
 	$(Q)echo "INSTALL PERL module $($(X_MODULE)_OUTPUT)/..."
 	$(Q)mkdir -p $(libdir)/perl5/site_perl/
 	$(Q)install $($(X_MODULE)_OUTPUT)/ExactImage.pm $($(X_MODULE)_BINARY) $(libdir)/perl5/site_perl/
-
