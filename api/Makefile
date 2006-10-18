@@ -4,7 +4,7 @@ BINARY = ExactImage
 BINARY_EXT = $(X_DYNEXT)
 DEPS = $(lib_BINARY) $(codecs_BINARY) $($(X_MODULE)_OUTPUT)/api-perl-wrap.cc
 
-CPPFLAGS += -I api $(PERLINCS)
+$(X_MODULE)_CXXFLAGS := -I api $(PERLINCS)
 
 $($(X_MODULE)_OUTPUT)/api-perl-wrap.cc: $(X_MODULE)/api.hh $(X_MODULE)/api-swig.hh
 	$(Q)echo "  SWIG      $($(X_MODULE)_OUTPUT)"
