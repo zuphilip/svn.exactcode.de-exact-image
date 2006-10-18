@@ -62,4 +62,3 @@ pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl, v\
 	PERLINCS=`perl -MExtUtils::Embed -e ccopts`
 
 save
-

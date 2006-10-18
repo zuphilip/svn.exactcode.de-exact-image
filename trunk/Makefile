@@ -1,4 +1,3 @@
-
 include config.make
 
 X_BUILD_IMPLICIT=0
@@ -57,4 +56,3 @@ endif
 
 check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT) $(X_OUTARCH)/edentify/edentify$(X_EXEEXT)
 	$(Q)cd testsuite; ./run ../$(X_OUTARCH)/econvert/econvert$(X_EXEEXT)
-
