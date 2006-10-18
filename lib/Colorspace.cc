@@ -1,5 +1,10 @@
 
+#ifdef __FreeBSD__
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
+
 #include <iostream>
 
 #include "Image.hh"

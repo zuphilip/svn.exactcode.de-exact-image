@@ -19,7 +19,12 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef __FreeBSD__
+#include <machine/endian.h>
+#else
 #include <endian.h>
+#endif
+
 #include <byteswap.h>
 
 #define TIFFSwabShort(x) *x = bswap_16 (*x)
