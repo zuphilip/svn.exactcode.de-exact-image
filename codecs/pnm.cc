@@ -14,6 +14,14 @@
 #include <string>
 #include <sstream>
 
+#ifdef __FreeBSD__
+#include <machine/endian.h>
+#else
+#include <endian.h>
+#endif
+
+#include <byteswap.h>
+
 #include "pnm.hh"
 
 int getNextHeaderNumber (std::istream* stream)
@@ -89,9 +97,9 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
     std::getline (*stream, str);
   }
   
-  Image::iterator it = image.begin ();
   if (mode <= '3') // ascii / plain text
     {
+      Image::iterator it = image.begin ();
       for (int y = 0; y < image.h; ++y)
 	{
 	  for (int x = 0; x < image.w; ++x)
@@ -117,42 +125,32 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
     }
   else // binary data
     {
-      char payload [3*2]; // max space we read for a pixel 3 pixel at 16 bit == 2 bytes
-      int size = image.spp * (image.bps > 8 ? 2 : 1);
+      const int stride = image.Stride ();
+      const int bps = image.bps;
       
       for (int y = 0; y < image.h; ++y)
 	{
-	  for (int x = 0; x < image.w; ++x)
-	    {
-	      stream->read (payload, size);
-	      
-	      if (image.spp == 1) {
-		int i = payload [0] * (255 / maxval);
-		
-		it.setL (i);
-	      }
-	      else {
-		uint16_t r, g, b;
-		
-		if (size == 3) {
-		  r = payload [0];
-		  g = payload [1];
-		  b = payload [2];
-		}
-		else {
-		  r = (payload [0] << 8) + payload [1];
-		  g = (payload [2] << 8) + payload [3];
-		  b = (payload [4] << 8) + payload [5];
-		}
-		it.setRGB (r, g, b);
-	      }
-	      
-	      it.set (it);
-	      ++it;
-	    }
+	  uint8_t* dest = image.data + y * stride;
+	  
+	  stream->read ((char*)dest, stride);
+
+	  // is it publically defined somewhere???
+	  if (bps == 1) {
+	    uint8_t* xor_ptr = dest;
+	    for (int x = 0; x < image.w; x += 8)
+	      *xor_ptr++ ^= 0xff;
+	  }
+	  
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  if (bps == 16) {
+	    uint16_t* swap_ptr = (uint16_t*)dest;
+	    for (int x = 0; x < image.w; ++x)
+	      *swap_ptr++ = bswap_16 (*swap_ptr);
+	  }
+#endif
 	}
     }
-
+  
   return true;
 }
 
@@ -222,47 +220,32 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   else
     {
-      char payload [3*2]; // max space we consume 3 pixel at 16 bit == 2 bytes
-      int size = image.spp * (image.bps > 8 ? 2 : 1);
+      const int stride = image.Stride ();
+      const int bps = image.bps;
+      
+      uint8_t* ptr = (uint8_t*) malloc (stride);
       
       for (int y = 0; y < image.h; ++y)
 	{
-	  for (int x = 0; x < image.w; ++x)
-	    {
-	      *it;
-	      
-	      if (image.spp == 1) {
-		int i = it.getL() / (255 / maxval);
-		
-		if (size == 1)
-		  payload [0] = i;
-		else {
-		  payload [0] = i >> 8;
-		  payload [1] = i & 0xff;
-		}
-	      }
-	      else {
-		uint16_t r, g, b;
-		it.getRGB (&r, &g, &b);
-		
-		if (size == 3) {
-		  payload [0] = r;
-		  payload [1] = g;
-		  payload [2] = b;
-		}
-		else {
-		  payload [0] = r >> 8;
-		  payload [1] = r & 0xFF;
-		  payload [2] = g >> 8;
-		  payload [3] = g & 0xFF;
-		  payload [4] = b >> 8;
-		  payload [5] = b & 0xFF;
-		}
-	      }
-	      ++it;
-	      stream->write (payload, size);
-	    }
+	  memcpy (ptr, image.data + y * stride, stride);
+	  
+	  // is this publically defined somewhere???
+	  if (bps == 1) {
+	    uint8_t* xor_ptr = ptr;
+	    for (int x = 0; x < image.w; x += 8)
+	      *xor_ptr++ ^= 0xff;
+	  }
+	  
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  if (bps == 16) {
+	    uint16_t* swap_ptr = (uint16_t*)ptr;
+	    for (int x = 0; x < image.w; ++x)
+	      *swap_ptr++ = bswap_16 (*swap_ptr);
+	  }
+#endif
+	  stream->write ((char*)ptr, stride);
 	}
+      free (ptr);
     }
   
   stream->flush ();
