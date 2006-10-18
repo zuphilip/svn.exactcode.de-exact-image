@@ -29,8 +29,16 @@ features are vital for macosd you need to update to a more recent compiler first
 headercheck c++ iostream string iostream sstream fstream || \
 	status_error "Not all tested STL headers are present - please install them."
 
-pkgcheck evas -config EVAS atleast 0.9.9
 pkgcheck x11 compile X11 atleast 11.0
+if ! pkgcheck evas -config EVAS atleast 0.9.9; then
+	cat <<-EOT
+
+		Enlightenment Evas was not found - edisplay is disabled.
+		Evas can be obtained from: www.enlightenment.org
+
+EOT
+fi
+
 
 pkgcheck libjpeg header LIBJPEG cc jconfig.h
 pkgcheck libtiff header LIBTIFF c++ tiff.h
