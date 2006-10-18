@@ -41,6 +41,9 @@
 #if HAVELCMS != 1
 #define NO_LCMS
 #endif
+#if HAVEJPEG != 1
+#define NO_JPEG
+#endif
 
 /*
    NO_JPEG disables decoding of compressed Kodak DC120 files.
