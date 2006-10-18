@@ -1,7 +1,8 @@
 
 Image formats:
  - xpm
- - ico (Windows Icon)
+ - ico (Windows icon files)
+ - icon (Apple icon files)
  - (e)ps
  - pcx
  - targa
@@ -11,9 +12,11 @@ General:
  - Exif, XMP and ordinary, classic comment support 
 
 Loders:
+ - delayed loading
  - allow for jpeg scaling / orthogonal rotation without recompression
 
 Algorithms:
+ - rgb_A_ iterator and thus scaling, rotation
  - scaling!
  - rotation, descew
  - descreen
