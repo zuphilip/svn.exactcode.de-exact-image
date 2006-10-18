@@ -25,6 +25,8 @@ Algorithms:
  - all the others
 
 Colorspaces:
+ - more generic but faster and let all algorithms use it in the most generic form
+ - RGBA
  - float, double support
  - CMYK
  - YUV
