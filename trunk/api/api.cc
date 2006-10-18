@@ -15,7 +15,7 @@
 #include <optimize2bw.hh>
 #include <empty-page.hh>
 
-#include <api.hh>
+#include "api.hh"
 
 Image* newImage ()
 {
