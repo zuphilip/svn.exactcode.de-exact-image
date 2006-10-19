@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
@@ -395,12 +394,16 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   jpeg_create_compress(&cinfo);
 
   cpp_stream_dest (&cinfo, stream);
-  
+
+  cinfo.in_color_space = JCS_UNKNOWN;
   if (image.bps == 8 && image.spp == 3)
     cinfo.in_color_space = JCS_RGB;
   else if (image.bps == 8 && image.spp == 1)
     cinfo.in_color_space = JCS_GRAYSCALE;
-  else {
+  else if (image.bps == 8 && image.spp == 4)
+    cinfo.in_color_space = JCS_CMYK;
+
+  if (cinfo.in_color_space == JCS_UNKNOWN) {
     std::cerr << "Unhandled bps/spp combination." << std::endl;
     jpeg_destroy_compress(&cinfo);
     return false;
