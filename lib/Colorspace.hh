@@ -1,3 +1,5 @@
+#ifndef COLORSPACE_HH
+#define COLORSPACE_HH
 
 void normalize (Image& image, unsigned char low = 0, unsigned char high = 0);
 
@@ -20,3 +22,4 @@ void colorspace_8_to_16 (Image& image);
 
 void colorspace_de_palette (Image& image, int table_entries,
 			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);
+#endif
