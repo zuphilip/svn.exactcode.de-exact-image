@@ -1,4 +1,3 @@
-
 /*
  * The ExactImage stable external API for use with SWIG.
  * Copyright (C) 2006 René Rebe, Archivista
@@ -101,6 +100,9 @@ int imageChannelDepth (Image* image);
 int imageWidth (Image* image);
 int imageHeight (Image* image);
 
+// returns the name of the image colorspace such as gray, gray2, gray4, rgb8, rgb16, cymk8, cymk16 ...
+char* imageColorspace (Image* image);
+
 int imageXres (Image* image);
 int imageYres (Image* image);
 
@@ -109,6 +111,10 @@ void imageSetYres (Image* image, int yres);
 
 
 // image manipulation
+
+// transforms the image into a new target colorspace - the names are the same as returned by
+// imageColorspace, might return false if the conversion was not possible
+bool imageConvertColorspace (Image* image, const char* target_colorspace);
 void imageRotate (Image* image, double angle);
 void imageScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);

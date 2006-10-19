@@ -36,6 +36,10 @@
 #include "riemersma.h"
 #include "floyd-steinberg.h"
 
+// let's reuse some parts of the official, stable API to avoid
+// duplicating code
+#include "api/api.cc"
+
 #include <functional>
 
 using namespace Utility;
@@ -133,80 +137,8 @@ bool convert_colorspace (const Argument<std::string>& arg)
 {
   std::string space = arg.Get();
   std::transform (space.begin(), space.end(), space.begin(), tolower);
-  std::cerr << "convert_colorspace: " << space << std::endl;
   
-  int spp, bps;
-  if (space == "bw" || space == "gray1") {
-    spp = 1; bps = 1;
-  } else if (space == "gray2") {
-    spp = 1; bps = 2;
-  } else if (space == "gray4") {
-    spp = 1; bps = 4;
-  } else if (space == "gray" || space == "gray8") {
-    spp = 1; bps = 8;
-  } else if (space == "gray16") {
-    spp = 1; bps = 16;
-  } else if (space == "rgb" || space == "rgb8") {
-    spp = 3; bps = 8;
-  } else if (space == "rgb16") {
-    spp = 3; bps = 16;
-  // TODO: CYMK, YVU, ...
-  } else {
-    std::cerr << "Requested colorspace conversion not yet implemented."
-              << std::endl;
-    return false;
-  }
-
-  // no image data, e.g. loading raw images
-  if (!image.data) {
-		image.spp = spp;
-		image.bps = bps;
-		return true;
-  }
-
-  // up
-  if (image.bps == 1 && bps == 2)
-    colorspace_gray1_to_gray2 (image);
-  else if (image.bps == 1 && bps == 4)
-    colorspace_gray1_to_gray4 (image);
-  else if (image.bps < 8 && bps >= 8)
-    colorspace_grayX_to_gray8 (image);
-
-  // upscale to 8 bit even for sub byte gray since we have no inter sub conv., yet
-  if (image.bps < 8 && image.bps > bps)
-    colorspace_grayX_to_gray8 (image);
-  
-  if (image.bps == 8 && image.spp == 1 && spp == 3)
-    colorspace_gray8_to_rgb8 (image);
-
-  if (image.bps == 8 && bps == 16)
-    colorspace_8_to_16 (image);
-  
-  // down
-  if (image.bps == 16 && bps < 16)
-    colorspace_16_to_8 (image);
- 
-  if (image.spp == 3 && spp == 1) 
-    colorspace_rgb8_to_gray8 (image);
-
-  if (spp == 1 && image.bps > bps) {
-    if (image.bps == 8 && bps == 1)
-      colorspace_gray8_to_gray1 (image);
-    else if (image.bps == 8 && bps == 2)
-      colorspace_gray8_to_gray2 (image);
-    else if (image.bps == 8 && bps == 1)
-      colorspace_gray8_to_gray1 (image);
-  }
-
-  if (image.spp != spp || image.bps != bps) {
-    std::cerr << "Incomplete colorspace conversion. Requested: spp: "
-              << spp << ", bps: " << bps
-              << " - now at spp: " << image.spp << ", bps: " << image.bps
-              << std::endl;
-    return false;
-  }
-  
-  return true;
+  return imageConvertColorspace (&image, space.c_str());
 }
 
 bool convert_normalize (const Argument<bool>& arg)
