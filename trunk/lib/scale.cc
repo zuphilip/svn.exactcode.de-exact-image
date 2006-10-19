@@ -41,36 +41,65 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
 
-  Image::iterator dst = new_image.begin();
-  Image::iterator src = image.begin();
+  if (image.bps == 8 && image.spp == 1)
+    {
+      uint8_t* dst = new_image.data;
+      uint8_t* src = image.data;
 
-  for (int y = 0; y < new_image.h; ++y) {
-    double by = (-1.0+image.h) * y / new_image.h;
-    int sy = (int)floor(by);
-    int ydist = (int) ((by - sy) * 256);
-    int syy = sy+1;
+      for (int y = 0; y < new_image.h; ++y) {
+	double by = (-1.0+image.h) * y / new_image.h;
+	int sy = (int)floor(by);
+	int ydist = (int) ((by - sy) * 256);
+	int syy = sy+1;
 
-    for (int x = 0; x < new_image.w; ++x) {
-      double bx = (-1.0+image.w) * x / new_image.w;
-      int sx = (int)floor(bx);
-      int xdist = (int) ((bx - sx) * 256);
-      int sxx = sx+1;
+	for (int x = 0; x < new_image.w; ++x) {
+	  double bx = (-1.0+image.w) * x / new_image.w;
+	  int sx = (int)floor(bx);
+	  int xdist = (int) ((bx - sx) * 256);
+	  int sxx = sx+1;
 
-      if (false && x < 8 && y < 8) {
-        std::cout << "sx: " << sx << ", sy: " << sy
-		  << ", sxx: " << sxx << ", syy: " << syy << std::endl;
-        std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
+	  unsigned int v = (
+			    src [sx +  sy*image.w] * (256-xdist) * (256-ydist) +
+			    src [sxx + sy*image.w] * xdist       * (256-ydist) +
+			    src [sx + syy*image.w] * (256-xdist) * ydist +
+			    src [sxx + syy*image.w] * xdist       * ydist
+			    ) / (256 * 256);
+	  *dst++ = v;
+	}
       }
-
-      dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
-                 *src.at (sxx, sy ) * xdist       * (256-ydist) +
-                 *src.at (sx,  syy) * (256-xdist) * ydist +
-                 *src.at (sxx, syy) * xdist       * ydist) /
-		(256 * 256) );
-      ++dst;
     }
-  }
+  else
+    {
+      Image::iterator dst = new_image.begin();
+      Image::iterator src = image.begin();
+      
+      for (int y = 0; y < new_image.h; ++y) {
+	double by = (-1.0+image.h) * y / new_image.h;
+	int sy = (int)floor(by);
+	int ydist = (int) ((by - sy) * 256);
+	int syy = sy+1;
 
+	for (int x = 0; x < new_image.w; ++x) {
+	  double bx = (-1.0+image.w) * x / new_image.w;
+	  int sx = (int)floor(bx);
+	  int xdist = (int) ((bx - sx) * 256);
+	  int sxx = sx+1;
+
+	  if (false && x < 8 && y < 8) {
+	    std::cout << "sx: " << sx << ", sy: " << sy
+		      << ", sxx: " << sxx << ", syy: " << syy << std::endl;
+	    std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
+	  }
+
+	  dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
+		     *src.at (sxx, sy ) * xdist       * (256-ydist) +
+		     *src.at (sx,  syy) * (256-xdist) * ydist +
+		     *src.at (sxx, syy) * xdist       * ydist) /
+		    (256 * 256) );
+	  ++dst;
+	}
+      }
+    }
   image = new_image;
 }
 
