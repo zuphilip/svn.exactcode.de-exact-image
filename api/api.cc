@@ -113,7 +113,17 @@ int imageYres (Image* image)
 
 char* imageColorspace (Image* image)
 {
-	// TODO:
+  switch (image->spp * image->bps)
+    {
+    case 1: return "gray1";
+    case 2: return "gray2";
+    case 4: return "gray4";
+    case 8: return "gray8";
+    case 16: return "gray16";
+    case 24: return "rgb8";
+    case 48: return "rgb16";
+    default: return "";
+    }
 }
 
 void imageSetXres (Image* image, int xres)
@@ -223,11 +233,21 @@ void imageBoxScale (Image* image, double factor)
 
 void imageOptimize2BW (Image* image, int low, int high,
 		       int threshold,
-		       int radius, double sd)
+		       int radius, double sd, int target_dpi)
 {
   optimize2bw (*image, low, high, 0, // sloppy thr
 	       radius, sd);
-  // optimize does not do this itself anymore
+  
+  if (target_dpi && image->xres)
+    {
+      double scale = (double)(target_dpi) / image->xres;
+      std::cerr << "scale: " << scale << std::endl;
+      if (scale < 1.0)
+	box_scale (*image, scale, scale);
+      else
+	bilinear_scale (*image, scale, scale);
+    }
+  
   colorspace_gray8_to_gray1 (*image, threshold);
 }
 

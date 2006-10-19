@@ -85,12 +85,12 @@ bool decodeImageFile (Image* image, const char* filename);
 #endif
 #endif
   void encodeImage (char **s, int *slen,
-		    Image* image, const char* codec, int quality,
-		    const char* compression);
+		    Image* image, const char* codec, int quality = 100,
+		    const char* compression = "");
 
 // encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,
-		      int quality, const char* compression);
+		      int quality = 100, const char* compression = "");
 
 
 // image properties
@@ -120,9 +120,10 @@ void imageScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 
 // advanced all-in-one algorithms
-void imageOptimize2BW (Image* image, int low, int high,
-		       int threshold,
-		       int radius, double standard_deviation);
+void imageOptimize2BW (Image* image, int low = 0, int high = 255,
+		       int threshold = 170,
+		       int radius = 3, double standard_deviation = 2.3,
+		       int target_dpi = 0);
 // remeber the margin must be a multiple of 8!
 bool imageIsEmpty (Image* image, double percent, int margin);
 
