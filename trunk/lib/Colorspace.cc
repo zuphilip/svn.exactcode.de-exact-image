@@ -179,7 +179,7 @@ void colorspace_grayX_to_gray8 (Image& image)
 
   Image gray8_image;
   gray8_image.bps = 8;
-  gray8_image.spp = 3;
+  gray8_image.spp = 1;
   gray8_image.data = 0;
   gray8_image.New (image.w, image.h);
 
