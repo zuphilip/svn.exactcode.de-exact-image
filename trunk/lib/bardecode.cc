@@ -1,4 +1,3 @@
-
 /*
  * Bardecode frontend with ExactImage image i/o backend."
  * Copyright (C) 2006 René Rebe for Archivista
@@ -61,10 +60,20 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
-std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
+std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
 					 int min_length, int max_length)
 {
   uint16_t i;
+  
+  // a copy we can mangle
+  Image image;
+  
+  // yeah - our annoying default copy ownership migration bits again ..
+  image = im;
+  im.data = image.data;
+  image.data = 0;
+  image.New (image.w, image.h);
+  memcpy (image.data, im.data, image.Stride()*image.h);
   
   // the barcode library does not support such a high bit-depth
   if (image.bps == 16)
@@ -75,11 +84,13 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
     colorspace_rgb8_to_gray8 (image);
   
   // testing showed the library does not like 2bps, so upscale it
-//  if (image.bps == 2)
-//    colorspace_gray2_to_gray4 (image);
-
+  if (image.bps < 8)
+    colorspace_grayX_to_gray8 (image);
+  
   // we have a 1, 4 or 8 bits per pixel GRAY image, now
-
+  
+  //ImageCodec::Write ("dump.tif", image, 90, "");
+  
 #if 0
   // The bardecode library is documented to require a 4 byte row
   // allignment. To conform this a custom allocated bitmap would
@@ -103,10 +114,10 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
       uint8_t l = it.getL();
 			z <<= 1;
       if (l > 127)
-				z |= 1;
-			if (x % 8 == 7)
-	      *bitmap_ptr++ = z;
-			++it;
+	z |= 1;
+      if (x % 8 == 7)
+	*bitmap_ptr++ = z;
+      ++it;
     }
     int remainder = 8 - image.w % 8;
     if (remainder != 8)
@@ -126,13 +137,13 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
   STSetParameter (hBarcode, ST_READ_EAN8, &i);
   STSetParameter (hBarcode, ST_READ_UPCA, &i);
   STSetParameter (hBarcode, ST_READ_UPCE, &i);
-  i = 1;
   
   // parse the code list
   std::string c (codes);
   std::transform (c.begin(), c.end(), c.begin(), tolower);
   std::string::size_type it = 0;
   std::string::size_type it2;
+  i = 1;
   do
     {
       it2 = c.find ('|', it);
@@ -171,8 +182,19 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
   i = max_length;
   STSetParameter (hBarcode, ST_MAX_LEN, &i);
   
-  i = 1;
-  STSetParameter(hBarcode, ST_MULTIPLE_READ, &i);
+  if (false) // the library claims to have defaults (...)
+    {
+      i = 15; // all directions
+      STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
+      
+      i = 1;
+      STSetParameter(hBarcode, ST_MULTIPLE_READ, &i);
+      
+      i = 20;
+      STSetParameter(hBarcode, ST_NOISEREDUCTION, &i);
+      i = 1;
+      STSetParameter(hBarcode, ST_DESPECKLE, &i);
+    }
   
   BITMAP bbitmap;
   bbitmap.bmType = 1; // bitmap type version, fixed v1
@@ -183,11 +205,11 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
   bbitmap.bmBitsPixel = image.bps; // 1, 4 and 8 appeared to work
   bbitmap.bmBits = image.data; // our class' bitmap data
   
-  /*
-  std::cerr << "w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
-            << ", bps: " << image.bps << ", stride: " << image.Stride()
-            << std::endl;
-  */
+  if (false)
+    std::cerr << "@: " << (void*) image.data
+	      << ", w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
+	      << ", bps: " << image.bps << ", stride: " << image.Stride()
+	      << std::endl;
   
   char** bar_codes;
   char** bar_codes_type;
@@ -196,7 +218,6 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
   int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
-  
   std::vector<std::string> ret;
   
   for (i = 0; i < bar_count; ++i) {
@@ -208,5 +229,6 @@ std::vector<std::string> decodeBarcodes (Image& image, const std::string& codes,
   }
   
   STFreeBarCodeSession (hBarcode);
+  
   return ret;
 }
