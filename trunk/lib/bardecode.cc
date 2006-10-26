@@ -83,48 +83,37 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   if (image.spp == 3)
     colorspace_rgb8_to_gray8 (image);
   
-  // testing showed the library does not like 2bps, so upscale it
+  // the library does not appear to like 2bps ?
   if (image.bps < 8)
     colorspace_grayX_to_gray8 (image);
   
-  // we have a 1, 4 or 8 bits per pixel GRAY image, now
+  // now we have a 8 bits per pixel GRAY image
   
   //ImageCodec::Write ("dump.tif", image, 90, "");
   
-#if 0
   // The bardecode library is documented to require a 4 byte row
   // allignment. To conform this a custom allocated bitmap would
   // be required which would either require a complete Image class
   // rewrite or a extremely costly allocation and copy at this
-  // location. Testing showed it worked without this allignment.
+  // location. Depending on the moon this is required or not.
   
-  int stride = image.Stride ();
-  std::cerr << "Stride: " << stride << std::endl;
-  stride += stride % 4 > 0 ? 4 - stride % 4 : 0;
-  std::cerr << "Stride: " << stride << std::endl;
-
-  uint8_t* bitmap = (uint8_t*) malloc (stride * image.h);
-  uint8_t* bitmap_ptr = bitmap;
-
-  Image::iterator it = image.begin (); 
-  for (int y = 0; y < image.h; ++y) {
-		uint8_t z = 0;
-    for (int x = 0; x < image.w; ++x) {
-      *it; // dereference for memory access
-      uint8_t l = it.getL();
-			z <<= 1;
-      if (l > 127)
-	z |= 1;
-      if (x % 8 == 7)
-	*bitmap_ptr++ = z;
-      ++it;
+  if (true)
+    {
+      int cur_stride = image.Stride ();
+      int stride = cur_stride / 4 * 4;
+      
+      if (false)
+	std::cerr << "Cur Stride: " << cur_stride << std::endl
+		  << "New Stride: " << stride << std::endl;
+      
+      // the new image is definetly smaller, thus we mess with the original data
+      // first row stays fixed, thus skip
+      for (int y = 1; y < image.h; ++y)
+	memmove (image.data + y*stride, image.data + y*cur_stride, stride);
+      
+      // store new stride == width (@ 8bit gray)
+      image.w = stride;
     }
-    int remainder = 8 - image.w % 8;
-    if (remainder != 8)
-      *bitmap_ptr = z << remainder;
-    bitmap_ptr = bitmap + stride * y;
-  }
-#endif
 
   // call into the barcode library
   void* hBarcode = STCreateBarCodeSession ();
