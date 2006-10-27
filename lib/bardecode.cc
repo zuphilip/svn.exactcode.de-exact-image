@@ -60,7 +60,7 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
-const bool debug = true;
+const bool debug = false;
 
 std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
 					 int min_length, int max_length)
@@ -77,6 +77,9 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   image.New (image.w, image.h);
   memcpy (image.data, im.data, image.Stride()*image.h);
   
+  if (image.xres == 0)
+    image.xres = 300; // passed down the lib ...
+  
   // the barcode library does not support such a high bit-depth
   if (image.bps == 16)
     colorspace_16_to_8 (image);
@@ -86,10 +89,10 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     colorspace_rgb8_to_gray8 (image);
   
   // the library does not appear to like 2bps ?
-  if (image.bps < 8)
+  if (image.bps == 2)
     colorspace_grayX_to_gray8 (image);
   
-  // now we have a 8 bits per pixel GRAY image
+  // now we have a 1, 4 or 8 bits per pixel GRAY image
   
   //ImageCodec::Write ("dump.tif", image, 90, "");
   
@@ -103,11 +106,12 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     int cur_stride = image.Stride ();
     int stride = cur_stride / 64 * 64;
     
-    if (true)
+    if (debug)
       std::cerr << "Cur Stride: " << cur_stride << std::endl
 		<< "New Stride: " << stride << std::endl;
     if (cur_stride != stride) {
-      std::cerr << "here\n";
+      if (debug)
+	std::cerr << "Moving ...\n";
       
       // the new image is definetly smaller, thus we mess with the original data
       // first row stays fixed, thus skip
