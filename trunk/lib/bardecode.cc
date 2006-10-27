@@ -102,25 +102,45 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   // rewrite or a extremely costly allocation and copy at this
   // location. Depending on the moon this is required or not.
   
+  uint8_t* malloced_data = image.data;
   {
-    int cur_stride = image.Stride ();
-    int stride = cur_stride / 64 * 64;
+    // required alignments
+    const int base_align = 4;
+    const int stride_align = 4;
     
-    if (debug)
-      std::cerr << "Cur Stride: " << cur_stride << std::endl
-		<< "New Stride: " << stride << std::endl;
-    if (cur_stride != stride) {
-      if (debug)
-	std::cerr << "Moving ...\n";
-      
-      // the new image is definetly smaller, thus we mess with the original data
-      // first row stays fixed, thus skip
-      for (int y = 1; y < image.h; ++y)
-	memmove (image.data + y*stride, image.data + y*cur_stride, stride);
-      
-      // store new stride == width (@ 8bit gray)
-      image.w = stride;
+    int stride = image.Stride ();
+    int new_stride = (stride + stride_align - 1) / stride_align * stride_align;
+    
+    // realloc the data to the maximal working set of memory we
+    // might have to work with in the worst-case
+    
+    image.data = (uint8_t*) realloc (image.data, new_stride * image.h + base_align);
+    malloced_data = image.data;
+    
+    uint8_t* new_data =
+      (uint8_t*) (((long)image.data + base_align - 1) / base_align * base_align);
+    new_data = image.data;
+    
+    if (debug) {
+      std::cerr << "  stride: " << stride << " aligned: " << new_stride << std::endl;
+      std::cerr << "  @: " << (void*) image.data
+		<< " aligned: " << (void*) new_data << std::endl;
     }
+    
+    if (stride != new_stride || image.data != new_data)
+      {
+	if (debug)
+	  std::cerr << "  moving data ..." << std::endl;
+	
+	for (int y = image.h-1; y >= 0; --y) {
+	  memmove (new_data + y*new_stride, image.data + y*stride, stride);
+	  memset (new_data + y*new_stride + stride, 0xff, new_stride-stride);
+       }
+	
+	// store new stride == width (@ 8bit gray)
+	image.w = new_stride * 8 / image.bps;
+	image.data = new_data;
+      }
   }
   
   // call into the barcode library
@@ -201,7 +221,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
       STSetParameter(hBarcode, ST_DESPECKLE, &i);
       
       i = 166;
-      TSetParameter(hBarcode, ST_CONTRAST, &i);
+      STSetParameter(hBarcode, ST_CONTRAST, &i);
     }
   
   BITMAP bbitmap;
@@ -210,11 +230,11 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   bbitmap.bmHeight = image.h;
   bbitmap.bmWidthBytes = image.Stride();
   bbitmap.bmPlanes = 1; // the library is documented to only take 1
-  bbitmap.bmBitsPixel = image.bps; // 1, 4 and 8 appeared to work
+  bbitmap.bmBitsPixel = image.bps * image.spp; // 1, 4 and 8 appeared to work
   bbitmap.bmBits = image.data; // our class' bitmap data
   
   if (debug)
-    std::cerr << "@: " << (void*) image.data
+    std::cerr << "  @: " << (void*) image.data
 	      << ", w: " << image.w << ", h: " << image.h
 	      << ", spp: " << image.spp << ", bps: " << image.bps
 	      << ", stride: " << image.Stride()
@@ -224,7 +244,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   char** bar_codes_type;
   
   // 0 == photometric min is black, but this appears to be inverted?
-  int photometric = 0;
+  int photometric = 1;
   int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
@@ -240,6 +260,9 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   }
   
   STFreeBarCodeSession (hBarcode);
+  
+  // as this one needs to be free'd
+  image.data = malloced_data;
   
   return ret;
 }
