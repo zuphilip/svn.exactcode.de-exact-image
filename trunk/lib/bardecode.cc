@@ -129,7 +129,6 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   
   // parse the code list
   std::string c (codes);
-  std::transform (c.begin(), c.end(), c.begin(), tolower);
   std::string::size_type it = 0;
   std::string::size_type it2;
   i = 1;
@@ -160,6 +159,15 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
 	    STSetParameter(hBarcode, ST_READ_UPCA, &i);
 	  else if (code == "upce")
 	    STSetParameter(hBarcode, ST_READ_UPCE, &i);
+          else if (code == "any") {
+	      STSetParameter (hBarcode, ST_READ_CODE39, &i);
+	      STSetParameter (hBarcode, ST_READ_CODE128, &i);
+	      STSetParameter (hBarcode, ST_READ_CODE25, &i);
+	      STSetParameter (hBarcode, ST_READ_EAN13, &i);
+	      STSetParameter (hBarcode, ST_READ_EAN8, &i);
+	      STSetParameter (hBarcode, ST_READ_UPCA, &i);
+	      STSetParameter (hBarcode, ST_READ_UPCE, &i);
+	  }
 	  else
 	    std::cerr << "Unrecognized barcode type: " << code << std::endl;
 	}

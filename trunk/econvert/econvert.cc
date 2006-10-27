@@ -135,10 +135,7 @@ bool convert_split (const Argument<std::string>& arg)
 
 bool convert_colorspace (const Argument<std::string>& arg)
 {
-  std::string space = arg.Get();
-  std::transform (space.begin(), space.end(), space.begin(), tolower);
-  
-  return imageConvertColorspace (&image, space.c_str());
+  return imageConvertColorspace (&image, arg.Get().c_str());
 }
 
 bool convert_normalize (const Argument<bool>& arg)
