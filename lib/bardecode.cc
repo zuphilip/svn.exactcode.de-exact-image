@@ -202,10 +202,17 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     }
   while (it2 != std::string::npos);
   
-  i = min_length;
-  STSetParameter (hBarcode, ST_MIN_LEN, &i);
-  i = max_length;
-  STSetParameter (hBarcode, ST_MAX_LEN, &i);
+  // only set if non-zero, otherwise CODE39 with chars does
+  // not appear to work quite right
+  if (min_length) {
+    i = min_length;
+    STSetParameter (hBarcode, ST_MIN_LEN, &i);
+  }
+  
+  if (max_length) {
+    i = max_length;
+    STSetParameter (hBarcode, ST_MAX_LEN, &i);
+  }
   
   if (false) // the library has defaults?
     {
