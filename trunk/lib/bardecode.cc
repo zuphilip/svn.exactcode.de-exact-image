@@ -199,6 +199,9 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
       STSetParameter(hBarcode, ST_NOISEREDUCTION, &i);
       i = 1;
       STSetParameter(hBarcode, ST_DESPECKLE, &i);
+      
+      i = 166;
+      TSetParameter(hBarcode, ST_CONTRAST, &i);
     }
   
   BITMAP bbitmap;
