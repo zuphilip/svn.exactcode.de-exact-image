@@ -85,7 +85,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     colorspace_16_to_8 (image);
   
   // the library interface only handles one channel data
-  if (image.spp == 3)
+  if (image.spp == 3) // color crashes the library more often than not
     colorspace_rgb8_to_gray8 (image);
   
   // the library does not appear to like 2bps ?
@@ -214,13 +214,14 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     std::cerr << "@: " << (void*) image.data
 	      << ", w: " << image.w << ", h: " << image.h
 	      << ", spp: " << image.spp << ", bps: " << image.bps
-	      << ", stride: " << image.Stride() << std::endl;
+	      << ", stride: " << image.Stride()
+	      << ", res: " << image.xres << std::endl;
   
   char** bar_codes;
   char** bar_codes_type;
   
   // 0 == photometric min is black, but this appears to be inverted?
-  int photometric = 1;
+  int photometric = 0;
   int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
