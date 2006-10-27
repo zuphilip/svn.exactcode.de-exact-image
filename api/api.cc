@@ -143,6 +143,8 @@ Image::iterator background;
 bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
   std::string space = target_colorspace;
+  std::transform (space.begin(), space.end(), space.begin(), tolower);
+
   int spp, bps;
   if (space == "bw" || space == "gray1") {
     spp = 1; bps = 1;
@@ -260,9 +262,12 @@ bool imageIsEmpty (Image* image, double percent, int margin)
 
 #include "bardecode.hh"
 
-char** imageDecodeBarcodes (Image* image, const char* codes,
-			    int min_length, int max_length)
+char** imageDecodeBarcodes (Image* image, const char* c,
+			    int min_length = 0, int max_length = 0)
 {
+  std::string codes = c;
+  std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
+
   std::vector<std::string> ret = 
     decodeBarcodes (*image, codes, min_length, max_length);
   
