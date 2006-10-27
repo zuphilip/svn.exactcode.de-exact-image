@@ -60,6 +60,8 @@ extern "C" { // missing in the library header ...
 
 using namespace Utility;
 
+const bool debug = true;
+
 std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
 					 int min_length, int max_length)
 {
@@ -97,14 +99,15 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   // rewrite or a extremely costly allocation and copy at this
   // location. Depending on the moon this is required or not.
   
-  if (true)
-    {
-      int cur_stride = image.Stride ();
-      int stride = cur_stride / 4 * 4;
-      
-      if (false)
-	std::cerr << "Cur Stride: " << cur_stride << std::endl
-		  << "New Stride: " << stride << std::endl;
+  {
+    int cur_stride = image.Stride ();
+    int stride = cur_stride / 64 * 64;
+    
+    if (true)
+      std::cerr << "Cur Stride: " << cur_stride << std::endl
+		<< "New Stride: " << stride << std::endl;
+    if (cur_stride != stride) {
+      std::cerr << "here\n";
       
       // the new image is definetly smaller, thus we mess with the original data
       // first row stays fixed, thus skip
@@ -114,7 +117,8 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
       // store new stride == width (@ 8bit gray)
       image.w = stride;
     }
-
+  }
+  
   // call into the barcode library
   void* hBarcode = STCreateBarCodeSession ();
   
@@ -179,7 +183,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   i = max_length;
   STSetParameter (hBarcode, ST_MAX_LEN, &i);
   
-  if (false) // the library claims to have defaults (...)
+  if (false) // the library has defaults?
     {
       i = 15; // all directions
       STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
@@ -202,16 +206,17 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   bbitmap.bmBitsPixel = image.bps; // 1, 4 and 8 appeared to work
   bbitmap.bmBits = image.data; // our class' bitmap data
   
-  if (false)
+  if (debug)
     std::cerr << "@: " << (void*) image.data
-	      << ", w: " << image.w << ", h: " << image.h << ", spp: " << image.spp
-	      << ", bps: " << image.bps << ", stride: " << image.Stride()
-	      << std::endl;
+	      << ", w: " << image.w << ", h: " << image.h
+	      << ", spp: " << image.spp << ", bps: " << image.bps
+	      << ", stride: " << image.Stride() << std::endl;
   
   char** bar_codes;
   char** bar_codes_type;
   
-  int photometric = 1; // 0 == photometric min is black, but this appears to be buggy ???
+  // 0 == photometric min is black, but this appears to be inverted?
+  int photometric = 1;
   int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image.xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
@@ -219,7 +224,8 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   
   for (i = 0; i < bar_count; ++i) {
     uint32 TopLeftX, TopLeftY, BotRightX, BotRightY ;
-    STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY, &BotRightX, &BotRightY);
+    STGetBarCodePos (hBarcode, i, &TopLeftX, &TopLeftY,
+		     &BotRightX, &BotRightY);
     //printf ("%s[%s]\n", bar_codes[i], bar_codes_type[i]);
     ret.push_back (bar_codes[i]);
     ret.push_back (bar_codes_type[i]);
