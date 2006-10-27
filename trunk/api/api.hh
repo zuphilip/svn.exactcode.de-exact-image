@@ -133,7 +133,7 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 // CODE39|CODE128|CODE25|EAN13|EAN8|UPCA|UPCE
 // case doesn't matter
 // 
-// returned is an alternatinv array of codes and types, like
+// returned is an alternating array of codes and types, like
 // "1234", "EAN", "5678", "CODE128", ...
 #ifdef SWIG
 // Creates a new Perl array and places a NULL-terminated char ** into it
