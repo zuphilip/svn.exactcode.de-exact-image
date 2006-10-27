@@ -116,10 +116,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     
     image.data = (uint8_t*) realloc (image.data, new_stride * image.h + base_align);
     malloced_data = image.data;
-    
-    uint8_t* new_data =
-      (uint8_t*) (((long)image.data + base_align - 1) / base_align * base_align);
-    new_data = image.data;
+    uint8_t* new_data = (uint8_t*) (((long)image.data + base_align - 1) & ~(base_align-1));
     
     if (debug) {
       std::cerr << "  stride: " << stride << " aligned: " << new_stride << std::endl;
