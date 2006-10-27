@@ -103,9 +103,11 @@ int imageHeight (Image* image);
 // returns the name of the image colorspace such as gray, gray2, gray4, rgb8, rgb16, cymk8, cymk16 ...
 char* imageColorspace (Image* image);
 
+// returns X and Y resolution
 int imageXres (Image* image);
 int imageYres (Image* image);
 
+// set X and Y resolution
 void imageSetXres (Image* image, int xres);
 void imageSetYres (Image* image, int yres);
 
