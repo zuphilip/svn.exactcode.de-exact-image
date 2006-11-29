@@ -20,8 +20,8 @@ void nearest_scale (Image& image, double scalex, double scaley)
   Image::iterator src = image.begin();
   for (int y=0; y < new_image.h; ++y)
     for (int x=0; x < new_image.w; ++x) {
-      int bx = (int) (((double) x) / scalex);
-      int by = (int) (((double) y) / scaley);
+      const int bx = (int) (((double) x) / scalex);
+      const int by = (int) (((double) y) / scaley);
       
       dst.set (*src.at (bx, by) );
       ++dst;
@@ -54,9 +54,9 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 
 	for (int x = 0; x < new_image.w; ++x) {
 	  double bx = (-1.0+image.w) * x / new_image.w;
-	  int sx = (int)floor(bx);
-	  int xdist = (int) ((bx - sx) * 256);
-	  int sxx = sx+1;
+	  const int sx = (int)floor(bx);
+	  const int xdist = (int) ((bx - sx) * 256);
+	  const int sxx = sx+1;
 
 	  unsigned int v = (
 			    src [sx +  sy*image.w] * (256-xdist) * (256-ydist) +
@@ -80,10 +80,10 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 	int syy = sy+1;
 
 	for (int x = 0; x < new_image.w; ++x) {
-	  double bx = (-1.0+image.w) * x / new_image.w;
-	  int sx = (int)floor(bx);
-	  int xdist = (int) ((bx - sx) * 256);
-	  int sxx = sx+1;
+	  const double bx = (-1.0+image.w) * x / new_image.w;
+	  const int sx = (int)floor(bx);
+	  const int xdist = (int) ((bx - sx) * 256);
+	  const int sxx = sx+1;
 
 	  if (false && x < 8 && y < 8) {
 	    std::cout << "sx: " << sx << ", sy: " << sy
@@ -228,22 +228,22 @@ void bicubic_scale (Image& image, double scalex, double scaley)
 
   for (int y = 0; y < new_image.h; ++y) {
     double by = .5+y / scaley;
-    int sy = std::min((int)by, image.h-1);
-    int ydist = (int) ((by - sy) * 256);
+    const int sy = std::min((int)by, image.h-1);
+    const int ydist = (int) ((by - sy) * 256);
     
-    int sy0 = std::max(sy-1, 0);
-    int sy2 = std::min(sy+1, image.h-1);
-    int sy3 = std::min(sy+2, image.h-1);
+    const int sy0 = std::max(sy-1, 0);
+    const int sy2 = std::min(sy+1, image.h-1);
+    const int sy3 = std::min(sy+2, image.h-1);
     
     for (int x = 0; x < new_image.w; ++x) {
       
-      double bx = .5+x / scalex;
-      int sx = std::min((int)bx, image.w - 1);
-      int xdist = (int) ((bx - sx) * 256);
+      const double bx = .5+x / scalex;
+      const int sx = std::min((int)bx, image.w - 1);
+      const int xdist = (int) ((bx - sx) * 256);
       
-      int sx0 = std::max(sx-1, 0);
-      int sx2 = std::min(sx+1, image.w-1);
-      int sx3 = std::min(sx+2, image.w-1);
+      const int sx0 = std::max(sx-1, 0);
+      const int sx2 = std::min(sx+1, image.w-1);
+      const int sx3 = std::min(sx+2, image.w-1);
       
       //      xdist = ydist = 0;
       r0 = CubicConvolution (xdist,
@@ -287,10 +287,10 @@ void ddt_scale (Image& image, double scalex, double scaley)
   Image::iterator src_d = src_c.at (1, 1);
   for (int y = 0; y < image.h-1; ++y) {
     for (int x = 0; x < image.w-1; ++x) {
-      int a = (*src_a).getL(); ++src_a;
-      int b = (*src_b).getL(); ++src_b;
-      int c = (*src_c).getL(); ++src_c;
-      int d = (*src_d).getL(); ++src_d;
+      const int a = (*src_a).getL(); ++src_a;
+      const int b = (*src_b).getL(); ++src_b;
+      const int c = (*src_c).getL(); ++src_c;
+      const int d = (*src_d).getL(); ++src_d;
       
       //std::cout << "x: " << x << ", y: " << y << std::endl;
       //std::cout << "a: " << a << ", b: " << b
@@ -309,14 +309,14 @@ void ddt_scale (Image& image, double scalex, double scaley)
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
   for (int y = 0; y < new_image.h; ++y) {
-    double by = (-1.0+image.h) * y / new_image.h;
-    int sy = (int)floor(by);
-    int ydist = (int) ((by - sy) * 256);
+    const double by = (-1.0+image.h) * y / new_image.h;
+    const int sy = (int)floor(by);
+    const int ydist = (int) ((by - sy) * 256);
     
     for (int x = 0; x < new_image.w; ++x) {
-      double bx = (-1.0+image.w) * x / new_image.w;
-      int sx = (int)floor(bx);
-      int xdist = (int) ((bx - sx) * 256);
+      const double bx = (-1.0+image.w) * x / new_image.w;
+      const int sx = (int)floor(bx);
+      const int xdist = (int) ((bx - sx) * 256);
       
       /*
       std::cout << "bx: " << bx << ", by: " << by << ", x: " << x << ", y: " << y
