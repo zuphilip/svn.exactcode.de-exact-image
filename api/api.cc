@@ -237,7 +237,7 @@ void imageOptimize2BW (Image* image, int low, int high,
 		       int threshold,
 		       int radius, double sd, int target_dpi)
 {
-  optimize2bw (*image, low, high, 0, // sloppy thr
+  optimize2bw (*image, low, high, threshold, 0 /* sloppy thr */,
 	       radius, sd);
   
   if (target_dpi && image->xres)
@@ -249,6 +249,13 @@ void imageOptimize2BW (Image* image, int low, int high,
       else
 	bilinear_scale (*image, scale, scale);
     }
+ 
+  /* This does not look very dynamic, but it is - the real work is
+     done inside the optimize2bw library - this just yields the final
+     bi-level data */
+
+  if (!threshold)
+    threshold = 200;
   
   colorspace_gray8_to_gray1 (*image, threshold);
 }
