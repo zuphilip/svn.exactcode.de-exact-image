@@ -1,7 +1,6 @@
-
 /*
- * Copyright (C) 2005 René Rebe
- *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2005-2006 René Rebe
+ *           (C) 2005-2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -80,7 +79,7 @@ int main (int argc, char* argv[])
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "Color / Gray image to Bi-level optimizer"
-                <<  " - Copyright 2005 by René Rebe" << std::endl
+                <<  " - Copyright 2005, 2006 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -118,13 +117,21 @@ int main (int argc, char* argv[])
     sd = arg_sd.Get();
     std::cerr << "SD overwritten: " << sd << std::endl;
   }
-    
-  optimize2bw (image, low, high, sloppy_threshold, radius, sd);
   
+  // convert to 1-bit (threshold)
+  int threshold = 0;
+  
+  if (arg_threshold.Get() != 0) {
+    threshold = arg_threshold.Get();
+    std::cerr << "Threshold: " << threshold << std::endl;
+  }
+  
+  optimize2bw (image, low, high, threshold, sloppy_threshold, radius, sd);
+
   // scale image using interpolation
   double scale = arg_scale.Get ();
   int dpi = arg_dpi.Get ();
-
+  
   if (scale != 0.0 && dpi != 0) {
     std::cerr << "DPI and scale argument must not be specified at once!" << std::endl;
     return 1;
@@ -157,14 +164,8 @@ int main (int argc, char* argv[])
 	bilinear_scale (image, scale, scale);
     }
   
-  
-  // convert to 1-bit (threshold)
-  int threshold = 170;
-    
-  if (arg_threshold.Get() != 0) {
-    threshold = arg_threshold.Get();
-    std::cerr << "Threshold: " << threshold << std::endl;
-  }
+  if (arg_threshold.Get() == 0)
+    threshold = 200;
   
   colorspace_gray8_to_gray1 (image, threshold);
   
@@ -172,6 +173,5 @@ int main (int argc, char* argv[])
     std::cerr << "Error writing output file." << std::endl;
     return 1;
   }
-  
   return 0;
 }
