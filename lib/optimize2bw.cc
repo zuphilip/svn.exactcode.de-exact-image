@@ -29,24 +29,106 @@
 
 #include "optimize2bw.hh"
 
-void optimize2bw (Image& image, int low, int high,
+void optimize2bw (Image& image, int low, int high, int threshold,
 		  int sloppy_threshold,
 		  int radius, double standard_deviation)
 {
-  // convert to RGB to gray - TODO: more cases
-  if (image.spp == 3 && image.bps == 8)
-    colorspace_rgb8_to_gray8 (image);
+  /* Convert to RGB to gray.
+     If the threshold is to be determined automatically, use color info. */
   
-  if (image.spp != 1 && image.bps != 8) {
-    std::cerr << "Can't yet handle " << image.spp << " samples with "
-	      << image.bps << " bits per sample." << std::endl;
-    return;
+  const int debug = 0;
+  
+  if (threshold) { // simple normalize
+    if (image.spp == 3 && image.bps == 8)
+      colorspace_rgb8_to_gray8 (image);
+    
+    if (image.spp != 1 && image.bps != 8) {
+      std::cerr << "Can't yet handle " << image.spp << " samples with "
+		<< image.bps << " bits per sample." << std::endl;
+      return;
+    }
+    
+    // CARE: if the normalize API changse, care must be taken to
+    //       adapt this to honor whether low and high actually have
+    //       been supplied
+    
+    normalize (image, low, high);
+  }
+  else { // color normalize on background color
+    
+    // search for background color */
+    int histogram[256][3] = { {0}, {0} };
+    
+    for (Image::iterator it = image.begin(); it != image.end(); ++it) {
+      uint16_t r, g, b;
+      *it;
+      it.getRGB (&r, &g, &b);
+      
+      histogram[r][0]++;
+      histogram[g][1]++;
+      histogram[b][2]++;
+    }
+    
+    int lowest = 255, highest = 0, bg_r = 0, bg_g = 0, bg_b = 0;
+    for (int i = 0; i <= 255; i++)
+      {
+	int r, g, b;
+	r = histogram[i][0];
+	g = histogram[i][1];
+	b = histogram[i][2];
+	
+	if (debug)
+	  std::cout << i << ": "<< r << " " << g << " " << b << std::endl;
+	const int magic = 2; // magic denoise constant
+	if (r >= magic || g >= magic || b >= magic)
+	  {
+	    if (i < lowest)
+	      lowest = i;
+	    if (i > highest)
+	      highest = i;
+	  }
+	
+	if (histogram[i][0] > histogram[bg_r][0])
+	  bg_r = i;
+	if (histogram[i][1] > histogram[bg_g][1])
+	  bg_g = i;
+	if (histogram[i][2] > histogram[bg_b][2])
+	  bg_b = i;
+      }
+    std::cerr << "lowest: " << lowest << ", highest: " << highest
+	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b << std::endl;
+    
+    highest = (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
+    
+    if (low)
+      lowest = low;
+    if (high)
+      highest = high;
+    
+    signed int a = (255 * 256) / (highest - lowest);
+    signed int b = (-a * lowest);
+    
+    std::cerr << "a: " << (float) a / 256
+	      << " b: " << (float) b / 256 << std::endl;
+    
+    for (Image::iterator it = image.begin(); it != image.end (); ++it) {
+      *it;
+      // TODO: under/overflow!
+      Image::iterator i = (it * a + b) / 256;
+      i.limit();
+      it.set(i);
+    }
+    
+    if (image.spp == 3 && image.bps == 8)
+      colorspace_rgb8_to_gray8 (image);
+    
+    if (image.spp != 1 && image.bps != 8) {
+      std::cerr << "Can't yet handle " << image.spp << " samples with "
+		<< image.bps << " bits per sample." << std::endl;
+      return;
+    }
   }
   
-  // CARE: if the normalize API changse, care must be taken to
-  //       adapt this to honor whether low and high actually have
-  //       been supplied
-  normalize (image, low, high);
   
   // Convolution Matrix (unsharp mask a-like)
   {
@@ -58,7 +140,8 @@ void optimize2bw (Image& image, int low, int high,
     
     matrix_type* matrix = new matrix_type [width * width];
     
-    std::cerr << std::fixed << std::setprecision(3);
+    if (debug)
+      std::cerr << std::fixed << std::setprecision(3);
     for (int y = -radius; y <= radius; ++y) {
       for (int x = -radius; x <= radius; ++x) {
 	matrix_type v = (matrix_type) (exp (-((float)x*x + (float)y*y) / (2. * sd * sd)) * 5);
@@ -77,9 +160,11 @@ void optimize2bw (Image& image, int low, int high,
 	if (x == 0 && y == 0)
 	  *m += 2*divisor;
 	
-	std::cerr << *m << " ";
+	if (debug)
+	  std::cerr << *m << " ";
       }
-      std::cerr << std::endl;
+      if (debug)
+	std::cerr << std::endl;
     }
     
     const int sloppy_thr = sloppy_threshold;

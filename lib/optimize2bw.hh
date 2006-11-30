@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
@@ -17,10 +16,12 @@
 
 #include "Image.hh"
 
-// optimizes the image for b/w images
-// it does not do the thresholding, the result is still 8 bit per pixel
-// so the caller can scale on the shaded data
+// Optimizes the image for b/w images.
+// It does not do the thresholding, the result is still 8 bit per pixel
+// so the caller can scale on the shaded data.
+// Threshold is not used, it just is a hint whether to use the more complex
+// color code-path.
 
-void optimize2bw (Image& image, int low = 0, int high = 0,
+void optimize2bw (Image& image, int low = 0, int high = 0, int threshold = 0,
 		  int sloppy_threshold = 0,
 		  int radius = 3, double standard_deviation = 2.1);
