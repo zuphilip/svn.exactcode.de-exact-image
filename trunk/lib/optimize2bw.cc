@@ -36,7 +36,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   /* Convert to RGB to gray.
      If the threshold is to be determined automatically, use color info. */
   
-  const int debug = 0;
+  const bool debug = false;
   
   if (threshold) { // simple normalize
     if (image.spp == 3 && image.bps == 8)
