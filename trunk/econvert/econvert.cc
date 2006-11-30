@@ -685,6 +685,76 @@ bool convert_descew (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_descew2 (const Argument<bool>& arg)
+{
+  using std::cout;
+  using std::endl;
+  
+  // find identical vertical pixels
+  Image::iterator it1 = image.begin();
+  Image::iterator it2 = image.begin();
+  Image::iterator it3 = image.begin();
+  Image::iterator it4 = image.begin();
+  Image::iterator it5 = image.begin();
+  it2 = it2.at (0, 1);
+  it3 = it3.at (0, 2);
+  it4 = it4.at (0, 3);
+  it5 = it5.at (0, 4);
+  
+  for (int y = 0; y < image.h-4; ++y) {
+    for (int x = 0; x < image.w; ++x)
+      {
+#define get(x,r,g,b) {				\
+	  uint16_t _r, _g, _b;			\
+	  *x;					\
+	  x.getRGB (&_r, &_g, &_b);		\
+	  r = _r; g = _g; b = _b;		\
+	}
+	
+	int r1, g1, b1;
+	get (it1,r1,g1,b1);
+	
+	int r2, g2, b2;
+	get (it2,r2,g2,b2);
+	
+	int r3, g3, b3;
+	get (it3,r3,g3,b3);
+
+	int r4, g4, b4;
+	get (it4,r4,g4,b4);
+
+	int r5, g5, b5;
+	get (it5,r5,g5,b5);
+	
+	const int n = 2;
+	
+	if (
+	    r2 >= r1-n && r2 <= r1+n &&
+	    g2 >= g1-n && g2 <= g1+n &&
+	    b2 >= b1-n && b2 <= b1+n &&
+	    
+	    r2 >= r3-n && r2 <= r3+n &&
+	    g2 >= g3-n && g2 <= g3+n &&
+	    b2 >= b3-n && b2 <= b3+n &&
+
+	    r2 >= r4-n && r2 <= r4+n &&
+	    g2 >= g4-n && g2 <= g4+n &&
+	    b2 >= b4-n && b2 <= b4+n &&
+
+	    r2 >= r5-n && r2 <= r5+n &&
+	    g2 >= g5-n && g2 <= g5+n &&
+	    b2 >= b5-n && b2 <= b5+n &&
+	    
+	    true
+	    )
+	  it2.setRGB (255, 255, 0), it2.set (it2);
+	
+	++it1; ++it2; ++it3; ++it4; ++it5;
+      }
+  }
+  return true;
+}
+
 bool convert_resolution (const Argument<std::string>& arg)
 {
   int xres, yres, n;
@@ -880,6 +950,12 @@ int main (int argc, char* argv[])
 			     0, 0, true, true);
   arg_descew.Bind (convert_descew);
   arglist.Add (&arg_descew);
+
+  Argument<bool> arg_descew2 ("", "descew2",
+			     "descew digitalized paper try2",
+			     0, 0, true, true);
+  arg_descew2.Bind (convert_descew2);
+  arglist.Add (&arg_descew2);
   
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
