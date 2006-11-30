@@ -1,4 +1,3 @@
-
 #ifndef IMAGE_HH
 #define IMAGE_HH
 
@@ -8,17 +7,28 @@
 class Image
 {
 public:
+
+  /*
+     Basic colorspace: GRAY, GRAYA, RGB, RGBA, CMYK, YUV, YUVA
+     Bit depth:        INT1 INT2 INT4        INT8 INT16 INT32 FLOAT32 FLOAT64
+   */
   
   typedef enum {
     GRAY1,
     GRAY2,
     GRAY4,
     GRAY8,
+    //    GRAY8A,
     GRAY16,
+    //    GRAY16A,
     RGB8,
+    //    RGB8A,
     RGB16,
+    //    RGB16A,
     CMYK8,
-    YUV8
+    //    CMYK16,
+    YUV8,
+    // YUVK8 - really appears in the wild? JPEG appears to support this (Y/Cb/Cr/K)
   } type_t;
 
   typedef union {
@@ -136,7 +146,8 @@ public:
     signed int bitpos; // for 1bps sub-position
     
     // for seperate use, e.g. to accumulate
-    iterator () {};
+    iterator ()
+    {};
     
     iterator (Image* _image, bool end)
       : image (_image), type (_image->Type()),
@@ -289,6 +300,37 @@ public:
       return tmp += other;
     }
     
+    inline iterator operator+ (int v) const {
+      iterator tmp = *this;
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	tmp.value.gray += v;
+	break;
+      case RGB8:
+      case RGB16:
+	tmp.value.rgb.r += v;
+	tmp.value.rgb.g += v;
+	tmp.value.rgb.b += v;
+	break;
+      case CMYK8:
+	tmp.value.cmyk.c += v;
+	tmp.value.cmyk.m += v;
+	tmp.value.cmyk.y += v;
+	tmp.value.cmyk.k += v;
+	break;
+      case YUV8:
+	tmp.value.yuv.y += v;
+	tmp.value.yuv.u += v;
+	tmp.value.yuv.v += v;
+	break;     
+      }
+      return tmp;
+    }
+    
     inline iterator& operator-= (const iterator& other)  {
       switch (type) {
       case GRAY1:
@@ -392,7 +434,37 @@ public:
     inline iterator& operator/ (const int v) const {
       iterator tmp = *this;
       return tmp /= v;
-    }    
+    }
+    
+    inline iterator& limit () {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+      case GRAY16:
+	if (value.gray > 0xff)
+	  value.gray = 0xff;
+	break;
+      case RGB8:
+	if (value.rgb.r > 0xff)
+	  value.rgb.r = 0xff;
+	if (value.rgb.g > 0xff)
+	  value.rgb.g = 0xff;
+	if (value.rgb.b > 0xff)
+	  value.rgb.b = 0xff;
+	break;
+      case RGB16:
+	if (value.rgb.r > 0xffff)
+	  value.rgb.r = 0xffff;
+	if (value.rgb.g > 0xffff)
+	  value.rgb.g = 0xffff;
+	if (value.rgb.b > 0xffff)
+	  value.rgb.b = 0xffff;
+	break;
+      }
+      return *this;
+    }
     
     //prefix
     inline iterator& operator++ () {
