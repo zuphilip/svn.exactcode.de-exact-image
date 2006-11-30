@@ -38,7 +38,7 @@ bool detect_empty_page (Image& image, double percent, int margin,
   
   // if not 1-bit optimize
   if (image.spp != 1 || image.bps != 1) {
-    optimize2bw (image);
+    optimize2bw (image, 0, 0, 128); /* force quick pass, no color use */
     // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
     colorspace_gray8_to_gray1 (image);
   }
