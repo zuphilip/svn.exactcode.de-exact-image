@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
@@ -18,7 +17,6 @@
 #include <iostream>
 
 #include "Image.hh"
-#include "Codecs.hh"
 
 #include "Colorspace.hh"
 

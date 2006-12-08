@@ -21,11 +21,9 @@
 #include <iomanip>
 
 #include "Image.hh"
-#include "Codecs.hh"
 
 #include "Colorspace.hh"
 #include "Matrix.hh"
-#include "scale.hh"
 
 #include "optimize2bw.hh"
 
