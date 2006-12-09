@@ -125,6 +125,7 @@ public:
 
     // copy pixel data
     memcpy (im->data, this->data, im->Stride() * im->h);
+    return im;
   }
   
   int Stride () const {
