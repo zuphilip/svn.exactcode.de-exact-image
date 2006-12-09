@@ -113,6 +113,19 @@ public:
     h = _h;
     data = (unsigned char*) realloc (data, Stride() * h);
   }
+
+  Image* Clone () {
+    Image* im = new Image;
+    *im = *other;
+
+    // currently for historic reasons the copy semantic is a bit unhandy here
+    other->data = im->data;
+    im->data = 0;
+    im->New (im->w, im->h);
+
+    // copy pixel data
+    memcpy (im->data, other->data, im->Stride() * im->h);
+  }
   
   int Stride () const {
     return (w * spp * bps + 7) / 8;
