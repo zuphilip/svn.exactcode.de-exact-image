@@ -116,15 +116,15 @@ public:
 
   Image* Clone () {
     Image* im = new Image;
-    *im = *other;
+    *im = *this;
 
     // currently for historic reasons the copy semantic is a bit unhandy here
-    other->data = im->data;
+    this->data = im->data;
     im->data = 0;
     im->New (im->w, im->h);
 
     // copy pixel data
-    memcpy (im->data, other->data, im->Stride() * im->h);
+    memcpy (im->data, this->data, im->Stride() * im->h);
   }
   
   int Stride () const {
