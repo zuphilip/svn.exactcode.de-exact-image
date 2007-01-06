@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2006 René Rebe
  *           (C) 2006 Archivista GmbH, CH-8042 Zuerich
@@ -29,7 +28,7 @@ using namespace Utility;
 
 void flipX (Image& image)
 {
-  int bytes = (image.w*image.spp*image.bps + 7) / 8;
+  int bytes = image.Stride();
   
   switch (image.spp * image.bps)
     {
@@ -91,7 +90,7 @@ void flipX (Image& image)
 void flipY (Image& image)
 {
   // TODO: 16bps
-  int bytes = (image.w*image.spp*image.bps + 7) / 8;
+  int bytes = image.Stride();
   for (int y = 0; y < image.h / 2; ++y)
     {
       int y2 = image.h - y - 1;
