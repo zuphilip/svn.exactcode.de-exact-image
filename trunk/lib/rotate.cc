@@ -33,14 +33,20 @@ void flipX (Image& image)
   switch (image.spp * image.bps)
     {
     case 1:
+    case 2:
+    case 4:
       {
 	// create a reversed bit table for fast lookup
-	int reversed_bits[256];
+	uint8_t reversed_bits[256];
+	
+	const int bps = image.bps;
+	const int mask = (1 << bps) - 1;
+	
 	for (int i = 0; i < 256; ++i) {
-	  char rev = 0, v = i;
-	  for (int j = 0; j < 8; ++j) {
-	    rev = rev << 1 | v & 1;
-	    v >>= 1;
+	  uint8_t rev = 0, v = i;
+	  for (int j = 0; j < 8/bps; ++j) {
+	    rev = rev << bps | v & mask;
+	    v >>= bps;
 	  }
 	  reversed_bits[i] = rev;
 	}
