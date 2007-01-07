@@ -40,66 +40,74 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 		 (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
-
-  if (image.bps == 8 && image.spp == 1)
+  
+  // $ time econvert  -i testsuite/descew/scew3.pnm --colorspace GRAY8 --bilinear-scale 1.75 -o test-scale.pnm
+  // real    0m0.732s
+  // user    0m0.688s
+  // sys     0m0.040s
+  
+  /* handcrafted due popular request */
+  if (new_image.spp == 1 && new_image.bps == 8)
     {
+      std::cerr << "here" << std::endl;
+      const int stride = image.Stride ();
       uint8_t* dst = new_image.data;
-      uint8_t* src = image.data;
-
-      for (int y = 0; y < new_image.h; ++y) {
-	double by = (-1.0+image.h) * y / new_image.h;
-	int sy = (int)floor(by);
-	int ydist = (int) ((by - sy) * 256);
-	int syy = sy+1;
-
-	for (int x = 0; x < new_image.w; ++x) {
-	  double bx = (-1.0+image.w) * x / new_image.w;
-	  const int sx = (int)floor(bx);
-	  const int xdist = (int) ((bx - sx) * 256);
-	  const int sxx = sx+1;
-
-	  unsigned int v = (
-			    src [sx +  sy*image.w] * (256-xdist) * (256-ydist) +
-			    src [sxx + sy*image.w] * xdist       * (256-ydist) +
-			    src [sx + syy*image.w] * (256-xdist) * ydist +
-			    src [sxx + syy*image.w] * xdist       * ydist
-			    ) / (256 * 256);
-	  *dst++ = v;
-	}
-      }
-    }
-  else
-    {
-      Image::iterator dst = new_image.begin();
-      Image::iterator src = image.begin();
       
       for (int y = 0; y < new_image.h; ++y) {
 	double by = (-1.0+image.h) * y / new_image.h;
-	int sy = (int)floor(by);
-	int ydist = (int) ((by - sy) * 256);
-	int syy = sy+1;
-
+	const int sy = (int)floor(by);
+	const int ydist = (int) ((by - sy) * 256);
+	const int syy = sy+1;
+	
 	for (int x = 0; x < new_image.w; ++x) {
 	  const double bx = (-1.0+image.w) * x / new_image.w;
 	  const int sx = (int)floor(bx);
 	  const int xdist = (int) ((bx - sx) * 256);
 	  const int sxx = sx+1;
-
-	  if (false && x < 8 && y < 8) {
-	    std::cout << "sx: " << sx << ", sy: " << sy
-		      << ", sxx: " << sxx << ", syy: " << syy << std::endl;
-	    std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
-	  }
-
-	  dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
-		     *src.at (sxx, sy ) * xdist       * (256-ydist) +
-		     *src.at (sx,  syy) * (256-xdist) * ydist +
-		     *src.at (sxx, syy) * xdist       * ydist) /
-		    (256 * 256) );
+	  
+	  
+	  *dst = (image.data [sx + sy*stride ] * (256-xdist) * (256-ydist) +
+		  image.data [sxx + sy*stride] * xdist       * (256-ydist) +
+		  image.data [sx +  syy*stride] * (256-xdist) * ydist +
+		  image.data [sxx + syy*stride] * xdist       * ydist) /
+	    (256 * 256);
 	  ++dst;
 	}
       }
+      image = new_image;
+      return;
     }
+  
+  Image::iterator dst = new_image.begin();
+  Image::iterator src = image.begin();
+      
+  for (int y = 0; y < new_image.h; ++y) {
+    const double by = (-1.0+image.h) * y / new_image.h;
+    const int sy = (int)floor(by);
+    const int ydist = (int) ((by - sy) * 256);
+    const int syy = sy+1;
+
+    for (int x = 0; x < new_image.w; ++x) {
+      const double bx = (-1.0+image.w) * x / new_image.w;
+      const int sx = (int)floor(bx);
+      const int xdist = (int) ((bx - sx) * 256);
+      const int sxx = sx+1;
+
+      if (false && x < 8 && y < 8) {
+	std::cout << "sx: " << sx << ", sy: " << sy
+		  << ", sxx: " << sxx << ", syy: " << syy << std::endl;
+	std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
+      }
+
+      dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
+		 *src.at (sxx, sy ) * xdist       * (256-ydist) +
+		 *src.at (sx,  syy) * (256-xdist) * ydist +
+		 *src.at (sxx, syy) * xdist       * ydist) /
+		(256 * 256) );
+      ++dst;
+    }
+  }
+  
   image = new_image;
 }
 
@@ -115,7 +123,7 @@ void box_scale (Image& image, double scalex, double scaley)
   new_image.yres = (int) (scaley * image.yres);
   
   /* handcrafted due popular request */
-  if (new_image.bps == 8 && new_image.spp == 1)
+  if (new_image.spp == 1 && new_image.bps == 8)
     {
       uint8_t* src = image.data;
       uint8_t* dst = new_image.data;
@@ -169,7 +177,7 @@ void box_scale (Image& image, double scalex, double scaley)
     for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
       //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
       for (int sx = 0; sx < image.w; ++sx) {
-	int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	const int dx = std::min ((int)(scalex*sx), new_image.w-1);
 	//	std::cout << "sx: " << sx << " -> " << dx << std::endl;
 	boxes[dx] += *src; ++src;
 	++count[dx];
