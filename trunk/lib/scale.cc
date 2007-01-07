@@ -47,14 +47,65 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   // sys     0m0.040s
   
   /* handcrafted due popular request */
-  if (new_image.spp == 1 && new_image.bps == 8)
+  if (new_image.spp == 1 && new_image.bps < 8)
     {
       std::cerr << "here" << std::endl;
+      
+      const int bps = image.bps;
+      const int spb = 8 / bps; // Samples Per Byte
+      const int mask = (1 << bps) - 1;
+      const int stride = image.Stride ();
+      
+      std::cerr << "bps: " << bps << ", spb: " << spb
+		<< ", mask: " << mask << ", stride: " << stride << std::endl;
+      
+      uint8_t* dst = new_image.data;
+      uint8_t v;
+      
+      for (int y = 0; y < new_image.h; ++y) {
+	double by = (-1.0+image.h) * y / new_image.h;
+	const int sy = (int)floor(by);
+	const int ydist = (int) ((by - sy) * 256);
+	const int syy = sy+1;
+	
+	int x;
+	for (x = 0; x < new_image.w;) {
+	  const double bx = (-1.0+image.w) * x / new_image.w;
+	  const int sx = (int)floor(bx);
+	  const int xdist = (int) ((bx - sx) * 256);
+	  const int sxx = sx+1;
+	  
+	  v <<= bps;
+	  // TODO: >> 7 ... for bps > 1
+	  v |= ( (( (image.data[sx/spb  + sy*stride]  >> (7 - (sx%spb)*bps) ) & mask) * (256-xdist) * (256-ydist) +
+		  ( (image.data[sxx/spb + sy*stride]  >> (7 - (sxx%spb)*bps)) & mask) * xdist       * (256-ydist) +
+		  ( (image.data[sx/spb  + syy*stride] >> (7 - (sx%spb)*bps) ) & mask) * (256-xdist) * ydist +
+		  ( (image.data[sxx/spb + syy*stride] >> (7 - (sxx%spb)*bps)) & mask) * xdist       * ydist) /
+		 (256 * 256) ) & mask;
+	  
+	  ++x;
+	  if (x % spb == 0)
+	    *dst++ = v;
+	}
+	int remainder = spb - x % spb;
+	if (remainder != spb) {
+	  v <<= bps * remainder;
+	  *dst++ = v;
+	}
+      }
+      image = new_image;
+      return;
+    }
+  
+  /* handcrafted due popular request */
+  if (new_image.spp == 1 && new_image.bps == 8)
+    {
+      std::cerr << "here2" << std::endl;
       const int stride = image.Stride ();
       uint8_t* dst = new_image.data;
       
       for (int y = 0; y < new_image.h; ++y) {
-	double by = (-1.0+image.h) * y / new_image.h;
+	const double by = (-1.0+image.h) * y / new_image.h;
 	const int sy = (int)floor(by);
 	const int ydist = (int) ((by - sy) * 256);
 	const int syy = sy+1;
@@ -65,10 +116,9 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 	  const int xdist = (int) ((bx - sx) * 256);
 	  const int sxx = sx+1;
 	  
-	  
-	  *dst = (image.data [sx + sy*stride ] * (256-xdist) * (256-ydist) +
-		  image.data [sxx + sy*stride] * xdist       * (256-ydist) +
-		  image.data [sx +  syy*stride] * (256-xdist) * ydist +
+	  *dst = (image.data [sx  + sy*stride]  * (256-xdist) * (256-ydist) +
+		  image.data [sxx + sy*stride]  * xdist       * (256-ydist) +
+		  image.data [sx  + syy*stride] * (256-xdist) * ydist +
 		  image.data [sxx + syy*stride] * xdist       * ydist) /
 	    (256 * 256);
 	  ++dst;
