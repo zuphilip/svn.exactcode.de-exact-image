@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2005 René Rebe
- *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2006, 2007 René Rebe
+ *           (C) 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -263,14 +263,22 @@ void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
 
 bool JPEGCodec::readImage (std::istream* stream, Image& image)
 {
-  {
+  if (stream->peek () != 0xFF)
+    return false;
+  stream->get (); // consume silently
+  if (stream->peek () != 0xD8)
+    return false;
+  
+  stream->seekg (0);
+  
+  if (0) { // TODO: differentiate JFIF vs. Exif?
     // quick magic check
-    char buf [10];
-    stream->read (buf, sizeof (buf));
-    stream->seekg (0);
-    
-    if (buf[6] != 'J' || buf[7] != 'F' || buf[8] != 'I' || buf[9] != 'F')
-      return false;
+      char buf [10];
+      stream->read (buf, sizeof (buf));
+      stream->seekg (0);
+      
+      if (buf[6] != 'J' || buf[7] != 'F' || buf[8] != 'I' || buf[9] != 'F')
+	return false;
   }
   
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
