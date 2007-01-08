@@ -629,7 +629,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     break;
   } /* switch */
   
-  image.data = data;
+  image.setRawData (data);
   
   // convert to RGB color-space - we do not handle palete images internally
   
@@ -753,7 +753,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
       
       for (int row = image.h-1; row >=0; --row)
 	{
-	  memcpy (payload, image.data + stride*row, stride);
+	  memcpy (payload, image.getRawData() + stride*row, stride);
 	  rearrangePixels (payload, image.w, info_hdr.iBitCount);
 	  
 	  if (!stream->write ((char*)payload, file_stride) ) {

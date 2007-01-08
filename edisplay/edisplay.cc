@@ -593,10 +593,7 @@ bool Viewer::Previous ()
 
 bool Viewer::Load ()
 {
-  if (image->data) {
-    free (image->data);
-    image->data = 0;
-  }
+  image->setRawData(0);
   
   // reset channel filter
   channel = 0;
@@ -627,7 +624,7 @@ bool Viewer::Load ()
     return false;
   }
 
-  if (image->data == 0) {
+  if (!image->getRawData()) {
     cerr << "image data not loaded?"<< endl;
     return false;
   }
@@ -654,7 +651,7 @@ void Viewer::ImageToEvas ()
   }
   
   evas_data = (unsigned char*) realloc (evas_data, image->w*image->h*4);
-  unsigned char* src_ptr = image->data;
+  unsigned char* src_ptr = image->getRawData();
   unsigned char* dest_ptr = evas_data;
 
   const int spp = image->spp; 

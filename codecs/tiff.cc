@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
@@ -95,7 +94,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   // printf ("w: %d h: %d\n", _w, _h);
   // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
 
-  image.data = (unsigned char* ) malloc (stride * image.h);
+  image.setRawData ((uint8_t*) malloc (stride * image.h));
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
   if (photometric == PHOTOMETRIC_PALETTE)
@@ -104,7 +103,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
 	printf ("Error reading colormap.\n");
     }
 
-  unsigned char* data2 = image.data;
+  uint8_t* data2 = image.getRawData();
   for (int row = 0; row < image.h; row++)
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
@@ -117,11 +116,11 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
       data2 += stride;
     }
   
-  /* strange 16bit gray images ??? */
+  /* strange 16bit gray images ??? or GRAYA? */
   if (image.spp == 2)
     {
-      for (unsigned char* it = image.data;
-	   it < image.data + stride * image.h; it += 2) {
+      for (uint8_t* it = image.getRawData();
+	   it < image.getRawDataEnd(); it += 2) {
 	char x = it[0];
 	it[0] = it[1];
 	it[1] = x;
@@ -217,7 +216,8 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   int stride = image.Stride();
   for (int row = 0; row < image.h; row++)
     {
-      if (TIFFWriteScanline (out, image.data + row * stride, row, 0) < 0)
+      if (TIFFWriteScanline (out,
+                             image.getRawData() + row * stride, row, 0) < 0)
 	break;
     }
   

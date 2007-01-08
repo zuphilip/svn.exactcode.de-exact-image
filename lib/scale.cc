@@ -1,4 +1,3 @@
-
 #include <math.h>
 
 #include <iostream>
@@ -6,11 +5,10 @@
 
 #include "Colorspace.hh"
 
-void nearest_scale (Image& image, double scalex, double scaley)
+void nearest_scale (Image& new_image, double scalex, double scaley)
 {
-  Image new_image = image;
-  new_image.data = 0;
-
+  Image image = new_image;
+  
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
@@ -26,20 +24,18 @@ void nearest_scale (Image& image, double scalex, double scaley)
       dst.set (*src.at (bx, by) );
       ++dst;
     }
-  
-  image = new_image;
-  new_image.data = 0;
 }
 
-void bilinear_scale (Image& image, double scalex, double scaley)
+void bilinear_scale (Image& new_image, double scalex, double scaley)
 {
-  Image new_image = image;
-  new_image.data = 0;
-  
+  Image image = new_image;
+
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
+  
+  uint8_t* data = image.getRawData();
   
   // $ time econvert  -i testsuite/descew/scew3.pnm --colorspace GRAY8 --bilinear-scale 1.75 -o test-scale.pnm
   // real    0m0.732s
@@ -61,7 +57,7 @@ void bilinear_scale (Image& image, double scalex, double scaley)
       //std::cerr << "bps: " << bps << ", spb: " << spb
       // 	  << ", mask: " << mask << ", stride: " << stride << std::endl;
       
-      uint8_t* dst = new_image.data;
+      uint8_t* dst = new_image.getRawData();
       uint8_t v = 0;
       
       for (int y = 0; y < new_image.h; ++y) {
@@ -80,10 +76,10 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 	  v <<= bps;
 	  
 	  v |=
-	    (( (image.data[sx/spb  + sy*stride]  >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * (256-ydist) +
-	     ( (image.data[sxx/spb + sy*stride]  >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * (256-ydist) +
-	     ( (image.data[sx/spb  + syy*stride] >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * ydist +
-	     ( (image.data[sxx/spb + syy*stride] >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * ydist)
+	    (( (data[sx/spb  + sy*stride]  >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * (256-ydist) +
+	     ( (data[sxx/spb + sy*stride]  >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * (256-ydist) +
+	     ( (data[sx/spb  + syy*stride] >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * ydist +
+	     ( (data[sxx/spb + syy*stride] >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * ydist)
 	    >> (16 + bshift);
 	  
 	  ++x;
@@ -96,16 +92,14 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 	  *dst++ = v;
 	}
       }
-      image = new_image;
       return;
     }
   
   /* handcrafted due popular request */
   if (new_image.spp == 1 && new_image.bps == 8)
     {
-      std::cerr << "here2" << std::endl;
       const int stride = image.Stride ();
-      uint8_t* dst = new_image.data;
+      uint8_t* dst = new_image.getRawData();
       
       for (int y = 0; y < new_image.h; ++y) {
 	const double by = (-1.0+image.h) * y / new_image.h;
@@ -119,15 +113,14 @@ void bilinear_scale (Image& image, double scalex, double scaley)
 	  const int xdist = (int) ((bx - sx) * 256);
 	  const int sxx = sx+1;
 	  
-	  *dst = (image.data [sx  + sy*stride]  * (256-xdist) * (256-ydist) +
-		  image.data [sxx + sy*stride]  * xdist       * (256-ydist) +
-		  image.data [sx  + syy*stride] * (256-xdist) * ydist +
-		  image.data [sxx + syy*stride] * xdist       * ydist)
+	  *dst = (data [sx  + sy*stride]  * (256-xdist) * (256-ydist) +
+		  data [sxx + sy*stride]  * xdist       * (256-ydist) +
+		  data [sx  + syy*stride] * (256-xdist) * ydist +
+		  data [sxx + syy*stride] * xdist       * ydist)
 	    >> 16;
 	  ++dst;
 	}
       }
-      image = new_image;
       return;
     }
   
@@ -160,26 +153,22 @@ void bilinear_scale (Image& image, double scalex, double scaley)
       ++dst;
     }
   }
-  
-  image = new_image;
 }
 
-void box_scale (Image& image, double scalex, double scaley)
+void box_scale (Image& new_image, double scalex, double scaley)
 {
-  Image new_image = image;
-  new_image.data = 0;
-
+  Image image = new_image;
+  
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
-  
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
   
   /* handcrafted due popular request */
   if (new_image.spp == 1 && new_image.bps == 8)
     {
-      uint8_t* src = image.data;
-      uint8_t* dst = new_image.data;
+      uint8_t* src = image.getRawData();
+      uint8_t* dst = new_image.getRawData();
       
       uint32_t boxes[new_image.w];
       uint32_t count[new_image.w];
@@ -205,7 +194,6 @@ void box_scale (Image& image, double scalex, double scaley)
 	}
       }
       
-      image = new_image;
       return;
     }
   
@@ -246,8 +234,6 @@ void box_scale (Image& image, double scalex, double scaley)
     }
     
   }
-  
-  image = new_image;
 }
 
 inline Image::iterator CubicConvolution (int distance,
@@ -269,10 +255,9 @@ inline Image::iterator CubicConvolution (int distance,
    0 0 -13.5 6
    0 0 6.1 -2.45 */
 
-void bicubic_scale (Image& image, double scalex, double scaley)
+void bicubic_scale (Image& new_image, double scalex, double scaley)
 {
-  Image new_image = image;
-  new_image.data = 0;
+  Image image = new_image;
   
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
@@ -324,18 +309,14 @@ void bicubic_scale (Image& image, double scalex, double scaley)
       ++dst;
     }
   }
-
-  image = new_image;
 }
 
-void ddt_scale (Image& image, double scalex, double scaley)
+void ddt_scale (Image& new_image, double scalex, double scaley)
 {
-  Image new_image = image;
-  new_image.data = 0;
+  Image image = new_image;
   
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
-  
   new_image.xres = (int)(scalex * image.xres);
   new_image.yres = (int)(scaley * image.yres);
   
@@ -440,6 +421,4 @@ void ddt_scale (Image& image, double scalex, double scaley)
       ++dst;
     }
   }
-
-  image = new_image;
 }

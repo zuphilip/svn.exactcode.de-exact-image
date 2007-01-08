@@ -6,12 +6,39 @@
 
 class Image
 {
+protected:
+  uint8_t* data;
+  
+  // TODO: codec attachment
+  
 public:
+  
+  uint8_t* getRawData () const {
+    // TODO: ask codec about it
+    return data;
+  }
+  
+  uint8_t* getRawDataEnd () const {
+    // TODO: ask codec about it
+    return data + h * Stride();
+  }
 
-  /*
-     Basic colorspace: GRAY, GRAYA, RGB, RGBA, CMYK, YUV, YUVA
-     Bit depth:        INT1 INT2 INT4        INT8 INT16 INT32 FLOAT32 FLOAT64
-   */
+  void setRawData (uint8_t* _data) {
+    // TODO: wipe the attached codec?
+    if (data)
+      free (data);
+    data = _data;
+  }
+
+  void setRawDataWithoutDelete (uint8_t* _data) {
+    data = _data;
+  }
+  
+  void New (int _w, int _h) {
+    w = _w;
+    h = _h;
+    data = (unsigned char*) realloc (data, Stride() * h);
+  }
   
   typedef enum {
     GRAY1,
@@ -78,7 +105,6 @@ public:
   } ivalue_t;
 
   int w, h, bps, spp, xres, yres;
-  unsigned char* data;
   
   // quick "hack" to let --density save untouched jpeg coefficients
   void* priv_data;
@@ -91,6 +117,12 @@ public:
   ~Image () {
     if (data)
       free (data);
+  }
+
+  Image (Image& other)
+    : data(0), priv_data(0), priv_data_valid(false)
+  {
+    operator= (other);
   }
   
   Image& operator= (Image& other)
@@ -108,12 +140,6 @@ public:
     return *this;
   }
   
-  void New (int _w, int _h) {
-    w = _w;
-    h = _h;
-    data = (unsigned char*) realloc (data, Stride() * h);
-  }
-
   Image* Clone () {
     Image* im = new Image;
     *im = *this;
@@ -168,12 +194,12 @@ public:
 	stride (_image->Stride()), width (image->w)
     {
       if (!end) {
-	ptr = (value_t*) image->data;
+	ptr = (value_t*) image->getRawData();
 	_x = 0;
 	bitpos = 7;
       }
       else {
-	ptr = (value_t*) (image->data + stride * image->h);
+	ptr = (value_t*) image->getRawDataEnd();
 	_x = width;
 	// TODO: bitpos= ...
       }

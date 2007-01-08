@@ -29,6 +29,7 @@ using namespace Utility;
 void flipX (Image& image)
 {
   int bytes = image.Stride();
+  uint8_t* data = image.getRawData();
   // TODO: 16bps
   switch (image.spp * image.bps)
     {
@@ -53,9 +54,9 @@ void flipX (Image& image)
 	
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    unsigned char* row = &image.data [y*bytes];
+	    uint8_t* row = &data [y*bytes];
 	    for (int x = 0; x < bytes/2; ++x) {
-	      unsigned char v = row [x];
+	      uint8_t v = row [x];
 	      row[x] = reversed_bits [row[bytes - 1 - x]];
 	      row[bytes - 1 - x] = reversed_bits[v];
 	    }
@@ -66,9 +67,9 @@ void flipX (Image& image)
       {
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    unsigned char* row = &image.data [y*bytes];
+	    uint8_t* row = &data [y*bytes];
 	    for (int x = 0; x < bytes/2; ++x) {
-	      unsigned char v = row [x];
+	      uint8_t v = row [x];
 	      row[x] = row[bytes - 1 - x];
 	      row[bytes - 1 - x] = v;
 	    }
@@ -78,7 +79,7 @@ void flipX (Image& image)
     case 24:
       {
 	for (int y = 0; y < image.h; ++y) {
-	  rgb* rgb_row = (rgb*) &image.data[y*bytes]; 
+	  rgb* rgb_row = (rgb*) &data[y*bytes]; 
 	  for (int x = 0; x < image.w/2; ++x) {
 	    rgb v = rgb_row [x];
 	    rgb_row[x] = rgb_row[image.w - 1 - x];
@@ -97,16 +98,17 @@ void flipY (Image& image)
 {
   // TODO: 16bps
   int bytes = image.Stride();
+  uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
     {
       int y2 = image.h - y - 1;
 
-      unsigned char* row1 = &image.data[y*bytes];
-      unsigned char* row2 = &image.data[y2*bytes];
+      uint8_t* row1 = &data[y*bytes];
+      uint8_t* row2 = &data[y2*bytes];
 
       for (int x = 0; x < bytes; ++x)
 	{
-	  unsigned char v = *row1;
+	  uint8_t v = *row1;
 	  *row1++ = *row2;
 	  *row2++ = v;
 	}
@@ -131,8 +133,8 @@ void rot90 (Image& image, int angle)
     
   int rot_bytes = (image.h*image.spp*image.bps + 7) / 8;
   
-  unsigned char* data = image.data;
-  unsigned char* rot_data = (unsigned char*) malloc (rot_bytes * image.w);
+  uint8_t* data = image.getRawData();
+  uint8_t* rot_data = (uint8_t*) malloc (rot_bytes * image.w);
   
   // TODO: 16bps
   switch (image.spp * image.bps)
@@ -147,7 +149,7 @@ void rot90 (Image& image, int angle)
       std::cerr << "mask: " << (int)mask << std::endl;
       
       for (int y = 0; y < image.h; ++y) {
-	unsigned char* new_row;
+	uint8_t* new_row;
 	if (cw)
 	  new_row = &rot_data [ (image.h - 1 - y) / spb ];
 	else
@@ -155,7 +157,7 @@ void rot90 (Image& image, int angle)
 	
 	for (int x = 0; x < image.w;) {
 	  // spread the bits thru the various row slots
-	  unsigned char bits = *data++;
+	  uint8_t bits = *data++;
 	  int i = 0;
 	  for (; i < spb && x < image.w; ++i) {
 	    if (cw) {
@@ -191,7 +193,7 @@ void rot90 (Image& image, int angle)
       
     case 8:
       for (int y = 0; y < image.h; ++y) {
-	unsigned char* new_row;
+	uint8_t* new_row;
 	if (cw)
 	  new_row = &rot_data [ image.h - 1 - y ];
 	else
@@ -208,7 +210,7 @@ void rot90 (Image& image, int angle)
       
     case 24:
       {
-	rgb* rgb_data = (rgb*) image.data; 
+	rgb* rgb_data = (rgb*) image.getRawData(); 
 	for (int y = 0; y < image.h; ++y) {
 	  rgb* new_row;
 	  if (cw)
@@ -235,8 +237,7 @@ void rot90 (Image& image, int angle)
     }
   
   // set the new data
-  free (image.data);
-  image.data = rot_data;
+  image.setRawData (rot_data);
   
   // we are done, tweak the w/h
   int x = image.w;
@@ -283,11 +284,11 @@ void rotate (Image& image, double angle, Image::iterator background)
   
   Image orig_image = image;
   
-  image.data = (uint8_t*) malloc (image.Stride()*image.h);
+  image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   
-  double cached_sin = sin (angle);;
+  double cached_sin = sin (angle);
   double cached_cos = cos (angle);
 
   for(int y = 0; y < image.h; ++y)

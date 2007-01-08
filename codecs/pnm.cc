@@ -1,4 +1,3 @@
-
 /*
  * C++ PNM library.
  * Copyright (c) 2006 Rene Rebe <rene@exactcode.de>
@@ -130,7 +129,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
       
       for (int y = 0; y < image.h; ++y)
 	{
-	  uint8_t* dest = image.data + y * stride;
+	  uint8_t* dest = image.getRawData() + y * stride;
 	  
 	  stream->read ((char*)dest, stride);
 
@@ -227,7 +226,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
       
       for (int y = 0; y < image.h; ++y)
 	{
-	  memcpy (ptr, image.data + y * stride, stride);
+	  memcpy (ptr, image.getRawData() + y * stride, stride);
 	  
 	  // is this publically defined somewhere???
 	  if (bps == 1) {

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2006 René Rebe
  * 
@@ -24,19 +23,19 @@
 
 bool RAWCodec::readImage (std::istream* stream, Image& image)
 {
-  if (!image.data)
-    image.data = (uint8_t*) malloc (image.Stride()*image.h);
-  return stream->readsome ((char*)image.data, image.Stride()*image.h)
+  if (!image.getRawData())
+    image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
+  return (size_t) stream->readsome ((char*)image.getRawData(), image.Stride()*image.h)
     == (size_t) image.Stride()*image.h;
 }
 
 bool RAWCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  if (!image.data)
+  if (!image.getRawData())
     return false;
 
-  return stream->write ((char*)image.data, image.Stride()*image.h)
+  return stream->write ((char*)image.getRawData(), image.Stride()*image.h)
     /* ==
        (size_t) image.Stride()*image.h*/;
 }

@@ -157,7 +157,7 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace)
   }
 
   // no image data, e.g. for loading raw images
-  if (!image->data) {
+  if (!image->getRawData()) {
     image->spp = spp;
     image->bps = bps;
     return true;
