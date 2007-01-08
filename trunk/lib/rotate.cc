@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2006 René Rebe
- *           (C) 2006 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2006, 2007 René Rebe
+ *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ using namespace Utility;
 void flipX (Image& image)
 {
   int bytes = image.Stride();
-  
+  // TODO: 16bps
   switch (image.spp * image.bps)
     {
     case 1:
@@ -133,41 +133,52 @@ void rot90 (Image& image, int angle)
   
   unsigned char* data = image.data;
   unsigned char* rot_data = (unsigned char*) malloc (rot_bytes * image.w);
-
+  
+  // TODO: 16bps
   switch (image.spp * image.bps)
     {
     case 1:
+    case 2:
+    case 4: {
+      const int bps = image.bps;
+      const int spb = 8 / bps; // Samples Per Byte
+      const uint8_t mask =  0xF00 >> bps;
+      
+      std::cerr << "mask: " << (int)mask << std::endl;
+      
       for (int y = 0; y < image.h; ++y) {
 	unsigned char* new_row;
 	if (cw)
-	  new_row = &rot_data [ (image.h - 1 - y) / 8 ];
+	  new_row = &rot_data [ (image.h - 1 - y) / spb ];
 	else
-	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / 8 ];
+	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / spb ];
+	
 	for (int x = 0; x < image.w;) {
 	  // spread the bits thru the various row slots
 	  unsigned char bits = *data++;
 	  int i = 0;
-	  for (; i < 8 && x < image.w; ++i) {
+	  for (; i < spb && x < image.w; ++i) {
 	    if (cw) {
-	      *new_row = *new_row >> 1 | (bits & 0x80);
+	      *new_row = *new_row >> bps | (bits & mask);
 	      new_row += rot_bytes;
 	    }
 	    else {
-	      *new_row = *new_row << 1 | (bits & 0x80) >> 7;
+	      *new_row = *new_row << bps | (bits & mask) >> (8-bps);
 	      new_row -= rot_bytes;
 	    }
-	    bits <<= 1;
+	    bits <<= bps;
 	    ++x;
 	  }
 	  // finally shift the last line if necessary
-	  if (i < 8) {
+	  // TODO: recheck this residual bit for correctness
+	  if (i < spb) {
 	    if (cw) {
 	      new_row -= rot_bytes;
-	      *new_row = *new_row >> (8 - i);
+	      *new_row = *new_row >> (8 - (bps*i));
 	    }
 	    else {
 	      new_row += rot_bytes;
-	      *new_row = *new_row << (8 - i);
+	      *new_row = *new_row << (8 - (bps*i));
 	      
 	    }
 	    bits <<= 1;
@@ -175,6 +186,7 @@ void rot90 (Image& image, int angle)
 	  }
 	}
       }
+    }
       break;
       
     case 8:
