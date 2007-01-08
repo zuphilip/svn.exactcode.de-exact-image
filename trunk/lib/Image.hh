@@ -4,6 +4,27 @@
 #include <inttypes.h>
 #include <string>
 
+/* The Plain Old Data encapsulation of pixel, raster data.
+ *
+ * Only minimal abstraction is done here to allow all sorts of
+ * hand optimized low-level optimizations.
+ *
+ * On loading a codec might be attached. The codec might be querried
+ * to decode the image data later on (decode on access) to allow
+ * avoiding image decoding if the data is not accessed.
+ *
+ * Equivalently writing can be optimized by keeping the codec
+ * around and saving the original data without recompression
+ * (JPEG).
+ *
+ * Some method in the codec allow working on the compressed data
+ * such as orthogonal rotation, down-scaling, and cropping
+ * (e.g. of JPEG DCT coefficients - like jpegtran, epeg).
+ */
+
+// just forward
+class ImageCodec;
+
 class Image
 {
 protected:
@@ -106,12 +127,14 @@ public:
 
   int w, h, bps, spp, xres, yres;
   
-  // quick "hack" to let --density save untouched jpeg coefficients
-  void* priv_data;
-  bool priv_data_valid;
+protected:
+  ImageCodec* codec;
+  
+public:
+  ImageCodec* getCodec() { return 0; }
   
   Image ()
-    : data(0), priv_data(0), priv_data_valid(false) {
+    : data(0) {
   }
   
   ~Image () {
@@ -120,7 +143,7 @@ public:
   }
 
   Image (Image& other)
-    : data(0), priv_data(0), priv_data_valid(false)
+    : data(0)
   {
     operator= (other);
   }
