@@ -11,15 +11,41 @@
  *
  * On loading a codec might be attached. The codec might be querried
  * to decode the image data later on (decode on access) to allow
- * avoiding image decoding if the data is not accessed.
+ * avoiding image decoding if the data is not accessed at all.
  *
  * Equivalently writing can be optimized by keeping the codec
  * around and saving the original data without recompression
  * (JPEG).
  *
- * Some method in the codec allow working on the compressed data
- * such as orthogonal rotation, down-scaling, and cropping
- * (e.g. of JPEG DCT coefficients - like jpegtran, epeg).
+ * Some methods in the codec allow working on the compressed data such
+ * as orthogonal rotation, down-scaling, and cropping (e.g. of JPEG
+ * DCT coefficients - like jpegtran, epeg).
+ *
+ * Call sequence on Read/Wrie:
+ *   Image::setRawData(0)
+ *   Image::setCodec()
+ *   Image::getRawData()
+ *     if !data then codec->decode() end
+ *
+ * After modifing the POD image or setting completely new data,
+ * setRawData*() must be called to notify about the update:
+ *   Image::setRawData*()
+ *     if !modified then codec->free() modified=true end 
+ *
+ * Again: If you modify more than meta data you must call:
+ *   Image::setRawData()
+ * even with the current data pointer remains equalq to ensure
+ * proper invalidation of the cached compressed codec data!
+ *
+ * Call sequence of the Codec's::encode*()
+ *     if image->isModified() then
+ *       encode_new_data()
+ *     else
+ *       just copy existing compressed data (e.g. DCT)
+ *     end
+ *
+ * The operator= create a complete clone of the image, the image
+ * buffers are not shared (anymore - formerly transfered ownership).
  */
 
 // just forward
@@ -29,9 +55,9 @@ class Image
 {
 protected:
   uint8_t* data;
-  
-  // TODO: codec attachment
-  
+  ImageCodec* codec;
+  bool modified;
+
 public:
   
   uint8_t* getRawData () const;
@@ -40,6 +66,11 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   void New (int _w, int _h);
+
+  ImageCodec* getCodec();
+  void setCodec (ImageCodec* _codec);
+  
+  bool isModified ();
   
   typedef enum {
     GRAY1,
@@ -107,11 +138,8 @@ public:
 
   int w, h, bps, spp, xres, yres;
   
-protected:
-  ImageCodec* codec;
   
 public:
-  ImageCodec* getCodec() { return 0; }
   
   Image ();
   Image (Image& other);
