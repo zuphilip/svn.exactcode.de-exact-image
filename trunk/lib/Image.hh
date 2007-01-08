@@ -34,32 +34,12 @@ protected:
   
 public:
   
-  uint8_t* getRawData () const {
-    // TODO: ask codec about it
-    return data;
-  }
-  
-  uint8_t* getRawDataEnd () const {
-    // TODO: ask codec about it
-    return data + h * Stride();
-  }
+  uint8_t* getRawData () const;
+  uint8_t* getRawDataEnd () const;
 
-  void setRawData (uint8_t* _data) {
-    // TODO: wipe the attached codec?
-    if (data)
-      free (data);
-    data = _data;
-  }
-
-  void setRawDataWithoutDelete (uint8_t* _data) {
-    data = _data;
-  }
-  
-  void New (int _w, int _h) {
-    w = _w;
-    h = _h;
-    data = (unsigned char*) realloc (data, Stride() * h);
-  }
+  void setRawData (uint8_t* _data);
+  void setRawDataWithoutDelete (uint8_t* _data);
+  void New (int _w, int _h);
   
   typedef enum {
     GRAY1,
@@ -133,49 +113,14 @@ protected:
 public:
   ImageCodec* getCodec() { return 0; }
   
-  Image ()
-    : data(0) {
-  }
+  Image ();
+  Image (Image& other);
+  ~Image ();
   
-  ~Image () {
-    if (data)
-      free (data);
-  }
-
-  Image (Image& other)
-    : data(0)
-  {
-    operator= (other);
-  }
   
-  Image& operator= (Image& other)
-  {
-    w = other.w;
-    h = other.h;
-    bps = other.bps;
-    spp = other.spp;
-    xres = other.xres;
-    yres = other.yres;
-    if (data)
-      free (data);
-    data = other.data;
-    other.data = 0;
-    return *this;
-  }
+  Image& operator= (Image& other);
   
-  Image* Clone () {
-    Image* im = new Image;
-    *im = *this;
-
-    // currently for historic reasons the copy semantic is a bit unhandy here
-    this->data = im->data;
-    im->data = 0;
-    im->New (im->w, im->h);
-
-    // copy pixel data
-    memcpy (im->data, this->data, im->Stride() * im->h);
-    return im;
-  }
+  Image* Clone ();
   
   int Stride () const {
     return (w * spp * bps + 7) / 8;
