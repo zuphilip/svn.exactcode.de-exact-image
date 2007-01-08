@@ -20,7 +20,10 @@ public:
     registerCodec ("raw", this); // Panasonic, Casio, Leica
   };
   virtual ~DCRAWCodec () { unregisterCodec (this); };
-
+  
+  virtual std::string getID () { return "DCRAW"; };
+  
+  
   virtual bool readImage (std::istream* stream, Image& image);
   virtual bool writeImage (std::ostream* stream, Image& image, int quality, const std::string& compress);
 };

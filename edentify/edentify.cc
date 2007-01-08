@@ -1,7 +1,7 @@
-
 /*
  * The ExactImage library's identify compatible command line frontend.
- * Copyright (C) 2006 René Rebe, Archivista
+ * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -177,10 +177,9 @@ int main (int argc, char* argv[])
 	  std::cout << "TODO: implement verbose output" << std::endl;
 	}
       else {
-	// TODO: attach the loader to the image, would be nice for JPEG, JP2
-	// coefficent handling anyway, so we can querry the codec identity here
-	// placeholder <CODEC> ...
-	std::cout << *file << ": <CODEC> " << image.w << "x" << image.h;
+	std::cout << *file << ": "
+		  << (image.getCodec() ? image.getCodec()->getID() : "NONE")
+		  << " " << image.w << "x" << image.h;
 	
 	if (image.xres && image.yres)
 	  std::cout << " @ " << image.xres << "x" << image.yres << "dpi ("

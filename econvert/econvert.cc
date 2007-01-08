@@ -1,6 +1,7 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2006 René Rebe, Archivista
+ * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -765,7 +766,6 @@ bool convert_resolution (const Argument<std::string>& arg)
 	yres = xres;
       image.xres = xres;
       image.yres = yres;
-      image.priv_data_valid = true; // "HACK" to allow losssless jpeg, though not always valid
       return true;
     }
   std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;

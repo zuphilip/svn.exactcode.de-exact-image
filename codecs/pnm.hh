@@ -11,7 +11,9 @@ public:
     registerCodec ("pbm", this);
   };
   virtual ~PNMCodec () { unregisterCodec (this); };
-
+  
+  virtual std::string getID () { return "PNM"; };
+  
   virtual bool readImage (std::istream* stream, Image& image);
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress);
