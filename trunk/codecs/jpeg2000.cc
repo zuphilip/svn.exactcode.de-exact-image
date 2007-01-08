@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2005 René Rebe
  * 
@@ -245,7 +244,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
     }
   }
   
-  im.data = data;
+  im.setRawData (data);
   jas_image_destroy (image);
   return true;
 }
@@ -295,7 +294,7 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
     }
   }
 
-  unsigned char* it = im.data;
+  uint8_t* it = im.getRawData();
   for (int y = 0; y < im.h; ++y) {
     for (int x = 0; x < im.w; ++x) {
       for (int k = 0; k < im.spp; ++k)

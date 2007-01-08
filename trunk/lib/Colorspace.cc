@@ -13,7 +13,8 @@
 void normalize (Image& image, unsigned char low, unsigned char high)
 {
   int histogram[256] = { 0 };
-  for (unsigned char* it = image.data; it < image.data + image.w*image.h;)
+  
+  for (unsigned char* it = image.getRawData(); it < image.getRawDataEnd();)
     histogram[*it++]++;
 
   int lowest = 255, highest = 0;
@@ -42,15 +43,15 @@ void normalize (Image& image, unsigned char low, unsigned char high)
   std::cerr << "a: " << (float) a / 256
 	    << " b: " << (float) b / 256 << std::endl;
 
-  for (unsigned char* it = image.data; it < image.data + image.w*image.h; ++it)
+  for (unsigned char* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
     *it = ((int) *it * a + b) / 256;
 
 }
 
 void colorspace_rgb8_to_gray8 (Image& image)
 {
-  unsigned char* output = image.data;
-  for (unsigned char* it = image.data; it < image.data + image.w*image.h*image.spp;)
+  unsigned char* output = image.getRawData();
+  for (unsigned char* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
     {
       // R G B order and associated weighting
       int c = (int)*it++ * 28;
@@ -64,8 +65,8 @@ void colorspace_rgb8_to_gray8 (Image& image)
 
 void colorspace_gray8_to_gray1 (Image& image, unsigned char threshold)
 {
-  unsigned char *output = image.data;
-  unsigned char *input = image.data;
+  unsigned char *output = image.getRawData();
+  unsigned char *input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
@@ -96,8 +97,8 @@ void colorspace_gray8_to_gray1 (Image& image, unsigned char threshold)
 
 void colorspace_gray8_to_gray4 (Image& image)
 {
-  unsigned char *output = image.data;
-  unsigned char *input = image.data;
+  unsigned char *output = image.getRawData();
+  unsigned char *input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
@@ -126,10 +127,10 @@ void colorspace_gray8_to_gray4 (Image& image)
 }
 void colorspace_gray8_to_gray2 (Image& image)
 {
-  unsigned char *output = image.data;
-  unsigned char *input = image.data;
+  unsigned char *output = image.getRawData();
+  unsigned char *input = image.getRawData();
   
-  for (int row = 0; row < image.h; row++)
+  for (int row = 0; row < image.h; ++row)
     {
       unsigned char z = 0;
       int x = 0;
@@ -159,15 +160,14 @@ void colorspace_gray8_to_rgb8 (Image& image)
 {
   unsigned char* data = (unsigned char*)malloc (image.w*image.h*3);
   unsigned char* output = data;
-  for (unsigned char* it = image.data;
-       it < image.data + image.w*image.h*image.spp; ++it)
+  for (unsigned char* it = image.getRawData ();
+       it < image.getRawData() + image.w*image.h*image.spp; ++it)
     {
       *output++ = *it;
       *output++ = *it;
       *output++ = *it;
     }
-  free (image.data);
-  image.data = data;
+  image.setRawData(data);
   image.spp = 3; // converted data right now
 }
 
@@ -180,7 +180,6 @@ void colorspace_grayX_to_gray8 (Image& image)
   Image gray8_image;
   gray8_image.bps = 8;
   gray8_image.spp = 1;
-  gray8_image.data = 0;
   gray8_image.New (image.w, image.h);
 
   Image::iterator it = image.begin();
@@ -193,7 +192,6 @@ void colorspace_grayX_to_gray8 (Image& image)
     ++it; ++gray8_it;
   }
   image = gray8_image;
-  gray8_image.data = 0;
 }
 
 void colorspace_grayX_to_rgb8 (Image& image)
@@ -205,7 +203,6 @@ void colorspace_grayX_to_rgb8 (Image& image)
   Image rgb_image;
   rgb_image.bps = 8;
   rgb_image.spp = 3;
-  rgb_image.data = 0;
   rgb_image.New (image.w, image.h);
   
   Image::iterator it = image.begin();
@@ -218,7 +215,6 @@ void colorspace_grayX_to_rgb8 (Image& image)
     ++it; ++rgb_it;
   }
   image = rgb_image;
-  rgb_image.data = 0;
 }
 
 void colorspace_gray1_to_gray2 (Image& image)
@@ -226,7 +222,7 @@ void colorspace_gray1_to_gray2 (Image& image)
   unsigned char* data = (unsigned char*) malloc (image.h*image.w/4);
   
   unsigned char* output = data;
-  unsigned char* input = image.data;
+  unsigned char* input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
@@ -247,24 +243,22 @@ void colorspace_gray1_to_gray2 (Image& image)
 	}
     }
   
-  free (image.data);
-  image.data = data;
-  
+  image.setRawData (data);
   image.bps = 2;
 }
 
 void colorspace_gray1_to_gray4 (Image& image)
 {
-    unsigned char* data = (unsigned char*) malloc (image.h*image.w/2);
+  uint8_t* data = (uint8_t*) malloc (image.h*image.w/2);
   
-  unsigned char* output = data;
-  unsigned char* input = image.data;
+  uint8_t* output = data;
+  uint8_t* input = image.getRawData();
   
-  for (int row = 0; row < image.h; row++)
+  for (int row = 0; row < image.h; ++row)
     {
       unsigned char z = 0;
       unsigned char zz = 0;
-      for (int x = 0; x < image.w; x++)
+      for (int x = 0; x < image.w; ++x)
 	{
 	  if (x % 8 == 0)
 	    z = *input++;
@@ -279,18 +273,16 @@ void colorspace_gray1_to_gray4 (Image& image)
 	}
     }
   
-  free (image.data);
-  image.data = data;
-  
+  image.setRawData (data);
   image.bps = 4;
 }
 
 void colorspace_gray1_to_gray8 (Image& image)
 {
-  unsigned char* data = (unsigned char*) malloc (image.h*image.w);
+  uint8_t* data = (unsigned char*) malloc (image.h*image.w);
   
-  unsigned char* output = data;
-  unsigned char* input = image.data;
+  uint8_t* output = data;
+  uint8_t* input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
@@ -306,17 +298,15 @@ void colorspace_gray1_to_gray8 (Image& image)
 	}
     }
   
-  free (image.data);
-  image.data = data;
-  
+  image.setRawData (data);
   image.bps = 8;
 }
 
 void colorspace_16_to_8 (Image& image)
 {
-  uint8_t* output = image.data;
-  for (uint8_t* it = image.data;
-       it < image.data + image.w*image.h*image.spp*2;)
+  uint8_t* output = image.getRawData();
+  for (uint8_t* it = image.getRawData();
+       it < image.getRawDataEnd();)
     {
 #if __BYTE_ORDER != __BIG_ENDIAN
       *output++ = it[1];
@@ -332,13 +322,12 @@ void colorspace_8_to_16 (Image& image)
 {
   uint16_t* data = (uint16_t*) malloc (image.w*image.h*image.spp*2);
   uint16_t* out_it = data;
-  for (uint8_t* it = image.data;
-       it < image.data + image.w*image.h*image.spp;)
+  for (uint8_t* it = image.getRawData();
+       it < image.getRawDataEnd();)
     {
       *out_it++ = *it++ * 0xffff / 255;
     }
-  free (image.data);
-  image.data = (uint8_t*) data;
+  image.setRawData ((uint8_t*)data);
   image.bps = 16; // converted 16bit data
 }
 
@@ -365,8 +354,8 @@ void colorspace_de_palette (Image& image, int table_entries,
 	bmap[0] >= 0xff00)
       {
 	std::cerr << "inverted b/w table." << std::endl;
-	for (unsigned char* it = image.data;
-	     it < image.data + image.Stride()*image.h;
+	for (unsigned char* it = image.getRawData();
+	     it < image.getRawDataEnd();
 	     ++it)
 	  *it ^= 0xff;
 	return;
@@ -398,17 +387,17 @@ void colorspace_de_palette (Image& image, int table_entries,
   if (!is_gray) // RGB
     new_size *= 3;
   
-  unsigned char* orig_data = image.data;
-  image.data = (unsigned char*) malloc (new_size);
+  uint8_t* orig_data = image.getRawData();
+  uint8_t* new_data = (uint8_t*) malloc (new_size);
   
-  unsigned char* src = orig_data;
-  unsigned char* dst = image.data;
+  uint8_t* src = orig_data;
+  uint8_t* dst = new_data;
 
   // TODO: allow 16bit output if the palette contains that much dynamic
 
   int bits_used = 0;
   int x = 0;
-  while (dst < image.data + new_size)
+  while (dst < new_data + new_size)
     {
       unsigned char v = *src >> (8 - image.bps);
       if (is_gray) {
@@ -432,7 +421,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	*src <<= image.bps;
       }
     }
-  free (orig_data);
+  image.setRawData (new_data);
   
   image.bps = 8;
   if (is_gray)

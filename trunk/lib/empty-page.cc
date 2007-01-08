@@ -57,9 +57,10 @@ bool detect_empty_page (Image& image, double percent, int margin,
   
   // count pixels
   int pixels = 0;
+  uint8_t* data = image.getRawData();
   for (int row = margin; row < image.h-margin; row++) {
     for (int x = margin/8; x < stride - margin/8; x++) {
-      int b = bits_set [ image.data[stride*row + x] ];
+      int b = bits_set [ data[stride*row + x] ];
       // it is a bits_set table - and we want the zeros ...
       pixels += 8-b;
     }

@@ -336,7 +336,7 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
       image.xres = image.yres = 0;
   }
 
-  image.data = (unsigned char*) malloc (row_stride * cinfo->output_height);
+  image.setRawData ((uint8_t*) malloc(row_stride * cinfo->output_height));
   
   /* Step 6: while (scan lines remain to be read) */
   /*           jpeg_read_scanlines(...); */
@@ -348,7 +348,7 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
        * Here the array is only one element long, but you could ask for
        * more than one scanline at a time if that's more convenient.
        */
-      buffer[0] = (JSAMPLE*) image.data + (cinfo->output_scanline*row_stride);
+      buffer[0] = (JSAMPLE*) image.getRawData() + (cinfo->output_scanline*row_stride);
       (void) jpeg_read_scanlines(cinfo, buffer, 1);
     }
     jpeg_finish_output(cinfo);
@@ -439,7 +439,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return true;
   }
   
-  // really enecode
+  // really encode
   
   cinfo.image_width = image.w;
   cinfo.image_height = image.h;
@@ -466,8 +466,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
-    buffer[0] = (JSAMPLE*) image.data +
-      cinfo.next_scanline*image.w*image.spp*image.bps/8;
+    buffer[0] = (JSAMPLE*) image.getRawData() +
+      cinfo.next_scanline*image.Stride();
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 

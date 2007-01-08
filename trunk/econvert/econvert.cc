@@ -59,10 +59,7 @@ Argument<std::string> arg_compression ("", "compress",
 
 bool convert_input (const Argument<std::string>& arg)
 {
-  if (image.data) {
-    free (image.data);
-    image.data = 0;
-  }
+  image.setRawData (0);
 
   if (!ImageCodec::Read(arg.Get(), image)) {
     std::cerr << "Error reading input file." << std::endl;
@@ -73,7 +70,7 @@ bool convert_input (const Argument<std::string>& arg)
 
 bool convert_output (const Argument<std::string>& arg)
 {
-  if (image.data == 0) {
+  if (image.getRawData() == 0) {
     std::cerr << "No image available." << std::endl;
     return false;
   }
@@ -94,7 +91,7 @@ bool convert_output (const Argument<std::string>& arg)
 
 bool convert_split (const Argument<std::string>& arg)
 {
-  if (image.data == 0) {
+  if (image.getRawData() == 0) {
     std::cerr << "No image available." << std::endl;
     return false;
   }
@@ -122,13 +119,14 @@ bool convert_split (const Argument<std::string>& arg)
   for (int i = 0; i < arg.Size(); ++i)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
-      split_image.data = image.data + i * split_image.Stride() * split_image.h;
+      split_image.setRawDataWithoutDelete
+        (image.getRawData() + i * split_image.Stride() * split_image.h);
       if (!ImageCodec::Write (arg.Get(i), split_image, quality, compression)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
       }
     }
-  split_image.data = 0; // not deallocate in dtor
+  split_image.setRawDataWithoutDelete (0); // not deallocate in dtor
   
   return err == 0;
 }
@@ -234,7 +232,7 @@ bool convert_dither_floyd_steinberg (const Argument<int>& arg)
     std::cerr << "Can only dither GRAY data right now." << std::endl;
     return false;
   }
-  FloydSteinberg (image.data, image.w, image.h, arg.Get());
+  FloydSteinberg (image.getRawData(), image.w, image.h, arg.Get());
   return true;
 }
 
@@ -244,7 +242,7 @@ bool convert_dither_riemersma (const Argument<int>& arg)
     std::cerr << "Can only dither GRAY data right now." << std::endl;
     return false;
   }
-  Riemersma (image.data, image.w, image.h, arg.Get());
+  Riemersma (image.getRawData(), image.w, image.h, arg.Get());
   return true;
 }
 
@@ -263,18 +261,19 @@ bool convert_descew (const Argument<bool>& arg)
   using std::cout;
   using std::endl;
   
-  //uint8_t* it = image.data;
   uint8_t* new_data = (uint8_t*) malloc (image.Stride() * image.h);
 
 #define pix(d,x,y) d[image.w*(y)+x]
   const int thr = 8;
-  
+
+  uint8_t* data = image.getRawData();
+ 
   // accumulate deltas
   for (int x = 0; x < image.w-1; ++x) {
     for (int y = 0; y < image.h-1; ++y)
       {
-	int i = std::abs ((int)pix(image.data,x,y) - pix(image.data,x+1,y));
-	i += std::abs ((int)pix(image.data,x,y) - pix(image.data,x,y+1));
+	int i = std::abs ((int)pix(data,x,y) - pix(data,x+1,y));
+	i += std::abs ((int)pix(data,x,y) - pix(data,x,y+1));
 	if (i > thr)
 	  pix(new_data,x,y) += i*2;
       }
@@ -389,14 +388,13 @@ bool convert_descew (const Argument<bool>& arg)
     //cout << endl;
   }
 
-  //memcpy (image.data, new_data, image.w*image.h);
-  free(image.data);
-  image.data = new_data;
+  image.setRawData (new_data);
+  data = image.getRawData();
        
 
   // visualize
   
-#define mark(x,y) {image.data[ image.Stride()* (y) + (x) ] = 0xff;}
+#define mark(x,y) {data[ image.Stride()* (y) + (x) ] = 0xff;}
 
   int* hori_histogramm = new int [image.w];
   int* vert_histogramm = new int [image.h];
@@ -423,7 +421,7 @@ bool convert_descew (const Argument<bool>& arg)
 	}
   }
   
-#define mark2(x,y,v) {image.data[ image.Stride()* (y) + (x) ] = v; }
+#define mark2(x,y,v) {data[ image.Stride()* (y) + (x) ] = v; }
 
 #if 0  
   for (int x = 2; x < image.w-2; ++x) {
@@ -784,8 +782,7 @@ bool convert_size (const Argument<std::string>& arg)
     {
       image.w = w;
       image.h = h;
-		  if (image.data) free (image.data);
-			image.data = 0;
+      image.setRawData (0);
       return true;
     }
   std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;

@@ -107,7 +107,7 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im)
   for (int i = 0; i < 0x10000; ++i)
     lut [i] = pow( (double) i / 0xFFFF, one_over_gamma) * 0xFFFF;
   
-  uint16_t* ptr = (uint16_t*) im.data;
+  uint16_t* ptr = (uint16_t*) im.getRawData();
   for (int row = 0; row < height; ++row)
     for (int col = 0; col < width; ++col)
       for (int c = 0; c < colors; ++c)

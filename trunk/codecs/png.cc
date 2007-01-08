@@ -1,4 +1,3 @@
-
 #include <endian.h>
 #include <stdlib.h>
 
@@ -176,13 +175,13 @@ bool PNGCodec::readImage (std::istream* stream, Image& image)
   /* Allocate the memory to hold the image using the fields of info_ptr. */
   int stride = png_get_rowbytes (png_ptr, info_ptr);
   
-  image.data = (unsigned char*) malloc (stride * height);
+  image.setRawData ((uint8_t*) malloc (stride * height));
   png_bytep row_pointers[1];
   
   /* The other way to read images - deal with interlacing: */
   for (int pass = 0; pass < number_passes; ++pass)
     for (unsigned int y = 0; y < height; ++y) {
-      row_pointers[0] = image.data + y * stride;
+      row_pointers[0] = image.getRawData() + y * stride;
       png_read_rows(png_ptr, row_pointers, png_bytepp_NULL, 1);
     }
   
@@ -267,7 +266,7 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   int number_passes = 1;
   for (int pass = 0; pass < number_passes; ++pass)
     for (int y = 0; y < image.h; ++y) {
-      row_pointers[0] = image.data + y * stride;
+      row_pointers[0] = image.getRawData() + y * stride;
       png_write_rows(png_ptr, (png_byte**)&row_pointers, 1);
     }
 

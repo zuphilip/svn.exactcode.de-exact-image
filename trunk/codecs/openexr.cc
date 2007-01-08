@@ -1,4 +1,3 @@
-
 /*
  * Copyright (C) 2006 René Rebe
  * 
@@ -148,7 +147,7 @@ try {
   
   Array2D<Rgba> pixels (1, image.w); // working data
   
-  uint16_t* it = (uint16_t*) image.data;
+  uint16_t* it = (uint16_t*) image.getRawData();
   for (int y = 0; y < image.h; ++y)
     {
       exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);
@@ -204,7 +203,7 @@ bool OpenEXRCodec::writeImage (std::ostream* stream, Image& image,
   
   Array2D<Rgba> pixels (1, image.w); // working data
   
-  uint16_t* it = (uint16_t*) image.data;
+  uint16_t* it = (uint16_t*) image.getRawData();
   for (int y = 0; y < image.h; ++y)
     {
       exrfile.setFrameBuffer (&pixels[0][0] - y * image.w, 1, image.w);

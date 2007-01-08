@@ -10,7 +10,8 @@ typedef double matrix_type;
 inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
-  unsigned char *data2 = (unsigned char *) malloc (image.w * image.h);
+  uint8_t* data = image.getRawData();
+  uint8_t* data2 = (uint8_t*) malloc (image.w * image.h);
   
   int xr = xw / 2;
   int yr = yw / 2;
@@ -27,10 +28,10 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
     for (int x = 0; x < image.w; ++x)
 #endif
       {
-	unsigned char * const dst_ptr = &data2[x + y * image.w];
-	unsigned char * const src_ptr = &image.data[x + y * image.w];
+	uint8_t* const dst_ptr = &data2[x + y * image.w];
+	uint8_t* const src_ptr = &data[x + y * image.w];
 	
-	const unsigned char val = *src_ptr;
+	const uint8_t val = *src_ptr;
 	
 	// for now, copy border pixels
 	if (y < yr || y > image.h - yr ||
@@ -38,8 +39,8 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  *dst_ptr = val;
 	else {
 	  matrix_type sum = 0;
-	  unsigned char* data_row =
-	    &image.data[ (y - yr) * image.w - xr + x];
+	  uint8_t* data_row =
+	    &data[ (y - yr) * image.w - xr + x];
 	  matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
 	  // for speed ,-)
@@ -48,14 +49,12 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	      sum += *data_row++ * *matrix_row++;
 	  
 	  sum /= divisor;
-	  unsigned char z = (unsigned char)
-	    (sum > 255 ? 255 : sum < 0 ? 0 : sum);
+	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	  *dst_ptr = z;
 	}
       }
   
-  free (image.data);
-  image.data = data2;
+  image.setRawData (data2);
 }
 
 #endif
