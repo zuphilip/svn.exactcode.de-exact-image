@@ -5,7 +5,6 @@ class BMPCodec : public ImageCodec {
 public:
   
   BMPCodec () { registerCodec ("bmp", this); };
-  ~BMPCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "BMP"; };
 

@@ -5,7 +5,6 @@ class PNGCodec : public ImageCodec {
 public:
   
   PNGCodec () { registerCodec ("png", this); };
-  virtual ~PNGCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "PNG"; };
   

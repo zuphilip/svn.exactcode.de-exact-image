@@ -19,7 +19,6 @@ public:
     registerCodec ("srf", this); // Sony
     registerCodec ("raw", this); // Panasonic, Casio, Leica
   };
-  virtual ~DCRAWCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "DCRAW"; };
   

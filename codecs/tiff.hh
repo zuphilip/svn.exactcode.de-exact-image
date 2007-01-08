@@ -9,8 +9,6 @@ public:
     registerCodec ("tiff", this);
     registerCodec ("tif", this);
   };
-
-  ~TIFCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "TIFF"; };
   
