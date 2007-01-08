@@ -1,5 +1,3 @@
-
-
 #ifndef IMAGELOADER_HH
 #define IMAGELOADER_HH
 
