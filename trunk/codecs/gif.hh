@@ -5,7 +5,6 @@ class GIFCodec : public ImageCodec {
 public:
   
   GIFCodec () { registerCodec ("gif", this); };
-  virtual ~GIFCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "GIF"; };
   

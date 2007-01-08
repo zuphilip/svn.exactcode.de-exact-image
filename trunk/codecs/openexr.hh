@@ -5,7 +5,6 @@ class OpenEXRCodec : public ImageCodec {
 public:
   
   OpenEXRCodec () { registerCodec ("exr", this); };
-  ~OpenEXRCodec () { unregisterCodec (this); };
   
     virtual std::string getID () { return "OpenEXR"; };
 

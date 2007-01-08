@@ -13,7 +13,7 @@ class ImageCodec
 {
 public:
   
-  virtual ~ImageCodec () { };
+  virtual ~ImageCodec ();
   virtual std::string getID () = 0;
   
   // NEW API, allowing the use of any STL i/o stream derived source

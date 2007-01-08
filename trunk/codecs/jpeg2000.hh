@@ -5,7 +5,6 @@ class JPEG2000Codec : public ImageCodec {
 public:
   
   JPEG2000Codec () { registerCodec ("jp2", this); };
-  virtual ~JPEG2000Codec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "JPEG2000"; };
   

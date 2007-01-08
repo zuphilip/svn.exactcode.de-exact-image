@@ -4,7 +4,6 @@ class RAWCodec : public ImageCodec {
 public:
   
   RAWCodec () { registerCodec ("raw", this, true /* explicit only */); };
-  virtual ~RAWCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "RAW data"; };
   

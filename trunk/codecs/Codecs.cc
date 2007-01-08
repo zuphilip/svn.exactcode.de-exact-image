@@ -6,6 +6,12 @@
 
 std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 
+
+ImageCodec::~ImageCodec ()
+{
+  unregisterCodec (this);
+}
+
 std::string get_ext (const std::string& filename)
 {
   // parse the filename extension

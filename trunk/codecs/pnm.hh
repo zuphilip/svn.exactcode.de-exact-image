@@ -10,7 +10,6 @@ public:
     registerCodec ("pgm", this);
     registerCodec ("pbm", this);
   };
-  virtual ~PNMCodec () { unregisterCodec (this); };
   
   virtual std::string getID () { return "PNM"; };
   
