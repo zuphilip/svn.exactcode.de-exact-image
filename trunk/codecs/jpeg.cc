@@ -268,7 +268,6 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   stream->get (); // consume silently
   if (stream->peek () != 0xD8)
     return false;
-  
   stream->seekg (0);
   
   if (0) { // TODO: differentiate JFIF vs. Exif?
