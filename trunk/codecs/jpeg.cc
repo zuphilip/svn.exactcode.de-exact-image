@@ -364,7 +364,7 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
 
   /* Step 7: Finish decompression */
 
-#if 0
+#if 1
   jpeg_finish_decompress(cinfo);
   /* We can ignore the return value since suspension is not possible
    * with the stdio data source.
@@ -417,7 +417,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return false;
   }
   
-  if (image.priv_data && image.priv_data_valid) {
+#if 0
+  if (codec ...) {
     // write original DCT coefficients
     
     std::cerr << "Writing original DCT coefficients." << std::endl;
@@ -446,6 +447,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     
     return true;
   }
+#endif
   
   // really encode
   
