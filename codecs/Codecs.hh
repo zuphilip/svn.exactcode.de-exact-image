@@ -26,7 +26,7 @@ public:
 		     int quality = 80, const std::string& compress = "");
   
   // OLD API, only left for compatibility
-  // not const string& because the filename is parsed and changed internally
+  // not const string& because the filename is parsed and the copy is changed intern.
   static bool Read (std::string file, Image& image);
   static bool Write (std::string file, Image& image,
 		     int quality = 80, const std::string& compress = "");
