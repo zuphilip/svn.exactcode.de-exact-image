@@ -2,35 +2,14 @@
 
 #include "Image.hh"
 
-uint8_t* Image::getRawData () const {
-  // TODO: ask codec about it
-  return data;
-}
-
-uint8_t* Image::getRawDataEnd () const {
-  // we call getRawData as it might have to query the codec to actually load it
-  return getRawData() + h * Stride();
-}
-
-void Image::setRawData (uint8_t* _data) {
-  // TODO: wipe the attached codec?
-  if (data)
-    free (data);
-  data = _data;
-}
-
-void Image::setRawDataWithoutDelete (uint8_t* _data) {
-  data = _data;
-}
-
-void Image::New (int _w, int _h) {
-  w = _w;
-  h = _h;
-  data = (unsigned char*) realloc (data, Stride() * h);
-}
-
 Image::Image ()
-  : data(0) {
+  : data(0), modified(false) {
+}
+
+Image::Image (Image& other)
+  : data(0), modified(false)
+{
+  operator= (other);
 }
 
 Image::~Image () {
@@ -38,14 +17,9 @@ Image::~Image () {
     free (data);
 }
 
-Image::Image (Image& other)
-  : data(0)
-{
-  operator= (other);
-}
-
 Image& Image::operator= (Image& other)
 {
+  // TODO: rethink
   w = other.w;
   h = other.h;
   bps = other.bps;
@@ -60,6 +34,7 @@ Image& Image::operator= (Image& other)
 }
 
 Image* Image::Clone () {
+  // TODO: rethink
   Image* im = new Image;
   *im = *this;
   
@@ -71,4 +46,47 @@ Image* Image::Clone () {
   // copy pixel data
   memcpy (im->data, this->data, im->Stride() * im->h);
   return im;
+}
+
+uint8_t* Image::getRawData () const {
+  // TODO: ask codec about it
+  return data;
+}
+
+uint8_t* Image::getRawDataEnd () const {
+  // we call getRawData as it might have to query the codec to actually load it
+  return getRawData() + h * Stride();
+}
+
+void Image::setRawData (uint8_t* _data) {
+  if (_data != data && data) {
+    free (data);
+    data = 0;
+  }
+
+  // reuse:
+  setRawDataWithoutDelete (_data);
+}
+
+void Image::setRawDataWithoutDelete (uint8_t* _data) {
+  modified = true;
+  data = _data;
+}
+
+void Image::New (int _w, int _h) {
+  w = _w;
+  h = _h;
+  data = (unsigned char*) realloc (data, Stride() * h);
+}
+
+ImageCodec* Image::getCodec() {
+  return codec;
+}
+
+void Image::setCodec(ImageCodec* codec) {
+  
+}
+
+bool Image::isModified () {
+  return modified;
 }
