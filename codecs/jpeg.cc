@@ -27,6 +27,9 @@
 #include <setjmp.h>
 
 #include "jpeg.hh"
+extern "C" {
+#include "transupp.h"
+}
 
 /*
  * ERROR HANDLING:
@@ -368,7 +371,7 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   }
   
   // later needd for on-demand compression
-  //image.setRawData (0);
+  // image.setRawData (0);
   
   srcinfo = cinfo;
   // extract the coefficients
@@ -412,7 +415,6 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
       std::cerr << "Image data was not modifed and JPEG codec: writing orig DCT coeff.." << std::endl;
       
       jpeg_copy_critical_parameters (srcinfo, &cinfo);
-      
       cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
       cinfo.density_unit = 1; /* 1 for dots/inch */
       cinfo.X_density = image.xres;
@@ -475,24 +477,47 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   std::cerr << "JPEGCodec::decodeNow" << std::endl;
 }
 
+// in any case (we do not want artefacts): transformoption.trim = TRUE;
+
 bool JPEGCodec::flipX (Image& image)
 {
+  std::cerr << "JPEGCodec::decodeNow" << std::endl;
+
+  jpeg_transform_info transformoption; /* image transformation options */
+  transformoption.transform = JXFORM_FLIP_H;
+  transformoption.trim = TRUE;
+  transformoption.force_grayscale = FALSE;
+  jtransform_request_workspace(srcinfo, &transformoption);
+  
   return false; // TODO: implement
 }
 
 bool JPEGCodec::flipY (Image& image)
 {
+  // transformoption.transform = JXFORM_FLIP_V;
+
   return false; // TODO: implement
 }
 
 bool JPEGCodec::rotate (Image& image, double angle)
 {
-  return false; // TODO: implement
+  if (angle != 90 && angle != 180 && angle != 270 && angle)
+    return false;
+  
+  // transformoption.transform = JXFORM_ROT_90;
+  // transformoption.transform = JXFORM_ROT_180;
+  // transformoption.transform = JXFORM_ROT_270;
+  
+  std::cerr << "Losslessly rotating JPEG DCT coeff.." << std::endl;
+  // TODO ...
+  return true;
 }
+
+// TODO?: transformoption.force_grayscale = FALSE;
 
 bool JPEGCodec::scale (Image& image, double xscale, double yscale)
 {
-  return false; // TODO: implement
+  return false; // TODO: look into epeg and implement
 }
 
 JPEGCodec jpeg_loader;
