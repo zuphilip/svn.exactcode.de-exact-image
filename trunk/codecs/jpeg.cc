@@ -419,7 +419,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (!image.isModified() /* TODO: && this codec*/) {
     // write original DCT coefficients
     
-    std::cerr << "Writing original DCT coefficients." << std::endl;
+    std::cerr << "Image data was not modifed and JPE codec: writing orig DCT coeff.." << std::endl;
     
     struct jpeg_decompress_struct* srcinfo = (jpeg_decompress_struct*) 0; /* TODO: image.priv_data */
     
@@ -486,6 +486,26 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     std::cout << jerr.num_warnings << " Warnings." << std::endl;
 
   return true;
+}
+
+bool JPEGCodec::flipX (Image& image)
+{
+  return false; // TODO: implement
+}
+
+bool JPEGCodec::flipY (Image& image)
+{
+  return false; // TODO: implement
+}
+
+bool JPEGCodec::rotate (Image& image, double angle)
+{
+  return false; // TODO: implement
+}
+
+bool JPEGCodec::scale (Image& image, double xscale, double yscale)
+{
+  return false; // TODO: implement
 }
 
 JPEGCodec jpeg_loader;
