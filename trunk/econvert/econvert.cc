@@ -145,48 +145,45 @@ bool convert_normalize (const Argument<bool>& arg)
 
 bool convert_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
+  double f = arg.Get();
   
-  if (scale < 0.5)
-    box_scale (image, scale, scale);
-  else
-    bilinear_scale (image, scale, scale);
+  scale (image, f, f);
   
   return true;
 }
 
 bool convert_nearest_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-  nearest_scale (image, scale, scale);
+  double f = arg.Get();
+  nearest_scale (image, f, f);
   return true;
 }
 
 bool convert_bilinear_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-  bilinear_scale (image, scale, scale);
+  double f = arg.Get();
+  bilinear_scale (image, f, f);
   return true;
 }
 
 bool convert_bicubic_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-  bicubic_scale (image, scale, scale);
+  double f = arg.Get();
+  bicubic_scale (image, f, f);
   return true;
 }
 
 bool convert_box_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-  box_scale (image, scale, scale);
+  double f = arg.Get();
+  box_scale (image, f, f);
   return true;
 }
 
 bool convert_ddt_scale (const Argument<double>& arg)
 {
-  double scale = arg.Get();
-  ddt_scale (image, scale, scale);
+  double f = arg.Get();
+  ddt_scale (image, f, f);
   return true;
 }
 
