@@ -82,7 +82,7 @@ void Image::New (int _w, int _h) {
   h = _h;
   
   // reuse:
-  setRawData ((uint8_t*) realloc (data, Stride() * h));
+  setRawDataWithoutDelete ((uint8_t*) realloc (data, Stride() * h));
 }
 
 void Image::setDecoderID (const std::string& id) {
