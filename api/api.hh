@@ -85,7 +85,7 @@ bool decodeImageFile (Image* image, const char* filename);
 #endif
 #endif
   void encodeImage (char **s, int *slen,
-		    Image* image, const char* codec, int quality = 100,
+		    Image* image, const char* codec, int quality = 75,
 		    const char* compression = "");
 
 // encode image into specified filename
