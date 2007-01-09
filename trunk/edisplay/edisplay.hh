@@ -39,7 +39,7 @@ private:
   
   // Image
   Image* image;
-  unsigned char* evas_data;
+  uint8_t* evas_data;
   
   // on screen display
   EvasRectangle* evas_osd_rect;

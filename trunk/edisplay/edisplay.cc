@@ -650,9 +650,9 @@ void Viewer::ImageToEvas ()
     evas_image->SetData (0);
   }
   
-  evas_data = (unsigned char*) realloc (evas_data, image->w*image->h*4);
-  unsigned char* src_ptr = image->getRawData();
-  unsigned char* dest_ptr = evas_data;
+  evas_data = (uint8_t*) realloc (evas_data, image->w*image->h*4);
+  uint8_t* src_ptr = image->getRawData();
+  uint8_t* dest_ptr = evas_data;
 
   const int spp = image->spp; 
   
