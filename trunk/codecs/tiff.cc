@@ -94,7 +94,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   // printf ("w: %d h: %d\n", _w, _h);
   // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
 
-  image.setRawData ((uint8_t*) malloc (stride * image.h));
+  image.New (image.w, image.h);
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
   if (photometric == PHOTOMETRIC_PALETTE)
