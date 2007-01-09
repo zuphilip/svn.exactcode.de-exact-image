@@ -16,10 +16,13 @@
  * file magick (on decoding) or the specified codec / file extension
  * on encoding.
  *
- * The codec might attach itself to the image on decoding to allow
- * on-the-fly decoding and reuse of coded data while re-encoding an
- * image where nothing or just meta data was touched while the pixel
- * data remain unmodified.
+ * The codec might attach a freestanding instance of itself onto the
+ * image on decode to allow on-the-fly decoding and reuse of coded
+ * data while re-encoding an image where nothing or just meta data was
+ * touched while the pixel data remains unmodified.
+ *
+ * Also some specialized methods are available to optimize some
+ * operations that sometimes can work on encoded data.
  */
 
 // just forward
