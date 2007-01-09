@@ -28,7 +28,7 @@
  *   Image::setCodec()
  *
  * or to get on-demand decoding:
- *   set meta data (::w, ::h, :;xdpi, ::ydpi, ...)
+ *   set meta data (e.g. ::w, ::h, ::xdpi, ::ydpi, ...)
  *   Image::setRawData(0)
  *   Image::setCodec()
  *

@@ -89,9 +89,11 @@ ImageCodec* Image::getCodec() {
   return codec;
 }
 
-void Image::setCodec(ImageCodec* _codec) {
+void Image::setCodec (ImageCodec* _codec) {
   codec = _codec;
-  modified = false;
+  // at the moment the codec is attached the data recent
+  if (codec) // not 0
+    modified = false;
 }
 
 bool Image::isModified () {
