@@ -85,7 +85,15 @@ void Image::New (int _w, int _h) {
   setRawData ((uint8_t*) realloc (data, Stride() * h));
 }
 
-ImageCodec* Image::getCodec() {
+void Image::setDecoderID (const std::string& id) {
+  decoderID = id;
+}
+
+const std::string& Image::getDecoderID () {
+  return decoderID;
+}
+
+ImageCodec* Image::Image::getCodec() {
   return codec;
 }
 
