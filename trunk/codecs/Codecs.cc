@@ -176,3 +176,8 @@ void ImageCodec::unregisterCodec (ImageCodec* _loader)
     loader = 0;
   }
 }
+
+/*bool*/ void ImageCodec::decodeNow (Image* image)
+{
+  // intentionally left blank
+}
