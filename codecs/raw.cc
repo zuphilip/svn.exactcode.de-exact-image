@@ -23,8 +23,8 @@
 
 bool RAWCodec::readImage (std::istream* stream, Image& image)
 {
-  if (!image.getRawData())
-    image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
+  image.New (image.w, image.h);
+  
   return (size_t) stream->readsome ((char*)image.getRawData(), image.Stride()*image.h)
     == (size_t) image.Stride()*image.h;
 }

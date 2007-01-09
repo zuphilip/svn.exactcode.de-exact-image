@@ -102,7 +102,7 @@ static jas_stream_ops_t cpp_jas_stream_ops = {
 
 static void jas_stream_initbuf (jas_stream_t* stream)
 {
-  stream->bufbase_ = (unsigned char*) jas_malloc (JAS_STREAM_BUFSIZE + JAS_STREAM_MAXPUTBACK);
+  stream->bufbase_ = (uint8_t*) jas_malloc (JAS_STREAM_BUFSIZE + JAS_STREAM_MAXPUTBACK);
   if (stream->bufbase_) {
     stream->bufmode_ |= JAS_STREAM_FREEBUF;
     stream->bufsize_ = JAS_STREAM_BUFSIZE;
@@ -210,8 +210,9 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   std::cout << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
-  unsigned char* data = (unsigned char*) malloc (im.w * im.h * im.spp);
-  unsigned char* data_ptr = data;
+  im.New (im.w, im.h);
+  uint8_t* data = im.getRawData ();
+  uint8_t* data_ptr = data;
 
   jas_matrix_t *jasdata[3];
   for (int k = 0; k < im.spp; ++k) {
@@ -244,7 +245,6 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
     }
   }
   
-  im.setRawData (data);
   jas_image_destroy (image);
   return true;
 }
