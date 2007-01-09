@@ -416,13 +416,12 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return false;
   }
   
-#if 0
-  if (codec ...) {
+  if (!image.isModified() /* TODO: && this codec*/) {
     // write original DCT coefficients
     
     std::cerr << "Writing original DCT coefficients." << std::endl;
     
-    struct jpeg_decompress_struct* srcinfo = (jpeg_decompress_struct*) image.priv_data;
+    struct jpeg_decompress_struct* srcinfo = (jpeg_decompress_struct*) 0; /* TODO: image.priv_data */
     
     jpeg_copy_critical_parameters (srcinfo, &cinfo);
     
@@ -442,11 +441,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     
     jpeg_finish_decompress(srcinfo);
     jpeg_destroy_decompress(srcinfo);
-    image.priv_data = 0;
+    /* TODO: image.priv_data = 0; */
     
     return true;
   }
-#endif
   
   // really encode
   
