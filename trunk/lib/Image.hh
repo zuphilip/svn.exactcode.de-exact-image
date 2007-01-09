@@ -22,22 +22,33 @@
  * DCT coefficients - like jpegtran, epeg).
  *
  * Call sequence on Read/Wrie:
+ * to immediatly attach the data
+ *   Image::New(w,h)
+ *   Image::getRawData() // to write the data
+ *   Image::setCodec()
+ *
+ * or to get on-demand decoding:
+ *   set meta data (::w, ::h, :;xdpi, ::ydpi, ...)
  *   Image::setRawData(0)
  *   Image::setCodec()
- *   Image::getRawData()
- *     if !data then codec->decode() end
  *
- * After modifing the POD image or setting completely new data,
- * setRawData*() must be called to notify about the update:
+ * Note: setCodec must be last as it marks the data as unmodifed.
+ *
+ * On access the data might be loaded on-demand:
+ *   Image::getRawData()
+ *     if !data then if codec then codec->decode() end end
+ *
+ * After modifing the POD image setRawData*() must be called to
+ * notify about the update:
  *   Image::setRawData*()
  *     if !modified then codec->free() modified=true end 
  *
  * Again: If you modify more than meta data you must call:
  *   Image::setRawData()
- * even with the current data pointer remains equalq to ensure
+ * even with the current data pointer remains equal to ensure
  * proper invalidation of the cached compressed codec data!
  *
- * Call sequence of the Codec's::encode*()
+ * Call sequence of the Codec's::encode*() if data is just rewritten:
  *     if image->isModified() then
  *       encode_new_data()
  *     else
@@ -45,7 +56,7 @@
  *     end
  *
  * The operator= create a complete clone of the image, the image
- * buffers are not shared (anymore - formerly transfered ownership).
+ * buffers are not shared (anymore - formerly ownership was passed).
  */
 
 // just forward
