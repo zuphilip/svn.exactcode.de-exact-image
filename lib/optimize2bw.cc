@@ -1,7 +1,6 @@
-
 /*
- * Copyright (C) 2005 René Rebe
- *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2005 - 2007 René Rebe
+ *           (C) 2005, 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -96,7 +95,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     std::cerr << "lowest: " << lowest << ", highest: " << highest
 	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b << std::endl;
     
-    highest = (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
+    highest = (int) (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
     
     if (low)
       lowest = low;
