@@ -56,7 +56,8 @@
  *     end
  *
  * The operator= create a complete clone of the image, the image
- * buffers are not shared (anymore - formerly ownership was passed).
+ * buffers are not shared (anymore, formerly ownership was passed and
+ * we had a seperate Clone() method).
  */
 
 // just forward
