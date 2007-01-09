@@ -49,9 +49,10 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 	{
 	  // use primary entry to only try each codec once
 	  if (it->primary_entry && !it->via_codec_only) {
-	    if (it->loader->readImage (stream, image))
+	    if (it->loader->readImage (stream, image)) {
+	      image.setDecoderID (it->loader->getID ());
 	      return true;
-	    
+	    }
 	    // TODO: remove once the codecs are clean
 	    stream->clear ();
 	    stream->seekg (0);

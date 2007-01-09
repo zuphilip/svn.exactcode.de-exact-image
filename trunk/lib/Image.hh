@@ -57,8 +57,11 @@
  *
  * The operator= create a complete clone of the image, the image
  * buffers are not shared (anymore, formerly ownership was passed and
- * we had a seperate Clone() method).
+ * we had a seperate Clone() method). The attached codec is not
+ * copied.
  */
+
+#include <string>
 
 // just forward
 class ImageCodec;
@@ -67,8 +70,10 @@ class Image
 {
 protected:
   uint8_t* data;
-  ImageCodec* codec;
   bool modified;
+  
+  std::string decoderID;
+  ImageCodec* codec;
 
 public:
   
@@ -78,7 +83,9 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   void New (int _w, int _h);
-
+  
+  void setDecoderID (const std::string& id);
+  const std::string& getDecoderID ();
   ImageCodec* getCodec();
   void setCodec (ImageCodec* _codec);
   

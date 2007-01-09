@@ -178,7 +178,7 @@ int main (int argc, char* argv[])
 	}
       else {
 	std::cout << *file << ": "
-		  << (image.getCodec() ? image.getCodec()->getID() : "NONE")
+		  << (image.getDecoderID().empty() ? "NONE" : image.getDecoderID() )
 		  << " " << image.w << "x" << image.h;
 	
 	if (image.xres && image.yres)
