@@ -55,6 +55,12 @@ public:
   // not pure-virtual so not every codec needs a NOP
   virtual /*bool*/ void decodeNow (Image* image);
   
+  // optional optimizing and/or lossless implementations (JPEG, et.al.)
+  virtual bool flipX (Image* image);
+  virtual bool flipY (Image* image);
+  virtual bool rotate (Image& image, double angle);
+  virtual bool scale (Image& image, double xscale, double yscale);
+  
 protected:
   
   struct loader_ref {
