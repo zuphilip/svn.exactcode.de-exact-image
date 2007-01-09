@@ -29,15 +29,17 @@ public:
   virtual ~ImageCodec ();
   virtual std::string getID () = 0;
   
-  // NEW API, allowing the use of any STL i/o stream derived source
+  // NEW API, allowing the use of any STL i/o stream derived source.
   static bool Read (std::istream* stream, Image& image,
 		    std::string codec = "");
   static bool Write (std::ostream* stream, Image& image,
 		     std::string codec = "", std::string ext = "",
 		     int quality = 75, const std::string& compress = "");
   
-  // OLD API, only left for compatibility
-  // not const string& because the filename is parsed and the copy is changed intern.
+  // OLD API, only left for compatibility.
+  // Not const string& because the filename is parsed and the copy is changed intern.
+  // 
+  // Removed after 2007-06-01!
   static bool Read (std::string file, Image& image);
   static bool Write (std::string file, Image& image,
 		     int quality = 75, const std::string& compress = "");
