@@ -23,11 +23,19 @@
 
 #include "tiff.hh"
 #include "Image.hh"
+#include "Codecs.hh"
+
+#include "rotate.hh"
 
 using namespace Utility;
 
 void flipX (Image& image)
 {
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->flipX(image))
+      return;
+  
   int bytes = image.Stride();
   uint8_t* data = image.getRawData();
   // TODO: 16bps
@@ -96,6 +104,11 @@ void flipX (Image& image)
 
 void flipY (Image& image)
 {
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->flipY(image))
+      return;
+  
   // TODO: 16bps
   int bytes = image.Stride();
   uint8_t* data = image.getRawData();
@@ -258,6 +271,11 @@ void rotate (Image& image, double angle, Image::iterator background)
   
   if (angle == 0.0)
     return;
+  
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->rotate(image, angle))
+      return;
   
   if (angle == 180.0) {
     flipX (image);

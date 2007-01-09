@@ -2,8 +2,27 @@
 
 #include <iostream>
 #include "Image.hh"
+#include "Codecs.hh"
 
 #include "Colorspace.hh"
+
+#include "scale.hh"
+
+void scale (Image& image, double scalex, double scaley)
+{
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+  
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->scale(image, scalex, scaley))
+      return;
+  
+  if (scalex < 0.5)
+    box_scale (image, scalex, scaley);
+  else
+    bilinear_scale (image, scalex, scaley);
+}
 
 void nearest_scale (Image& new_image, double scalex, double scaley)
 {

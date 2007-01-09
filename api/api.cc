@@ -214,12 +214,17 @@ void imageRotate (Image* image, double angle)
 
 void imageScale (Image* image, double factor)
 {
-  bilinear_scale (*image, factor, factor);
+  scale (*image, factor, factor);
 }
 
 void imageBoxScale (Image* image, double factor)
 {
   box_scale (*image, factor, factor);
+}
+
+void imageBilinearScale (Image* image, double factor)
+{
+  bilinear_scale (*image, factor, factor);
 }
 
 void imageOptimize2BW (Image* image, int low, int high,

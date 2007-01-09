@@ -118,8 +118,11 @@ void imageSetYres (Image* image, int yres);
 // imageColorspace, might return false if the conversion was not possible
 bool imageConvertColorspace (Image* image, const char* target_colorspace);
 void imageRotate (Image* image, double angle);
+
+// best scale (or thru the codec (e.g. JPEG)) or explicit algorithm
 void imageScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
+void imageBilinearScale (Image* image, double factor);
 
 // advanced all-in-one algorithms
 void imageOptimize2BW (Image* image, int low = 0, int high = 255,

@@ -1,5 +1,7 @@
+// pick the best
+void scale (Image& image, double xscale, double yscale);
 
-
+// explicit versions
 void nearest_scale (Image& image, double xscale, double yscale);
 void box_scale (Image& image, double xscale, double yscale);
 

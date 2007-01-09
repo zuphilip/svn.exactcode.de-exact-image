@@ -183,17 +183,17 @@ void ImageCodec::unregisterCodec (ImageCodec* _loader)
 }
 
 // optional, return false (unsupported) by default
-bool ImageCodec::flipX (Image* image)
+bool ImageCodec::flipX (Image& image)
 {
   return false;
 }
 
-bool ImageCodec::flipY (Image* image)
+bool ImageCodec::flipY (Image& image)
 {
   return false;
 }
 
-bool ImageCodec::rotate (Image& image, double angle)
+bool ImageCodec::rotate (Image& image, double ayngle)
 {
   return false;
 }
