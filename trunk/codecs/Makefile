@@ -2,7 +2,7 @@
 ifeq "$(WITHLIBJPEG)" "1"
 LDFLAGS += -ljpeg
 else
-NOT_SRCS += jpeg.cc jpegsupport.cc
+NOT_SRCS += jpeg.cc transupp.c
 endif
 
 ifeq "$(WITHLIBTIFF)" "1"
