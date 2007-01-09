@@ -9,6 +9,19 @@
 
 #include "Image.hh"
 
+/* The Image decoder and coder collection.
+ *
+ * The class itself has static methods to perform the de- and
+ * encoding. These methods search thru a loader vector to match the
+ * file magick (on decoding) or the specified codec / file extension
+ * on encoding.
+ *
+ * The codec might attach itself to the image on decoding to allow
+ * on-the-fly decoding and reuse of coded data while re-encoding an
+ * image where nothing or just meta data was touched while the pixel
+ * data remain unmodified.
+ */
+
 class ImageCodec
 {
 public:
