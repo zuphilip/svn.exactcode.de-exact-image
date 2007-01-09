@@ -69,22 +69,29 @@ void Image::setRawData (uint8_t* _data) {
 }
 
 void Image::setRawDataWithoutDelete (uint8_t* _data) {
-  modified = true;
+  if (!modified) {
+    std::cerr << "Image modified" << std::endl;
+    modified = true;
+  }
+  
   data = _data;
 }
 
 void Image::New (int _w, int _h) {
   w = _w;
   h = _h;
-  data = (unsigned char*) realloc (data, Stride() * h);
+  
+  // reuse:
+  setRawData ((uint8_t*) realloc (data, Stride() * h));
 }
 
 ImageCodec* Image::getCodec() {
   return codec;
 }
 
-void Image::setCodec(ImageCodec* codec) {
-  
+void Image::setCodec(ImageCodec* _codec) {
+  codec = _codec;
+  modified = false;
 }
 
 bool Image::isModified () {
