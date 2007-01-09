@@ -142,3 +142,36 @@ bool ImageCodec::Write (std::string file, Image& image,
     delete s;
   return res;
 }
+
+void ImageCodec::registerCodec (const char* _ext, ImageCodec* _loader,
+				bool _via_codec_only)
+{
+  static ImageCodec* last_loader = 0;
+  if (!loader)
+    loader = new std::vector<loader_ref>;
+  
+  loader->push_back ( (loader_ref) {_ext, _loader,
+			  _loader != last_loader, _via_codec_only} );
+  last_loader = _loader;
+}
+
+void ImageCodec::unregisterCodec (ImageCodec* _loader)
+{
+  // sanity check
+  if (!loader) {
+    std::cerr << "unregisterCodec: no codecs, unregister impossible!" << std::endl;
+  }
+  
+  // remove from array
+  std::vector<loader_ref>::iterator it;
+  for (it = loader->begin(); it != loader->end();)
+    if (it->loader == _loader)
+      it = loader->erase (it);
+    else
+      ++it;
+  
+  if (loader->empty()) {
+    delete loader;
+    loader = 0;
+  }
+}
