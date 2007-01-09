@@ -34,13 +34,13 @@ public:
 		    std::string codec = "");
   static bool Write (std::ostream* stream, Image& image,
 		     std::string codec = "", std::string ext = "",
-		     int quality = 80, const std::string& compress = "");
+		     int quality = 75, const std::string& compress = "");
   
   // OLD API, only left for compatibility
   // not const string& because the filename is parsed and the copy is changed intern.
   static bool Read (std::string file, Image& image);
   static bool Write (std::string file, Image& image,
-		     int quality = 80, const std::string& compress = "");
+		     int quality = 75, const std::string& compress = "");
   
   // per codec methods
   virtual bool readImage (std::istream* stream, Image& image) = 0;
