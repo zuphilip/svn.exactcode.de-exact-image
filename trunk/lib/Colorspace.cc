@@ -10,11 +10,11 @@
 #include "Image.hh"
 #include "Colorspace.hh"
 
-void normalize (Image& image, unsigned char low, unsigned char high)
+void normalize (Image& image, uint8_t low, uint8_t high)
 {
   int histogram[256] = { 0 };
   
-  for (unsigned char* it = image.getRawData(); it < image.getRawDataEnd();)
+  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd();)
     histogram[*it++]++;
 
   int lowest = 255, highest = 0;
@@ -43,34 +43,34 @@ void normalize (Image& image, unsigned char low, unsigned char high)
   std::cerr << "a: " << (float) a / 256
 	    << " b: " << (float) b / 256 << std::endl;
 
-  for (unsigned char* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
+  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
     *it = ((int) *it * a + b) / 256;
 
 }
 
 void colorspace_rgb8_to_gray8 (Image& image)
 {
-  unsigned char* output = image.getRawData();
-  for (unsigned char* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+  uint8_t* output = image.getRawData();
+  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
     {
       // R G B order and associated weighting
       int c = (int)*it++ * 28;
       c += (int)*it++ * 59;
       c += (int)*it++ * 11;
       
-      *output++ = (unsigned char)(c / 100);
+      *output++ = (uint8_t)(c / 100);
     }
   image.spp = 1; // converted data right now
 }
 
-void colorspace_gray8_to_gray1 (Image& image, unsigned char threshold)
+void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 {
-  unsigned char *output = image.getRawData();
-  unsigned char *input = image.getRawData();
+  uint8_t *output = image.getRawData();
+  uint8_t *input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
-      unsigned char z = 0;
+      uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
 	{
@@ -97,12 +97,12 @@ void colorspace_gray8_to_gray1 (Image& image, unsigned char threshold)
 
 void colorspace_gray8_to_gray4 (Image& image)
 {
-  unsigned char *output = image.getRawData();
-  unsigned char *input = image.getRawData();
+  uint8_t *output = image.getRawData();
+  uint8_t *input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
-      unsigned char z = 0;
+      uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
 	{
@@ -127,12 +127,12 @@ void colorspace_gray8_to_gray4 (Image& image)
 }
 void colorspace_gray8_to_gray2 (Image& image)
 {
-  unsigned char *output = image.getRawData();
-  unsigned char *input = image.getRawData();
+  uint8_t *output = image.getRawData();
+  uint8_t *input = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
     {
-      unsigned char z = 0;
+      uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
 	{
@@ -158,9 +158,9 @@ void colorspace_gray8_to_gray2 (Image& image)
 
 void colorspace_gray8_to_rgb8 (Image& image)
 {
-  unsigned char* data = (unsigned char*)malloc (image.w*image.h*3);
-  unsigned char* output = data;
-  for (unsigned char* it = image.getRawData ();
+  uint8_t* data = (uint8_t*)malloc (image.w*image.h*3);
+  uint8_t* output = data;
+  for (uint8_t* it = image.getRawData ();
        it < image.getRawData() + image.w*image.h*image.spp; ++it)
     {
       *output++ = *it;
@@ -219,15 +219,15 @@ void colorspace_grayX_to_rgb8 (Image& image)
 
 void colorspace_gray1_to_gray2 (Image& image)
 {
-  unsigned char* data = (unsigned char*) malloc (image.h*image.w/4);
+  uint8_t* data = (uint8_t*) malloc (image.h*image.w/4);
   
-  unsigned char* output = data;
-  unsigned char* input = image.getRawData();
+  uint8_t* output = data;
+  uint8_t* input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
-      unsigned char z = 0;
-      unsigned char zz = 0;
+      uint8_t z = 0;
+      uint8_t zz = 0;
       for (int x = 0; x < image.w; x++)
 	{
 	  if (x % 8 == 0)
@@ -256,8 +256,8 @@ void colorspace_gray1_to_gray4 (Image& image)
   
   for (int row = 0; row < image.h; ++row)
     {
-      unsigned char z = 0;
-      unsigned char zz = 0;
+      uint8_t z = 0;
+      uint8_t zz = 0;
       for (int x = 0; x < image.w; ++x)
 	{
 	  if (x % 8 == 0)
@@ -279,14 +279,14 @@ void colorspace_gray1_to_gray4 (Image& image)
 
 void colorspace_gray1_to_gray8 (Image& image)
 {
-  uint8_t* data = (unsigned char*) malloc (image.h*image.w);
+  uint8_t* data = (uint8_t*) malloc (image.h*image.w);
   
   uint8_t* output = data;
   uint8_t* input = image.getRawData();
   
   for (int row = 0; row < image.h; row++)
     {
-      unsigned char z = 0;
+      uint8_t z = 0;
       for (int x = 0; x < image.w; x++)
 	{
 	  if (x % 8 == 0)
@@ -354,7 +354,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	bmap[0] >= 0xff00)
       {
 	std::cerr << "inverted b/w table." << std::endl;
-	for (unsigned char* it = image.getRawData();
+	for (uint8_t* it = image.getRawData();
 	     it < image.getRawDataEnd();
 	     ++it)
 	  *it ^= 0xff;
@@ -399,7 +399,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   int x = 0;
   while (dst < new_data + new_size)
     {
-      unsigned char v = *src >> (8 - image.bps);
+      uint8_t v = *src >> (8 - image.bps);
       if (is_gray) {
 	*dst++ = rmap[v] >> 8;
       } else {

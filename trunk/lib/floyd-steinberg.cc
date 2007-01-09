@@ -6,19 +6,20 @@
 #include <stdlib.h>
 #include <string.h>	// memcpy
 #include <math.h>	// floor
+#include <inttypes.h>	// uint8_t
 
 void
-FloydSteinberg (unsigned char *image, int width, int height, int shades)
+FloydSteinberg (uint8_t *image, int width, int height, int shades)
 {
-  unsigned char *src_row;
-  unsigned char *dest_row;
+  uint8_t *src_row;
+  uint8_t *dest_row;
   float *error, *nexterror, *tmp;
   int row;
   int bytes = 1;
 
   /*  allocate row/error buffers  */
   src_row = image;
-  dest_row = (unsigned char *) malloc (width * bytes);
+  dest_row = (uint8_t *) malloc (width * bytes);
 
   error = (float *) malloc (width * bytes * sizeof (float));
   nexterror = (float *) malloc (width * bytes * sizeof (float));

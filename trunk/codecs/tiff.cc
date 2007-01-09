@@ -110,7 +110,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
 	break;
       // invert if saved inverted
       if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
-	for (unsigned char* i = data2; i != data2 + stride; ++i)
+	for (uint8_t* i = data2; i != data2 + stride; ++i)
 	  *i ^= 0xFF;
 
       data2 += stride;
