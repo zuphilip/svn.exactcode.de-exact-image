@@ -20,11 +20,6 @@
 
 #include <iostream>
 
-extern "C" {
-#include <jpeglib.h>
-#include <jerror.h>
-}
-
 /*
  * <setjmp.h> is used for the optional error recovery mechanism
  */
@@ -261,6 +256,18 @@ void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
 
 /* *** back on-topic *** */
 
+JPEGCodec::~JPEGCodec ()
+{
+  if (srcinfo) {
+    
+    /* Step 8: Release JPEG decompression object */
+    
+    /* This is an important step since it will release a good deal of memory. */
+    jpeg_destroy_decompress (srcinfo);
+    srcinfo = 0;
+  }
+}
+
 bool JPEGCodec::readImage (std::istream* stream, Image& image)
 {
   if (stream->peek () != 0xFF)
@@ -283,9 +290,6 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
   
   struct my_error_mgr jerr;
-  
-  JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
-  int row_stride;		/* physical row width in output buffer */
   
   /* Step 1: allocate and initialize JPEG decompression object */
 
@@ -317,16 +321,13 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   
   /* Step 5: Start decompressor */
 
-  (void) jpeg_start_decompress (cinfo);
+  jpeg_start_decompress (cinfo);
   
-  /* JSAMPLEs per row in output buffer */
-  row_stride = cinfo->output_width * cinfo->output_components;
-
   image.w = cinfo->output_width;
   image.h = cinfo->output_height;
   image.spp = cinfo->output_components;
   image.bps = 8;
-
+  
   /* These three values are not used by the JPEG code, merely copied */
   /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
   /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
@@ -342,12 +343,17 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
     default:
       image.xres = image.yres = 0;
   }
-
-  image.setRawData ((uint8_t*) malloc(row_stride * cinfo->output_height));
   
-  /* Step 6: while (scan lines remain to be read) */
-  /*           jpeg_read_scanlines(...); */
+  /* JSAMPLEs per row in output buffer */
+  int row_stride = cinfo->output_width * cinfo->output_components;
 
+  image.New (image.w, image.h);
+  
+  /* Step 6: jpeg_read_scanlines(...); */
+  
+  uint8_t* data = image.getRawData ();
+  JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
+  
   while (! jpeg_input_complete(cinfo)) {
     jpeg_start_output(cinfo, cinfo->input_scan_number);
     while (cinfo->output_scanline < cinfo->output_height) {
@@ -355,35 +361,19 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
        * Here the array is only one element long, but you could ask for
        * more than one scanline at a time if that's more convenient.
        */
-      buffer[0] = (JSAMPLE*) image.getRawData() + (cinfo->output_scanline*row_stride);
-      (void) jpeg_read_scanlines(cinfo, buffer, 1);
+      buffer[0] = (JSAMPLE*) data+ (cinfo->output_scanline*row_stride);
+      jpeg_read_scanlines(cinfo, buffer, 1);
     }
     jpeg_finish_output(cinfo);
   }
-
-  /* Step 7: Finish decompression */
-
-#if 1
-  jpeg_finish_decompress(cinfo);
-  /* We can ignore the return value since suspension is not possible
-   * with the stdio data source.
-   */
-
-  /* Step 8: Release JPEG decompression object */
-
-  /* This is an important step since it will release a good deal of memory. */
-  jpeg_destroy_decompress(cinfo);
   
-  /* At this point you may want to check to see whether any corrupt-data
-   * warnings occurred (test whether jerr.pub.num_warnings is nonzero).
-   */
-#else
-  if (image.priv_data) {
-    jpeg_finish_decompress((jpeg_decompress_struct*)image.priv_data);
-    jpeg_destroy_decompress((jpeg_decompress_struct*)image.priv_data);
-  }
-  image.priv_data = (void*) cinfo; // keep for writing, of course a "HACK"
-#endif
+  // later needd for on-demand compression
+  //image.setRawData (0);
+  
+  srcinfo = cinfo;
+  // extract the coefficients
+  src_coef_arrays = jpeg_read_coefficients (cinfo);
+  image.setCodec (this);
   
   return true;
 }
@@ -416,35 +406,26 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return false;
   }
   
-  if (!image.isModified() /* TODO: && this codec*/) {
-    // write original DCT coefficients
-    
-    std::cerr << "Image data was not modifed and JPE codec: writing orig DCT coeff.." << std::endl;
-    
-    struct jpeg_decompress_struct* srcinfo = (jpeg_decompress_struct*) 0; /* TODO: image.priv_data */
-    
-    jpeg_copy_critical_parameters (srcinfo, &cinfo);
-    
-    cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
-    cinfo.density_unit = 1; /* 1 for dots/inch */
-    cinfo.X_density = image.xres;
-    cinfo.Y_density = image.yres;
-    
-    // extract the coefficients
-    jvirt_barray_ptr* src_coef_arrays = jpeg_read_coefficients(srcinfo);
-    
-    jpeg_write_coefficients(&cinfo, src_coef_arrays);
-    
-    /* Finish compression and release memory */
-    jpeg_finish_compress(&cinfo);
-    jpeg_destroy_compress(&cinfo);
-    
-    jpeg_finish_decompress(srcinfo);
-    jpeg_destroy_decompress(srcinfo);
-    /* TODO: image.priv_data = 0; */
-    
-    return true;
-  }
+  // write original DCT coefficients ???
+  if (!image.isModified() && image.getCodec () && image.getCodec()->getID() == getID())
+    {
+      std::cerr << "Image data was not modifed and JPEG codec: writing orig DCT coeff.." << std::endl;
+      
+      jpeg_copy_critical_parameters (srcinfo, &cinfo);
+      
+      cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
+      cinfo.density_unit = 1; /* 1 for dots/inch */
+      cinfo.X_density = image.xres;
+      cinfo.Y_density = image.yres;
+      
+      jpeg_write_coefficients(&cinfo, src_coef_arrays);
+      
+      /* Finish compression and release memory */
+      jpeg_finish_compress(&cinfo);
+      jpeg_destroy_compress(&cinfo);
+      
+      return true;
+    }
   
   // really encode
   
@@ -486,6 +467,12 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     std::cout << jerr.num_warnings << " Warnings." << std::endl;
 
   return true;
+}
+
+// on-demand decoding
+/*bool*/ void JPEGCodec::decodeNow (Image* image)
+{
+  std::cerr << "JPEGCodec::decodeNow" << std::endl;
 }
 
 bool JPEGCodec::flipX (Image& image)
