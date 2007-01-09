@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "Image.hh"
+#include "Codecs.hh"
 
 Image::Image ()
   : data(0), modified(false) {
@@ -49,7 +50,13 @@ Image* Image::Clone () {
 }
 
 uint8_t* Image::getRawData () const {
-  // TODO: ask codec about it
+  // ask codec about it
+  if (!data && codec) {
+    Image* image = const_cast<Image*>(this);
+    codec->decodeNow (image);
+    if (data) // if data was added
+      image->modified = false;
+  }
   return data;
 }
 

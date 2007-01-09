@@ -22,6 +22,9 @@
  * data remain unmodified.
  */
 
+// just forward
+class Image;
+
 class ImageCodec
 {
 public:
@@ -48,6 +51,9 @@ public:
   virtual bool readImage (std::istream* stream, Image& image) = 0;
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress) = 0;
+  
+  // not pure-virtual so not every codec needs a NOP
+  virtual /*bool*/ void decodeNow (Image* image);
   
 protected:
   
