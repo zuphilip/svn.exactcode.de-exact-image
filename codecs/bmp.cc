@@ -212,7 +212,7 @@ typedef struct
  * pixels to RGB (RGBA) format.
  */
 static void
-rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
+rearrangePixels(uint8_t* buf, uint32 width, uint32 bit_count)
 {
   char tmp;
   
@@ -231,7 +231,7 @@ rearrangePixels(unsigned char* buf, uint32 width, uint32 bit_count)
   
   case 32:
     {
-      unsigned char* buf1 = buf;
+      uint8_t* buf1 = buf;
       for (int i = 0; i < width; i++, buf += 4) {
 	tmp = *buf;
 	*buf1++ = *(buf + 2);
@@ -255,7 +255,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   uint32 row, stride;
   
   uint32  clr_tbl_size = 0, n_clr_elems = 3;
-  unsigned char *clr_tbl = 0;
+  uint8_t *clr_tbl = 0;
   uint8_t* data = 0;
   
   stream->read ((char*)&file_hdr.bType, 2);
@@ -393,7 +393,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	  1 << image.bps : info_hdr.iClrUsed;
       else
 	clr_tbl_size = 1 << image.bps;
-      clr_tbl = (unsigned char *)
+      clr_tbl = (uint8_t *)
 	_TIFFmalloc(n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
 	fprintf(stderr, "Can't allocate space for color table\n");
@@ -493,9 +493,9 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	// convert to RGB
 	if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
-	    unsigned char* row_ptr = data + stride*row;
-	    unsigned char* r16_ptr = row_ptr + file_stride - 2;
-	    unsigned char* rgb_ptr = row_ptr + stride - 3;
+	    uint8_t* row_ptr = data + stride*row;
+	    uint8_t* r16_ptr = row_ptr + file_stride - 2;
+	    uint8_t* rgb_ptr = row_ptr + stride - 3;
 	    
 	    int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
 	    int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
@@ -532,20 +532,20 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     {
       uint32		i, j, k, runlength, x;
       uint32		compr_size, uncompr_size;
-      unsigned char   *comprbuf;
-      unsigned char   *uncomprbuf;
+      uint8_t   *comprbuf;
+      uint8_t   *uncomprbuf;
 
       printf ("RLE%s compressed\n", info_hdr.iCompression == BMPC_RLE4 ? "4" : "8");
       
       compr_size = file_hdr.iSize - file_hdr.iOffBits;
       uncompr_size = image.w * image.h;
       
-      comprbuf = (unsigned char *) _TIFFmalloc( compr_size );
+      comprbuf = (uint8_t *) _TIFFmalloc( compr_size );
       if (!comprbuf) {
 	fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
 	goto bad1;
       }
-      uncomprbuf = (unsigned char *) _TIFFmalloc( uncompr_size );
+      uncomprbuf = (uint8_t *) _TIFFmalloc( uncompr_size );
       if (!uncomprbuf) {
 	fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
 	goto bad1;
@@ -611,7 +611,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       }
       
       _TIFFfree(comprbuf);
-      data = (unsigned char *) _TIFFmalloc( uncompr_size );
+      data = (uint8_t *) _TIFFmalloc( uncompr_size );
       if (!data) {
 	fprintf (stderr, "Can't allocate space for final uncompressed scanline buffer\n");
 	goto bad1;
@@ -685,7 +685,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   int stride = image.Stride ();
   
   uint32  clr_tbl_size = 0, n_clr_elems = 3;
-  unsigned char *clr_tbl = 0;
+  uint8_t *clr_tbl = 0;
   
   memset (&file_hdr, 0, sizeof (file_hdr));
   memset (&info_hdr, 0, sizeof (info_hdr));

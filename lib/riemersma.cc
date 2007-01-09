@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <inttypes.h>	// int8_t
 
 enum {
   NONE,
@@ -20,7 +21,7 @@ enum {
 static int cur_x=0, cur_y=0;
 static int img_width=0, img_height=0;
 static float img_factor;
-static unsigned char *img_ptr;
+static uint8_t *img_ptr;
 
 #define SIZE 16                 /* queue size: number of pixels remembered */
 #define MAX  16                 /* relative weight of youngest pixel in the
@@ -40,7 +41,7 @@ static void init_weights(int a[],int size,int max)
   } /*for */
 }
 
-static void dither_pixel(unsigned char *pixel)
+static void dither_pixel(uint8_t *pixel)
 {
 static int error[SIZE]; /* queue with error values of recent pixels */
   int i,err;
@@ -58,8 +59,8 @@ static int error[SIZE]; /* queue with error values of recent pixels */
     pvalue = 0;
 
   memmove(error,error+1,(SIZE-1)*sizeof error[0]);    /* shift queue */
-  error[SIZE-1] = *pixel - (unsigned char)(pvalue + 0.5);
-  *pixel=(unsigned char)(pvalue + 0.5);
+  error[SIZE-1] = *pixel - (uint8_t)(pvalue + 0.5);
+  *pixel=(uint8_t)(pvalue + 0.5);
 }
 
 static void move (int direction)
@@ -156,7 +157,7 @@ void hilbert_level(int level,int direction)
   } /* if */
 }
 
-void Riemersma(unsigned char *image,int width,int height, int shades)
+void Riemersma(uint8_t *image,int width,int height, int shades)
 {
   int level,size;
 
