@@ -150,7 +150,7 @@ bool convert_scale (const Argument<double>& arg)
   if (scale < 0.5)
     box_scale (image, scale, scale);
   else
-    ddt_scale (image, scale, scale);
+    bilinear_scale (image, scale, scale);
   
   return true;
 }
