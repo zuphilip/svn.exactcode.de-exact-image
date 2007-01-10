@@ -582,7 +582,8 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   jpeg_create_compress(&dstinfo);
   
   srcinfo.mem->max_memory_to_use = dstinfo.mem->max_memory_to_use;
-
+  
+  private_copy.seekg (0);
   cpp_stream_src (&srcinfo, &private_copy);
   
   /* Read file header */
@@ -643,7 +644,9 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   
   // copy into the shadow buffer
   private_copy.str (stream.str());
-  
+
+  // std::cerr << "new copy length: " << private_copy.str().size() << std::endl;
+
   // Update meta, w/h,spp might have changed.
   // We re-read the header because we do not want to re-hardcode the
   // trimming required for some operations.
