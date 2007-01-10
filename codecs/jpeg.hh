@@ -1,16 +1,17 @@
-#include "Codecs.hh"
-
 extern "C" {
 #include <jpeglib.h>
 #include <jerror.h>
+#include "transupp.h"
 }
+
+#include <sstream>
+
+#include "Codecs.hh"
 
 class JPEGCodec : public ImageCodec {
 public:
   
-  JPEGCodec ()
-    : srcinfo (0), src_coef_arrays (0)
-  {
+  JPEGCodec () {
     registerCodec ("jpeg", this);
     registerCodec ("jpg", this);
   };
@@ -34,9 +35,8 @@ public:
   virtual bool scale (Image& image, double xscale, double yscale);
   
 private:
-  // for on-demand loading
-  jpeg_decompress_struct* srcinfo;
-  // for encoding reuse
-  jvirt_barray_ptr* src_coef_arrays;
-
+  
+  bool do_transform (JXFORM_CODE code, bool to_gray = false);
+  
+  std::stringstream private_copy;
 };
