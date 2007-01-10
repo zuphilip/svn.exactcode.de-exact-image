@@ -309,7 +309,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // really encode
   
-   std::cerr << "Shadow image data modifed, classic compress." << std::endl;
+  std::cerr << "Shadow image data modifed, classic compress." << std::endl;
   
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -320,7 +320,21 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
   cpp_stream_dest (&cinfo, stream);
+  
+  cinfo.in_color_space = JCS_UNKNOWN;
+  if (image.bps == 8 && image.spp == 3)
+    cinfo.in_color_space = JCS_RGB;
+  else if (image.bps == 8 && image.spp == 1)
+    cinfo.in_color_space = JCS_GRAYSCALE;
+  else if (image.bps == 8 && image.spp == 4)
+    cinfo.in_color_space = JCS_CMYK;
 
+  if (cinfo.in_color_space == JCS_UNKNOWN) {
+    std::cerr << "Unhandled bps/spp combination." << std::endl;
+    jpeg_destroy_compress(&cinfo);
+    return false;
+  }
+  
   cinfo.image_width = image.w;
   cinfo.image_height = image.h;
   cinfo.input_components = image.spp;
