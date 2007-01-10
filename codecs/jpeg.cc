@@ -267,7 +267,6 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   stream->get (); // consume silently
   if (stream->peek () != 0xD8)
     return false;
-  stream->seekg (0);
   
   if (0) { // TODO: differentiate JFIF vs. Exif?
     // quick magic check
@@ -279,68 +278,8 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
 	return false;
   }
   
-  struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
-  
-  struct my_error_mgr jerr;
-  
-  /* Step 1: allocate and initialize JPEG decompression object */
-
-  /* We set up the normal JPEG error routines, then override error_exit. */
-  cinfo->err = jpeg_std_error(&jerr.pub);
-  jerr.pub.error_exit = my_error_exit;
-  /* Establish the setjmp return context for my_error_exit to use. */
-  if (setjmp(jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error.
-     * We need to clean up the JPEG object, close the input file, and return.
-     */
-    jpeg_destroy_decompress (cinfo);
+  if (!readMeta (stream, image))
     return false;
-  }
-  
-  jpeg_create_decompress (cinfo);
-  
-  /* Step 2: specify data source (eg, a file) */
-  
-  cpp_stream_src (cinfo, stream);
-
-  /* Step 3: read file parameters with jpeg_read_header() */
-
-  jpeg_read_header(cinfo, TRUE);
-  
-  /* Step 4: set parameters for decompression */
-  
-  cinfo->buffered_image = TRUE; /* select buffered-image mode */
-  
-  /* Step 5: Start decompressor */
-  
-  jpeg_start_decompress (cinfo);
-  
-  image.w = cinfo->output_width;
-  image.h = cinfo->output_height;
-  image.spp = cinfo->output_components;
-  image.bps = 8;
-  
-  /* These three values are not used by the JPEG code, merely copied */
-  /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
-  /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
-  /* ratio is defined by X_density/Y_density even when density_unit=0. */
-  switch (cinfo->density_unit)           /* JFIF code for pixel size units */
-  {
-    case 1: image.xres = cinfo->X_density;		/* Horizontal pixel density */
-            image.yres = cinfo->Y_density;		/* Vertical pixel density */
-            break;
-    case 2: image.xres = cinfo->X_density * 254 / 100;
-            image.yres = cinfo->Y_density * 254 / 100;
-            break;
-    default:
-      image.xres = image.yres = 0;
-  }
-  
-  /* Step 8: Release JPEG decompression object */
-  
-  /* This is an important step since it will release a good deal of memory. */
-  jpeg_finish_decompress(cinfo);
-  jpeg_destroy_decompress (cinfo);
   
   // on-demand compression
   image.setRawData (0);
@@ -369,6 +308,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   
   // really encode
+  
+   std::cerr << "Shadow image data modifed, classic compress." << std::endl;
   
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -493,14 +434,14 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 bool JPEGCodec::flipX (Image& image)
 {
   std::cerr << "JPEGCodec::flipX" << std::endl;
-  do_transform (JXFORM_FLIP_H);
+  do_transform (JXFORM_FLIP_H, image);
   return true;
 }
 
 bool JPEGCodec::flipY (Image& image)
 {
   std::cerr << "JPEGCodec::flipY" << std::endl;
-  do_transform (JXFORM_FLIP_V);
+  do_transform (JXFORM_FLIP_V, image);
   return true;
 }
 
@@ -509,11 +450,11 @@ bool JPEGCodec::rotate (Image& image, double angle)
   std::cerr << "JPEGCodec::rotate" << std::endl;
   
   if (angle == 90) 
-    { do_transform (JXFORM_ROT_90); return true; }
+    { do_transform (JXFORM_ROT_90, image); return true; }
   if (angle == 180)
-    { do_transform (JXFORM_ROT_180); return true; }
+    { do_transform (JXFORM_ROT_180, image); return true; }
   if (angle == 270)
-    { do_transform (JXFORM_ROT_270); return true; }
+    { do_transform (JXFORM_ROT_270, image); return true; }
 
   // no acceleration, fall thru
   return false;
@@ -526,7 +467,77 @@ bool JPEGCodec::scale (Image& image, double xscale, double yscale)
   return false; // TODO: look into epeg and implement
 }
 
-bool JPEGCodec::do_transform (JXFORM_CODE code, bool to_gray)
+bool JPEGCodec::readMeta (std::istream* stream, Image& image, bool just_basic)
+{
+  stream->seekg (0);
+  
+  struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
+  
+  struct my_error_mgr jerr;
+  
+  /* Step 1: allocate and initialize JPEG decompression object */
+
+  /* We set up the normal JPEG error routines, then override error_exit. */
+  cinfo->err = jpeg_std_error(&jerr.pub);
+  jerr.pub.error_exit = my_error_exit;
+  /* Establish the setjmp return context for my_error_exit to use. */
+  if (setjmp(jerr.setjmp_buffer)) {
+    /* If we get here, the JPEG code has signaled an error.
+     * We need to clean up the JPEG object, close the input file, and return.
+     */
+    jpeg_destroy_decompress (cinfo);
+    return false;
+  }
+  
+  jpeg_create_decompress (cinfo);
+  
+  /* Step 2: specify data source (eg, a file) */
+  
+  cpp_stream_src (cinfo, stream);
+
+  /* Step 3: read file parameters with jpeg_read_header() */
+
+  jpeg_read_header(cinfo, TRUE);
+  
+  /* Step 4: set parameters for decompression */
+  
+  cinfo->buffered_image = TRUE; /* select buffered-image mode */
+  
+  /* Step 5: Start decompressor */
+  
+  jpeg_start_decompress (cinfo);
+  
+  image.w = cinfo->output_width;
+  image.h = cinfo->output_height;
+  image.spp = cinfo->output_components;
+  image.bps = 8;
+  
+  if (!just_basic) {
+    /* These three values are not used by the JPEG code, merely copied */
+    /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
+    /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
+    /* ratio is defined by X_density/Y_density even when density_unit=0. */
+    switch (cinfo->density_unit)           /* JFIF code for pixel size units */
+      {
+      case 1: image.xres = cinfo->X_density;		/* Horizontal pixel density */
+	image.yres = cinfo->Y_density;		/* Vertical pixel density */
+	break;
+      case 2: image.xres = cinfo->X_density * 254 / 100;
+	image.yres = cinfo->Y_density * 254 / 100;
+	break;
+      default:
+	image.xres = image.yres = 0;
+      }
+  }
+  
+  /* Step 8: Release JPEG decompression object */
+  
+  /* This is an important step since it will release a good deal of memory. */
+  jpeg_finish_decompress(cinfo);
+  jpeg_destroy_decompress (cinfo);
+}
+
+bool JPEGCodec::do_transform (JXFORM_CODE code, Image& image, bool to_gray)
 {
   jpeg_transform_info transformoption; /* image transformation options */
   
@@ -600,6 +611,19 @@ bool JPEGCodec::do_transform (JXFORM_CODE code, bool to_gray)
   
   // copy into the shadow buffer
   private_copy.str (stream.str());
+  
+  // Update meta, w/h,spp might have changed
+  // we re-read the header because we do not want to re-hardcode the
+  // trimming required for some operations
+  readMeta (&private_copy, image, true /* just basic, e.g. no res, etc. */);
+  // as we read back just the basics, some manual translations
+  switch (code) {
+  case JXFORM_ROT_90:
+  case JXFORM_ROT_270:
+    { int t = image.xres; image.xres = image.yres; image.yres = t;} break;
+  default:
+    ; // silence compiler
+  }
   
   return true;
 }
