@@ -50,7 +50,7 @@ Image::iterator background_color; // the background color
 
 Argument<int> arg_quality ("", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
-			   "integer range 0-100, the default is 80",
+			   "integer range 0-100, the default is 75",
 			   0, 1, true, true);
 
 Argument<std::string> arg_compression ("", "compress",
@@ -113,7 +113,7 @@ bool convert_split (const Argument<std::string>& arg)
     return false;
   }
   
-  int quality = 80;
+  int quality = 70;
   if (arg_quality.Size())
     quality = arg_quality.Get();
   std::string compression = "";
