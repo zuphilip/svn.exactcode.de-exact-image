@@ -121,6 +121,7 @@ void imageRotate (Image* image, double angle);
 
 // best scale (or thru the codec (e.g. JPEG)) or explicit algorithm
 void imageScale (Image* image, double factor);
+void imageNearestScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 void imageBilinearScale (Image* image, double factor);
 
