@@ -222,6 +222,11 @@ void imageBoxScale (Image* image, double factor)
   box_scale (*image, factor, factor);
 }
 
+void imageNearestScale (Image* image, double factor)
+{
+  nearest_scale (*image, factor, factor);
+}
+
 void imageBilinearScale (Image* image, double factor)
 {
   bilinear_scale (*image, factor, factor);
