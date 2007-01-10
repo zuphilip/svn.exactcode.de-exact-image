@@ -71,12 +71,16 @@ bool convert_input (const Argument<std::string>& arg)
 
 bool convert_output (const Argument<std::string>& arg)
 {
+  // we can check this way anymore as it might trigger on-the-fly
+  // decoding
+#if 0
   if (image.getRawData() == 0) {
     std::cerr << "No image available." << std::endl;
     return false;
   }
+#endif
   
-  int quality = 80;
+  int quality = 75;
   if (arg_quality.Size())
     quality = arg_quality.Get();
   std::string compression = "";
