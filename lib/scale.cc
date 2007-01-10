@@ -56,11 +56,6 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
   
   uint8_t* data = image.getRawData();
   
-  // $ time econvert  -i testsuite/descew/scew3.pnm --colorspace GRAY8 --bilinear-scale 1.75 -o test-scale.pnm
-  // real    0m0.732s
-  // user    0m0.688s
-  // sys     0m0.040s
-  
   /* handcrafted due popular request */
   if (new_image.spp == 1 && new_image.bps < 8)
     {
