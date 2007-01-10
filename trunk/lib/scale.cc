@@ -143,6 +143,40 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
       return;
     }
   
+   /* handcrafted due popular request */
+  if (new_image.spp == 3 && new_image.bps == 8)
+    {
+      const int stride = image.Stride ();
+      uint8_t* dst = new_image.getRawData();
+      
+      for (int y = 0; y < new_image.h; ++y) {
+	const double by = (-1.0+image.h) * y / new_image.h;
+	const int sy = (int)floor(by);
+	const int ydist = (int) ((by - sy) * 256);
+	const int syy = sy+1;
+	
+	for (int x = 0; x < new_image.w; ++x) {
+	  const double bx = (-1.0+image.w) * x / new_image.w;
+	  const int sx = 3*(int)floor(bx);
+	  const int xdist = (int) ((bx - sx/3) * 256);
+	  const int sxx = sx+3;
+	  *dst++ = (data [sx  +0+ sy*stride]  * (256-xdist) * (256-ydist) +
+		    data [sxx +0+ sy*stride]  * xdist       * (256-ydist) +
+		    data [sx  +0+ syy*stride] * (256-xdist) * ydist +
+		    data [sxx +0+ syy*stride] * xdist       * ydist) >> 16;
+	  *dst++ = (data [sx  +1+ sy*stride]  * (256-xdist) * (256-ydist) +
+		    data [sxx +1+ sy*stride]  * xdist       * (256-ydist) +
+		    data [sx  +1+ syy*stride] * (256-xdist) * ydist +
+		    data [sxx +1+ syy*stride] * xdist       * ydist) >> 16;
+	  *dst++ = (data [sx  +2+ sy*stride]  * (256-xdist) * (256-ydist) +
+		    data [sxx +2+ sy*stride]  * xdist       * (256-ydist) +
+		    data [sx  +2+ syy*stride] * (256-xdist) * ydist +
+		    data [sxx +2+ syy*stride] * xdist       * ydist) >> 16;
+	}
+      }
+      return;
+    }
+  
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
       
