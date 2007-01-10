@@ -168,8 +168,6 @@ public:
   
   Image& operator= (Image& other);
   
-  Image* Clone ();
-  
   int Stride () const {
     return (w * spp * bps + 7) / 8;
   }
