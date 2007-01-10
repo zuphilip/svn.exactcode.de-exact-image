@@ -28,7 +28,9 @@ void deleteImage (Image* image)
 
 Image* copyImage (Image* other)
 {
-  return other->Clone ();
+  Image* image = new Image;
+  *image = *other;
+  return image;
 }
 
 bool decodeImage (Image* image, char* data, int n)

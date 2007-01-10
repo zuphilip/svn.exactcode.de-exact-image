@@ -27,26 +27,17 @@ Image& Image::operator= (Image& other)
   spp = other.spp;
   xres = other.xres;
   yres = other.yres;
-  if (data)
-    free (data);
-  data = other.data;
-  other.data = 0;
+  
+  uint8_t* d = other.getRawData();
+  if (d) {
+    New (w, h);
+    memcpy (data, d, Stride() * h);
+  }
+  else {
+    setRawData();
+  }
+  
   return *this;
-}
-
-Image* Image::Clone () {
-  // TODO: rethink
-  Image* im = new Image;
-  *im = *this;
-  
-  // currently for historic reasons the copy semantic is a bit unhandy here
-  this->data = im->data;
-  im->data = 0;
-  im->New (im->w, im->h);
-  
-  // copy pixel data
-  memcpy (im->data, this->data, im->Stride() * im->h);
-  return im;
 }
 
 uint8_t* Image::getRawData () const {
