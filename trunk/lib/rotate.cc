@@ -100,6 +100,7 @@ void flipX (Image& image)
       std::cerr << "flipX: unsupported depth." << std::endl;
       return;
     }
+  image.setRawData();
 }
 
 void flipY (Image& image)
@@ -126,6 +127,7 @@ void flipY (Image& image)
 	  *row2++ = v;
 	}
     }
+  image.setRawData();
 }
 
 void shear (Image& image, double xangle, double yangle)
@@ -136,6 +138,7 @@ void shear (Image& image, double xangle, double yangle)
   if (yangle != 0.0)
     {
     }
+  image.setRawData();
 }
 
 void rot90 (Image& image, int angle)
@@ -249,9 +252,6 @@ void rot90 (Image& image, int angle)
       return;
     }
   
-  // set the new data
-  image.setRawData (rot_data);
-  
   // we are done, tweak the w/h
   int x = image.w;
   image.w = image.h;
@@ -260,6 +260,9 @@ void rot90 (Image& image, int angle)
   x = image.xres;
   image.xres = image.yres;
   image.yres = x;
+
+  // set the new data
+  image.setRawData (rot_data);
 }
 
 
@@ -343,4 +346,5 @@ void rotate (Image& image, double angle, Image::iterator background)
 	  
 	  ++it;
 	}
+  image.setRawData ();
 }
