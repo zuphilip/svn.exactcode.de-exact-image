@@ -65,6 +65,13 @@ uint8_t* Image::getRawDataEnd () const {
   return getRawData() + h * Stride();
 }
 
+void Image::setRawData () {
+  if (!modified) {
+    std::cerr << "Image modified" << std::endl;
+    modified = true;
+  }
+}
+
 void Image::setRawData (uint8_t* _data) {
   if (_data != data && data) {
     free (data);
@@ -76,12 +83,10 @@ void Image::setRawData (uint8_t* _data) {
 }
 
 void Image::setRawDataWithoutDelete (uint8_t* _data) {
-  if (!modified) {
-    std::cerr << "Image modified" << std::endl;
-    modified = true;
-  }
-  
   data = _data;
+  
+  // reuse
+  setRawData ();
 }
 
 void Image::New (int _w, int _h) {

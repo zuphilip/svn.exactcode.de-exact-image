@@ -46,6 +46,7 @@ void normalize (Image& image, uint8_t low, uint8_t high)
   for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
     *it = ((int) *it * a + b) / 256;
 
+  image.setRawData();
 }
 
 void colorspace_rgb8_to_gray8 (Image& image)
@@ -61,6 +62,7 @@ void colorspace_rgb8_to_gray8 (Image& image)
       *output++ = (uint8_t)(c / 100);
     }
   image.spp = 1; // converted data right now
+  image.setRawData();
 }
 
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
@@ -93,6 +95,7 @@ void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 	}
     }
   image.bps = 1;
+  image.setRawData();
 }
 
 void colorspace_gray8_to_gray4 (Image& image)
@@ -124,6 +127,7 @@ void colorspace_gray8_to_gray4 (Image& image)
 	}
     }
   image.bps = 4;
+  image.setRawData();
 }
 void colorspace_gray8_to_gray2 (Image& image)
 {
@@ -154,6 +158,7 @@ void colorspace_gray8_to_gray2 (Image& image)
 	}
     }
   image.bps = 2;
+  image.setRawData();
 }
 
 void colorspace_gray8_to_rgb8 (Image& image)
@@ -167,8 +172,8 @@ void colorspace_gray8_to_rgb8 (Image& image)
       *output++ = *it;
       *output++ = *it;
     }
-  image.setRawData(data);
   image.spp = 3; // converted data right now
+  image.setRawData(data);
 }
 
 void colorspace_grayX_to_gray8 (Image& image)
@@ -243,8 +248,8 @@ void colorspace_gray1_to_gray2 (Image& image)
 	}
     }
   
-  image.setRawData (data);
   image.bps = 2;
+  image.setRawData (data);
 }
 
 void colorspace_gray1_to_gray4 (Image& image)
@@ -273,8 +278,8 @@ void colorspace_gray1_to_gray4 (Image& image)
 	}
     }
   
-  image.setRawData (data);
   image.bps = 4;
+  image.setRawData (data);
 }
 
 void colorspace_gray1_to_gray8 (Image& image)
@@ -298,8 +303,8 @@ void colorspace_gray1_to_gray8 (Image& image)
 	}
     }
   
-  image.setRawData (data);
   image.bps = 8;
+  image.setRawData (data);
 }
 
 void colorspace_16_to_8 (Image& image)
@@ -316,6 +321,7 @@ void colorspace_16_to_8 (Image& image)
       it += 2;
     }
   image.bps = 8; // converted 8bit data
+  image.setRawData ();
 }
 
 void colorspace_8_to_16 (Image& image)
@@ -327,8 +333,9 @@ void colorspace_8_to_16 (Image& image)
     {
       *out_it++ = *it++ * 0xffff / 255;
     }
-  image.setRawData ((uint8_t*)data);
+  
   image.bps = 16; // converted 16bit data
+  image.setRawData ((uint8_t*)data);
 }
 
 void colorspace_de_palette (Image& image, int table_entries,
@@ -358,6 +365,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	     it < image.getRawDataEnd();
 	     ++it)
 	  *it ^= 0xff;
+	image.setRawData ();
 	return;
       }
   }
@@ -421,11 +429,11 @@ void colorspace_de_palette (Image& image, int table_entries,
 	*src <<= image.bps;
       }
     }
-  image.setRawData (new_data);
-  
   image.bps = 8;
   if (is_gray)
     image.spp = 1;
   else
     image.spp = 3;
+
+  image.setRawData (new_data);  
 }
