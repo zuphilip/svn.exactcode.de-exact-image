@@ -120,7 +120,7 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace);
 void imageRotate (Image* image, double angle);
 
 void imageFlipX (Image* image);
-void iamgeFlipY (Image* image);
+void imageFlipY (Image* image);
 
 // best scale (or thru the codec (e.g. JPEG)) or explicit algorithm
 void imageScale (Image* image, double factor);
