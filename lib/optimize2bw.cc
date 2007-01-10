@@ -116,6 +116,8 @@ void optimize2bw (Image& image, int low, int high, int threshold,
       it.set(i);
     }
     
+    image.setRawData();
+    
     if (image.spp == 3 && image.bps == 8)
       colorspace_rgb8_to_gray8 (image);
     
