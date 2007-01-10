@@ -80,6 +80,7 @@ public:
   uint8_t* getRawData () const;
   uint8_t* getRawDataEnd () const;
 
+  void setRawData (); // just mark modified
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   void New (int _w, int _h);
