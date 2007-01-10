@@ -78,6 +78,20 @@ my_error_exit (j_common_ptr cinfo)
   longjmp(myerr->setjmp_buffer, 1);
 }
 
+void jpeg_compress_set_density (jpeg_compress_struct* dstinfo, const Image& image)
+{
+  dstinfo->JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
+  if (image.xres == 0 || image.yres == 0) {
+    dstinfo->density_unit = 0; /* unknown */
+    dstinfo->X_density = dstinfo->Y_density = 0;
+  }
+  else {
+    dstinfo->density_unit = 1; /* 1 for dots/inch */
+    dstinfo->X_density = image.xres;
+    dstinfo->Y_density = image.yres;
+  }
+}
+
 /* *** source manager *** */
 
 typedef struct {
@@ -301,8 +315,11 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     {
       std::cerr << "Shadow image data valid: writing orig DCT" << std::endl;
       
-      // TODO: hm - ok it is not that easy, meta might changed, redo ...
+      // since potentially meta data might have changed we have to re-create
+      // the stream here
+      doTransform (JXFORM_NONE, image);
       
+      // TODO: potentially optimize by directly writing into this stream ...
       stream->write (private_copy.str().c_str(), private_copy.str().size());
       return true;
     }
@@ -339,20 +356,12 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   cinfo.image_height = image.h;
   cinfo.input_components = image.spp;
   cinfo.data_precision = image.bps; 
-
+  
   /* defaults depending on in_color_space */
   jpeg_set_defaults(&cinfo);
   
-  cinfo.JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
-  if (image.xres == 0 || image.yres == 0) {
-    cinfo.density_unit = 0; /* unknown */
-    cinfo.X_density = cinfo.Y_density = 0;
-  }
-  else {
-    cinfo.density_unit = 1; /* 1 for dots/inch */
-    cinfo.X_density = image.xres;
-    cinfo.Y_density = image.yres;
-  }
+  jpeg_compress_set_density (&cinfo, image);
+
   jpeg_set_quality(&cinfo, quality, FALSE); /* do not limit to baseline-JPEG values */
 
   /* Start compressor */
@@ -448,14 +457,14 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 bool JPEGCodec::flipX (Image& image)
 {
   std::cerr << "JPEGCodec::flipX" << std::endl;
-  do_transform (JXFORM_FLIP_H, image);
+  doTransform (JXFORM_FLIP_H, image);
   return true;
 }
 
 bool JPEGCodec::flipY (Image& image)
 {
   std::cerr << "JPEGCodec::flipY" << std::endl;
-  do_transform (JXFORM_FLIP_V, image);
+  doTransform (JXFORM_FLIP_V, image);
   return true;
 }
 
@@ -464,11 +473,11 @@ bool JPEGCodec::rotate (Image& image, double angle)
   std::cerr << "JPEGCodec::rotate" << std::endl;
   
   if (angle == 90) 
-    { do_transform (JXFORM_ROT_90, image); return true; }
+    { doTransform (JXFORM_ROT_90, image); return true; }
   if (angle == 180)
-    { do_transform (JXFORM_ROT_180, image); return true; }
+    { doTransform (JXFORM_ROT_180, image); return true; }
   if (angle == 270)
-    { do_transform (JXFORM_ROT_270, image); return true; }
+    { doTransform (JXFORM_ROT_270, image); return true; }
 
   // no acceleration, fall thru
   return false;
@@ -481,7 +490,7 @@ bool JPEGCodec::scale (Image& image, double xscale, double yscale)
   return false; // TODO: look into epeg and implement
 }
 
-bool JPEGCodec::readMeta (std::istream* stream, Image& image, bool just_basic)
+bool JPEGCodec::readMeta (std::istream* stream, Image& image)
 {
   stream->seekg (0);
   
@@ -526,32 +535,32 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image, bool just_basic)
   image.spp = cinfo->output_components;
   image.bps = 8;
   
-  if (!just_basic) {
-    /* These three values are not used by the JPEG code, merely copied */
-    /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
-    /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
-    /* ratio is defined by X_density/Y_density even when density_unit=0. */
-    switch (cinfo->density_unit)           /* JFIF code for pixel size units */
-      {
-      case 1: image.xres = cinfo->X_density;		/* Horizontal pixel density */
-	image.yres = cinfo->Y_density;		/* Vertical pixel density */
-	break;
-      case 2: image.xres = cinfo->X_density * 254 / 100;
-	image.yres = cinfo->Y_density * 254 / 100;
-	break;
-      default:
-	image.xres = image.yres = 0;
-      }
-  }
+  /* These three values are not used by the JPEG code, merely copied */
+  /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
+  /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
+  /* ratio is defined by X_density/Y_density even when density_unit=0. */
+  switch (cinfo->density_unit)           /* JFIF code for pixel size units */
+    {
+    case 1: image.xres = cinfo->X_density;           /* Horizontal pixel density */
+      image.yres = cinfo->Y_density;          /* Vertical pixel density */
+      break;
+    case 2: image.xres = cinfo->X_density * 254 / 100;
+      image.yres = cinfo->Y_density * 254 / 100;
+      break;
+    default:
+      image.xres = image.yres = 0;
+    }
   
   /* Step 8: Release JPEG decompression object */
   
   /* This is an important step since it will release a good deal of memory. */
   jpeg_finish_decompress(cinfo);
   jpeg_destroy_decompress (cinfo);
+  
+  return true;
 }
 
-bool JPEGCodec::do_transform (JXFORM_CODE code, Image& image, bool to_gray)
+bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
 {
   jpeg_transform_info transformoption; /* image transformation options */
   
@@ -560,10 +569,6 @@ bool JPEGCodec::do_transform (JXFORM_CODE code, Image& image, bool to_gray)
   jpeg_error_mgr jsrcerr, jdsterr;
   
   std::stringstream stream;
-  
-#ifdef PROGRESS_REPORT
-  struct cdjpeg_progress_mgr progress;
-#endif
   
   jvirt_barray_ptr * src_coef_arrays;
   jvirt_barray_ptr * dst_coef_arrays;
@@ -595,19 +600,32 @@ bool JPEGCodec::do_transform (JXFORM_CODE code, Image& image, bool to_gray)
   /* Read source file as DCT coefficients */
   src_coef_arrays = jpeg_read_coefficients(&srcinfo);
   
-
   /* Initialize destination compression parameters from source values */
   jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
 
   /* Adjust destination parameters if required by transform options;
    * also find out which set of coefficient arrays will hold the output.
    */
-  dst_coef_arrays = jtransform_adjust_parameters(&srcinfo, &dstinfo,
-						 src_coef_arrays,
-						 &transformoption);
+  if (code == JXFORM_NONE)
+    dst_coef_arrays = src_coef_arrays;
+  else
+    dst_coef_arrays = jtransform_adjust_parameters(&srcinfo, &dstinfo,
+						   src_coef_arrays,
+						   &transformoption);
 
   /* Specify data destination for compression */
   cpp_stream_dest (&dstinfo, &stream);
+  
+  // as we read back just the basics, some manual translations
+  switch (code) {
+  case JXFORM_ROT_90:
+  case JXFORM_ROT_270:
+    { int t = image.xres; image.xres = image.yres; image.yres = t;} break;
+  default:
+    ; // silence compiler
+  }
+  
+  jpeg_compress_set_density (&dstinfo, image);
   
   /* Start compressor (note no image data is actually written here) */
   jpeg_write_coefficients(&dstinfo, dst_coef_arrays);
@@ -626,19 +644,10 @@ bool JPEGCodec::do_transform (JXFORM_CODE code, Image& image, bool to_gray)
   // copy into the shadow buffer
   private_copy.str (stream.str());
   
-  // Update meta, w/h,spp might have changed
-  // we re-read the header because we do not want to re-hardcode the
-  // trimming required for some operations
-  readMeta (&private_copy, image, true /* just basic, e.g. no res, etc. */);
-  // as we read back just the basics, some manual translations
-  switch (code) {
-  case JXFORM_ROT_90:
-  case JXFORM_ROT_270:
-    { int t = image.xres; image.xres = image.yres; image.yres = t;} break;
-  default:
-    ; // silence compiler
-  }
-  
+  // Update meta, w/h,spp might have changed.
+  // We re-read the header because we do not want to re-hardcode the
+  // trimming required for some operations.
+  readMeta (&private_copy, image);
   return true;
 }
 

@@ -36,9 +36,9 @@ public:
   
 private:
   
-  bool readMeta (std::istream* stream, Image& image, bool just_basic = false);
-
-  bool do_transform (JXFORM_CODE code, Image& image, bool to_gray = false);
+  // internals and helper
+  bool readMeta (std::istream* stream, Image& image);
+  bool doTransform (JXFORM_CODE code, Image& image, bool to_gray = false);
   
   std::stringstream private_copy;
 };
