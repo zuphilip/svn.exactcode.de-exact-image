@@ -212,6 +212,16 @@ void imageRotate (Image* image, double angle)
   rotate (*image, angle, background);
 }
 
+void imageFlipX (Image* image)
+{
+  flipX (*image);
+}
+
+void imageFlipY (Image* image)
+{
+  flipY (*image);
+}
+
 void imageScale (Image* image, double factor)
 {
   scale (*image, factor, factor);
