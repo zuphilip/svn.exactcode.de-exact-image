@@ -119,6 +119,9 @@ void imageSetYres (Image* image, int yres);
 bool imageConvertColorspace (Image* image, const char* target_colorspace);
 void imageRotate (Image* image, double angle);
 
+void imageFlipX (Image* image);
+void iamgeFlipY (Image* image);
+
 // best scale (or thru the codec (e.g. JPEG)) or explicit algorithm
 void imageScale (Image* image, double factor);
 void imageNearestScale (Image* image, double factor);
