@@ -6,10 +6,21 @@
 
 std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 
+ImageCodec::ImageCodec ()
+  : _image (0)
+{
+}
+
+ImageCodec::ImageCodec (Image* __image)
+  : _image (__image)
+{
+}
 
 ImageCodec::~ImageCodec ()
 {
-  unregisterCodec (this);
+  // if not freestanding
+  if (!_image)
+    unregisterCodec (this);
 }
 
 std::string get_ext (const std::string& filename)
@@ -77,25 +88,31 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
   
-
   std::vector<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end(); ++it)
     {
       if (codec.empty()) // match extension
 	{
 	  if (it->ext == ext)
-	    return (it->loader->writeImage (stream, image, quality, compress));
+	    goto do_write;
 	}
       else // manual codec spec
 	{
 	  if (it->primary_entry && it->ext == codec) {
-	    return (it->loader->writeImage (stream, image, quality, compress));
+	    goto do_write;
 	  }
 	}
     }
   
   std::cerr << "No matching codec found." << std::endl;
   return false;
+  
+ do_write:
+  // reuse attached codec (if any and the image is unmodified)
+  if (image.getCodec() && !image.isModified() && image.getCodec()->getID() == it->loader->getID())
+    return (image.getCodec()->writeImage (stream, image, quality, compress));
+  else
+    return (it->loader->writeImage (stream, image, quality, compress));
 }
 
 // OLD API

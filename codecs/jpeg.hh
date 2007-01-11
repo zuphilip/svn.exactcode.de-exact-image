@@ -16,7 +16,8 @@ public:
     registerCodec ("jpg", this);
   };
   
-  ~JPEGCodec ();
+  // freestanding
+  JPEGCodec (Image* _image);
   
   virtual std::string getID () { return "JPEG"; };
   

@@ -31,7 +31,8 @@ class Image;
 class ImageCodec
 {
 public:
-  
+  ImageCodec ();
+  ImageCodec (Image* __image);
   virtual ~ImageCodec ();
   virtual std::string getID () = 0;
   
@@ -80,6 +81,8 @@ protected:
 			     bool _via_codec_only = false);
   static void unregisterCodec (ImageCodec* _loader);
   
+  // freestanding instance, attached to an image
+  const Image* _image;
 };
 
 #endif
