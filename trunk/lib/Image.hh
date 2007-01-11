@@ -167,6 +167,7 @@ public:
   
   
   Image& operator= (Image& other);
+  void copyTransferOwnership (Image& other);
   
   int Stride () const {
     return (w * spp * bps + 7) / 8;
@@ -780,6 +781,9 @@ public:
   iterator end () {
     return iterator(this, true);
   }
+  
+protected:
+  void copyMeta (const Image& other);
 };
 
 typedef struct { unsigned char r, g, b; } rgb;

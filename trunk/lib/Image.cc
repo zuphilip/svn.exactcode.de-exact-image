@@ -24,15 +24,19 @@ Image::~Image () {
     free (data); data = 0;
 }
 
-Image& Image::operator= (Image& other)
+void Image::copyMeta (const Image& other)
 {
-  // TODO: rethink
   w = other.w;
   h = other.h;
   bps = other.bps;
   spp = other.spp;
   xres = other.xres;
   yres = other.yres;
+}
+
+Image& Image::operator= (Image& other)
+{
+  copyMeta (other);
   
   uint8_t* d = other.getRawData();
   if (d) {
@@ -44,6 +48,15 @@ Image& Image::operator= (Image& other)
   }
   
   return *this;
+}
+
+void Image::copyTransferOwnership (Image& other)
+{
+  copyMeta (other);
+
+  uint8_t* d = other.getRawData();
+  other.setRawDataWithoutDelete (0);
+  setRawData (d);
 }
 
 uint8_t* Image::getRawData () const {
@@ -64,7 +77,8 @@ uint8_t* Image::getRawDataEnd () const {
 
 void Image::setRawData () {
   if (!modified) {
-    std::cerr << "Image modified" << std::endl;
+    // DEBUG
+    // std::cerr << "Image modified" << std::endl;
     modified = true;
   }
 }
