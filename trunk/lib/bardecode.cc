@@ -68,7 +68,8 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   uint16_t i;
   
   // a copy we can mangle
-  Image* image = im.Clone();
+  Image* image = new Image;
+  *image = im;
   
   if (image->xres == 0)
     image->xres = 300; // passed down the lib ...
