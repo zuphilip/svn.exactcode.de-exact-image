@@ -14,8 +14,13 @@ Image::Image (Image& other)
 }
 
 Image::~Image () {
+  // release attached codec
+  if (codec)
+    delete (codec); codec = 0;
+      
+  // release POD
   if (data)
-    free (data);
+    free (data); data = 0;
 }
 
 Image& Image::operator= (Image& other)
