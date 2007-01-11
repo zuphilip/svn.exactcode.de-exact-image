@@ -4,11 +4,12 @@
 #include "Codecs.hh"
 
 Image::Image ()
-  : data(0), modified(false) {
+  : data(0), modified(false), codec(0)
+{
 }
 
 Image::Image (Image& other)
-  : data(0), modified(false)
+  : data(0), modified(false), codec(0)
 {
   operator= (other);
 }
