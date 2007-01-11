@@ -316,11 +316,11 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 {
   // if the instance is freestanding it can only be called by the mux if the cache is valid
   if (_image) {
-    std::cerr << "Shadow image data valid: writing orig DCT" << std::endl;
-    
     // since potentially meta data might have changed we have to re-create
     // the stream here
     doTransform (JXFORM_NONE, image);
+    
+    std::cerr << "Writing DCT coefficients" << std::endl;
     
     // TODO: potentially optimize by directly writing into this stream ...
     stream->write (private_copy.str().c_str(), private_copy.str().size());
@@ -328,9 +328,6 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
   
   // really encode
-  
-  std::cerr << "Shadow image data modifed, classic compress." << std::endl;
-  
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
 
@@ -382,7 +379,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   jpeg_destroy_compress(&cinfo);
 
   if (jerr.num_warnings)
-    std::cout << jerr.num_warnings << " Warnings." << std::endl;
+    std::cerr << jerr.num_warnings << " Warnings." << std::endl;
 
   return true;
 }
@@ -390,10 +387,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 // on-demand decoding
 /*bool*/ void JPEGCodec::decodeNow (Image* image)
 {
-  std::cerr << "JPEGCodec::decodeNow" << std::endl;
-  
+  // std::cerr << "JPEGCodec::decodeNow" << std::endl;
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
-  
   struct my_error_mgr jerr;
   
   /* Step 1: allocate and initialize JPEG decompression object */
@@ -459,22 +454,18 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
 bool JPEGCodec::flipX (Image& image)
 {
-  std::cerr << "JPEGCodec::flipX" << std::endl;
   doTransform (JXFORM_FLIP_H, image);
   return true;
 }
 
 bool JPEGCodec::flipY (Image& image)
 {
-  std::cerr << "JPEGCodec::flipY" << std::endl;
   doTransform (JXFORM_FLIP_V, image);
   return true;
 }
 
 bool JPEGCodec::rotate (Image& image, double angle)
 {
-  std::cerr << "JPEGCodec::rotate" << std::endl;
-  
   if (angle == 90) 
     { doTransform (JXFORM_ROT_90, image); return true; }
   if (angle == 180)
@@ -573,6 +564,8 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   
   std::stringstream stream;
   
+  std::cerr << "Transforming DCT coefficients." << std::endl;
+  
   jvirt_barray_ptr * src_coef_arrays;
   jvirt_barray_ptr * dst_coef_arrays;
   
@@ -647,8 +640,6 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   
   // copy into the shadow buffer
   private_copy.str (stream.str());
-
-  // std::cerr << "new copy length: " << private_copy.str().size() << std::endl;
 
   // Update meta, w/h,spp might have changed.
   // We re-read the header because we do not want to re-hardcode the
