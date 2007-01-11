@@ -270,7 +270,8 @@ void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
 
 /* *** back on-topic *** */
 
-JPEGCodec::~JPEGCodec ()
+JPEGCodec::JPEGCodec (Image* _image)
+  : ImageCodec (_image)
 {
 }
 
@@ -298,11 +299,14 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
   // on-demand compression
   image.setRawData (0);
   
+  // freestanding instance
+  JPEGCodec* codec = new JPEGCodec (&image);
+  
   // private copy for deferred decoding
   stream->seekg (0);
-  *stream >> private_copy.rdbuf();
+  *stream >> codec->private_copy.rdbuf();
   
-  image.setCodec (this);
+  image.setCodec (codec);
   
   return true;
 }
@@ -310,19 +314,18 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
 bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			    const std::string& compress)
 {
-  // write original DCT coefficients ???
-  if (!image.isModified() && image.getCodec () && image.getCodec()->getID() == getID())
-    {
-      std::cerr << "Shadow image data valid: writing orig DCT" << std::endl;
-      
-      // since potentially meta data might have changed we have to re-create
-      // the stream here
-      doTransform (JXFORM_NONE, image);
-      
-      // TODO: potentially optimize by directly writing into this stream ...
-      stream->write (private_copy.str().c_str(), private_copy.str().size());
-      return true;
-    }
+  // if the instance is freestanding it can only be called by the mux if the cache is valid
+  if (_image) {
+    std::cerr << "Shadow image data valid: writing orig DCT" << std::endl;
+    
+    // since potentially meta data might have changed we have to re-create
+    // the stream here
+    doTransform (JXFORM_NONE, image);
+    
+    // TODO: potentially optimize by directly writing into this stream ...
+    stream->write (private_copy.str().c_str(), private_copy.str().size());
+    return true;
+  }
   
   // really encode
   
