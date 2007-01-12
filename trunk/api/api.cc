@@ -135,9 +135,15 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
   std::string space = target_colorspace;
   std::transform (space.begin(), space.end(), space.begin(), tolower);
-
+  
+  // thru the codec?
+  if (!image->isModified() && image->getCodec())
+    if (space == "gray" || space == "gray8")
+      if (image->getCodec()->toGray(*image))
+	return true;
+  
   int spp, bps;
-  if (space == "bw" || space == "gray1") {
+  if (space == "bw" || space == "bilevel" || space == "gray1") {
     spp = 1; bps = 1;
   } else if (space == "gray2") {
     spp = 1; bps = 2;
