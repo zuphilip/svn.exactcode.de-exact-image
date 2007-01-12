@@ -61,8 +61,6 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
   /* handcrafted due popular request */
   if (new_image.spp == 1 && new_image.bps < 8)
     {
-      std::cerr << "here" << std::endl;
-      
       const int bps = image.bps;
       const int spb = 8 / bps; // Samples Per Byte
       const int mask = (1 << bps) - 1;

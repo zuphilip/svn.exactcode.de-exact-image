@@ -161,8 +161,7 @@ void rot90 (Image& image, int angle)
       const int bps = image.bps;
       const int spb = 8 / bps; // Samples Per Byte
       const uint8_t mask =  0xF00 >> bps;
-      
-      std::cerr << "mask: " << (int)mask << std::endl;
+      // std::cerr << "mask: " << (int)mask << std::endl;
       
       for (int y = 0; y < image.h; ++y) {
 	uint8_t* new_row;
