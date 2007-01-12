@@ -215,6 +215,11 @@ bool ImageCodec::rotate (Image& image, double ayngle)
   return false;
 }
 
+bool ImageCodec::toGray (Image& image)
+{
+  return false;
+}
+
 bool ImageCodec::scale (Image& image, double xscale, double yscale)
 {
   return false;
