@@ -318,12 +318,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (_image) {
     // since potentially meta data might have changed we have to re-create
     // the stream here
-    doTransform (JXFORM_NONE, image);
-    
-    std::cerr << "Writing DCT coefficients" << std::endl;
-    
-    // TODO: potentially optimize by directly writing into this stream ...
-    stream->write (private_copy.str().c_str(), private_copy.str().size());
+    doTransform (JXFORM_NONE, image, stream);
+    std::cerr << "Wrote DCT coefficients" << std::endl;
     return true;
   }
   
@@ -477,7 +473,11 @@ bool JPEGCodec::rotate (Image& image, double angle)
   return false;
 }
 
-// TODO?: transformoption.force_grayscale = FALSE;
+bool JPEGCodec::toGray (Image& image)
+{ 
+  doTransform (JXFORM_NONE, image, 0, true /* to gray */);
+  return true;
+}
 
 bool JPEGCodec::scale (Image& image, double xscale, double yscale)
 {
@@ -554,7 +554,8 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   return true;
 }
 
-bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
+bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
+			     std::ostream* s, bool to_gray)
 {
   jpeg_transform_info transformoption; /* image transformation options */
   
@@ -603,7 +604,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   /* Adjust destination parameters if required by transform options;
    * also find out which set of coefficient arrays will hold the output.
    */
-  if (code == JXFORM_NONE)
+  if (code == JXFORM_NONE && !to_gray)
     dst_coef_arrays = src_coef_arrays;
   else
     dst_coef_arrays = jtransform_adjust_parameters(&srcinfo, &dstinfo,
@@ -611,7 +612,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
 						   &transformoption);
 
   /* Specify data destination for compression */
-  cpp_stream_dest (&dstinfo, &stream);
+  cpp_stream_dest (&dstinfo, s ? s : &stream);
   
   // as we read back just the basics, some manual translations
   switch (code) {
@@ -638,13 +639,17 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image, bool to_gray)
   jpeg_finish_decompress(&srcinfo);
   jpeg_destroy_decompress(&srcinfo);
   
-  // copy into the shadow buffer
-  private_copy.str (stream.str());
-
-  // Update meta, w/h,spp might have changed.
-  // We re-read the header because we do not want to re-hardcode the
-  // trimming required for some operations.
-  readMeta (&private_copy, image);
+  // if we are not just writing
+  if (!s) {
+    private_copy.str (stream.str());
+    // copy into the shadow buffer
+    
+    // Update meta, w/h,spp might have changed.
+    // We re-read the header because we do not want to re-hardcode the
+    // trimming required for some operations.
+    readMeta (&private_copy, image);
+  }
+  
   return true;
 }
 
