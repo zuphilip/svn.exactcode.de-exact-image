@@ -859,7 +859,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_split);
   
   Argument<std::string> arg_colorspace ("", "colorspace",
-					"convert image colorspace (BILEVEL, GRAY, GRAY2, GRAY4,\n\t\tRGB, YUV, CYMK)",
+					"convert image colorspace (BW, BILEVEL, GRAY, GRAY1, GRAY2, GRAY4,\n\t\tRGB, YUV, CYMK)",
 					0, 1, true, true);
   arg_colorspace.Bind (convert_colorspace);
   arglist.Add (&arg_colorspace);
