@@ -36,6 +36,8 @@ public:
   virtual bool scale (Image& image, double xscale, double yscale);
   
 private:
+
+  void decodeNow (Image* image, int factor);
   
   // internals and helper
   bool readMeta (std::istream* stream, Image& image);
