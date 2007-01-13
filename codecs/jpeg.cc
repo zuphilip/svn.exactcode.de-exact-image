@@ -30,6 +30,8 @@
 
 #include "jpeg.hh"
 
+#include "scale.hh"
+
 /*
  * ERROR HANDLING:
  *
@@ -384,6 +386,13 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 /*bool*/ void JPEGCodec::decodeNow (Image* image)
 {
   // std::cerr << "JPEGCodec::decodeNow" << std::endl;
+  
+  // decode without scaling
+  decodeNow (image, 1);
+}
+
+/*bool*/ void JPEGCodec::decodeNow (Image* image, int factor)
+{
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
   struct my_error_mgr jerr;
   
@@ -415,9 +424,19 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   /* Step 4: set parameters for decompression */
   
   cinfo->buffered_image = TRUE; /* select buffered-image mode */
+
+  // TODO: set scaling
+  if (factor != 1) {
+    cinfo->scale_num = 1;
+    cinfo->scale_denom = factor;
+    cinfo->dct_method = JDCT_IFAST;
+  }
   
   /* Step 5: Start decompressor */
   jpeg_start_decompress (cinfo);
+  
+  image->w = cinfo->output_width;
+  image->h = cinfo->output_height;
   
   /* JSAMPLEs per row in output buffer */
   int row_stride = cinfo->output_width * cinfo->output_components;
@@ -475,13 +494,43 @@ bool JPEGCodec::rotate (Image& image, double angle)
 
 bool JPEGCodec::toGray (Image& image)
 { 
-  doTransform (JXFORM_NONE, image, 0, true /* to gray */);
+  doTransform (JXFORM_NONE, image, 0 /* stream */, true /* to gray */);
   return true;
 }
 
 bool JPEGCodec::scale (Image& image, double xscale, double yscale)
 {
-  return false; // TODO: look into epeg and implement
+  // we only support fast downscaling
+  if (xscale > 1.0 || yscale > 1.0)
+    return false; // let the generic scaler handle this
+  
+  int w_final = (int)(xscale * image.w);
+  int h_final = (int)(xscale * image.h);
+
+  std::cerr << "Scaling by partially loading DCT coefficients." << std::endl;
+    
+  // compute downscale factor
+  int scale = (int) (xscale > yscale ? 1./xscale : 1./yscale);
+  if      (scale > 8) scale = 8;
+  else if (scale < 1) scale = 1;
+  
+  // we get values in the range [1,8] here, but libjpeg only
+  // supports [1,2,4,8] - others are rounded down
+  decodeNow (&image, scale);
+  // due downscaling the private copy is no longer valid
+  image.setRawData ();
+
+  // TODO: test if we can just read the coefficients
+  
+  // we only have scaled in the range [1,2,4,8] and need to do the rest
+  // manually
+  xscale = (double)w_final / image.w;
+  yscale = (double)h_final / image.h;
+  
+  if (xscale != 1.0 || yscale != 1.0)
+    box_scale (image, xscale, yscale);
+  
+  return true;
 }
 
 bool JPEGCodec::readMeta (std::istream* stream, Image& image)
