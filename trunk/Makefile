@@ -1,5 +1,7 @@
 include config.make
 
+X_OUTARCH := ./objdir
+
 X_BUILD_IMPLICIT=0
 include utility/Makefile
 X_BUILD_IMPLICIT=1
