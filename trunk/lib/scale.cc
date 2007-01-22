@@ -256,33 +256,37 @@ void box_scale (Image& new_image, double scalex, double scaley)
     boxes[x] = new_image.begin();
   
   int dy = 0;
-  for (int sy = 0; dy < new_image.h && sy < image.h; ++dy) {
+  for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
+    {
     
-    // clear for accumulation
-    for (int x = 0; x < new_image.w; ++x) {
-      boxes[x].clear();
-      count[x] = 0;
-    }
-
-    for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
-      //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
-      for (int sx = 0; sx < image.w; ++sx) {
-	const int dx = std::min ((int)(scalex*sx), new_image.w-1);
-	//	std::cout << "sx: " << sx << " -> " << dx << std::endl;
-	boxes[dx] += *src; ++src;
-	++count[dx];
+      // clear for accumulation
+      for (int x = 0; x < new_image.w; ++x) {
+	boxes[x].clear();
+	count[x] = 0;
+      }
+    
+      for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
+	//      std::cout << "sy: " << sy << " from " << image.h << std::endl;
+	for (int sx = 0; sx < image.w; ++sx) {
+	  const int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	  //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
+	  boxes[dx] += *src; ++src;
+	  ++count[dx];
+	}
+      }
+    
+      // set box
+      //    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
+      for (int dx = 0; dx < new_image.w; ++dx) {
+	//      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
+	//       		<< ", count: " << count[dx] << std::endl;      
+	dst.set (boxes[dx] / count[dx]);
+	/* Test pattern:
+	   dst.setL (dx*dy);
+	   dst.set (dst); */
+	++dst;
       }
     }
-    // set box
-    //    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
-    for (int dx = 0; dx < new_image.w; ++dx) {
-      //      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
-      //       		<< ", count: " << count[dx] << std::endl;      
-      dst.set (boxes[dx] / count[dx]);
-      ++dst;
-    }
-    
-  }
 }
 
 inline Image::iterator CubicConvolution (int distance,
