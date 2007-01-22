@@ -86,7 +86,6 @@ void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 	      z = 0;
 	    }
 	}
-      // remainder - TODO: test for correctness ...
       int remainder = 8 - x % 8;
       if (remainder != 8)
 	{
@@ -118,7 +117,6 @@ void colorspace_gray8_to_gray4 (Image& image)
 	      z = 0;
 	    }
 	}
-      // remainder - TODO: test for correctness ...
       int remainder = 2 - x % 2;
       if (remainder != 2)
 	{
@@ -149,7 +147,6 @@ void colorspace_gray8_to_gray2 (Image& image)
 	      z = 0;
 	    }
 	}
-      // remainder - TODO: test for correctness ...
       int remainder = 4 - x % 4;
       if (remainder != 4)
 	{
@@ -224,16 +221,21 @@ void colorspace_grayX_to_rgb8 (Image& image)
 
 void colorspace_gray1_to_gray2 (Image& image)
 {
-  uint8_t* data = (uint8_t*) malloc (image.h*image.w/4);
+  uint8_t* old_data = image.getRawData();
+  int old_stride = image.Stride();
   
-  uint8_t* output = data;
-  uint8_t* input = image.getRawData();
+  image.bps = 2;
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
+  uint8_t* output = image.getRawData();
   
-  for (int row = 0; row < image.h; row++)
+  for (int row = 0; row < image.h; ++row)
     {
       uint8_t z = 0;
       uint8_t zz = 0;
-      for (int x = 0; x < image.w; x++)
+      uint8_t* input  = old_data + row * old_stride;
+
+      int x;
+      for (x = 0; x < image.w; ++x)
 	{
 	  if (x % 8 == 0)
 	    z = *input++;
@@ -246,24 +248,35 @@ void colorspace_gray1_to_gray2 (Image& image)
 	  if (x % 4 == 3)
 	    *output++ = zz;
 	}
+      
+      int remainder = 4 - x % 4;
+      if (remainder != 4)
+	{
+	  zz <<= 2*remainder;
+	  *output++ = zz;
+	}
     }
-  
-  image.bps = 2;
-  image.setRawData (data);
+  free (old_data);
 }
 
 void colorspace_gray1_to_gray4 (Image& image)
 {
-  uint8_t* data = (uint8_t*) malloc (image.h*image.w/2);
+  uint8_t* old_data = image.getRawData();
+  int old_stride = image.Stride();
   
-  uint8_t* output = data;
-  uint8_t* input = image.getRawData();
+  image.bps = 4;
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
+  uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
     {
       uint8_t z = 0;
       uint8_t zz = 0;
-      for (int x = 0; x < image.w; ++x)
+      
+      uint8_t* input  = old_data + row * old_stride;
+      
+      int x;
+      for (x = 0; x < image.w; ++x)
 	{
 	  if (x % 8 == 0)
 	    z = *input++;
@@ -276,23 +289,33 @@ void colorspace_gray1_to_gray4 (Image& image)
 	  if (x % 2 == 1)
 	    *output++ = zz;
 	}
+      
+      int remainder = 2 - x % 2;
+      if (remainder != 2)
+	{
+	  zz <<= 4*remainder;
+	  *output++ = zz;
+	}
     }
   
-  image.bps = 4;
-  image.setRawData (data);
+  free (old_data);
 }
 
 void colorspace_gray1_to_gray8 (Image& image)
 {
-  uint8_t* data = (uint8_t*) malloc (image.h*image.w);
+  uint8_t* old_data = image.getRawData();
+  int old_stride = image.Stride();
   
-  uint8_t* output = data;
-  uint8_t* input = image.getRawData();
-  
-  for (int row = 0; row < image.h; row++)
+  image.bps = 8;
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
+  uint8_t* output = image.getRawData();
+ 
+  for (int row = 0; row < image.h; ++row)
     {
+      uint8_t* input  = old_data + row * old_stride;
       uint8_t z = 0;
-      for (int x = 0; x < image.w; x++)
+      
+      for (int x = 0; x < image.w; ++x)
 	{
 	  if (x % 8 == 0)
 	    z = *input++;
@@ -302,9 +325,7 @@ void colorspace_gray1_to_gray8 (Image& image)
 	  z <<= 1;
 	}
     }
-  
-  image.bps = 8;
-  image.setRawData (data);
+  free (old_data);
 }
 
 void colorspace_16_to_8 (Image& image)
