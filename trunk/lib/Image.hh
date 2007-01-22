@@ -249,14 +249,17 @@ public:
       case GRAY1:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 8);
 	tmp.bitpos = 7 - x % 8;
+	tmp._x = x;
 	break;
       case GRAY2:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 4);
 	tmp.bitpos = 7 - (x % 4) * 2;
+	tmp._x = x;
 	break;
       case GRAY4:
 	tmp.ptr = (value_t*) (image->data + stride * y + x / 2);
 	tmp.bitpos = 7 - (x % 2) * 4;
+	tmp._x = x;
 	break;
       case GRAY8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x);
