@@ -717,13 +717,13 @@ public:
     inline void set (const iterator& other) {
       switch (type) {
       case GRAY1:
-	ptr->gray |= (other.value.gray >> 7) << bitpos;
+	ptr->gray = (ptr->gray & (~(1<<bitpos))) | (other.value.gray >> 7) << bitpos;
 	break;
       case GRAY2:
-	ptr->gray |= (other.value.gray >> 6) << (bitpos-1);
+	ptr->gray = (ptr->gray & (~(3<<(bitpos-1)))) | (other.value.gray >> 6) << (bitpos-1);
 	break;
       case GRAY4:
-	ptr->gray |= (other.value.gray >> 4) << (bitpos-3);
+	ptr->gray = (ptr->gray & (~(15<<(bitpos-3)))) | (other.value.gray >> 4) << (bitpos-3);
 	break;
       case GRAY8:
 	ptr->gray = other.value.gray;
