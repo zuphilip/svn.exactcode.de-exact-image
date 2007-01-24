@@ -29,22 +29,24 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
   uint8_t* data = image.getRawData();
   uint8_t* new_data = (uint8_t*) malloc (image.w * image.h);
   
-  int xr = xw / 2;
-  int yr = yw / 2;
+  const int xr = xw / 2;
+  const int yr = yw / 2;
 
-  int _y1 = std::min (image.h, yr);
-  int _y2 = std::max (image.h-yr, yr);
+  const int _y1 = std::min (image.h, yr);
+  const int _y2 = std::max (image.h-yr, yr);
 
   uint8_t* src_ptr = data;
   uint8_t* dst_ptr = new_data;
 
   // top-border
-  for (int y = 0; y < _y1; ++y)
-    for (int x = 0; x < image.w; ++x)
-      *dst_ptr++ = *src_ptr++;
+  for (int i = 0; i < _y1 * image.w; ++i)
+    *dst_ptr++ = *src_ptr++;
 
   for (int y = _y1; y < _y2; ++y)
   {
+    src_ptr = &data[y * image.w];
+    dst_ptr = &new_data[y * image.w];
+
     // left-side border
     for (int x = 0; x < xr; ++x)
         *dst_ptr++ = *src_ptr++;
@@ -52,6 +54,7 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
     // convolution area
     for (int x = xr; x < image.w-xr; ++x)
       {
+	  ++src_ptr;
 	  matrix_type sum = 0;
 	  uint8_t* data_row = &data[ (y - yr) * image.w - xr + x];
 	  matrix_type* matrix_row = matrix;
@@ -65,17 +68,15 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	  *dst_ptr++ = z;
       }
-
     // right-side border
     for (int x = image.w-xr; x < image.w; ++x)
         *dst_ptr++ = *src_ptr++;
   }
 
   // bottom-border
-  for (int y = _y2; y < image.h; ++y)
-    for (int x = 0; x < image.w; ++x)
-      *dst_ptr++ = *src_ptr++;
-  
+  for (int i = 0; i < image.w * (image.h-_y2); ++i)
+    *dst_ptr++ = *src_ptr++;
+
   image.setRawData (new_data);
 }
 
