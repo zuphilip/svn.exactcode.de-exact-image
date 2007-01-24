@@ -30,12 +30,6 @@
 
 #include "Colorspace.hh"
 
-#include "scale.hh"
-#include "rotate.hh"
-// #include "Matrix.hh"
-#include "riemersma.h"
-#include "floyd-steinberg.h"
-
 #include <functional>
 
 // barcode library
