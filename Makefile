@@ -23,6 +23,7 @@ cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
 
 ifeq "$(X_ARCH)" "i686"
 CXXFLAGS += -march=i686
+CXXFLAGS += $(call cc-option,-mtune=pentium4,)
 endif
 
 ifeq "$(X_ARCH)" "sparc64"
