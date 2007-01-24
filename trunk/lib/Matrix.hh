@@ -27,32 +27,24 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 			 matrix_type divisor)
 {
   uint8_t* data = image.getRawData();
-  uint8_t* data2 = (uint8_t*) malloc (image.w * image.h);
+  uint8_t* new_data = (uint8_t*) malloc (image.w * image.h);
   
   int xr = xw / 2;
   int yr = yw / 2;
-  
-#if 0
-  // experimental tiling code that is not faster :-(
-  const int tiles = 16;
-  for (int my = 0; my < h; my += tiles)
-    for (int mx = 0; mx < w; mx += tiles)
-      for (int y = my; y < my + tiles && y < h; ++y)
-	for (int x = mx; x < mx + tiles && x < w; ++x)
-#else
+
   for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* src_ptr = &data[y * image.w];
+    uint8_t* dst_ptr = &new_data[y * image.w];
+
     for (int x = 0; x < image.w; ++x)
-#endif
       {
-	uint8_t* const dst_ptr = &data2[x + y * image.w];
-	uint8_t* const src_ptr = &data[x + y * image.w];
-	
-	const uint8_t val = *src_ptr;
+	const uint8_t val = *src_ptr++;
 	
 	// for now, copy border pixels
 	if (y < yr || y > image.h - yr ||
 	    x < xr || x > image.w - xr)
-	  *dst_ptr = val;
+	  *dst_ptr++ = val;
 	else {
 	  matrix_type sum = 0;
 	  uint8_t* data_row =
@@ -66,11 +58,12 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  
 	  sum /= divisor;
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
-	  *dst_ptr = z;
+	  *dst_ptr++ = z;
 	}
       }
+  }
   
-  image.setRawData (data2);
+  image.setRawData (new_data);
 }
 
 #endif
