@@ -32,23 +32,28 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
   int xr = xw / 2;
   int yr = yw / 2;
 
-  for (int y = 0; y < image.h; ++y)
-  {
-    uint8_t* src_ptr = &data[y * image.w];
-    uint8_t* dst_ptr = &new_data[y * image.w];
+  int _y1 = std::min (image.h, yr);
+  int _y2 = std::max (image.h-yr, yr);
 
+  uint8_t* src_ptr = data;
+  uint8_t* dst_ptr = new_data;
+
+  // top-border
+  for (int y = 0; y < _y1; ++y)
     for (int x = 0; x < image.w; ++x)
+      *dst_ptr++ = *src_ptr++;
+
+  for (int y = _y1; y < _y2; ++y)
+  {
+    // left-side border
+    for (int x = 0; x < xr; ++x)
+        *dst_ptr++ = *src_ptr++;
+
+    // convolution area
+    for (int x = xr; x < image.w-xr; ++x)
       {
-	const uint8_t val = *src_ptr++;
-	
-	// for now, copy border pixels
-	if (y < yr || y > image.h - yr ||
-	    x < xr || x > image.w - xr)
-	  *dst_ptr++ = val;
-	else {
 	  matrix_type sum = 0;
-	  uint8_t* data_row =
-	    &data[ (y - yr) * image.w - xr + x];
+	  uint8_t* data_row = &data[ (y - yr) * image.w - xr + x];
 	  matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
 	  // for speed ,-)
@@ -59,9 +64,17 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  sum /= divisor;
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	  *dst_ptr++ = z;
-	}
       }
+
+    // right-side border
+    for (int x = image.w-xr; x < image.w; ++x)
+        *dst_ptr++ = *src_ptr++;
   }
+
+  // bottom-border
+  for (int y = _y2; y < image.h; ++y)
+    for (int x = 0; x < image.w; ++x)
+      *dst_ptr++ = *src_ptr++;
   
   image.setRawData (new_data);
 }
