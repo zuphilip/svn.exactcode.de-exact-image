@@ -38,6 +38,8 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
   uint8_t* src_ptr = data;
   uint8_t* dst_ptr = new_data;
 
+  const int kernel_offset = yr * image.w + xr;
+
   // top-border
   for (int i = 0; i < _y1 * image.w; ++i)
     *dst_ptr++ = *src_ptr++;
@@ -54,9 +56,9 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
     // convolution area
     for (int x = xr; x < image.w-xr; ++x)
       {
-	  ++src_ptr;
+	  uint8_t* data_row = src_ptr++ - kernel_offset;
 	  matrix_type sum = 0;
-	  uint8_t* data_row = &data[ (y - yr) * image.w - xr + x];
+
 	  matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
 	  // for speed ,-)
