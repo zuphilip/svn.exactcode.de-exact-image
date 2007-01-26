@@ -721,7 +721,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // swab non byte fields
 #if __BYTE_ORDER == __BIG_ENDIAN
-  TIFFSwabLong(&file_hdr.uSize);
+  TIFFSwabLong(&file_hdr.iSize);
   TIFFSwabLong(&file_hdr.iOffBits);
   
   TIFFSwabLong(&info_hdr.iSize);
