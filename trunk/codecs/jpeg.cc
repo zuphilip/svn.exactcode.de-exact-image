@@ -460,7 +460,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
     jpeg_finish_output(cinfo);
   }
-  
+
+  jpeg_finish_decompress(cinfo);
+  jpeg_destroy_decompress(cinfo);
+
   // shadow data is still valid for more transformations
   image->setCodec (this);
 }
