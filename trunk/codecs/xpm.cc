@@ -181,15 +181,76 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
   return true;
 }
 
+std::string symbol (int i)
+{
+  std::string s;
+  s.append (1, (char) ('a' + i));
+  return s;
+}
+
+std::string put_hex (unsigned char hi)
+{
+  std::string s;
+  
+  unsigned char lo = hi & 0xF;
+  hi >>= 4;
+  
+  if (hi < 10)
+    s.append (1, (char)'0' + hi);
+  else
+    s.append (1, (char)'A' + hi - 10);
+
+  if (lo < 10)
+    s.append (1, (char)'0' + lo);
+  else
+    s.append (1, (char)'A' + lo - 10);
+  
+  return s;
+}
+
 bool XPMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  /* TODO
-  stream << "static char * ExactImage[] = {\n"
-	 << image.w << " " << image.h << " "
-	 << image.colors << " " << chars_per_pixel << "\n";
-  */
-  return false;
+  // TODO: count colors later
+  if (image.spp > 1) {
+    std::cerr << "Too many colors for XPM." << std::endl;
+    return false;
+  }
+  
+  int colors = (1 << image.bps);
+      
+  *stream << "/* XPM */\n"
+	  << "static char * ExactImage[] = {\n"
+	  << "\"" << image.w << " " << image.h << " "
+	  << colors  << " " << 1 /* cpp */ << "\",\n";
+  
+  // write colors
+  for (int c = 0; c < colors; ++c)
+    {
+      int l = c * 255 / (colors-1);
+      *stream << "\"" << symbol (c) << "\t" << "c #"
+	      << put_hex(l)
+	      << put_hex(l)
+	      << put_hex(l)
+	      << "\",\n";
+    }
+  
+  // write pixels
+  Image::iterator it = image.begin ();
+  for (int y = 0; y < image.h; ++y)
+    {
+      *stream << "\"";
+      for (int x = 0; x < image.w; ++x)
+	{
+	  *it;
+	  *stream << symbol (it.getL() >> (8 - image.bps) );
+	  ++it;
+	}
+      
+      *stream << "\"" << (y < image.h-1 ? ",\n" : "};\n");
+    }
+  
+  return true;
 }
 
 XPMCodec xpm_loader;
