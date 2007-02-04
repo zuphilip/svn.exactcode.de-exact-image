@@ -1,0 +1,195 @@
+/*
+ * C++ XPM library.
+ * Copyright (c) 2007 Rene Rebe <rene@exactcode.de>
+ */
+
+#include <iostream>
+#include <string>
+#include <sstream>
+
+#include "xpm.hh"
+
+#include "Colorspace.hh"
+
+// Format:
+//
+// /* XPM */"
+// static char * XFACE[] = {
+// "48 48 2 1",
+// "a c #ffffff",
+// "b c #000000",
+// "abaabaababaaabaabababaabaabaababaabaaababaabaaab"
+// ...
+
+uint8_t parse_hex (std::istream* stream)
+{
+  uint8_t x = 0;
+
+  char c = tolower (stream->get());
+  if (c >= '0' && c <= '9')
+    x = x << 4 | c - '0';
+  else
+    x = x << 4 | c - 'a' + 10;
+  
+  c = tolower (stream->get());
+  if (c >= '0' && c <= '9')
+    x = x << 4 | c - '0';
+  else
+    x = x << 4 | c - 'a' + 10;
+
+  return x;
+}
+
+void skip_comments (std::istream* stream)
+{
+  if (stream->peek() == '/')
+    {
+      stream->get();
+      if (stream->peek() == '*')
+	{
+	  // std::cerr << "comment" << std::endl;
+	  do {
+	    char c = stream->get();
+	    // std::cerr << c;
+	    if (c == '*' && stream->peek() == '/') {
+	      stream->get();
+	      break;
+	    }
+	  } while (*stream);
+	  while (*stream && stream->peek() == '\n')
+	    stream->get();
+	  // std::cerr << std::endl;
+	}
+      else
+	stream->putback('/');
+    }
+}
+
+bool XPMCodec::readImage (std::istream* stream, Image& image)
+{
+  // check signature
+  std::string line;
+  std::getline (*stream, line);
+  if (line != "/* XPM */") {
+    stream->seekg (0);
+    return false;
+  }
+  
+  // TODO: wirte a more sophisticated parser here
+  
+  // drop the C declaration
+  std::getline (*stream, line);
+  
+  skip_comments (stream);
+  // dimensions and #colors
+  if (stream->peek() == '"')
+    stream->get();
+  
+  int colors, cpp; // chars per pixel
+  *stream >> image.w >> image.h >> colors >> cpp;
+  std::getline (*stream, line);
+  
+  std::cerr << "XPM: " << image.w << "x" << image.h
+	    << ", colors: " << colors << ", chars per pix: "
+	    << cpp << std::endl;
+  
+  uint16_t* rmap = new uint16_t [colors];
+  uint16_t* gmap = new uint16_t [colors];
+  uint16_t* bmap = new uint16_t [colors];
+  std::vector<std::string> cmap;
+  
+  skip_comments (stream);
+  
+  // read color definitions
+  for (int c = 0; c < colors; ++c)
+    {
+      std::string name, type;
+  
+      // std::cerr << "Reading color: " << c << std::endl;
+      
+      if (stream->peek() == '"')
+	stream->get();
+      
+      do {
+	name.push_back (stream->get());
+      }
+      while (stream->peek() != '\t' && stream->peek() != ' ');
+	
+      *stream >> type;
+      // Type: c -> colour, m -> monochrome, g -> grayscale, and s -> symbolic
+      if (type != "c") {
+	std::cerr << "XPM color type: " << type << " not yet implemented." << std::endl;
+	return false;
+      }
+      
+      while (stream->peek() == ' ')
+	stream->get();
+      
+      if (stream->peek() == '#') {
+	stream->get();
+	rmap[c] = parse_hex (stream) << 8;
+	gmap[c] = parse_hex (stream) << 8;
+	bmap[c] = parse_hex (stream) << 8;
+	std::getline (*stream, line);
+      }
+      else {
+	rmap[c] = gmap[c] = bmap[c] = 0;
+	std::getline (*stream, line);
+	if (line != "None\",")
+	  std::cerr << "Unrecognized color: " << line << std::endl;
+      }
+      
+      // symbol -> index map
+      cmap.push_back (name);
+      //std::cerr << cmap[c] << ": " << rmap[c] << " " << gmap[c] << " " << bmap[c] << std::endl;
+    }
+  
+  image.bps = 8; // for now, later this could be optimized
+  image.spp = 1; // for now, later this could be optimized
+  image.New(image.w, image.h);
+  image.xres = image.yres = 0;
+  
+  skip_comments (stream);
+
+  // read in the pixel data
+  u_int8_t* dst = image.getRawData();
+  for (int y = 0; y < image.h; ++y)
+    {
+      if (stream->peek() == '"')
+	stream->get();
+      for (int x = 0; x < image.w; ++x)
+	{
+	  std::string str;
+	  str.append (1, (char)stream->get());
+	  
+	  std::vector<std::string>::iterator it =
+	    find (cmap.begin(), cmap.end(), str);
+	  
+	  if (it == cmap.end())
+	    std::cerr << "Not in color map: '" << str << "'!" << std::endl;
+	  else {
+	    int c = (it - cmap.begin());
+	    *dst = c;
+	  }
+	  ++dst;
+	}
+      std::getline (*stream, line);
+    }
+  
+  colorspace_de_palette (image, colors, rmap, gmap, bmap);
+
+  return true;
+}
+
+bool XPMCodec::writeImage (std::ostream* stream, Image& image, int quality,
+			   const std::string& compress)
+{
+  /* TODO
+  stream << "static char * ExactImage[] = {\n"
+	 << image.w << " " << image.h << " "
+	 << image.colors << " " << chars_per_pixel << "\n";
+  */
+  return false;
+}
+
+XPMCodec xpm_loader;
