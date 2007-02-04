@@ -177,6 +177,8 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
     }
   
   colorspace_de_palette (image, colors, rmap, gmap, bmap);
+  delete (rmap); delete (gmap); delete (bmap);
+  rmap = gmap = bmap = 0;
 
   return true;
 }
@@ -249,7 +251,7 @@ bool XPMCodec::writeImage (std::ostream* stream, Image& image, int quality,
       
       *stream << "\"" << (y < image.h-1 ? ",\n" : "};\n");
     }
-  
+
   return true;
 }
 
