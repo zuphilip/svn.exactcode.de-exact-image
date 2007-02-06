@@ -110,11 +110,9 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
       if (stream->peek() == '"')
 	stream->get();
       
-      do {
+      for (int i = 0; i < cpp; ++i)
 	name.push_back (stream->get());
-      }
-      while (stream->peek() != '\t' && stream->peek() != ' ');
-	
+      
       *stream >> type;
       // Type: c -> colour, m -> monochrome, g -> grayscale, and s -> symbolic
       if (type != "c") {
@@ -146,7 +144,7 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
   
   image.bps = 8; // for now, later this could be optimized
   image.spp = 1; // for now, later this could be optimized
-  image.New(image.w, image.h);
+  image.New (image.w, image.h);
   image.xres = image.yres = 0;
   
   skip_comments (stream);
@@ -160,7 +158,8 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
       for (int x = 0; x < image.w; ++x)
 	{
 	  std::string str;
-	  str.append (1, (char)stream->get());
+	  for (int i = 0; i < cpp; ++i)
+	    str.append (1, (char)stream->get());
 	  
 	  std::vector<std::string>::iterator it =
 	    find (cmap.begin(), cmap.end(), str);
