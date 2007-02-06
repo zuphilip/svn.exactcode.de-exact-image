@@ -151,6 +151,9 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
 
   // read in the pixel data
   u_int8_t* dst = image.getRawData();
+  
+  int c = 0;
+  std::string last = "";
   for (int y = 0; y < image.h; ++y)
     {
       if (stream->peek() == '"')
@@ -161,16 +164,20 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
 	  for (int i = 0; i < cpp; ++i)
 	    str.append (1, (char)stream->get());
 	  
-	  std::vector<std::string>::iterator it =
-	    find (cmap.begin(), cmap.end(), str);
-	  
-	  if (it == cmap.end())
-	    std::cerr << "Not in color map: '" << str << "'!" << std::endl;
-	  else {
-	    int c = (it - cmap.begin());
-	    *dst = c;
+	  if (str != last) {
+	    // TODO: make this a hash lookup ...
+	    std::vector<std::string>::iterator it =
+	      find (cmap.begin(), cmap.end(), str);
+	    
+	    if (it == cmap.end())
+	      std::cerr << "Not in color map: '" << str << "'!" << std::endl;
+	    else {
+	      c = (it - cmap.begin());
+	      last = str;
+	    }
 	  }
-	  ++dst;
+	  
+	  *++dst = c;
 	}
       std::getline (*stream, line);
     }
