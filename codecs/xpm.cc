@@ -88,7 +88,8 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
   int colors, cpp; // chars per pixel
   *stream >> image.w >> image.h >> colors >> cpp;
   std::getline (*stream, line);
-  
+
+  if (false)
   std::cerr << "XPM: " << image.w << "x" << image.h
 	    << ", colors: " << colors << ", chars per pix: "
 	    << cpp << std::endl;
