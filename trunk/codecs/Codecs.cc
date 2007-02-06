@@ -1,6 +1,8 @@
 
 #include "Codecs.hh"
 
+#include <ctype.h> // tolower
+
 #include <iostream>
 #include <fstream>
 

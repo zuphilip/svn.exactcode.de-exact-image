@@ -1,6 +1,8 @@
 #include <math.h>
 
 #include <iostream>
+#include <algorithm>
+
 #include "Image.hh"
 #include "Codecs.hh"
 
