@@ -3,6 +3,7 @@
  * Copyright (c) 2007 Rene Rebe <rene@exactcode.de>
  */
 
+#include <ctype.h>
 #include <iostream>
 #include <string>
 #include <sstream>
@@ -151,7 +152,7 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
   skip_comments (stream);
 
   // read in the pixel data
-  u_int8_t* dst = image.getRawData();
+  uint8_t* dst = image.getRawData();
   
   int c = 0;
   std::string last = "";
