@@ -1,6 +1,5 @@
 
 Image formats:
- - xpm
  - ico (Windows icon files)
  - icon (Apple icon files)
  - (e)ps
@@ -8,12 +7,12 @@ Image formats:
  - targa
  - all the others
 
+Loaders:
+ - (optimized) palette saving
+ - gzip / bzip2 / ... compressed streams
+
 General:
  - Exif, XMP and ordinary, classic comment support 
-
-Loders:
- - delayed loading
- - allow for jpeg scaling / orthogonal rotation without recompression
 
 Algorithms:
  - rgb_A_ iterator and thus scaling, rotation
@@ -36,7 +35,7 @@ Colorspaces:
 Frontends:
  - edentify:
    - more complete
- - edisplay:
+ - econvert:
    - seperate channels
  - edisplay:
    - channel cycling
