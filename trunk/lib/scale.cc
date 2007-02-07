@@ -313,7 +313,7 @@ inline Image::iterator CubicConvolution (int distance,
 void bicubic_scale (Image& new_image, double scalex, double scaley)
 {
   Image image;
-  image.copyTransferOwnership (image);
+  image.copyTransferOwnership (new_image);
   
   new_image.New ((int)(scalex * (double) image.w),
 		 (int)(scaley * (double) image.h));
