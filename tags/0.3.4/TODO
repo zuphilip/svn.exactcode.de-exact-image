@@ -1,0 +1,44 @@
+
+Image formats:
+ - ico (Windows icon files)
+ - icon (Apple icon files)
+ - (e)ps
+ - pcx
+ - targa
+ - all the others
+
+Loaders:
+ - (optimized) palette saving
+ - gzip / bzip2 / ... compressed streams
+
+General:
+ - Exif, XMP and ordinary, classic comment support 
+
+Algorithms:
+ - rgb_A_ iterator and thus scaling, rotation
+ - scaling!
+ - rotation, descew
+ - descreen
+ - sharp, unsharp
+ - crop
+ - all the others
+
+Colorspaces:
+ - more generic but faster and let all algorithms use it in the most generic form
+ - RGBA
+ - float, double support
+ - CMYK
+ - YUV
+ - sRGB vs. Adobe RGB
+ - ...
+
+Frontends:
+ - edentify:
+   - more complete
+ - econvert:
+   - seperate channels
+ - edisplay:
+   - channel cycling
+   - thumbnailing
+   - slideshow
+
