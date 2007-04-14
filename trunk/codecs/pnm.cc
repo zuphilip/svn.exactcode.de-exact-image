@@ -143,7 +143,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
 #if __BYTE_ORDER != __BIG_ENDIAN
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)dest;
-	    for (int x = 0; x < image.w; ++x)
+	    for (int x = 0; x < stride/2; ++x)
 	      *swap_ptr++ = bswap_16 (*swap_ptr);
 	  }
 #endif
@@ -238,7 +238,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 #if __BYTE_ORDER != __BIG_ENDIAN
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)ptr;
-	    for (int x = 0; x < image.w; ++x)
+	    for (int x = 0; x < stride/2; ++x)
 	      *swap_ptr++ = bswap_16 (*swap_ptr);
 	  }
 #endif
