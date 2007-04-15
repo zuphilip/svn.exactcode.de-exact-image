@@ -3,7 +3,7 @@
 . config/functions
 
 with_options="x11 evas libjpeg libtiff libpng libungif jasper openexr lcms bardecode swig perl"
-# feature_options="debug"
+feature_options="evasgl"
 
 PACKAGE="exact-image"
 VERSION_MAJOR=0
@@ -30,7 +30,7 @@ headercheck c++ iostream string iostream sstream fstream || \
 	status_error "Not all tested STL headers are present - please install them."
 
 pkgcheck x11 compile X11 atleast 11.0
-if ! pkgcheck evas -config EVAS atleast 0.9.9; then
+if ! pkgcheck evas pkg-config EVAS atleast 0.9.9; then
 	cat <<-EOT
 
 		Enlightenment Evas was not found - edisplay is disabled.
@@ -39,6 +39,10 @@ if ! pkgcheck evas -config EVAS atleast 0.9.9; then
 EOT
 fi
 
+if headercheck "cc $EVASINCS " "Evas_Engine_GL_X11.h"
+then EVASGL=1
+else EVASGL=0
+fi
 
 pkgcheck libjpeg header LIBJPEG cc jconfig.h
 pkgcheck libtiff header LIBTIFF c++ tiff.h
