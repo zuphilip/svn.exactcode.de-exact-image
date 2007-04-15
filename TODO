@@ -22,6 +22,7 @@ Algorithms:
  - sharp, unsharp
  - crop
  - all the others
+ - affine transforms
 
 Colorspaces:
  - more generic but faster and let all algorithms use it in the most generic form
