@@ -1,17 +1,20 @@
 
+#include "config.h"
+
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 
 #include "Evas.h"
 #include "Evas_Engine_Software_X11.h"
+#if EVASGL == 1
 #include "Evas_Engine_GL_X11.h"
+#endif
 
 #include <endian.h>
 #include <algorithm>
 #include <iostream>
 #include <sstream>
 
-#include "config.h"
 #include "ArgumentList.hh"
 #include "Timer.hh"
 using namespace Utility;
@@ -244,6 +247,7 @@ int Viewer::Run (bool opengl)
       
       evas->EngineInfo ( (Evas_Engine_Info*)einfo );
     }
+#if EVASGL == 1
   else
     {
       evas->OutputMethod ("gl_x11");
@@ -267,6 +271,7 @@ int Viewer::Run (bool opengl)
       
       evas->EngineInfo ( (Evas_Engine_Info*)einfo );
     }
+#endif
 
   /* Setup */
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TTF/");
@@ -719,9 +724,11 @@ int main (int argc, char** argv)
   Argument<bool> arg_help ("", "help",
                            "display this help text and exit");
   arglist.Add (&arg_help);
+#if EVASGL == 1
   Argument<bool> arg_gl ("", "gl",
 			 "Utilize OpenGL for rendering");
   arglist.Add (&arg_gl);
+#endif
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
@@ -736,5 +743,11 @@ int main (int argc, char** argv)
     }
   
   Viewer viewer(arglist.Residuals());
-  return viewer.Run (arg_gl.Get());
+  return viewer.Run (
+#if EVASGL == 1
+  arg_gl.Get()
+#else
+  false
+#endif
+  );
 }
