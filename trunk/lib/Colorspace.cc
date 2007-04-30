@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "Image.hh"
+#include "Codecs.hh"
 #include "Colorspace.hh"
 
 void normalize (Image& image, uint8_t low, uint8_t high)
@@ -457,4 +458,88 @@ void colorspace_de_palette (Image& image, int table_entries,
     image.spp = 3;
 
   image.setRawData (new_data);  
+}
+
+bool colorspace_convert (Image& image, const std::string& target_colorspace)
+{
+  std::string space = target_colorspace;
+  std::transform (space.begin(), space.end(), space.begin(), tolower);
+  
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (space == "gray" || space == "gray8")
+      if (image.getCodec()->toGray(image))
+	return true;
+  
+  int spp, bps;
+  if (space == "bw" || space == "bilevel" || space == "gray1") {
+    spp = 1; bps = 1;
+  } else if (space == "gray2") {
+    spp = 1; bps = 2;
+  } else if (space == "gray4") {
+    spp = 1; bps = 4;
+  } else if (space == "gray" || space == "gray8") {
+    spp = 1; bps = 8;
+  } else if (space == "gray16") {
+    spp = 1; bps = 16;
+  } else if (space == "rgb" || space == "rgb8") {
+    spp = 3; bps = 8;
+  } else if (space == "rgb16") {
+    spp = 3; bps = 16;
+  // TODO: CYMK, YVU, ...
+  } else {
+    std::cerr << "Requested colorspace conversion not yet implemented."
+              << std::endl;
+    return false;
+  }
+
+  // no image data, e.g. for loading raw images
+  if (!image.getRawData()) {
+    image.spp = spp;
+    image.bps = bps;
+    return true;
+  }
+
+  // up
+  if (image.bps == 1 && bps == 2)
+    colorspace_gray1_to_gray2 (image);
+  else if (image.bps == 1 && bps == 4)
+    colorspace_gray1_to_gray4 (image);
+  else if (image.bps < 8 && bps >= 8)
+    colorspace_grayX_to_gray8 (image);
+
+  // upscale to 8 bit even for sub byte gray since we have no inter sub conv., yet
+  if (image.bps < 8 && image.bps > bps)
+    colorspace_grayX_to_gray8 (image);
+  
+  if (image.bps == 8 && image.spp == 1 && spp == 3)
+    colorspace_gray8_to_rgb8 (image);
+
+  if (image.bps == 8 && bps == 16)
+    colorspace_8_to_16 (image);
+  
+  // down
+  if (image.bps == 16 && bps < 16)
+    colorspace_16_to_8 (image);
+ 
+  if (image.spp == 3 && spp == 1) 
+    colorspace_rgb8_to_gray8 (image);
+
+  if (spp == 1 && image.bps > bps) {
+    if (image.bps == 8 && bps == 1)
+      colorspace_gray8_to_gray1 (image);
+    else if (image.bps == 8 && bps == 2)
+      colorspace_gray8_to_gray2 (image);
+    else if (image.bps == 8 && bps == 4)
+      colorspace_gray8_to_gray4 (image);
+  }
+
+  if (image.spp != spp || image.bps != bps) {
+    std::cerr << "Incomplete colorspace conversion. Requested: spp: "
+              << spp << ", bps: " << bps
+              << " - now at spp: " << image.spp << ", bps: " << image.bps
+              << std::endl;
+    return false;
+  }
+  return true;
 }

@@ -15,8 +15,8 @@
  */
 
 /*
- * This header defines the public, supposedly stable public API that
- * can even be used from C as well as SWIG script language bindings.
+ * This header defines the public, supposedly stable, API that can
+ * even be used from C as well as SWIG script language bindings.
  *
  * We decided to map the library internals in an non-OO (Object
  * Oriented) way in order to archive the most flexible external
