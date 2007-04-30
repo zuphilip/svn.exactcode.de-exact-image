@@ -26,10 +26,6 @@
 
 using namespace Utility;
 
-/* TODO: for more accurance one could introduce a hot-spot area that
-   has a higher weight than the other (outer) region to more reliably
-   detect crossed but otherwise empty pages */
-
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
