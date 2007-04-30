@@ -35,20 +35,12 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   
   const bool debug = false;
   
-  if (threshold) { // simple normalize
-    colorspace_convert (image, "gray8");
-    
-    // CARE: if the normalize API changse, care must be taken to
-    //       adapt this to honor whether low and high actually have
-    //       been supplied
-    
-    normalize (image, low, high);
-  }
-  else { // color normalize on background color
-    // search for background color */
+  // color normalize on background color
+  // search for background color */
+  {
     int histogram[256][3] = { {0}, {0} };
     
-    colorspace_convert (image, "rgb8");
+    colorspace_by_name (image, "rgb8");
     
     uint8_t* it = image.getRawData ();
     uint8_t* end = image.getRawDataEnd ();
@@ -137,12 +129,6 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     image.setRawData();
   }
   
-  if (image.spp != 1 && image.bps != 8) {
-    std::cerr << "Can't yet handle " << image.spp << " samples with "
-	      << image.bps << " bits per sample." << std::endl;
-    return;
-  }
-  
   // Convolution Matrix (unsharp mask a-like)
   {
     // compute kernel (convolution matrix to move over the iamge)
@@ -179,8 +165,6 @@ void optimize2bw (Image& image, int low, int high, int threshold,
       if (debug)
 	std::cerr << std::endl;
     }
-    
-    const int sloppy_thr = sloppy_threshold;
     
     convolution_matrix (image, matrix, width, width, divisor);
   }

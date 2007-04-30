@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2005 René Rebe
- *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2005 - 2007 René Rebe
+ *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,33 +17,59 @@
 #include <iostream>
 
 #include "Image.hh"
+#include "Codecs.hh"
 
 #include "Colorspace.hh"
+#include "Matrix.hh"
 
 #include "empty-page.hh"
-#include "optimize2bw.hh"
 
 /* TODO: for more accurance one could introduce a hot-spot area that
    has a higher weight than the other (outer) region to more reliably
    detect crossed but otherwise empty pages */
 
-bool detect_empty_page (Image& image, double percent, int margin,
+bool detect_empty_page (Image& im, double percent, int margin,
 			int* set_pixels)
 {
-  // arg checking
+  // sanitize margin
   if (margin % 8 != 0)
     margin -= margin % 8;
   
-  // if not 1-bit optimize
-  if (image.spp != 1 || image.bps != 1) {
-    optimize2bw (image, 0, 0, 128); /* force quick pass, no color use */
-    // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
+  // TODO: optimize not to copy the pixel data on colorspace conversion
+  Image image;
+  image = im;
+  
+  // already in sub-byte domain? just count the black pixels
+  if (image.spp == 1 && (image.bps > 1 && image.bps < 8))
+    {
+      colorspace_by_name (image, "gray1");
+    }
+  // if not 1-bit, yet: convert it down ...
+  else if (image.spp != 1 || image.bps != 1) {
+    // don't care about cmyk vs. rgb, just get gray8 pixels, quickly
+    colorspace_by_name (image, "gray8");
+    
+    // throw a dust removal mask over the data
+    {
+      // this is a custom, just sort of unsharp, mask
+      matrix_type matrix [3*3] = {
+	-0.677, -0.823, -0.677,
+	-0.823, 10.382 /*was 18, but that is overbright*/, -0.823,
+	-0.677, -0.823, -0.677
+      };
+      
+      convolution_matrix (image, matrix, 3, 3, 4.437);
+    }
+    
+    // DEBUG: ImageCodec::Write ("test.pnm", image);
+    
+    // convert to 1-bit (threshold)
     colorspace_gray8_to_gray1 (image);
   }
-    
+  
   // count bits and decide based on that
   
-  // create a bit table for fast lookup
+  // create a fast bit count lookup table
   int bits_set[256] = { 0 };
   for (int i = 0; i < 256; i++) {
     int bits = 0;
@@ -55,7 +81,7 @@ bool detect_empty_page (Image& image, double percent, int margin,
   
   int stride = (image.w * image.bps * image.spp + 7) / 8;
   
-  // count pixels
+  // count pixels by table lookup
   int pixels = 0;
   uint8_t* data = image.getRawData();
   for (int row = margin; row < image.h-margin; row++) {

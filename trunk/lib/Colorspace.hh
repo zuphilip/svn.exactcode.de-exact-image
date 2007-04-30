@@ -23,6 +23,6 @@ void colorspace_8_to_16 (Image& image);
 void colorspace_de_palette (Image& image, int table_entries,
 			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);
 
-bool colorspace_convert (Image& image, const std::string& target_colorspace);
+bool colorspace_by_name (Image& image, const std::string& target_colorspace);
 
 #endif
