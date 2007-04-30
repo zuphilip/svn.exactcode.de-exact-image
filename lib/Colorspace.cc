@@ -460,7 +460,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   image.setRawData (new_data);  
 }
 
-bool colorspace_convert (Image& image, const std::string& target_colorspace)
+bool colorspace_by_name (Image& image, const std::string& target_colorspace)
 {
   std::string space = target_colorspace;
   std::transform (space.begin(), space.end(), space.begin(), tolower);

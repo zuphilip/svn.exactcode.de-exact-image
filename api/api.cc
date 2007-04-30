@@ -133,7 +133,7 @@ Image::iterator background;
 
 bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
-  return colorspace_convert (*image, target_colorspace);
+  return colorspace_by_name (*image, target_colorspace);
 }
 
 void imageRotate (Image* image, double angle)
