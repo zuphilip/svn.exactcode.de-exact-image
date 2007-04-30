@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2005 - 2007 René Rebe
- *           (C) 2005, 2006 Archivista GmbH, CH-8042 Zuerich
+ *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,14 +36,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   const bool debug = false;
   
   if (threshold) { // simple normalize
-    if (image.spp == 3 && image.bps == 8)
-      colorspace_rgb8_to_gray8 (image);
-    
-    if (image.spp != 1 && image.bps != 8) {
-      std::cerr << "Can't yet handle " << image.spp << " samples with "
-		<< image.bps << " bits per sample." << std::endl;
-      return;
-    }
+    colorspace_convert (image, "gray8");
     
     // CARE: if the normalize API changse, care must be taken to
     //       adapt this to honor whether low and high actually have
@@ -52,15 +45,18 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     normalize (image, low, high);
   }
   else { // color normalize on background color
-    
     // search for background color */
     int histogram[256][3] = { {0}, {0} };
     
-    for (Image::iterator it = image.begin(); it != image.end(); ++it) {
-      uint16_t r, g, b;
-      *it;
-      it.getRGB (&r, &g, &b);
-      
+    colorspace_convert (image, "rgb8");
+    
+    uint8_t* it = image.getRawData ();
+    uint8_t* end = image.getRawDataEnd ();
+    
+    while (it != end) {
+      uint8_t r = *it++;
+      uint8_t g = *it++;
+      uint8_t b = *it++;
       histogram[r][0]++;
       histogram[g][1]++;
       histogram[b][2]++;
@@ -69,10 +65,9 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     int lowest = 255, highest = 0, bg_r = 0, bg_g = 0, bg_b = 0;
     for (int i = 0; i <= 255; i++)
       {
-	int r, g, b;
-	r = histogram[i][0];
-	g = histogram[i][1];
-	b = histogram[i][2];
+	int r = histogram[i][0];
+	int g = histogram[i][1];
+	int b = histogram[i][2];
 	
 	if (debug)
 	  std::cout << i << ": "<< r << " " << g << " " << b << std::endl;
@@ -92,42 +87,57 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	if (histogram[i][2] > histogram[bg_b][2])
 	  bg_b = i;
       }
-    std::cerr << "lowest: " << lowest << ", highest: " << highest
-	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b << std::endl;
-    
     highest = (int) (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
+        
+    std::cerr << "lowest: " << lowest << ", highest: " << highest
+	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b
+	      << std::endl;
     
     if (low)
       lowest = low;
     if (high)
       highest = high;
+
+    std::cerr << "after limit and overwrite, lowest: " << lowest
+	      << ", highest: " << highest << std::endl;
     
     signed int a = (255 * 256) / (highest - lowest);
     signed int b = (-a * lowest);
     
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
+
+    it = image.getRawData ();
+    end = image.getRawDataEnd ();
+    uint8_t*it2 = it;
     
-    for (Image::iterator it = image.begin(); it != image.end (); ++it) {
-      *it;
-      // TODO: under/overflow!
-      Image::iterator i = (it * a + b) / 256;
-      i.limit();
-      it.set(i);
+    while (it != end) {
+      int _r = *it++;
+      int _g = *it++;
+      int _b = *it++;
+      
+      _r = (_r * a + b) / 256;
+      _g = (_g * a + b) / 256;
+      _b = (_b * a + b) / 256;
+      
+      // clip
+      _r = std::max (std::min (_r, 255), 0);
+      _g = std::max (std::min (_g, 255), 0);
+      _b = std::max (std::min (_b, 255), 0);
+      
+      // on-the-fly convert to gray with associated weighting
+      *it2++ = (_r*28 + _g*59 + _b*11) / 100;
     }
     
+    image.spp = 1; // converted data RGB8->GRAY8
     image.setRawData();
-    
-    if (image.spp == 3 && image.bps == 8)
-      colorspace_rgb8_to_gray8 (image);
-    
-    if (image.spp != 1 && image.bps != 8) {
-      std::cerr << "Can't yet handle " << image.spp << " samples with "
-		<< image.bps << " bits per sample." << std::endl;
-      return;
-    }
   }
   
+  if (image.spp != 1 && image.bps != 8) {
+    std::cerr << "Can't yet handle " << image.spp << " samples with "
+	      << image.bps << " bits per sample." << std::endl;
+    return;
+  }
   
   // Convolution Matrix (unsharp mask a-like)
   {
