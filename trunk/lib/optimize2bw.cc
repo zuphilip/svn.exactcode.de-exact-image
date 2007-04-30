@@ -93,6 +93,10 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b
 	      << std::endl;
     
+    const int min_delta = 128;
+    lowest = std::max (std::min (lowest, highest - min_delta), 0);
+    highest = std::min (std::max (highest, lowest + min_delta), 255);
+    
     if (low)
       lowest = low;
     if (high)
