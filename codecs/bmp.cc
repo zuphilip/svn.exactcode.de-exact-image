@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (c) 2006 Rene Rebe <rene@exactcode.de>
+ * Copyright (c) 2006 - 2007 Rene Rebe <rene@exactcode.de>
  *
  * loosely based on (in the past more so, but more and more parts got rewritten):
  *
@@ -40,7 +40,7 @@ typedef uint32_t uint32;
 #define _TIFFmalloc malloc
 #define _TIFFfree free
 
-int last_bit_set (int v)
+static int last_bit_set (int v)
 {
   unsigned int i;
   for (i = sizeof (int) * 8 - 1; i > 0; --i) {
@@ -371,8 +371,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   if (info_hdr.iBitCount != 1  && info_hdr.iBitCount != 4  &&
       info_hdr.iBitCount != 8  && info_hdr.iBitCount != 16 &&
       info_hdr.iBitCount != 24 && info_hdr.iBitCount != 32) {
-    fprintf(stderr, "Cannot process BMP file with bit count %d\n",
-	    info_hdr.iBitCount);
+    std::cerr << "Cannot process BMP file with bit count " << info_hdr.iBitCount << "\n";
     return 0;
   }
   
@@ -396,7 +395,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       clr_tbl = (uint8_t *)
 	_TIFFmalloc(n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
-	fprintf(stderr, "Can't allocate space for color table\n");
+	std::cerr << "Can't allocate space for color table\n" << std::endl;
 	goto bad;
       }
       
@@ -437,7 +436,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   // detect old style bitmask images
   if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 16)
     {
-      /*printf ("implicit non-RGB image\n"); */
+      //std::cerr << "implicit non-RGB image\n";
       info_hdr.iCompression = BMPC_BITFIELDS;
       info_hdr.iBlueMask = 0x1f;
       info_hdr.iGreenMask = 0x1f << 5;
@@ -450,27 +449,32 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 
   switch (info_hdr.iCompression) {
   case BMPC_BITFIELDS:
-    // we convert those to RGB for easier use
+    // we unpack bitfields to plain RGB
     image.bps = 8;
-  
+    stride = image.Stride ();
+    
   case BMPC_RGB:
     {
       uint32 file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
       /*printf ("bitcount: %d, stride: %d, file stride: %d\n",
 	      info_hdr.iBitCount, stride, file_stride);
-      
+     
       printf ("red mask: %x, green mask: %x, blue mask: %x\n",
       info_hdr.iRedMask, info_hdr.iGreenMask, info_hdr.iBlueMask); */
       
-      data = (uint8_t*) _TIFFmalloc (stride * image.h);
-      
-      if (!data) {
-	fprintf(stderr, "Can't allocate space for image buffer\n");
+      data = (uint8_t*) _TIFFmalloc (stride*image.h);
+      uint8_t* row_data = (uint8_t*) _TIFFmalloc (file_stride);
+      if (!data || !row_data) {
+	std::cerr << "Can't allocate space for image buffer\n";
 	goto bad1;
       }
       
-      for (row = 0; row < image.h; row++) {
+      const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
+      const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
+      const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
+      
+      for (row = 0; row < image.h; ++row) {
 	std::istream::pos_type offset;
 	
 	if (info_hdr.iHeight > 0)
@@ -485,25 +489,22 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	  }
 	*/
 	
-	if (stream->read ((char*)data + stride*row, stride) < 0) {
-	  fprintf(stderr, "scanline %lu: Read error\n",
-		  (unsigned long) row);
+	if (stream->read ((char*)row_data, file_stride) < 0) {
+	  std::cerr << "scanline " << row << ": Read error\n";
 	}
 	
 	// convert to RGB
 	if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
-	    uint8_t* row_ptr = data + stride*row;
-	    uint8_t* r16_ptr = row_ptr + file_stride - 2;
-	    uint8_t* rgb_ptr = row_ptr + stride - 3;
+	    uint8_t* bf_ptr = row_data;
+	    uint8_t* rgb_ptr = data + stride * row;
 	    
-	    int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
-	    int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
-	    int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
-	    
-	    for ( ; rgb_ptr >= row_ptr; r16_ptr -= 2, rgb_ptr -= 3)
+	    for (int i = 0; i < image.w; ++i, rgb_ptr += 3)
 	      {
-		int val = (r16_ptr[0] << 0) + (r16_ptr[1] << 8);
+		int val = 0;
+		for (int bits = 0; bits < info_hdr.iBitCount; bits += 8)
+		  val |= (*bf_ptr++) << bits;
+		    
 		if (r_shift > 0)
 		  rgb_ptr[0] = (val & info_hdr.iRedMask) >> r_shift;
 		else
@@ -518,9 +519,12 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 		  rgb_ptr[2] = (val & info_hdr.iBlueMask) << -b_shift;
 	      }
 	  }
-	else
-	  rearrangePixels(data + stride*row, image.w, info_hdr.iBitCount);
+	else {
+	  rearrangePixels (row_data, image.w, info_hdr.iBitCount);
+	  memcpy (data+stride*row, row_data, stride);
+	}
       }
+      _TIFFfree(row_data);
     }
     break;
     
@@ -534,20 +538,21 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       uint32		compr_size, uncompr_size;
       uint8_t   *comprbuf;
       uint8_t   *uncomprbuf;
-
-      printf ("RLE%s compressed\n", info_hdr.iCompression == BMPC_RLE4 ? "4" : "8");
+      
+      //std::cerr << "RLE" << (info_hdr.iCompression == BMPC_RLE4 ? "4" : "8")
+      //	<< " compressed\n";
       
       compr_size = file_hdr.iSize - file_hdr.iOffBits;
       uncompr_size = image.w * image.h;
       
       comprbuf = (uint8_t *) _TIFFmalloc( compr_size );
       if (!comprbuf) {
-	fprintf (stderr, "Can't allocate space for compressed scanline buffer\n");
+	std::cerr << "Can't allocate space for compressed scanline buffer\n";
 	goto bad1;
       }
       uncomprbuf = (uint8_t *) _TIFFmalloc( uncompr_size );
       if (!uncomprbuf) {
-	fprintf (stderr, "Can't allocate space for uncompressed scanline buffer\n");
+	std::cerr, "Can't allocate space for uncompressed scanline buffer\n";
 	goto bad1;
       }
       
@@ -613,7 +618,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       _TIFFfree(comprbuf);
       data = (uint8_t *) _TIFFmalloc( uncompr_size );
       if (!data) {
-	fprintf (stderr, "Can't allocate space for final uncompressed scanline buffer\n");
+	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
 	goto bad1;
       }
       
