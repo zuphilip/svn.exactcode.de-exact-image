@@ -372,7 +372,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	gmap[1] >= 0xff00 &&
 	bmap[1] >= 0xff00)
       {
-	std::cerr << "correct b/w table." << std::endl;
+	//std::cerr << "correct b/w table." << std::endl;
 	return;
       }
     if (rmap[1] == 0 &&
@@ -382,7 +382,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	gmap[0] >= 0xff00 &&
 	bmap[0] >= 0xff00)
       {
-	std::cerr << "inverted b/w table." << std::endl;
+	//std::cerr << "inverted b/w table." << std::endl;
 	for (uint8_t* it = image.getRawData();
 	     it < image.getRawDataEnd();
 	     ++it)
