@@ -141,7 +141,6 @@ void Viewer::AlphaOSD (int a)
   r = g = b = 0xff;
   evas_color_argb_premul (a, &r, &g, &b);
   
-  std::cerr << "alpha: " << a << std::endl;
   evas_osd_text1->Color (r, g, b, a);
   evas_osd_text2->Color (r, g, b, a);
 
