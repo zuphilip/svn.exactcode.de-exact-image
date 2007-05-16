@@ -128,13 +128,20 @@ void imageNearestScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 void imageBilinearScale (Image* image, double factor);
 
+// fast auto crop by equal background color
+// (currently only crops the bottom, might be expanded in the
+//  future to allow top, left, right as well with always just
+//  the bottom crop enabled by default)
+void imageFastAutoCrop (Image* image);
+
 // advanced all-in-one algorithms
 void imageOptimize2BW (Image* image, int low = 0, int high = 255,
 		       int threshold = 170,
 		       int radius = 3, double standard_deviation = 2.3,
 		       int target_dpi = 0);
-// remeber the margin must be a multiple of 8!
+// remeber: the margin will be rounded down to a multiple of 8, ...
 bool imageIsEmpty (Image* image, double percent, int margin);
+
 
 #if WITHBARDECODE == 1
 // commercial bardecode
