@@ -8,6 +8,7 @@
 
 #include <rotate.hh>
 #include <scale.hh>
+#include <crop.hh>
 
 #include <Colorspace.hh>
 
@@ -169,6 +170,57 @@ void imageNearestScale (Image* image, double factor)
 void imageBilinearScale (Image* image, double factor)
 {
   bilinear_scale (*image, factor, factor);
+}
+
+void imageFastAutoCrop (Image* image)
+{
+  // check for valid image
+  if (!image)
+    return;
+  
+  if (!image->getRawData())
+    return;
+  
+  // which value to compare against, get RGB of first pixel of the last line
+  // iterator is a generic way to get RGB regardless of the bit-depth
+  u_int16_t r = 0, g = 0, b = 0;
+  Image::iterator it = image->begin();
+  it = it.at (0, image->h - 1);
+  r = 0; g = 0; b = 0;
+  (*it).getRGB (&r, &g, &b);
+  
+  if (r != g || g != b)
+    return; // not a uniform color
+  
+  if (r != 0 && r != 255)
+    return; // not min nor max
+  
+  const int stride = image->Stride();
+  
+  // first determine the color to crop, for now we only accept full black or white
+  int h = image->h-1;
+  for (; h >= 0; --h) {
+    // data row
+    uint8_t* data = image->getRawData() + stride * h;
+    
+    // optimization assumption: we have an [0-8) bit-depth gray or RGB image
+    // here and we just care to compare for min or max, thus we can compare
+    // just the raw payload
+    int x = 0;
+    for (; x < stride; ++x)
+      if (data[x] != r)
+	break;
+    
+    if (x != stride)
+      break;
+  }
+  ++h; // we are at the line that differs
+  
+  // We could just tweak the image height here, but later we might not
+  // only also crop the other borders, but also benefit from lossless
+  // jpeg cropping, ...  We do not explicitly check if we crop, the
+  // crop function will optimize a NOP crop away for all callers.
+  crop (*image, 0, 0, image->w, h);
 }
 
 void imageOptimize2BW (Image* image, int low, int high,
