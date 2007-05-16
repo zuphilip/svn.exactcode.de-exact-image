@@ -207,14 +207,21 @@ void imageFastAutoCrop (Image* image)
     // here and we just care to compare for min or max, thus we can compare
     // just the raw payload
     int x = 0;
-    for (; x < stride; ++x)
-      if (data[x] != r)
+    for (; x < stride-1; ++x)
+      if (data[x] != r) {
+	// std::cerr << "breaking in inner loop at: " << x << std::endl;
 	break;
+      }
     
-    if (x != stride)
+    if (x != stride-1) {
+      // std::cerr << "breaking in outer loop at height: " << h << " with x: " << x << " vs. " << stride << std::endl;
       break;
+    }
   }
   ++h; // we are at the line that differs
+
+  if (h == 0) // do not crop if the image is totally empty
+    return;
   
   // We could just tweak the image height here, but later we might not
   // only also crop the other borders, but also benefit from lossless
