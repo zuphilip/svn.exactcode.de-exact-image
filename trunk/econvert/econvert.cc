@@ -32,6 +32,7 @@
 #include "Colorspace.hh"
 
 #include "scale.hh"
+#include "crop.hh"
 #include "rotate.hh"
 #include "Matrix.hh"
 #include "riemersma.h"
@@ -790,6 +791,20 @@ bool convert_size (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_crop (const Argument<std::string>& arg)
+{
+  int x,y, w, h, n;
+  // parse
+  
+  // TODO: pretty C++ parser
+  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x, &y, &w, &h)) == 4)
+    {
+      crop (image, x, y, w, h);
+      return true;
+    }
+  std::cerr << "Crop '" << arg.Get() << "' could not be parsed." << std::endl;
+  return false;
+}
 
 bool convert_background (const Argument<std::string>& arg)
 {
@@ -966,6 +981,12 @@ int main (int argc, char* argv[])
 			      0, 1, true, true);
   arg_size.Bind (convert_size);
   arglist.Add (&arg_size);
+
+  Argument<std::string> arg_crop ("", "crop",
+			      "crop an area out of an image: x,y,w,h",
+			      0, 1, true, true);
+  arg_crop.Bind (convert_crop);
+  arglist.Add (&arg_crop);
 
   Argument<std::string> arg_background ("", "background",
 					"background color used for operations",
