@@ -43,7 +43,9 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
   // top-border
   for (int i = 0; i < _y1 * image.w; ++i)
     *dst_ptr++ = *src_ptr++;
-
+  
+  divisor = 1 / divisor; // to multiple in the loop
+  
   for (int y = _y1; y < _y2; ++y)
   {
     src_ptr = &data[y * image.w];
@@ -66,7 +68,7 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	    for (int x2 = 0; x2 < xw; ++x2)
 	      sum += *data_row++ * *matrix_row++;
 	  
-	  sum /= divisor;
+	  sum *= divisor;
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	  *dst_ptr++ = z;
       }
