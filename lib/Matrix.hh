@@ -66,16 +66,16 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  // for speed ,-)
 	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw) {
 	    int x2 = xw;
-#if 1
 	    while (x2 >= 4) {
-	      sum += *data_row++ * *matrix_row++;
-	      sum += *data_row++ * *matrix_row++;
-	      sum += *data_row++ * *matrix_row++;
-	      sum += *data_row++ * *matrix_row++;
 	      
+	      sum += data_row[0] * matrix_row[0];
+	      sum += data_row[1] * matrix_row[1];
+	      sum += data_row[2] * matrix_row[2];
+	      sum += data_row[3] * matrix_row[3];
+	      data_row += 4;
+	      matrix_row += 4;
 	      x2 -= 4;
 	    }
-#endif
 	    while (x2 > 0) {
  	      sum += *data_row++ * *matrix_row++;
 	      --x2;
