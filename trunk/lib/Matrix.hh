@@ -59,7 +59,7 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
     for (int x = xr; x < image.w-xr; ++x)
       {
 	  uint8_t* data_row = src_ptr++ - kernel_offset;
-	  matrix_type sum = 0;
+	  matrix_type sum1 = 0, sum2 = 0, sum3 = 0, sum4 = 0;
 
 	  matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
@@ -67,22 +67,21 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw) {
 	    int x2 = xw;
 	    while (x2 >= 4) {
-	      
-	      sum += data_row[0] * matrix_row[0];
-	      sum += data_row[1] * matrix_row[1];
-	      sum += data_row[2] * matrix_row[2];
-	      sum += data_row[3] * matrix_row[3];
+	      sum1 += matrix_row[0] * data_row[0];
+	      sum2 += matrix_row[1] * data_row[1];
+	      sum3 += matrix_row[2] * data_row[2];
+	      sum4 += matrix_row[3] * data_row[3];
 	      data_row += 4;
 	      matrix_row += 4;
 	      x2 -= 4;
 	    }
 	    while (x2 > 0) {
- 	      sum += *data_row++ * *matrix_row++;
+ 	      sum1 += *matrix_row++ * *data_row++;
 	      --x2;
 	    }
 	  }
 	  
-	  sum *= divisor;
+	  matrix_type sum = (sum1+sum2+sum3+sum4) * divisor;
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
 	  *dst_ptr++ = z;
       }
