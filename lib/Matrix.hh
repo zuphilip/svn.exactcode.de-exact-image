@@ -64,9 +64,23 @@ inline void convolution_matrix (Image& image, matrix_type* matrix, int xw, int y
 	  matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
 	  // for speed ,-)
-	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw)
-	    for (int x2 = 0; x2 < xw; ++x2)
+	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw) {
+	    int x2 = xw;
+#if 1
+	    while (x2 >= 4) {
 	      sum += *data_row++ * *matrix_row++;
+	      sum += *data_row++ * *matrix_row++;
+	      sum += *data_row++ * *matrix_row++;
+	      sum += *data_row++ * *matrix_row++;
+	      
+	      x2 -= 4;
+	    }
+#endif
+	    while (x2 > 0) {
+ 	      sum += *data_row++ * *matrix_row++;
+	      --x2;
+	    }
+	  }
 	  
 	  sum *= divisor;
 	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
