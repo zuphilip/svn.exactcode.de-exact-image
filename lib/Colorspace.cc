@@ -1,15 +1,11 @@
 
-#if defined(__FreeBSD__) || defined(__APPLE__)
-#include <machine/endian.h>
-#else
-#include <endian.h>
-#endif
-
 #include <iostream>
 
 #include "Image.hh"
 #include "Codecs.hh"
 #include "Colorspace.hh"
+
+#include "Endianess.hh"
 
 void normalize (Image& image, uint8_t low, uint8_t high)
 {
@@ -335,11 +331,10 @@ void colorspace_16_to_8 (Image& image)
   for (uint8_t* it = image.getRawData();
        it < image.getRawDataEnd();)
     {
-#if __BYTE_ORDER != __BIG_ENDIAN
-      *output++ = it[1];
-#else
-      *output++ = it[0];
-#endif
+      if (Exact::NativeEndianTraits::IsBigendian)
+	*output++ = it[0];
+      else
+	*output++ = it[1];
       it += 2;
     }
   image.bps = 8; // converted 8bit data
