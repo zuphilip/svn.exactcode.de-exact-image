@@ -190,7 +190,7 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
     uint16 rmap[256], gmap[256], bmap[256];
     int i;
     for (i=0;i<256;++i) {
-      rmap[i] = gmap[i] = bmap[i] = (i<<8);
+      rmap[i] = gmap[i] = bmap[i] = i * 0xffff / 255;
     }
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
     TIFFSetField (out, TIFFTAG_COLORMAP, rmap, gmap, bmap);
