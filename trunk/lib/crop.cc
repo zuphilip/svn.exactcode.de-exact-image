@@ -68,3 +68,57 @@ image.setRawData (); // invalidate
    ;
  }
 }
+
+void fastAutoCrop (Image& image)
+{
+  if (!image.getRawData())
+    return;
+  
+  // which value to compare against, get RGB of first pixel of the last line
+  // iterator is a generic way to get RGB regardless of the bit-depth
+  u_int16_t r = 0, g = 0, b = 0;
+  Image::iterator it = image.begin();
+  it = it.at (0, image.h - 1);
+  r = 0; g = 0; b = 0;
+  (*it).getRGB (&r, &g, &b);
+  
+  if (r != g || g != b)
+    return; // not a uniform color
+  
+  if (r != 0 && r != 255)
+    return; // not min nor max
+  
+  const int stride = image.Stride();
+  
+  // first determine the color to crop, for now we only accept full black or white
+  int h = image.h-1;
+  for (; h >= 0; --h) {
+    // data row
+    uint8_t* data = image.getRawData() + stride * h;
+    
+    // optimization assumption: we have an [0-8) bit-depth gray or RGB image
+    // here and we just care to compare for min or max, thus we can compare
+    // just the raw payload
+    int x = 0;
+    for (; x < stride-1; ++x)
+      if (data[x] != r) {
+	// std::cerr << "breaking in inner loop at: " << x << std::endl;
+	break;
+      }
+    
+    if (x != stride-1) {
+      // std::cerr << "breaking in outer loop at height: " << h << " with x: " << x << " vs. " << stride << std::endl;
+      break;
+    }
+  }
+  ++h; // we are at the line that differs
+
+  if (h == 0) // do not crop if the image is totally empty
+    return;
+  
+  // We could just tweak the image height here, but later we might not
+  // only also crop the other borders, but also benefit from lossless
+  // jpeg cropping, ...  We do not explicitly check if we crop, the
+  // crop function will optimize a NOP crop away for all callers.
+  crop (image, 0, 0, image.w, h);
+}
