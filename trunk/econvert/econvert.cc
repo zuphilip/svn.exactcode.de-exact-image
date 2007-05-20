@@ -806,6 +806,12 @@ bool convert_crop (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_fast_auto_crop (const Argument<bool>& arg)
+{
+  fastAutoCrop (image);
+  return true;
+}
+
 bool convert_background (const Argument<std::string>& arg)
 {
   // parse
@@ -987,6 +993,13 @@ int main (int argc, char* argv[])
 			      0, 1, true, true);
   arg_crop.Bind (convert_crop);
   arglist.Add (&arg_crop);
+
+  Argument<bool> arg_fast_auto_crop ("", "fast-auto-crop",
+				     "fast auto crop",
+				     0, 0, true, true);
+  arg_fast_auto_crop.Bind (convert_fast_auto_crop);
+  arglist.Add (&arg_fast_auto_crop);
+
 
   Argument<std::string> arg_background ("", "background",
 					"background color used for operations",
