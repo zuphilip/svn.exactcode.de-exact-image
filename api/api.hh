@@ -128,6 +128,8 @@ void imageNearestScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 void imageBilinearScale (Image* image, double factor);
 
+void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
+
 // fast auto crop by equal background color
 // (currently only crops the bottom, might be expanded in the
 //  future to allow top, left, right as well with always just

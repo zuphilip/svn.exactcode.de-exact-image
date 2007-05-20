@@ -172,6 +172,11 @@ void imageBilinearScale (Image* image, double factor)
   bilinear_scale (*image, factor, factor);
 }
 
+void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+  crop (*image, x, y, w, h);
+}
+
 void imageFastAutoCrop (Image* image)
 {
   // check for valid image
