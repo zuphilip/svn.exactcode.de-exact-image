@@ -157,13 +157,18 @@ void hilbert_level(int level,int direction)
   } /* if */
 }
 
+inline double priv_log2(double n) {
+  return log(n)/log(2);
+  //return log2(n);
+}
+
 void Riemersma(uint8_t *image,int width,int height, int shades)
 {
   int level,size;
 
   /* determine the required order of the Hilbert curve */
   size = width > height ? width : height;
-  level = (int) log2 (size);
+  level = (int) priv_log2 (size);
   if ((1L << level) < size)
     level++;
 
