@@ -309,24 +309,12 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     int16_t  iShort;
     
     stream->read ((char*)&iShort, 2);
-#if __BYTE_ORDER == __BIG_ENDIAN
-    TIFFSwabShort(&iShort);
-#endif
     info_hdr.iWidth = iShort;
     stream->read ((char*)&iShort, 2);
-#if __BYTE_ORDER == __BIG_ENDIAN
-    TIFFSwabShort(&iShort);
-#endif
     info_hdr.iHeight = iShort;
     stream->read ((char*)&iShort, 2);
-#if __BYTE_ORDER == __BIG_ENDIAN
-    TIFFSwabShort(&iShort);
-#endif
     info_hdr.iPlanes = iShort;
     stream->read ((char*)&iShort, 2);
-#if __BYTE_ORDER == __BIG_ENDIAN
-    TIFFSwabShort(&iShort);
-#endif
     info_hdr.iBitCount = iShort;
     info_hdr.iCompression = BMPC_RGB;
     n_clr_elems = 3;
