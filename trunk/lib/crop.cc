@@ -21,8 +21,8 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   
   // TODO: Call thru codec, e.g. optimized for JPEG
   /*
-  std::cerr << "after limiting: " << x << " " << y
-	    << " " << w << " " << h << std::endl;
+    std::cerr << "after limiting: " << x << " " << y
+    << " " << w << " " << h << std::endl;
   */
 
   // truncate the height, this is optimized for the "just height" case
@@ -50,23 +50,23 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
     src += stride;
   }
   
-image.setRawData (); // invalidate
- image.w = w;
- image.h = h;
+  image.setRawData (); // invalidate
+  image.w = w;
+  image.h = h;
  
- switch (orig_bps) {
- case 1:
-   colorspace_gray8_to_gray1 (image);
-   break;
- case 2:
-   colorspace_gray8_to_gray2 (image);
-   break;
- case 4:
-   colorspace_gray8_to_gray4 (image);
-   break;
- default:
-   ;
- }
+  switch (orig_bps) {
+  case 1:
+    colorspace_gray8_to_gray1 (image);
+    break;
+  case 2:
+    colorspace_gray8_to_gray2 (image);
+    break;
+  case 4:
+    colorspace_gray8_to_gray4 (image);
+    break;
+  default:
+    ;
+  }
 }
 
 void fastAutoCrop (Image& image)
