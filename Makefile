@@ -6,8 +6,9 @@ X_BUILD_IMPLICIT=0
 include utility/Makefile
 X_BUILD_IMPLICIT=1
 
-CFLAGS = -Wall -O2 -s
-CXXFLAGS = -Wall -O2 -s -Wno-sign-compare
+# -s silcently corrupts binaries on OS X, sigh -ReneR
+CFLAGS = -Wall -O2
+CXXFLAGS = -Wall -O2 -Wno-sign-compare
 #CFLAGS = -Wall -O0 -ggdb
 #CXXFLAGS = -Wall -O0 -ggdb
 
