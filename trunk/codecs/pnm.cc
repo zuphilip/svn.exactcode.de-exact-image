@@ -13,15 +13,9 @@
 #include <string>
 #include <sstream>
 
-#ifdef __FreeBSD__
-#include <machine/endian.h>
-#else
-#include <endian.h>
-#endif
-
-#include <byteswap.h>
-
 #include "pnm.hh"
+#include "Endianess.hh"
+using namespace Exact;
 
 int getNextHeaderNumber (std::istream* stream)
 {
@@ -140,13 +134,11 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
 	      *xor_ptr++ ^= 0xff;
 	  }
 	  
-#if __BYTE_ORDER != __BIG_ENDIAN
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)dest;
 	    for (int x = 0; x < stride/2; ++x)
-	      *swap_ptr++ = bswap_16 (*swap_ptr);
+	      *swap_ptr++ = ByteSwap<NativeEndianTraits,BigEndianTraits, uint16_t>::Swap (*swap_ptr);
 	  }
-#endif
 	}
     }
   
@@ -235,13 +227,13 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	      *xor_ptr++ ^= 0xff;
 	  }
 	  
-#if __BYTE_ORDER != __BIG_ENDIAN
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)ptr;
 	    for (int x = 0; x < stride/2; ++x)
-	      *swap_ptr++ = bswap_16 (*swap_ptr);
+	      *swap_ptr++ = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
+
 	  }
-#endif
+	  
 	  stream->write ((char*)ptr, stride);
 	}
       free (ptr);

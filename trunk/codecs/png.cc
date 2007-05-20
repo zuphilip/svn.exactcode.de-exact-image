@@ -1,11 +1,10 @@
-#include <endian.h>
 #include <stdlib.h>
-
 #include <png.h>
 
-#include "png.hh"
-
 #include <iostream>
+
+#include "png.hh"
+#include "Endianess.hh"
 
 void stdstream_read_data(png_structp png_ptr,
 			 png_bytep data, png_size_t length)
@@ -153,12 +152,11 @@ bool PNGCodec::readImage (std::istream* stream, Image& image)
     png_get_sBIT(png_ptr, info_ptr, &sig_bit);
     png_set_shift(png_ptr, sig_bit);
   }
-  
-#if __BYTE_ORDER != __BIG_ENDIAN
+
   /* swap bytes of 16 bit files to least significant byte first
      we store them in CPU byte order in memory */
-  png_set_swap(png_ptr);
-#endif
+  if (Exact::NativeEndianTraits::IsBigendian)
+    png_set_swap(png_ptr);
 
   /* Turn on interlace handling.  REQURIED if you are not using
    * png_read_image().  To see how to handle interlacing passes,
