@@ -1,3 +1,18 @@
+/*
+ * The ExactImage library's displayy compatible command line frontend.
+ * Copyright (C) 2006, 2007 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ * 
+ */
 
 #include "config.h"
 
@@ -29,6 +44,8 @@ using namespace Utility;
 #include "Image.hh"
 #include "Codecs.hh"
 #include "Colorspace.hh"
+
+#include "rotate.hh"
 
 #include "edisplay.hh"
 
@@ -525,6 +542,18 @@ int Viewer::Run (bool opengl)
 		  
 		  SetOSDZoom ();
 		  break;
+
+		case XK_greater:
+		  rotate (*image, 90, image->begin());
+		  ImageToEvas ();
+		  SetOSDZoom ();
+		  break;
+		
+		case XK_less:
+		  rotate (*image, -90, image->begin());
+		  ImageToEvas ();
+		  SetOSDZoom ();
+		  break;
 		  
 		case XK_q:
 		  quit = true;
@@ -743,7 +772,7 @@ int main (int argc, char** argv)
     {
       cerr << "Exact image viewer (edisplay)."
 	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 by René Rebe" << std::endl
+	   <<  " - Copyright (C) 2006 - 2007 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
