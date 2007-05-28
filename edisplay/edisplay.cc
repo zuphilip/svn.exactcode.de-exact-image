@@ -546,13 +546,13 @@ int Viewer::Run (bool opengl)
 		case XK_greater:
 		  rotate (*image, 90, image->begin());
 		  ImageToEvas ();
-		  SetOSDZoom ();
+		  AlphaOSD (0);
 		  break;
 		
 		case XK_less:
 		  rotate (*image, -90, image->begin());
 		  ImageToEvas ();
-		  SetOSDZoom ();
+		  AlphaOSD (0);
 		  break;
 		  
 		case XK_q:
@@ -568,6 +568,7 @@ int Viewer::Run (bool opengl)
 					ev.xexpose.width,
 					ev.xexpose.height);
 	      break;
+	      
 	    case ConfigureNotify:
 	      evas_bgr_image->Resize (ev.xconfigure.width,
 				      ev.xconfigure.height);
@@ -579,6 +580,7 @@ int Viewer::Run (bool opengl)
 	      // limit/clip
 	      Move (0, 0);
 	      break;
+	      
 	    default:
 	      break;
 	    }
