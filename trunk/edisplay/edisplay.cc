@@ -49,6 +49,8 @@ using namespace Utility;
 
 #include "edisplay.hh"
 
+#include "Endianess.hh"
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -684,20 +686,20 @@ void Viewer::ImageToEvas ()
     {
       for (int y=0; y < image->h; ++y)
 	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  
-#if __BYTE_ORDER != __BIG_ENDIAN
-	  dest_ptr[0] = src_ptr[2];
-	  dest_ptr[1] = src_ptr[1];
-	  dest_ptr[2] = src_ptr[0];
-	  if (spp == 4)
-	    dest_ptr[3] = src_ptr[3]; // alpha
-#else
-	  dest_ptr[1] = src_ptr[0];
-	  dest_ptr[2] = src_ptr[1];
-	  dest_ptr[3] = src_ptr[2];
-	  if (spp == 4)
-	    dest_ptr[0] = src_ptr[3]; // alpha
-#endif
+	  if (!Exact::NativeEndianTraits::IsBigendian) {
+	    dest_ptr[0] = src_ptr[2];
+	    dest_ptr[1] = src_ptr[1];
+	    dest_ptr[2] = src_ptr[0];
+	    if (spp == 4)
+	      dest_ptr[3] = src_ptr[3]; // alpha
+	  }
+	  else {
+	    dest_ptr[1] = src_ptr[0];
+	    dest_ptr[2] = src_ptr[1];
+	    dest_ptr[3] = src_ptr[2];
+	    if (spp == 4)
+	      dest_ptr[0] = src_ptr[3]; // alpha
+	  }
 	}
     }
   else
@@ -707,17 +709,18 @@ void Viewer::ImageToEvas ()
       
       for (int y=0; y < image->h; ++y)
 	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-#if __BYTE_ORDER != __BIG_ENDIAN
-	  dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
-	    intensity ? src_ptr[ch] : 0;
-	  if (!intensity)
-	    dest_ptr[2-ch] = src_ptr[ch];
-#else
-	  dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
-	    intensity ? src_ptr[ch] : 0;
-	  if (!intensity)
-	    dest_ptr[1+ch] = src_ptr[ch];
-#endif
+	  if (!Exact::NativeEndianTraits::IsBigendian) {
+	    dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
+	      intensity ? src_ptr[ch] : 0;
+	    if (!intensity)
+	      dest_ptr[2-ch] = src_ptr[ch];
+	  }
+	  else {
+	    dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
+	      intensity ? src_ptr[ch] : 0;
+	    if (!intensity)
+	      dest_ptr[1+ch] = src_ptr[ch];
+	  }
 	}
     }
   
