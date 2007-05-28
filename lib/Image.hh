@@ -90,6 +90,7 @@ public:
   ImageCodec* getCodec();
   void setCodec (ImageCodec* _codec);
   
+
   bool isModified ();
   
   typedef enum {
@@ -156,8 +157,8 @@ public:
     } yuv;
   } ivalue_t;
 
+  /* TODO: should be unsigned */
   int w, h, bps, spp, xres, yres;
-  
   
 public:
   
@@ -194,6 +195,7 @@ public:
     Image* image;
     
     type_t type;
+    /* TODO: shoudl be unsigned */
     int stride, width, _x;
     ivalue_t value;
 
