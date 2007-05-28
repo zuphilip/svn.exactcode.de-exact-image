@@ -49,25 +49,13 @@ using namespace Utility;
 
 #include "edisplay.hh"
 
-#define DG 0x66, 0x66, 0x66
-#define LG 0x99, 0x99, 0x99
-
-static uint8_t evas_bgr_image_data[] = {
-#if __BYTE_ORDER != __BIG_ENDIAN
-  LG, 0, DG, 0,
-  DG, 0, LG, 0
-#else
-  0, LG, 0, DG,
-  0, DG, 0, LG
-#endif
-};
-
-#undef DG
-#undef LG
-
 using std::cout;
 using std::cerr;
 using std::endl;
+
+static uint32_t evas_bgr_image_data[] = {
+  0x999999, 0x666666,
+  0x666666, 0x999999};
 
 int Viewer::Window2ImageX (int x)
 {
