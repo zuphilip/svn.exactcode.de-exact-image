@@ -142,17 +142,9 @@ void Viewer::UpdateOSD (const std::string& str1, const std::string& str2)
 
 void Viewer::AlphaOSD (int a)
 {
-  int r, g, b;
-  r = g = b = 0xff;
-  evas_color_argb_premul (a, &r, &g, &b);
-  
-  evas_osd_text1->Color (r, g, b, a);
-  evas_osd_text2->Color (r, g, b, a);
-
-  r = g = b = 0x40;
-  a = std::max (a-92, 0);
-  evas_color_argb_premul (a, &r, &g, &b);
-  evas_osd_rect->Color (r, g, b, a);
+  evas_osd_text1->Color (0xFF, 0xFF, 0xFF, a);
+  evas_osd_text2->Color (0xFF, 0xFF, 0xFF, a);
+  evas_osd_rect->Color (0x40, 0x40, 0x40, std::max (a-92, 0));
 }
 
 void Viewer::TickOSD ()
