@@ -16,7 +16,7 @@
 
 
 #include <vector>
-#include "Image.hh"
+#include "FG-Matrix.hh"
 
 class Segment
 {
@@ -31,24 +31,23 @@ public:
   Segment(unsigned int ix, unsigned int iy, unsigned int iw, unsigned int ih, Segment* iparent=0);
   ~Segment();
 
-  bool Subdivide(Image& img, double tolerance, unsigned int min_length, int fg_threshold, bool horizontal);
+  bool Subdivide(const FGMatrix& img, double tolerance, unsigned int min_length, bool horizontal);
 
-  // Draws a red frame around the segment
-  void Draw(Image& output);
+  // Draws a (red) frame around the segment
+  void Draw(Image& output, unsigned int r=255, unsigned int g=0, unsigned int b=0);
 
 private:
 
   void InsertChild(unsigned int start, unsigned int end, bool horizontal);
 
-  // hack to count foreground pixels in horizontal/vertical lines in gray sub-image
-  unsigned int* Count(Image& img, int fg_threshold, bool horizontal);
+  // count foreground pixels in horizontal/vertical lines
+  unsigned int* Count(const FGMatrix& img, bool horizontal);
 };
 
 
 
-// returns a segmentation of <img>. preprocessing using optimize2bw is recommended.
+// returns a segmentation of foreground matrix <img>.
 // <tolerance> is the maximum fraction of foreground pixels allowed in a separator line
-// <fg_threshold> is the maximum luminance of a foreground pixel
 // <min_w> and <min_h> denote the minimum separator width and height
-Segment* segment_image(Image& img, double tolerance, unsigned int min_w, unsigned int min_h, int fg_threshold);
+Segment* segment_image(const FGMatrix& img, double tolerance, unsigned int min_w, unsigned int min_h);
 
