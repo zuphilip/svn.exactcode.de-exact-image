@@ -151,7 +151,8 @@ int main (int argc, char* argv[])
   int height=arg_height.Get();
   // TODO: check for nonsense values
 
-  Segment* segment=segment_image(image, tolerance, width, height, threshold);
+  FGMatrix foreground(image, threshold);
+  Segment* segment=segment_image(foreground, tolerance, width, height);
   Draw(segment, o_image);
 
 
