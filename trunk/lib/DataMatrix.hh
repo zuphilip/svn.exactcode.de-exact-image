@@ -1,3 +1,6 @@
+#ifndef DATA_MATRIX_HH__
+#define DATA_MATRIX_HH__
+
 template <typename T>
 class DataMatrix
 {
@@ -42,4 +45,6 @@ public:
     return data[x][y];
   }
 };
+
+#endif
   

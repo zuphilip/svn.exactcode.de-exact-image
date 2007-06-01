@@ -53,18 +53,11 @@ public:
 };
 
 
-
 DistanceMatrix::DistanceMatrix(Image& image, unsigned int fg_threshold)
   : DataMatrix<unsigned int>(image.w, image.h)
 {
-  
-  for (unsigned int x=0; x<w; x++)
-    for (unsigned int y=0; y<h; y++)
-      data[x][y]=undefined_dist;
-
-  std::vector <QueueElement> queue;
-  queue.reserve(4*w*h);
-
+  Queue queue;
+  Init(queue);
   unsigned int line=0;
   unsigned int row=0;
   Image::iterator i=image.begin();
@@ -81,6 +74,39 @@ DistanceMatrix::DistanceMatrix(Image& image, unsigned int fg_threshold)
     }
   }
 
+  RunBFS(queue);
+}
+
+
+
+DistanceMatrix::DistanceMatrix(const FGMatrix& image)
+  : DataMatrix<unsigned int>(image.w, image.h)
+{
+  Queue queue;
+  Init(queue);
+  for (unsigned int x=0; x<w; x++)
+    for (unsigned int y=0; y<h ; y++)
+      if (image(x,y)) {
+	queue.push_back(QueueElement(x, y));
+	data[x][y]=0;
+      }
+
+  RunBFS(queue);
+}
+
+
+
+void DistanceMatrix::Init(Queue& queue)
+{
+  for (unsigned int x=0; x<w; x++)
+    for (unsigned int y=0; y<h; y++)
+      data[x][y]=undefined_dist;
+
+  queue.reserve(4*w*h);
+}
+
+void DistanceMatrix::RunBFS(Queue& queue)
+{
   unsigned int pos=0;
   while (pos < queue.size()) {
     for (unsigned int direction=0; direction<4; direction++) {
@@ -98,6 +124,7 @@ DistanceMatrix::DistanceMatrix(Image& image, unsigned int fg_threshold)
   for (unsigned int x=0; x<w; x++)
     for (unsigned int y=0; y<h; y++)
       data[x][y]=(unsigned int) sqrt((double) (data[x][y] << 2*precission_shift));
+  queue.clear();
 }
 
 DistanceMatrix::DistanceMatrix(const DistanceMatrix& source, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
