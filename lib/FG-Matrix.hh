@@ -1,3 +1,6 @@
+#ifndef FG_MATRIX_HH__
+#define FG_MATRIX_HH__
+
 #include "Image.hh"
 #include "DataMatrix.hh"
 
@@ -9,3 +12,4 @@ public:
   ~FGMatrix();
 };
   
+#endif
