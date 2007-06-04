@@ -1,44 +1,34 @@
-/*
- * Image Segmentation
- * Copyright (C) 2007 Valentin Ziegler and René Rebe
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2. A copy of the GNU General
- * Public License can be found in the file LICENSE.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
- * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- * 
- */
-
-#include <math.h>
+//#include <math.h>
 
 #include <iostream>
 #include <iomanip>
 
-
 #include "ArgumentList.hh"
-
-#include "segmentation.hh"
 #include "Codecs.hh"
 #include "Colorspace.hh"
 #include "Matrix.hh"
-
 #include "optimize2bw.hh"
+#include "Contours.hh"
+
+void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned int B)
+{
+  Image::iterator color=img.begin();
+  color.setRGB(R, G, B);
+
+  Image::iterator p=img.begin();
+  p=p.at(x,y);
+  p.set(color);
+}
+
+void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b)
+{
+  for (unsigned int i=0; i<c.size(); i++)
+    PutPixel(img, c[i].first, c[i].second, r, g, b);
+}
+
 
 using namespace Utility;
 
-
-void Draw(Segment* s, Image& img)
-{
-  if (s->children.size() == 0)
-    s->Draw(img);
-  else for (unsigned int i=0; i<s->children.size(); i++)
-    Draw(s->children[i], img);
-}
 
 int main (int argc, char* argv[])
 {
@@ -64,16 +54,6 @@ int main (int argc, char* argv[])
 
   Argument<double> arg_sd ("sd", "standard-deviation",
 			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
-  
-  Argument<double> arg_tolerance ("T", "tolerance",
-			       "fraction of foreground pixels tolerated per line", 0.02, 0, 1);
-
-  Argument<int> arg_width("W", "width",
-			  "minimum width of vertical separator", 10, 0, 1);
-
-  Argument<int> arg_height("H", "height",
-			   "minimum height of horizontal separator", 20, 0, 1);
-
 
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -83,9 +63,6 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_threshold);
   arglist.Add (&arg_radius);
   arglist.Add (&arg_sd);
-  arglist.Add (&arg_tolerance);
-  arglist.Add (&arg_width);
-  arglist.Add (&arg_height);
 
 
   // parse the specified argument list - and maybe output the Usage
@@ -146,15 +123,27 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 200;
 
-  double tolerance=arg_tolerance.Get();
-  int width=arg_width.Get();
-  int height=arg_height.Get();
-  // TODO: check for nonsense values
+  FGMatrix m(image, threshold);
 
-  FGMatrix foreground(image, threshold);
-  Segment* segment=segment_image(foreground, tolerance, width, height);
-  //  Draw(segment, o_image);
+  std::cout << "Contouring" << std::endl;
+  Contours cont(m);
+  std::cout << "done." << std::endl;
 
+  for (unsigned int i=0; i<cont.contours.size(); i++) {
+    unsigned int r;
+    unsigned int g;
+    unsigned int b;
+    switch (i % 6) {
+    case 0: r=255; g=0; b=0; break;
+    case 1: r=0; g=255; b=0; break;
+    case 2: r=0; g=0; b=255; break;
+    case 3: r=255; g=255; b=0; break;
+    case 4: r=0; g=255; b=255; break;
+    case 5: r=255; g=0; b=255; break;
+    }
+    DrawContour(o_image, *cont.contours[i], r,g,b);
+    std::cout << cont.contours[i]->size() << std::endl;
+  }
 
   if (!ImageCodec::Write(arg_output.Get(), o_image)) {
     std::cerr << "Error writing output file." << std::endl;
