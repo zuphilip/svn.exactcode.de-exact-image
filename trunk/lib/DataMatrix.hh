@@ -40,7 +40,12 @@ public:
   T** data;
   bool master;
 
-  T operator() (unsigned int x, unsigned int y) const
+  const T& operator() (unsigned int x, unsigned int y) const
+  {
+    return data[x][y];
+  }
+
+  T& operator() (unsigned int x, unsigned int y)
   {
     return data[x][y];
   }
