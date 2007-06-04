@@ -22,7 +22,7 @@
 
 #include "ArgumentList.hh"
 
-#include "segmentation.hh"
+#include "DistanceMatrix.hh"
 #include "Codecs.hh"
 #include "Colorspace.hh"
 #include "Matrix.hh"
@@ -31,14 +31,6 @@
 
 using namespace Utility;
 
-
-void Draw(Segment* s, Image& img)
-{
-  if (s->children.size() == 0)
-    s->Draw(img);
-  else for (unsigned int i=0; i<s->children.size(); i++)
-    Draw(s->children[i], img);
-}
 
 int main (int argc, char* argv[])
 {
@@ -64,16 +56,6 @@ int main (int argc, char* argv[])
 
   Argument<double> arg_sd ("sd", "standard-deviation",
 			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
-  
-  Argument<double> arg_tolerance ("T", "tolerance",
-			       "fraction of foreground pixels tolerated per line", 0.02, 0, 1);
-
-  Argument<int> arg_width("W", "width",
-			  "minimum width of vertical separator", 10, 0, 1);
-
-  Argument<int> arg_height("H", "height",
-			   "minimum height of horizontal separator", 20, 0, 1);
-
 
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -83,9 +65,6 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_threshold);
   arglist.Add (&arg_radius);
   arglist.Add (&arg_sd);
-  arglist.Add (&arg_tolerance);
-  arglist.Add (&arg_width);
-  arglist.Add (&arg_height);
 
 
   // parse the specified argument list - and maybe output the Usage
@@ -146,15 +125,25 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 200;
 
-  double tolerance=arg_tolerance.Get();
-  int width=arg_width.Get();
-  int height=arg_height.Get();
-  // TODO: check for nonsense values
-
-  FGMatrix foreground(image, threshold);
-  Segment* segment=segment_image(foreground, tolerance, width, height);
-  //  Draw(segment, o_image);
-
+  //FGMatrix m(image, threshold);
+  //DistanceMatrix dm(m);
+  DistanceMatrix dm(image, threshold);
+ 
+  unsigned int line=0;
+  unsigned int row=0;
+  Image::iterator i=o_image.begin();
+  Image::iterator end=o_image.end();
+  Image::iterator color=o_image.begin();
+  for (; i!=end ; ++i) {
+    int value=255-(int)dm(row,line);
+    color.setRGB(value < 0 ? 0 : value, value==255 ? 255 : 0, 0);
+    i.set(color);
+   
+    if (++row == image.w) {
+      line++;
+      row=0;
+    }
+  }
 
   if (!ImageCodec::Write(arg_output.Get(), o_image)) {
     std::cerr << "Error writing output file." << std::endl;
