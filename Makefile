@@ -7,8 +7,8 @@ include utility/Makefile
 X_BUILD_IMPLICIT=1
 
 # -s silcently corrupts binaries on OS X, sigh -ReneR
-CFLAGS = -Wall -O2
-CXXFLAGS = -Wall -O2 -Wno-sign-compare
+CFLAGS = -Wall -O2 -pg
+CXXFLAGS = -Wall -O2 -pg -Wno-sign-compare
 #CFLAGS = -Wall -O0 -ggdb
 #CXXFLAGS = -Wall -O0 -ggdb
 
@@ -32,7 +32,7 @@ CXXFLAGS += -mcpu=ultrasparc
 CXXFLAGS += $(call cc-option,-mtune=niagara,)
 endif
 
-CXXFLAGS += -funroll-loops -fomit-frame-pointer
+CXXFLAGS += -funroll-loops # -fomit-frame-pointer
 CXXFLAGS += $(call cc-option,-funswitch-loops,)
 CXXFLAGS += $(call cc-option,-fpeel-loops,)
 CXXFLAGS += $(call cc-option,-ftracer,)
@@ -43,7 +43,7 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
-MODULES = lib codecs econvert edentify
+MODULES = lib codecs econvert edentify segmentation
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
