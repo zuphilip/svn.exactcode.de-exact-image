@@ -11,7 +11,7 @@ void RotCenterAndReduce(const Contours::Contour& source,
 			Contours::Contour& dest,
 			double phi, // clockwise rotation in radians
 			unsigned int add, // added to all coordinates to avoid negative values,
-                                          // should be to set to image.w+image.h
+                                          // should be at least image diagonal length
 			unsigned int shift, // integer coordinate bit reduction
 			double& drx, // returned centroid 
 			double& dry  // returned centroid

@@ -94,3 +94,9 @@ Contours::Contours(const FGMatrix& image)
 	    } while (Step(map, xx, yy, bborder));
 	  }
 }
+
+Contours::~Contours()
+{
+  for (unsigned int i=0; i<contours.size(); i++)
+    delete contours[i];
+}
