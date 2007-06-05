@@ -1,3 +1,18 @@
+/*
+ * Colorspace conversions..
+ * Copyright (C) 2006, 2007 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ * 
+ */
 
 #include <iostream>
 
@@ -43,6 +58,20 @@ void normalize (Image& image, uint8_t low, uint8_t high)
   for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
     *it = ((int) *it * a + b) / 256;
 
+  image.setRawData();
+}
+
+void colorspace_rgba8_to_rgb8 (Image& image)
+{
+  uint8_t* output = image.getRawData();
+  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+    {
+      *output++ = *it++;
+      *output++ = *it++;
+      *output++ = *it++;
+      it++; // skip over a
+    }
+  image.spp = 3; // converted data right now
   image.setRawData();
 }
 
@@ -483,7 +512,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
     spp = 3; bps = 8;
   } else if (space == "rgb16") {
     spp = 3; bps = 16;
-  // TODO: CYMK, YVU, ...
+  // TODO: CYMK, YVU, RGBA, GRAYA...
   } else {
     std::cerr << "Requested colorspace conversion not yet implemented."
               << std::endl;
@@ -518,6 +547,9 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
   // down
   if (image.bps == 16 && bps < 16)
     colorspace_16_to_8 (image);
+
+  if (image.spp == 4 && spp < 4)
+    colorspace_rgba8_to_rgb8 (image);
  
   if (image.spp == 3 && spp == 1) 
     colorspace_rgb8_to_gray8 (image);
