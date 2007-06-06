@@ -29,6 +29,15 @@ double L1Dist(const Contours::Contour& a,
 	      double& transy  // returned translation for a
 	      );
 
+// plot contour in specified color
+// c coordinates must not be outside image range
+void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b);
+
+// plot translated contour
+// c coordinates may lie outside image
+void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsigned int ty, unsigned int r, unsigned int g, unsigned int b);
+
+
 // not implemented yet, but could be usefull to cache preprocessed
 // contours on disk
 bool WriteContour(FILE* f, const Contours::Contour& source);
