@@ -1,5 +1,6 @@
 #include "ContourUtility.hh"
 #include <math.h>
+//#include <iostream>
 
 void CenterAndReduce(const Contours::Contour& source,
 		     Contours::Contour& dest,
@@ -94,14 +95,24 @@ double L1Dist(const Contours::Contour& a,
   //bool forward=true;
   for (unsigned int i=0; i<a.size(); i++) {
     if (i>0) {
-      delta=abs(a[i].first-a[i-1].first)+abs(a[i].second-a[i-1].second);
+      delta=abs((int)a[i].first-(int)a[i-1].first)+abs((int)a[i].second-(int)a[i-1].second);
       opt=best-delta;
       best+=delta;
     }
 
     int pos=lastpos;
     for (unsigned int j=0; j<b.size(); j++) {
-      int current=abs(dx+a[i].first-b[pos].first)+abs(dy+a[i].second-b[pos].second);
+      int current=abs(dx+(int)a[i].first-(int)b[pos].first)+abs(dy+(int)a[i].second-(int)b[pos].second);
+
+      /* sanity check
+      if (current < 0) {
+	std::cout << "? " << current << "\t"
+		  << abs(dx+(int)a[i].first-(int)b[pos].first) << "\t"
+		  << abs(dy+(int)a[i].second-(int)b[pos].second) << std::endl;
+	std::cout << dx << "\t" << (int)a[i].first << "\t" << (int)b[pos].first << std::endl;
+	std::cout << dy << "\t" << (int)a[i].second << "\t" << (int)b[pos].second << std::endl;	
+      } */
+
       if (current < best) {
 	best=current;
 	//forward=(pos>lastpos);
@@ -125,6 +136,7 @@ double L1Dist(const Contours::Contour& a,
 	//  pos+=b.size();
 	//}
     }
+
     sum += best;
   }
   
