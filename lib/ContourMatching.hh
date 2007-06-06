@@ -25,12 +25,21 @@ protected:
   friend class MatchSorter;
 
   double N_M_Match(unsigned int set, unsigned int& pivot);
+  double PrecisionScore();
+
+  void RotatedCentroidPosition(double& rx, double& ry);
+  bool OptimizeAngle(double& score, double delta);
+  bool OptimizeHTranslation(double& score, int delta);
+  bool OptimizeVTranslation(double& score, int delta);
+  bool Optimize(double& score);
 
   Contours* source;
   unsigned int tolerance;
   unsigned int shift;
   double rot_max;
   double rot_step;
+  double centerx;
+  double centery;
   unsigned int logo_set_count;
   unsigned int total_contour_length;
 

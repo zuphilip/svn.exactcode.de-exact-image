@@ -178,6 +178,9 @@ int main (int argc, char* argv[])
     Contours::Contour transformed;
     RotCenterAndReduce(*lrep.mapping[i].first, transformed, angle, 0, 0, trash, trash);
     DrawTContour(o_image, transformed, tx, ty, 0, 0, 255);
+    //transformed.clear();
+    //RotCenterAndReduce(*lrep.mapping[i].first, transformed, 0, 0, 0, trash, trash);
+    //DrawTContour(o_image, transformed, tx, ty, 0, 255, 255);
     DrawContour(o_image, *lrep.mapping[i].second, 0,  255, 0);
   }
 

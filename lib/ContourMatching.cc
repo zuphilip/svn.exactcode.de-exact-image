@@ -51,6 +51,20 @@ LogoRepresentation::LogoRepresentation(Contours* logo_contours,
     logo_set_count=max_feature_no;
   }
 
+  centerx=.0;
+  centery=.0;
+  unsigned int count=0;
+  for (unsigned int i=0; i<logo_set_count; i++) {
+    count+=source->contours[logo_set_map[i]]->size();
+    for (unsigned int j=0; j<source->contours[logo_set_map[i]]->size(); j++) {
+      centerx += (*(source->contours[logo_set_map[i]]))[j].first;
+      centery += (*(source->contours[logo_set_map[i]]))[j].second;
+    }
+  }
+  centerx/=(double)count;
+  centery/=(double)count;
+    
+
   double angle=.0;
   rot_max=std::min(359.9, fabs(rot_max));
   rot_step=std::max(rot_step, 0.5);
@@ -141,7 +155,7 @@ double LogoRepresentation::Score(Contours* image)
 
   // starting parameters optained from heuristic
   score=(score/ (double) total_contour_length) / (double) tolerance;
-  std::cout << score << std::endl;
+  std::cout << "heuristic score: " <<  score << std::endl;
   const LogoContourData& result=logo_sets[best_set][best_pivot];
   logo_translation.first=(int)result.matches[result.n_to_n_match_index]->transx;
   logo_translation.second=(int)result.matches[result.n_to_n_match_index]->transy;
@@ -163,7 +177,36 @@ double LogoRepresentation::Score(Contours* image)
   }
 
   // optimize
-  
+
+  score=PrecisionScore();
+
+  /*
+  double oldrx=.0;
+  double oldry=.0;
+  double newrx=.0;
+  double newry=.0;
+  RotatedCentroidPosition(oldrx, oldry);
+  rot_angle-=10;
+  RotatedCentroidPosition(newrx, newry);
+  logo_translation.first+=(int)(oldrx-newrx);
+  logo_translation.second+=(int)(oldry-newry);
+  */
+
+  bool improved=true;
+  unsigned int precision_iterations=4;
+  //if (false)
+  for (unsigned int run=0; run <= precision_iterations && improved ; run++) {
+     std::cout << score
+	       << "\t" << logo_translation.first
+	       << "\t" << logo_translation.second
+	       << "\t" << rot_angle << std::endl;
+     improved=false;
+
+     if (run < precision_iterations) {
+       improved=Optimize(score);
+     }
+  }
+ 
   // clean up
   for (unsigned int s=0; s<logo_sets.size(); s++)
     for (unsigned int j=0; j<logo_set_count; j++) {
@@ -231,6 +274,135 @@ double LogoRepresentation::N_M_Match(unsigned int set, unsigned int& pivot)
   
   return bestsum;
 }
+
+
+double LogoRepresentation::PrecisionScore()
+{
+  Contours::Contour tmp;
+  double trash;
+  //double sum=(double)tolerance*(double)total_contour_length;
+  double sum=.0;
+  unsigned int length=0;
+
+  double tx=(double)logo_translation.first-(double)logo_trans_before_rot;
+  double ty=(double)logo_translation.second-(double)logo_trans_before_rot;
+
+  for (unsigned int i=0; i<logo_set_count; i++) {
+    tmp.clear();
+    RotCenterAndReduce(*mapping[i].first, tmp, M_PI*rot_angle/180.0,
+		       logo_trans_before_rot, 0, trash, trash);
+
+    double current=(double)tolerance*(double)tmp.size();
+    length+=tmp.size();
+    current-=L1Dist(tmp, *mapping[i].second,
+		0.0, 0.0, tx, ty, 0, trash, trash);
+
+    sum+=std::max(0.0, current);
+  }
+
+  sum=(sum/ (double)length) / (double) tolerance;
+  return sum;
+};
+
+
+void LogoRepresentation::RotatedCentroidPosition(double& rx, double& ry)
+{
+  double c=cos(M_PI*rot_angle/180.0);
+  double s=sin(M_PI*rot_angle/180.0);
+  rx=c*centerx - s*centery;
+  ry=s*centerx + c*centery;
+  //  std::cout << centerx << "\t" << centery << "\t\t" << rx << "\t" << ry <<std::endl;
+}
+
+
+bool LogoRepresentation::OptimizeAngle(double& score, double delta)
+{
+       double oldrx=.0;
+       double oldry=.0;
+       double newrx=.0;
+       double newry=.0;
+       std::pair<int, int> o_translation=logo_translation;
+       double o_angle=rot_angle;
+       RotatedCentroidPosition(oldrx, oldry);
+       rot_angle+=delta;
+       RotatedCentroidPosition(newrx, newry);
+       logo_translation.first+=(int)(oldrx-newrx);
+       logo_translation.second+=(int)(oldry-newry);
+
+       double new_score=PrecisionScore();
+       if (new_score > score) {
+	 score=new_score;
+	 return true;
+       }
+
+       logo_translation=o_translation;
+       rot_angle=o_angle;
+       return false;
+}
+
+bool LogoRepresentation::OptimizeHTranslation(double& score, int delta)
+{
+  logo_translation.first+=delta;
+  double new_score=PrecisionScore();
+  if (new_score > score) {
+    score=new_score;
+    return true;
+  }
+  
+  logo_translation.first-=delta;
+  return false;
+}
+
+bool LogoRepresentation::OptimizeVTranslation(double& score, int delta)
+{
+  logo_translation.second+=delta;
+  double new_score=PrecisionScore();
+  if (new_score > score) {
+    score=new_score;
+    return true;
+  }
+  
+  logo_translation.second-=delta;
+  return false;
+}
+
+bool LogoRepresentation::Optimize(double& score)
+{
+  bool improvement=false;
+
+  const double start_angle_delta=2.0;
+  const double end_angle_delta=0.1;
+  double delta=start_angle_delta;
+  do {
+    bool success=false;
+    while (OptimizeAngle(score, delta))
+      success=true;
+    if (!success)
+    while (OptimizeAngle(score, -delta))
+      success=true;
+
+    improvement |= success;
+    delta /= 2.0;
+  } while (delta >= end_angle_delta );
+
+  bool successh=false;
+  while (OptimizeHTranslation(score, +1))
+    successh=true;
+  if (!successh)
+  while (OptimizeHTranslation(score, -1))
+    successh=true;
+  improvement |= successh;
+
+  bool successv=false;
+  while (OptimizeVTranslation(score, +1))
+    successv=true;
+  if (!successv)
+  while (OptimizeVTranslation(score, -1))
+    successv=true;
+  improvement |= successv;
+
+  return improvement;
+};
 
 
 LogoRepresentation::Match::Match(const ImageContourData& image,
