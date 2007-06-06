@@ -58,7 +58,7 @@ int main (int argc, char* argv[])
 
 
   Argument<double> arg_angle("A", "angle", "maximum rotation angle for pre-matching",
-			     3.0, 0, 1);
+			     0.0, 0, 1);
 
   Argument<double> arg_step("S", "step", "rotation angle increment for pre-matching",
 			    3.0, 0, 1);
