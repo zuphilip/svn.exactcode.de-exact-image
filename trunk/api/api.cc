@@ -14,6 +14,7 @@
 
 #include <optimize2bw.hh>
 #include <empty-page.hh>
+#include <ContourMatching.hh>
 
 #include "api.hh"
 
@@ -239,3 +240,61 @@ char** imageDecodeBarcodes (Image* image, const char* c,
 }
 
 #endif
+
+
+Contours* newContours(Image* image, int low, int high,
+		      int threshold,
+		      int radius, double standard_deviation)
+{
+  optimize2bw (*image, low, high, threshold, 0, radius, standard_deviation);
+  if (threshold==0)
+    threshold=200;
+  FGMatrix m(*image, threshold);
+  return new Contours(m);
+}
+
+void deleteContours(Contours* contours)
+{
+  delete contours;
+}
+
+LogoRepresentation* newRepresentation(Contours* logo_contours,
+			    int max_feature_no,
+			    int max_avg_tolerance,
+			    int reduction_shift,
+			    double maximum_angle,
+			    double angle_step)
+{
+  return new LogoRepresentation(logo_contours,
+				max_feature_no,
+				max_avg_tolerance,
+				reduction_shift,
+				maximum_angle,
+				angle_step);
+}
+
+void deleteRepresentation(LogoRepresentation* representation)
+{
+  delete representation;
+}
+
+double matchingScore(LogoRepresentation* representation, Contours* image_contours)
+{
+  return representation->Score(image_contours);
+}
+
+// theese are valid after call to MatchingScore()
+double logoAngle(LogoRepresentation* representation)
+{
+  return representation->rot_angle;
+}
+
+int logoTranslationX(LogoRepresentation* representation)
+{
+  return representation->logo_translation.first;
+}
+
+int logoTranslationY(LogoRepresentation* representation)
+{
+  return representation->logo_translation.second;
+}
