@@ -131,6 +131,36 @@ double L1Dist(const Contours::Contour& a,
   return sum*factor;
 }
 
+// not very efficient, yet effective
+static void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned int B)
+{
+  Image::iterator color=img.begin();
+  color.setRGB(R, G, B);
+
+  Image::iterator p=img.begin();
+  p=p.at(x,y);
+  p.set(color);
+}
+
+
+void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b)
+{
+  for (unsigned int i=0; i<c.size(); i++)
+    PutPixel(img, c[i].first, c[i].second, r, g, b);
+}
+
+void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsigned int ty, unsigned int r, unsigned int g, unsigned int b)
+{
+  for (unsigned int i=0; i<c.size(); i++) {
+    int x=c[i].first+tx;
+    int y=c[i].second+ty;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x, y, r, g, b);
+  }
+}
+
+
+
 bool WriteContour(FILE* f, const Contours::Contour& source);
 bool ReadContour(FILE* f, const Contours::Contour& dest);
 
