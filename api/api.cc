@@ -298,3 +298,13 @@ int logoTranslationY(LogoRepresentation* representation)
 {
   return representation->logo_translation.second;
 }
+
+int inverseLogoTranslationX(LogoRepresentation* representation, Image* image)
+{
+  return representation->CalculateInverseTranslation(image->w/2, image->h/2).first;
+}
+
+int inverseLogoTranslationY(LogoRepresentation* representation, Image* image)
+{
+  return representation->CalculateInverseTranslation(image->w/2, image->h/2).second;
+}
