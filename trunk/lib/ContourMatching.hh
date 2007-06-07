@@ -21,6 +21,10 @@ public:
   double rot_angle;
   std::vector< std::pair <Contours::Contour*, Contours::Contour*> > mapping; // logo contour, image contour
 
+  // calculates the (unrotatated) logo translation after -rot_angle image rotation around (rx,ry)
+  const std::pair<int, int>& CalculateInverseTranslation(int rx, int ry);
+  std::pair<int, int> inverse_translation;
+
 protected:
   friend class MatchSorter;
 

@@ -222,6 +222,19 @@ double LogoRepresentation::Score(Contours* image)
   return score;
 }
 
+const std::pair<int, int>& LogoRepresentation::CalculateInverseTranslation(int rx, int ry)
+{
+  double x=(double)logo_translation.first - rx;
+  double y=(double)logo_translation.second - ry;
+  double c=cos(-M_PI*rot_angle/180.0);
+  double s=sin(-M_PI*rot_angle/180.0);
+  double xx=c*x - s*y;
+  double yy=s*x + c*y;
+  inverse_translation.first=rx+(int)xx;
+  inverse_translation.second=ry+(int)yy;
+  return inverse_translation;
+}
+
 
 double LogoRepresentation::N_M_Match(unsigned int set, unsigned int& pivot)
 {

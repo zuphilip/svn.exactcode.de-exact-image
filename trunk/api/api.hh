@@ -211,3 +211,5 @@ double logoAngle(LogoRepresentation* representation);
 int logoTranslationX(LogoRepresentation* representation);
 int logoTranslationY(LogoRepresentation* representation);
 
+int inverseLogoTranslationX(LogoRepresentation* representation, Image* image);
+int inverseLogoTranslationY(LogoRepresentation* representation, Image* image);
