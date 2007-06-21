@@ -159,6 +159,39 @@ int main (int argc, char* argv[])
   Contours contl(ml);
   std::cout << "done." << std::endl;
 
+
+#if false // Export test
+  FILE* test=fopen("test.cnt", "w");
+  if (!WriteContourArray(test, conti.contours))
+    std::cout << "write error" << std::endl;
+  fclose(test);
+
+  
+  Contours copy;
+  test=fopen("test.cnt", "r");
+  if (ReadContourArray(test, copy.contours)) {
+    if (copy.contours.size() != conti.contours.size()) {
+      std::cout << "contour count differs" << std::endl;
+    } else {
+      for (unsigned int c=0; c<copy.contours.size(); c++) {
+	if (copy.contours[c]->size() != conti.contours[c]->size())
+	  std::cout << "size" << std::endl;
+	else 
+	  for (unsigned int i=0; i<copy.contours[c]->size(); i++)
+	    if ((*(copy.contours[c]))[i] != (*(conti.contours[c]))[i])
+	      std::cout << "content\t" << i 
+			<< "\t" << (*(copy.contours[c]))[i].first
+			<< "\t" << (*(copy.contours[c]))[i].second
+			<< "\t" << (*(conti.contours[c]))[i].first
+			<< "\t" << (*(conti.contours[c]))[i].second
+			<<  std::endl;
+      }
+    }
+  } else
+    std::cout << "read error" << std::endl;
+  fclose(test);
+#endif
+
   // Todo: check for insane values
   unsigned int features=arg_features.Get();
   unsigned int tolerance=arg_tolerance.Get();

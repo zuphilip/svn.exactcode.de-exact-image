@@ -8,6 +8,8 @@ public:
   typedef DataMatrix<int> VisitMap;
 
   Contours(const FGMatrix& image);
+  Contours() {} // empty constructor for generic usage
+
   ~Contours();
 
   std::vector <Contour*> contours;

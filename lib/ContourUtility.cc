@@ -1,6 +1,8 @@
 #include "ContourUtility.hh"
 #include <math.h>
 //#include <iostream>
+#include <assert.h>
+#include <stdio.h>
 
 void CenterAndReduce(const Contours::Contour& source,
 		     Contours::Contour& dest,
@@ -173,6 +175,111 @@ void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsig
 
 
 
-bool WriteContour(FILE* f, const Contours::Contour& source);
-bool ReadContour(FILE* f, const Contours::Contour& dest);
+bool WriteContour(FILE* f, const Contours::Contour& source)
+{
+  if (source.size() == 0) {
+    if (fprintf(f, "! 0 0 0\n") < 0)
+      return false;
+  } else {
+    unsigned int l=source.size();
+    int lastx=source[0].first;
+    int lasty=source[0].second;
+    if (fprintf(f, "! %d %d %d\n", lastx, lasty, l) < 0)
+      return false;
 
+    int code=0;
+    for (unsigned int i=1; i<l; i++) {
+      int currentx=source[i].first;
+      int currenty=source[i].second;
+      int caddx=1+currentx-lastx;
+      int caddy=1+currenty-lasty;
+      assert(caddx >=0 && caddx < 3);
+      assert(caddy >=0 && caddy < 3);
+      int cadd=caddx+(3*caddy);
+      lastx=currentx;
+      lasty=currenty;
+      
+      if (i % 2 == 1)
+	code=cadd;
+      else {
+	code+=3*3*cadd;
+	if (fputc('"'+(char) code, f) == EOF)
+	  return false;
+      }
+    }
+    
+    if (l % 2 == 0) {
+      if (fputc('"'+(char) code, f)==EOF)
+	return false;
+    }
+    if (fputc('\n', f) == EOF)
+      return false;
+  }
+
+  return true;
+}
+
+bool ReadContour(FILE* f, Contours::Contour& dest)
+{
+  int l;
+  int x;
+  int y;
+  if (fscanf(f, "! %d %d %d\n", &x, &y, &l) != 3)
+    return false;
+  dest.resize(l);
+  if (l == 0)
+    return true;
+  dest[0].first=x;
+  dest[0].second=y;
+  int c=0;
+  for (unsigned int i=1; i<(unsigned int) l ; i++) {
+    if (i % 2 == 1) {
+      c=fgetc(f);
+      if (c == EOF)
+	return false;
+      c-='"';
+    } else {
+      c /= 3*3;
+    }
+    
+    int dx=(c % 3) - 1;
+    int dy=((c / 3) % 3) -1;
+    x+=dx;
+    y+=dy;
+    dest[i].first=x;
+    dest[i].second=y;
+  }
+  fgetc(f); // read linebreak;
+  return true;
+}
+
+
+bool WriteContourArray(FILE* f, const std::vector <Contours::Contour*>& contours)
+{
+  unsigned int n=contours.size();
+  if (fprintf(f, "CONTOURS v1 %d\n", n)<0)
+    return false;
+  for (unsigned int i=0; i<n; i++)
+    if (!WriteContour(f,*(contours[i])))
+      return false;
+  return true;
+}
+
+bool ReadContourArray(FILE* f, std::vector <Contours::Contour*>& contours)
+{
+  unsigned int n=0;
+  if (fscanf(f, "CONTOURS v1 %d\n", &n) != 1) {
+    return false;
+  }
+  contours.resize(n);
+  for (unsigned int i=0; i<n; i++) {
+    contours[i]=new Contours::Contour;
+    if (!ReadContour(f, *(contours[i]))) {
+      for (unsigned int j=0; j<=i; j++)
+	delete contours[j];
+      contours.clear();
+      return false;
+    }
+  }
+  return true;
+}
