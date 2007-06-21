@@ -38,8 +38,10 @@ void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigne
 void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsigned int ty, unsigned int r, unsigned int g, unsigned int b);
 
 
-// not implemented yet, but could be usefull to cache preprocessed
-// contours on disk
+// functions to cache preprocessed contours on disk
 bool WriteContour(FILE* f, const Contours::Contour& source);
-bool ReadContour(FILE* f, const Contours::Contour& dest);
+bool ReadContour(FILE* f, Contours::Contour& dest);
+
+bool WriteContourArray(FILE* f, const std::vector <Contours::Contour*>& contours);
+bool ReadContourArray(FILE* f, std::vector <Contours::Contour*>& contours);
 
