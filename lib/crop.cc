@@ -10,11 +10,11 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
 {
   // limit to valid boundaries
   x = std::min (x, (unsigned)image.w-1);
-  y = std::min (x, (unsigned)image.h-1);
+  y = std::min (y, (unsigned)image.h-1);
   
-  w = std::min (x+w, (unsigned)image.w-x);
-  h = std::min (y+h, (unsigned)image.h-y);
-  
+  w = std::min (w, (unsigned)image.w-x);
+  h = std::min (h, (unsigned)image.h-y);
+
   // something to do?
   if (x == 0 && y == 0 && w == image.w && h == image.h)
     return;
@@ -27,7 +27,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
 
   // truncate the height, this is optimized for the "just height" case
   // (of e.g. fastAutoCrop)
-  if (x == 0 || y == 0 || w == image.w) {
+  if (x == 0 && y == 0 && w == image.w) {
     image.setRawData (); // invalidate
     image.h = h;
     return;
@@ -42,7 +42,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   int cut_stride = stride * w / image.w;
   
   uint8_t* dst = image.getRawData ();
-  uint8_t* src = dst + stride * y;
+  uint8_t* src = dst + stride * y + (stride * x / image.w);
   
   for (int i = 0; i < h; ++i) {
     memmove (dst, src, cut_stride);
