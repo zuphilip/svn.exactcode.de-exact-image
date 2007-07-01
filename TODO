@@ -1,34 +1,28 @@
 
-Array subscription, ala:
-image[][]
-
-type inside the image: RGB, YUV, CMYK
-
-cheap copies
-copy on write
-sub-images
- ->
+Image formats:
+ - ico (Windows icon files)
+ - icon (Apple icon files)
+ - (e)ps
+ - pcx
+ - targa
+ - all the others
 
 Loaders:
  - (optimized) palette saving
  - gzip / bzip2 / ... compressed streams
- - http:// et al (libcurl or so?)
- - 2 and 4 bit TIFF "imperfect"
 
 General:
  - Exif, XMP and ordinary, classic comment support 
 
 Algorithms:
  - rgb_A_ iterator and thus scaling, rotation
- - faster and ddt scaling!
- - descew
+ - scaling!
+ - rotation, descew
  - descreen
  - sharp, unsharp
- - contrast, brightness
+ - crop
  - all the others
  - affine transforms
- - Barcode recognition
- - 2D Baccode recognition: Datamatrix, Semacode, BeeTagg and QR 
 
 Colorspaces:
  - more generic but faster and let all algorithms use it in the most generic form

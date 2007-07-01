@@ -52,7 +52,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   
   uint16 photometric = 0;
   TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
-  // std::cerr << "photometric: " << (int)photometric << std::endl;
+  //printf ("photometric: %d\n", photometric);
   switch (photometric)
     {
     case PHOTOMETRIC_MINISWHITE:
@@ -60,9 +60,10 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     case PHOTOMETRIC_RGB:
     case PHOTOMETRIC_PALETTE:
       break;
+    
     default:
-      std::cerr << "Bad photometric: " << (int)photometric << std::endl;
-      return false;
+      printf("Bad photometric: %d\n", photometric);
+      return 0;
     }
   
   uint32 _w;
@@ -99,7 +100,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   if (photometric == PHOTOMETRIC_PALETTE)
     {
       if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
-	std::cerr << "Error reading colormap." << std::endl;
+	printf ("Error reading colormap.\n");
     }
 
   uint8_t* data2 = image.getRawData();
@@ -183,13 +184,13 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   TIFFSetField (out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
-  if (image.spp == 1)
+  if (image.bps == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else if (false) { /* just saved for reference */
+  else if (image.spp == 1) {
     uint16 rmap[256], gmap[256], bmap[256];
     int i;
     for (i=0;i<256;++i) {
-      rmap[i] = gmap[i] = bmap[i] = i * 0xffff / 255;
+      rmap[i] = gmap[i] = bmap[i] = (i<<8);
     }
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
     TIFFSetField (out, TIFFTAG_COLORMAP, rmap, gmap, bmap);

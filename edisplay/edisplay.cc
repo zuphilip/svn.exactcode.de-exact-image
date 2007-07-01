@@ -1,18 +1,3 @@
-/*
- * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006, 2007 René Rebe
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2. A copy of the GNU General
- * Public License can be found in the file LICENSE.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
- * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- * 
- */
 
 #include "config.h"
 
@@ -45,19 +30,27 @@ using namespace Utility;
 #include "Codecs.hh"
 #include "Colorspace.hh"
 
-#include "rotate.hh"
-
 #include "edisplay.hh"
 
-#include "Endianess.hh"
+#define DG 0x66, 0x66, 0x66
+#define LG 0x99, 0x99, 0x99
+
+static uint8_t evas_bgr_image_data[] = {
+#if __BYTE_ORDER != __BIG_ENDIAN
+  LG, 0, DG, 0,
+  DG, 0, LG, 0
+#else
+  0, LG, 0, DG,
+  0, DG, 0, LG
+#endif
+};
+
+#undef DG
+#undef LG
 
 using std::cout;
 using std::cerr;
 using std::endl;
-
-static uint32_t evas_bgr_image_data[] = {
-  0x999999, 0x666666,
-  0x666666, 0x999999};
 
 int Viewer::Window2ImageX (int x)
 {
@@ -144,9 +137,17 @@ void Viewer::UpdateOSD (const std::string& str1, const std::string& str2)
 
 void Viewer::AlphaOSD (int a)
 {
-  evas_osd_text1->Color (0xFF, 0xFF, 0xFF, a);
-  evas_osd_text2->Color (0xFF, 0xFF, 0xFF, a);
-  evas_osd_rect->Color (0x40, 0x40, 0x40, std::max (a-92, 0));
+  int r, g, b;
+  r = g = b = 0xff;
+  evas_color_argb_premul (a, &r, &g, &b);
+  
+  evas_osd_text1->Color (r, g, b, a);
+  evas_osd_text2->Color (r, g, b, a);
+
+  r = g = b = 0x40;
+  a = std::max (a-92, 0);
+  evas_color_argb_premul (a, &r, &g, &b);
+  evas_osd_rect->Color (r, g, b, a);
 }
 
 void Viewer::TickOSD ()
@@ -524,18 +525,6 @@ int Viewer::Run (bool opengl)
 		  
 		  SetOSDZoom ();
 		  break;
-
-		case XK_greater:
-		  rotate (*image, 90, image->begin());
-		  ImageToEvas ();
-		  AlphaOSD (0);
-		  break;
-		
-		case XK_less:
-		  rotate (*image, -90, image->begin());
-		  ImageToEvas ();
-		  AlphaOSD (0);
-		  break;
 		  
 		case XK_q:
 		  quit = true;
@@ -550,7 +539,6 @@ int Viewer::Run (bool opengl)
 					ev.xexpose.width,
 					ev.xexpose.height);
 	      break;
-	      
 	    case ConfigureNotify:
 	      evas_bgr_image->Resize (ev.xconfigure.width,
 				      ev.xconfigure.height);
@@ -562,7 +550,6 @@ int Viewer::Run (bool opengl)
 	      // limit/clip
 	      Move (0, 0);
 	      break;
-	      
 	    default:
 	      break;
 	    }
@@ -686,20 +673,20 @@ void Viewer::ImageToEvas ()
     {
       for (int y=0; y < image->h; ++y)
 	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  if (!Exact::NativeEndianTraits::IsBigendian) {
-	    dest_ptr[0] = src_ptr[2];
-	    dest_ptr[1] = src_ptr[1];
-	    dest_ptr[2] = src_ptr[0];
-	    if (spp == 4)
-	      dest_ptr[3] = src_ptr[3]; // alpha
-	  }
-	  else {
-	    dest_ptr[1] = src_ptr[0];
-	    dest_ptr[2] = src_ptr[1];
-	    dest_ptr[3] = src_ptr[2];
-	    if (spp == 4)
-	      dest_ptr[0] = src_ptr[3]; // alpha
-	  }
+	  
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  dest_ptr[0] = src_ptr[2];
+	  dest_ptr[1] = src_ptr[1];
+	  dest_ptr[2] = src_ptr[0];
+	  if (spp == 4)
+	    dest_ptr[3] = src_ptr[3]; // alpha
+#else
+	  dest_ptr[1] = src_ptr[0];
+	  dest_ptr[2] = src_ptr[1];
+	  dest_ptr[3] = src_ptr[2];
+	  if (spp == 4)
+	    dest_ptr[0] = src_ptr[3]; // alpha
+#endif
 	}
     }
   else
@@ -709,18 +696,17 @@ void Viewer::ImageToEvas ()
       
       for (int y=0; y < image->h; ++y)
 	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  if (!Exact::NativeEndianTraits::IsBigendian) {
-	    dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
-	      intensity ? src_ptr[ch] : 0;
-	    if (!intensity)
-	      dest_ptr[2-ch] = src_ptr[ch];
-	  }
-	  else {
-	    dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
-	      intensity ? src_ptr[ch] : 0;
-	    if (!intensity)
-	      dest_ptr[1+ch] = src_ptr[ch];
-	  }
+#if __BYTE_ORDER != __BIG_ENDIAN
+	  dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
+	    intensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[2-ch] = src_ptr[ch];
+#else
+	  dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
+	    intensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[1+ch] = src_ptr[ch];
+#endif
 	}
     }
   
@@ -757,7 +743,7 @@ int main (int argc, char** argv)
     {
       cerr << "Exact image viewer (edisplay)."
 	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 - 2007 by René Rebe" << std::endl
+	   <<  " - Copyright (C) 2006 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);

@@ -231,6 +231,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	    uint16_t* swap_ptr = (uint16_t*)ptr;
 	    for (int x = 0; x < stride/2; ++x)
 	      *swap_ptr++ = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
+
 	  }
 	  
 	  stream->write ((char*)ptr, stride);

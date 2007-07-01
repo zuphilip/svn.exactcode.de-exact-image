@@ -128,8 +128,6 @@ void imageNearestScale (Image* image, double factor);
 void imageBoxScale (Image* image, double factor);
 void imageBilinearScale (Image* image, double factor);
 
-void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
-
 // fast auto crop by equal background color
 // (currently only crops the bottom, might be expanded in the
 //  future to allow top, left, right as well with always just
@@ -179,37 +177,3 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 char** imageDecodeBarcodes (Image* image, const char* codes,
 			    int min_length, int max_length);
 #endif
-
-/* contour matching functions
- * attention:
- * this part of the api is in an evaluation phase and not yet written in stone !!
- */
-
-class Contours;
-class LogoRepresentation;
-
-Contours* newContours(Image* image, int low = 0, int high = 0,
-		       int threshold = 0,
-		       int radius = 3, double standard_deviation = 2.1);
-
-
-void deleteContours(Contours* contours);
-
-LogoRepresentation* newRepresentation(Contours* logo_contours,
-			    int max_feature_no=10,
-			    int max_avg_tolerance=10,
-			    int reduction_shift=3,
-			    double maximum_angle=0.0,
-			    double angle_step=0.0);
-
-void deleteRepresentation(LogoRepresentation* representation);
-
-double matchingScore(LogoRepresentation* representation, Contours* image_contours);
-
-// theese are valid after call to MatchingScore()
-double logoAngle(LogoRepresentation* representation);
-int logoTranslationX(LogoRepresentation* representation);
-int logoTranslationY(LogoRepresentation* representation);
-
-int inverseLogoTranslationX(LogoRepresentation* representation, Image* image);
-int inverseLogoTranslationY(LogoRepresentation* representation, Image* image);

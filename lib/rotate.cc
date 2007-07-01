@@ -326,8 +326,8 @@ void rotate (Image& image, double angle, Image::iterator background)
 	    int oxx = (int)floor(ox);
 	    int oyy = (int)floor(oy);
 	    
-	    int oxx2 = std::min (oxx+1, image.w-1);
-	    int oyy2 = std::min (oyy+1, image.h-1);
+	    int oxx2 = std::min (oxx+1, image.w);
+	    int oyy2 = std::min (oyy+1, image.h);
 	    
 	    int xdist = (int) ((ox - oxx) * 256);
 	    int ydist = (int) ((oy - oyy) * 256);

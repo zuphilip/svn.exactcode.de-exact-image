@@ -43,7 +43,7 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
 
-MODULES = lib codecs econvert edentify ContourMatching
+MODULES = lib codecs econvert edentify
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
