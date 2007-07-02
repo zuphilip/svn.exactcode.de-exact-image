@@ -188,11 +188,10 @@ inline bool InternalClipLine (point& p1, point& p2, const area& m_area)
   return true;
 }
 
-inline void Blend (Image::iterator it, unsigned int x, unsigned int y, const Image::iterator& color)
+inline void Blend (Image::iterator& it, unsigned int x, unsigned int y, const Image::iterator& color)
 {
   it = it.at (x, y);
-  it = color;
-  *it;
+  it.set (color);
 }
 
 void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
