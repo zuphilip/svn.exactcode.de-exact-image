@@ -194,6 +194,8 @@ inline void Blend (Image::iterator& it, unsigned int x, unsigned int y, const Im
   it.set (color);
 }
 
+#include <iostream>
+
 void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
 	       const Image::iterator& color)
 {
@@ -231,14 +233,14 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
   // here we draw a line using the midpoint scan-conversion algorithm
   else
     {
+      Blend (it, p1.y, p1.x, color);
+      
       if (p2.y > p1.y) { // positive angle
 	if (dy <= dx) // flat
 	  {
 	    coord d = 2 * dy - dx;
 	    coord incE = 2 * dy;
 	    coord incNE  = 2 * (dy - dx);
-	    
-	    Blend (it, p1.x, p1.y, color);
 	    
 	    while (p1.x < p2.x)
 	      {
@@ -259,8 +261,6 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 	    coord incE = 2 * dx;
 	    coord incNE  = 2 * (dx - dy);
 	    
-	    Blend (it, p1.y, p1.x, color);
-	    
 	    while (p1.y < p2.y)
 	      {
 		if (d <= 0) {
@@ -271,7 +271,7 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 		  ++p1.x;
 		}
 		++p1.y;
-		Blend (it, p1.y, p1.x, color);
+		Blend (it, p1.x, p1.y, color);
 	      }
 	  }
       }
@@ -282,8 +282,6 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 	    coord incE = 2 * (-dy);
 	    coord incNE  = -2 * (dy + dx);
 	    
-	    Blend (it, p1.x, p1.y, color);
-	    
 	    while (p1.x < p2.x)
 	      {
 		if (d <= 0) {
@@ -293,7 +291,7 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 		  d += incNE;
 		  -- p1.y;
 		}
-		++ p1.x;
+		++p1.x;
 		Blend (it, p1.x, p1.y, color);
 	      }
 	  }
@@ -303,7 +301,6 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 	    coord incE = 2 * dx;
 	    coord incNE  = 2 * (dx + dy);
 	    
-	    Blend (it, p1.x, p1.y, color);
 	    while (p1.y > p2.y)
 	      {
 		if (d <= 0) {
@@ -313,7 +310,7 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
 		  d += incNE;
 		  ++p1.x;
 		}
-		-- p1.y;
+		--p1.y;
 		Blend (it, p1.x, p1.y, color);
 	      }
 	  }
