@@ -481,3 +481,15 @@ void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
     }
 }
 #endif
+
+void drawRectange(Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
+		  const Image::iterator& color)
+{
+  // top / bottom
+  drawLine(image, x,  y,  x2, y,  color);
+  drawLine(image, x,  y2, x2, y2, color);
+
+  // sides, avoid dubble set on corners
+  drawLine(image, x,  y+1, x,  y2-1, color);
+  drawLine(image, x2, y+1, x2, y2-1, color);
+}
