@@ -16,6 +16,8 @@
 #include <empty-page.hh>
 #include <ContourMatching.hh>
 
+#include "line.hh"
+
 #include "api.hh"
 
 Image* newImage ()
@@ -131,7 +133,8 @@ void imageSetYres (Image* image, int yres)
 
 // image manipulation
 
-Image::iterator background;
+static Image::iterator background;
+static Image::iterator foreground;
 
 bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
@@ -181,6 +184,17 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 void imageFastAutoCrop (Image* image)
 {
   fastAutoCrop (*image);
+}
+
+// some drawing primitives
+void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
+{
+  drawLine (*image, x, y, x2, y2, foreground);
+}
+
+void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
+{
+  drawRectange (*image, x, y, x2, y2, foreground);
 }
 
 void imageOptimize2BW (Image* image, int low, int high,

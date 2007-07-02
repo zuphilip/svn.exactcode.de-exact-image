@@ -136,6 +136,12 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 //  the bottom crop enabled by default)
 void imageFastAutoCrop (Image* image);
 
+
+// some drawing primitives
+void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
+void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
+
+
 // advanced all-in-one algorithms
 void imageOptimize2BW (Image* image, int low = 0, int high = 255,
 		       int threshold = 170,
