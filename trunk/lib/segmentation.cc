@@ -17,29 +17,6 @@
 #include "line.hh"
 #include "segmentation.hh"
 
-void drawHLine(Image& img, unsigned int x_start, unsigned int x_end, unsigned int y,
-	       unsigned int r=255, unsigned int g=0, unsigned int b=0)
-{
-  Image::iterator color = img.begin();
-  color.setRGB (r, g, b);
-  
-  drawLine(img, x_start, y, x_end, y, color);
-}
-
-void drawVLine(Image& img, unsigned int y_start, unsigned int y_end, unsigned int x,
-	       unsigned int r=255, unsigned int g=0, unsigned int b=0)
-{
-
-  Image::iterator color = img.begin();
-  color.setRGB (r, g, b);
-  
-  drawLine(img, x, y_start, x, y_end, color);
-}
-
-
-
-
-
 Segment::Segment(unsigned int ix, unsigned int iy, unsigned int iw, unsigned int ih, Segment* iparent)
 {
   x=ix;
@@ -89,10 +66,10 @@ bool Segment::Subdivide(const FGMatrix& img, double tolerance, unsigned int min_
 
 void Segment::Draw(Image& output, unsigned int r, unsigned int g, unsigned int b)
 {
-  drawHLine(output, x, x+w-1, y, r,g,b);
-  drawHLine(output, x, x+w-1, y+h-1, r,g,b);
-  drawVLine(output, y, y+h-1, x, r,g,b);
-  drawVLine(output, y, y+h-1, x+w-1, r,g,b);
+  Image::iterator color = output.begin();
+  color.setRGB (r, g, b);
+  
+  drawRectange(output, x, y, x+w-1, y+h-1, color);
 }
 
 
