@@ -1,6 +1,6 @@
 /*
  * Image Line 
- * Copyright (C) 2007 Valentin Ziegler and René Rebe
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +17,11 @@
 #include "line.hh"
 #include <iostream>
 
-// dirty hack to draw a horizontal/vertical red line over the image
-void Line::drawLine(Image& img, unsigned int a_start, unsigned int a_end, unsigned int b, bool horizontal)
+void drawLine (Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
+	       const Image::iterator& color)
 {
+
+#if 0
   unsigned int width=(unsigned int) img.w;
   Image::iterator red=img.begin();
   red.setRGB(255, 0, 0);
@@ -47,18 +49,5 @@ void Line::drawLine(Image& img, unsigned int a_start, unsigned int a_end, unsign
       row=0;
     }
   }
+#endif
 }
-
-void Line::drawHLine(Image& img, unsigned int x_start, unsigned int x_end, unsigned int y)
-{
-  drawLine(img, x_start, x_end, y, true);
-}
-
-void Line::drawVLine(Image& img, unsigned int y_start, unsigned int y_end, unsigned int x)
-{
-  drawLine(img, y_start, y_end, x, false);
-}
-
-Line::Line(){};
-
-Line::~Line(){};
