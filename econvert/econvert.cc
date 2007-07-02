@@ -852,7 +852,7 @@ bool convert_line (const Argument<std::string>& arg)
 
   if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2)) == 4)
     {
-      drawLine(image, x1, x2, x2, y2, foreground_color);
+      drawLine(image, x1, y1, x2, y2, foreground_color);
       return true; 
     }
   
