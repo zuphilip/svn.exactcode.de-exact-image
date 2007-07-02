@@ -37,6 +37,7 @@
 #include "Matrix.hh"
 #include "riemersma.h"
 #include "floyd-steinberg.h"
+#include "line.hh"
 
 // let's reuse some parts of the official, stable API to avoid
 // duplicating code
@@ -47,6 +48,7 @@
 using namespace Utility;
 
 Image image; // the global Image we work on
+Line  line;
 Image::iterator background_color; // the background color
 
 Argument<int> arg_quality ("", "quality",
@@ -844,6 +846,20 @@ bool convert_background (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_line (const Argument<std::string>& arg)
+{
+  unsigned int x1, y1, x2, y2, n;
+
+  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2)) == 4)
+    {
+      line.drawHLine(image, x1, x2, y1);
+      std::cout << "Hi, here i am ;)" << std::endl;
+    }
+
+
+  return true; 
+}
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -1006,7 +1022,15 @@ int main (int argc, char* argv[])
 					0, 1, true, true);
   arg_background.Bind (convert_background);
   arglist.Add (&arg_background);
-  
+ 
+  Argument<std::string> arg_line ("", "line",
+                                  "draw vertical, horizontal and diagonal lines:"
+				  " x1, y1, x2, y2",
+                                   0, 1, true, true);
+  arg_line.Bind (convert_line);
+  arglist.Add (&arg_line);
+
+ 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
     return 1;
