@@ -1,6 +1,6 @@
 /*
  * Image Line
- * Copyright (C) 2007 Valentin Ziegler and René Rebe
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,21 +14,6 @@
  * 
  */
 
-
-#include <vector>
 #include "Image.hh"
-
-class Line 
-{
-public:
-
-  Line();
-  ~Line();
-
-  void drawLine(Image& img, unsigned int a_start, unsigned int a_end, unsigned int b, bool horizontal);
-
-  void drawHLine(Image& img, unsigned int x_start, unsigned int x_end, unsigned int y);
-
-  void drawVLine(Image& img, unsigned int y_start, unsigned int y_end, unsigned int x);
-
-};
+void drawLine(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int x2,
+	      const Image::iterator& color);

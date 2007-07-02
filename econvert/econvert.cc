@@ -48,8 +48,8 @@
 using namespace Utility;
 
 Image image; // the global Image we work on
-Line  line;
 Image::iterator background_color; // the background color
+Image::iterator foreground_color; // the foreground color
 
 Argument<int> arg_quality ("", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
@@ -852,12 +852,12 @@ bool convert_line (const Argument<std::string>& arg)
 
   if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2)) == 4)
     {
-      line.drawHLine(image, x1, x2, y1);
-      std::cout << "Hi, here i am ;)" << std::endl;
+      drawLine(image, x1, x2, x2, y2, foreground_color);
+      return true; 
     }
-
-
-  return true; 
+  
+  std::cerr << "Error parsing line: '" << arg.Get() << "'" << std::endl;
+  return false;
 }
 
 int main (int argc, char* argv[])
@@ -865,6 +865,8 @@ int main (int argc, char* argv[])
   ArgumentList arglist;
   background_color.type = Image::RGB8;
   background_color.setL (255);
+  foreground_color.type = Image::RGB8;
+  foreground_color.setL (127);
   
   // setup the argument list
   Argument<bool> arg_help ("", "help",
@@ -1024,8 +1026,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_background);
  
   Argument<std::string> arg_line ("", "line",
-                                  "draw vertical, horizontal and diagonal lines:"
-				  " x1, y1, x2, y2",
+                                  "draw a line: x1, y1, x2, y2",
                                    0, 1, true, true);
   arg_line.Bind (convert_line);
   arglist.Add (&arg_line);

@@ -14,47 +14,26 @@
  * 
  */
 
-
+#include "line.hh"
 #include "segmentation.hh"
-
-// dirty hack to draw a horizontal/vertical line over the image
-void drawLine(Image& img, unsigned int a_start, unsigned int a_end, unsigned int b, bool horizontal,
-	      unsigned int R=255, unsigned int G=0, unsigned int B=0)
-{
-  unsigned int width=(unsigned int) img.w;
-  Image::iterator color=img.begin();
-  color.setRGB(R, G, B);
-  
-  unsigned int line=0;
-  unsigned int row=0;
-  unsigned int max=(horizontal) ? b : a_end;
-  Image::iterator i=img.begin();
-  Image::iterator end=img.end();
-  for (; i!=end && line <= max; ++i) {
-    if (horizontal) {
-      if (line==b && row >= a_start && row <= a_end)
-	i.set(color);
-    } else {
-      if (row==b && line >= a_start && line <= a_end)
-	i.set(color);
-    }
-    if (++row == width) {
-      line++;
-      row=0;
-    }
-  }
-}
 
 void drawHLine(Image& img, unsigned int x_start, unsigned int x_end, unsigned int y,
 	       unsigned int r=255, unsigned int g=0, unsigned int b=0)
 {
-  drawLine(img, x_start, x_end, y, true, r,g,b);
+  Image::iterator color = img.begin();
+  color.setRGB (r, g, b);
+  
+  drawLine(img, x_start, y, x_end, y, color);
 }
 
 void drawVLine(Image& img, unsigned int y_start, unsigned int y_end, unsigned int x,
 	       unsigned int r=255, unsigned int g=0, unsigned int b=0)
 {
-  drawLine(img, y_start, y_end, x, false, r,g,b);
+
+  Image::iterator color = img.begin();
+  color.setRGB (r, g, b);
+  
+  drawLine(img, x, y_start, x, y_end, color);
 }
 
 
