@@ -219,3 +219,5 @@ int logoTranslationY(LogoRepresentation* representation);
 
 int inverseLogoTranslationX(LogoRepresentation* representation, Image* image);
 int inverseLogoTranslationY(LogoRepresentation* representation, Image* image);
+
+void drawMatchedContours(LogoRepresentation* representation, Image* image);

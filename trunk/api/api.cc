@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include <string>
 #include <vector>
 #include <sstream>
@@ -322,3 +324,20 @@ int inverseLogoTranslationY(LogoRepresentation* representation, Image* image)
 {
   return representation->CalculateInverseTranslation(image->w/2, image->h/2).second;
 }
+
+
+void drawMatchedContours(LogoRepresentation* representation, Image* image)
+{
+  int tx=representation->logo_translation.first;
+  int ty=representation->logo_translation.second;
+  double angle=M_PI * representation->rot_angle / 180.0;
+
+  for (unsigned int i=0; i<representation->mapping.size(); i++) {
+    double trash;
+    Contours::Contour transformed;
+    RotCenterAndReduce(*(representation->mapping[i].first), transformed, angle, 0, 0, trash, trash);
+    DrawTContour(*image, transformed, tx, ty, 0,0,255);
+    DrawContour(*image, *(representation->mapping[i].second), 0,255,0);
+  }
+}
+
