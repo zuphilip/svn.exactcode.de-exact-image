@@ -786,9 +786,10 @@ public:
   iterator end () {
     return iterator(this, true);
   }
+
+  void copyMeta (const Image& other);
   
 protected:
-  void copyMeta (const Image& other);
 };
 
 typedef struct { unsigned char r, g, b; } rgb;
