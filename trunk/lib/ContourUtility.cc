@@ -148,12 +148,10 @@ double L1Dist(const Contours::Contour& a,
 // not very efficient, yet effective
 static void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned int B)
 {
-  Image::iterator color=img.begin();
-  color.setRGB(R, G, B);
-
   Image::iterator p=img.begin();
   p=p.at(x,y);
-  p.set(color);
+  p.setRGB(R, G, B);
+  p.set(p);
 }
 
 
