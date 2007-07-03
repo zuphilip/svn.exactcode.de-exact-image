@@ -233,8 +233,8 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
   // here we draw a line using the midpoint scan-conversion algorithm
   else
     {
-      Blend (it, p1.y, p1.x, color);
-      
+      Blend (it, p1.x, p1.y, color);
+
       if (p2.y > p1.y) { // positive angle
 	if (dy <= dx) // flat
 	  {
