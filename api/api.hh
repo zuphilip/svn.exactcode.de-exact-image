@@ -40,7 +40,8 @@ void deleteImage (Image* image);
 
 // copy the image's pixel and meta data
 Image* copyImage (Image* image);
-
+Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
+			   unsigned int w, unsigned int h, double angle);
 
 // decode image from memory data of size n
 #ifdef SWIG
