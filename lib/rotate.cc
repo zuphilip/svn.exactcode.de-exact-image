@@ -308,8 +308,8 @@ void rotate (Image& image, double angle, Image::iterator background)
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   
-  double cached_sin = sin (angle);
-  double cached_cos = cos (angle);
+  const double cached_sin = sin (angle);
+  const double cached_cos = cos (angle);
 
   for(int y = 0; y < image.h; ++y)
       for(int x = 0; x < image.w; ++x)
@@ -346,4 +346,63 @@ void rotate (Image& image, double angle, Image::iterator background)
 	  ++it;
 	}
   image.setRawData ();
+}
+
+Image* copy_crop_rotate (Image& image, unsigned int x_start, unsigned int y_start,
+			 unsigned int w, unsigned int h,
+			 double angle)
+{
+  angle = fmod (angle, 360);
+  if (angle < 0)
+    angle += 360;
+  
+  // trivial code just for testing, to be optimized
+  
+  angle = angle / 180 * M_PI;
+  
+  Image* new_image = new Image;
+  new_image->copyMeta (image);
+  new_image->New (w, h);
+  
+  Image::iterator it = new_image->begin();
+  Image::iterator orig_it = image.begin();
+  
+  const double cached_sin = sin (angle);
+  const double cached_cos = cos (angle);
+
+  Image::iterator background = image.begin();  background.setL (0);
+  
+  for(int y = 0; y < h; ++y)
+      for(int x = 0; x < w; ++x)
+	{
+	  const double ox = (  x * cached_cos + y * cached_sin) + x_start;
+	  const double oy = (- x * cached_sin + y * cached_cos) + y_start;
+	  
+	  if (ox >= 0 && oy >= 0 &&
+	      ox < image.w && oy < image.h) {
+	    
+	    int oxx = (int)floor(ox);
+	    int oyy = (int)floor(oy);
+	    
+	    int oxx2 = std::min (oxx+1, image.w-1);
+	    int oyy2 = std::min (oyy+1, image.h-1);
+	    
+	    int xdist = (int) ((ox - oxx) * 256);
+	    int ydist = (int) ((oy - oyy) * 256);
+	    
+	    it.set ( (
+		      *orig_it.at (oxx,  oyy ) * (256-xdist) * (256-ydist) +
+		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist) +
+		      *orig_it.at (oxx,  oyy2) * (256-xdist) * ydist +
+		      *orig_it.at (oxx2, oyy2) * xdist       * ydist
+		      ) /
+		     (256 * 256) );
+	  }
+	  else
+	    it.set (background);
+	  
+	  ++it;
+	}
+  
+  return new_image;
 }
