@@ -157,9 +157,11 @@ static void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, u
 
 void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b)
 {
-  for (unsigned int i=0; i<c.size(); i++)
+  for (unsigned int i=0; i<c.size(); i++) {
     PutPixel(img, c[i].first, c[i].second, r, g, b);
+  }
 }
+
 
 void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsigned int ty, unsigned int r, unsigned int g, unsigned int b)
 {
@@ -171,6 +173,106 @@ void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsig
   }
 }
 
+/*
+void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b)
+{
+  int xsum=0;
+  int ysum=0;
+  for (unsigned int i=0; i<c.size(); i++) {
+    PutPixel(img, c[i].first, c[i].second, r, g, b);
+    xsum+=c[i].first;
+    ysum+=c[i].second;
+  }
+
+  xsum /= c.size();
+  ysum /= c.size();
+
+  for (int dx=-10; dx<=10; dx++) {
+    int x=xsum+dx;
+    int y=ysum;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x,y, r, g, b);
+  }
+  for (int dy=-10; dy<=10; dy++) {
+    int x=xsum;
+    int y=ysum+dy;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img,x,y, r, g, b);
+  }
+ 
+  Contours::Contour trash;
+  double tx=0;
+  double ty=0;
+  CenterAndReduce(c,trash,3,tx,ty);
+  xsum=(tx*8.0);
+  ysum=(ty*8.0);
+  
+  for (int dx=-4; dx<=4; dx++) {
+    int x=xsum+dx;
+    int y=ysum;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x,y, r, g, b);
+  }
+  for (int dy=-4; dy<=4; dy++) {
+    int x=xsum;
+    int y=ysum+dy;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img,x,y, r, g, b);
+  }
+
+}
+
+void DrawTContour(Image& img, const Contours::Contour& c, unsigned int tx, unsigned int ty, unsigned int r, unsigned int g, unsigned int b)
+{
+  int xsum=0;
+  int ysum=0;
+  for (unsigned int i=0; i<c.size(); i++) {
+    int x=c[i].first+tx;
+    int y=c[i].second+ty;
+    xsum+=x;
+    ysum+=y;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x, y, r, g, b);
+  }
+
+  xsum /= c.size();
+  ysum /= c.size();
+
+  for (int dx=-10; dx<=10; dx++) {
+    int x=xsum+dx;
+    int y=ysum;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x,y, r, g, b);
+  }
+  for (int dy=-10; dy<=10; dy++) {
+    int x=xsum;
+    int y=ysum+dy;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img,x,y, r, g, b);
+  }
+ 
+  Contours::Contour trash;
+  double ddx=0;
+  double ddy=0;
+  CenterAndReduce(c,trash,3,ddx,ddy);
+  xsum=tx+(ddx*8.0);
+  ysum=ty+(ddy*8.0);
+  
+  for (int dx=-4; dx<=4; dx++) {
+    int x=xsum+dx;
+    int y=ysum;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img, x,y, r, g, b);
+  }
+  for (int dy=-4; dy<=4; dy++) {
+    int x=xsum;
+    int y=ysum+dy;
+    if (x >= 0 && x <= img.w && y >= 0 && y <= img.h)
+      PutPixel(img,x,y, r, g, b);
+  }
+
+}
+*/
 
 
 bool WriteContour(FILE* f, const Contours::Contour& source)

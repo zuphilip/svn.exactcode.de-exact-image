@@ -176,10 +176,41 @@ double LogoRepresentation::Score(Contours* image)
        logo_sets[best_set][i].matches[logo_sets[best_set][i].n_to_n_match_index]->cimg);
   }
 
+  // adjust translation
+  // (this is a quick workaround to the shifted-centroid phenomenon)
+
+  Contours::Contour tmp;
+  double rax=.0;
+  double ray=.0;
+  double rbx=.0;
+  double rby=.0;
+  RotCenterAndReduce(*(mapping[best_pivot].first), tmp, M_PI*rot_angle/180.0,
+		     logo_trans_before_rot, 0, rax, ray);
+  rax-=(double)logo_trans_before_rot;
+  ray-=(double)logo_trans_before_rot;
+  tmp.clear();
+  const Contours::Contour& second=*(mapping[best_pivot].second);
+  for (unsigned int i=0; i<second.size(); i++) {
+    rbx+=second[i].first;
+    rby+=second[i].second;
+  }
+  rbx/=(double)second.size();
+  rby/=(double)second.size();
+  int newtx=(int)(rbx-rax);
+  int newty=(int)(rby-ray);
+  std::cout << "adjusting translation: "
+	    << logo_translation.first << "\t"
+	    << logo_translation.second << "\t->\t"
+	    << newtx << "\t" << newty << std::endl;
+  logo_translation.first=newtx;
+  logo_translation.second=newty;
+
+
   // optimize
 
   score=PrecisionScore();
 
+  //#if false
   /*
   double oldrx=.0;
   double oldry=.0;
@@ -206,7 +237,8 @@ double LogoRepresentation::Score(Contours* image)
        improved=Optimize(score);
      }
   }
- 
+  //#endif 
+
   // clean up
   for (unsigned int s=0; s<logo_sets.size(); s++)
     for (unsigned int j=0; j<logo_set_count; j++) {
@@ -285,6 +317,8 @@ double LogoRepresentation::N_M_Match(unsigned int set, unsigned int& pivot)
       }
     }
   
+  //std::cout << pivot << std::endl;
+
   return bestsum;
 }
 
@@ -310,6 +344,7 @@ double LogoRepresentation::PrecisionScore()
     current-=L1Dist(tmp, *mapping[i].second,
 		0.0, 0.0, tx, ty, 0, trash, trash);
 
+    //std::cout << "match " << i << "\t" << current << std::endl;
     sum+=std::max(0.0, current);
   }
 
