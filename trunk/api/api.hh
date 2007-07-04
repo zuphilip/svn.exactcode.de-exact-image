@@ -140,6 +140,7 @@ void imageFastAutoCrop (Image* image);
 
 // some drawing primitives
 void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
+void imageDrawAALine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
 void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
 
 
