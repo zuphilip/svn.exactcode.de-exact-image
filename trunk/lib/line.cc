@@ -188,13 +188,30 @@ inline bool InternalClipLine (point& p1, point& p2, const area& m_area)
   return true;
 }
 
-inline void Blend (Image::iterator& it, unsigned int x, unsigned int y, const Image::iterator& color)
+inline void Blend (Image::iterator& it, unsigned int x, unsigned int y,
+		   const Image::iterator& color, int alpha = 0xff)
 {
   it = it.at (x, y);
-  it.set (color);
+  
+  if (alpha == 0xff) {
+    it.set (color);
+  }
+  else if (alpha > 0) {
+    uint16_t r, r2, g, g2, b, b2;
+    color.getRGB (&r, &g, &b);
+    *it;
+    it.getRGB (&r2, &g2, &b2);
+    
+    const int ialpha = 255 - alpha; // inverse
+    
+    r = (r * alpha + r2 * ialpha) >> 8;
+    g = (g * alpha + g2 * ialpha) >> 8;
+    b = (b * alpha + b2 * ialpha) >> 8;
+    
+    it.setRGB (r, g, b);
+    it.set (it);
+  }
 }
-
-#include <iostream>
 
 void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
 	       const Image::iterator& color)
@@ -318,42 +335,25 @@ void drawLine (Image& image, unsigned int x, unsigned int y, unsigned int x2, un
     }
 }
 
-
-#if 0
-void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
-			     GsmpColor::Color c)
+void drawAALine (Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
+		 const Image::iterator& color)
 {
-  if (! InternalClipLine (p1, p2) )
+  point p1 (x, y);
+  point p2 (x2, y2);
+  area m_area (0, 0, image.w, image.h);
+  
+  if (!InternalClipLine (p1, p2, m_area))
     return;
   
   coord dx = p2.x - p1.x;
   coord dy = p2.y - p1.y;
   
-  if (dx == 0) // vertical line
+  Image::iterator it = image.begin();
+  
+  if (dx == 0 || dy == 0) // vertical or horizontal line
     {
-      coord y = std::min (p1.y, p2.y);
-      coord t_y = std::max (p1.y, p2.y);
-      
-      coord pixel = (y * m_area.w) + p1.x;
-      
-      while (y <= t_y){
-	GsmpColor::Blend ( &(m_data [pixel] ), c);
-	pixel += m_area.w;
-	++ y;
-      }
-    }
-  else if (dy == 0) // horizontal line
-    {
-      coord x = std::min (p1.x, p2.x);
-      coord t_x = std::max (p1.x, p2.x);
-      
-      coord pixel = (p1.y * m_area.w) + x;
-      
-      while (x <= t_x){
-	GsmpColor::Blend ( &(m_data [pixel] ), c);
-	++ pixel;
-	++ x;
-      }
+      // reuse
+      drawLine (image, x, y, x2, y2, color);
     }
   // here we draw a line using the midpoint scan-conversion algorithm
   else
@@ -365,27 +365,23 @@ void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
 	    coord incE = 2 * dy;
 	    coord incNE  = 2 * (dy - dx);
 	    
-	    coord pixel = (p1.y * m_area.w) + p1.x;
-	    
 	    while (p1.x < p2.x)
 	      {
 		coord intB = ((d - incNE) << 8) / (incE - incNE + 1);
 		coord intA = 255 - intB;
 		
-		GsmpColor::Blend ( &(m_data [pixel] ), c, intA);
-		if (pixel + m_area.w < m_area.w * m_area.h)
-		  GsmpColor::Blend ( &(m_data [pixel + m_area.w] ), c, intB);
+		Blend (it, p1.x, p1.y, color, intA);
+		if (p1.y+1 < m_area.h)
+		  Blend (it, p1.x, p1.y+1, color, intB);
 		
 		if (d <= 0) {
 		  d += incE;
-		  ++ pixel;
 		}
 		else {
 		  d += incNE;
-		  pixel += m_area.w + 1;
+		  ++p1.y;
 		}
-		
-		++ p1.x;
+		++p1.x;
 	      }
 	  }
 	else // steep (this is a late night guess and might need fixing)
@@ -394,27 +390,23 @@ void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
 	    coord incE = 2 * dx;
 	    coord incNE  = 2 * (dx - dy);
 	    
-	    coord pixel = (p1.y * m_area.w) + p1.x;
-	    
 	    while (p1.y < p2.y)
 	      {
 		coord intB = ((d - incNE) << 8) / (incE - incNE + 1);
 		coord intA = 255 - intB;
 		
-		GsmpColor::Blend ( &(m_data [pixel] ), c, intA);
-		if (pixel + 1 < m_area.w * m_area.h) // TODO: needs fixing
-		  GsmpColor::Blend ( &(m_data [pixel + 1] ), c, intB);
+		Blend (it, p1.x, p1.y, color, intA);
+		if (p1.x+1 < m_area.w)
+		  Blend (it, p1.x+1, p1.y, color, intB);
 		
 		if (d <= 0) {
 		  d += incE;
-		  pixel += m_area.w;
 		}
 		else {
 		  d += incNE;
-		  pixel += m_area.w + 1;
+		  ++p1.x;
 		}
-		
-		++ p1.y;
+		++p1.y;
 	      }
 	  }
       }
@@ -425,26 +417,22 @@ void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
 	    coord incE = 2 * (-dy);
 	    coord incNE  = -2 * (dy + dx);
 	    
-	    coord pixel = (p1.y * m_area.w) + p1.x;
-	    
 	    while (p1.x < p2.x)
 	      {
 		coord intB = ((d - incNE) << 8) / (incE - incNE + 1);
 		coord intA = 255 - intB;
 		
-		GsmpColor::Blend ( &(m_data [pixel] ), c, intA);
-		if (pixel - m_area.w >= 0)
-		  GsmpColor::Blend ( &(m_data [pixel - m_area.w] ), c, intB);
+		Blend (it, p1.x, p1.y, color, intA);
+		if (p1.y-1 >= 0)
+		  Blend (it, p1.x, p1.y-1, color, intB);
 		
 		if (d <= 0) {
 		  d += incE;
-		  ++ pixel;
 		}
 		else {
 		  d += incNE;
-		  pixel -= m_area.w - 1;
+		  --p1.y;
 		}
-		
 		++ p1.x;
 	      }
 	  }
@@ -454,33 +442,29 @@ void GsmpPixmap::DrawAaLine (GsmpPixmap::point p1, GsmpPixmap::point p2,
 	    coord incE = 2 * dx;
 	    coord incNE  = 2 * (dx + dy);
 	    
-	    coord pixel = (p1.y * m_area.w) + p1.x;
-	    
 	    while (p1.y > p2.y)
 	      {
 		coord intB = ((d - incNE) << 8) / (incE - incNE + 1);
 		coord intA = 255 - intB;
 		
-		GsmpColor::Blend ( &(m_data [pixel] ), c, intA);
-		if (pixel + 1 < m_area.w * m_area.h) // TODO: needs fixing
-		  GsmpColor::Blend ( &(m_data [pixel + 1] ), c, intB);
+		// TODO: start pixel is strangely dark
+		Blend (it, p1.x, p1.y, color, intA);
+		if (p1.x+1 < m_area.w)
+		  Blend (it, p1.x+1, p1.y, color, intB);
 		
 		if (d <= 0) {
 		  d += incE;
-		  pixel -= m_area.w;
 		}
 		else {
 		  d += incNE;
-		  pixel -= m_area.w - 1;
+		  ++p1.x;
 		}
-		
-		-- p1.y;
+		--p1.y;
 	      }
 	  }
       }
     }
 }
-#endif
 
 void drawRectange(Image& image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
 		  const Image::iterator& color)
