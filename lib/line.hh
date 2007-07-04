@@ -17,5 +17,8 @@
 #include "Image.hh"
 void drawLine(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
 	      const Image::iterator& color);
+void drawAALine(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
+		const Image::iterator& color);
+
 void drawRectange(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
 		  const Image::iterator& color);
