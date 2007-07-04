@@ -1,12 +1,18 @@
-#ifndef IMAGE_HH
-#define IMAGE_HH
-
-#include <inttypes.h>
-#include <string>
-
 /* The Plain Old Data encapsulation of pixel, raster data.
- *
- * Only minimal abstraction is done here to allow all sorts of
+ * Copyright (C) 2005 - 2007 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ */
+
+/* Only minimal abstraction is done here to allow all sorts of
  * hand optimized low-level optimizations.
  *
  * On loading a codec might be attached. The codec might be querried
@@ -61,6 +67,10 @@
  * copied.
  */
 
+#ifndef IMAGE_HH
+#define IMAGE_HH
+
+#include <inttypes.h>
 #include <string>
 
 // just forward
@@ -611,7 +621,7 @@ public:
     }
     
     // return Luminance
-    inline uint16_t getL ()
+    inline uint16_t getL () const
     {
       switch (type) {
       case GRAY1:
@@ -637,7 +647,7 @@ public:
     }
     
     // return Luminance
-    inline void getRGB(uint16_t* r, uint16_t* g, uint16_t* b)
+    inline void getRGB(uint16_t* r, uint16_t* g, uint16_t* b) const
     {
       switch (type) {
       case GRAY1:
