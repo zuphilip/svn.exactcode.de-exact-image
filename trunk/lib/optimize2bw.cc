@@ -169,3 +169,45 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     convolution_matrix (image, matrix, width, width, divisor);
   }
 }
+
+void differential_optimize2bw (Image& image,
+			       int low, int high, int threshold,
+			       int sloppy_threshold,
+			       int radius, double standard_deviation)
+{
+  colorspace_by_name (image, "gray8");
+  
+  Image src_image (image);
+  uint8_t* it = src_image.getRawData ();
+  uint8_t* dst = image.getRawData ();
+
+  for (unsigned int y = 0; y < image.h; ++y)
+    for (unsigned int x = 0; x < image.w; ++x, ++it, ++dst)
+      {
+	if (x > 0 && y > 0 &&
+	    x < image.w-1 && y < image.h-1)
+	  {
+	    const int ref = it[0];
+	    unsigned int sum =
+	      std::abs ( (int)it[-1] - ref ) +
+	      std::abs ( (int)it[+1] - ref ) +
+	      std::abs ( (int)it[-image.w] - ref ) +
+	      std::abs ( (int)it[+image.w] - ref ) +
+	      
+	      (
+	       std::abs ( (int)it[-1-image.w] - ref ) +
+	      std::abs ( (int)it[+1-image.w] - ref ) +
+	      std::abs ( (int)it[-1+image.w] - ref ) +
+	      std::abs ( (int)it[+1+image.w] - ref )
+	       ) / 2
+	      ;
+	    
+	    if (sum > 255)
+	      sum = 255;
+	    sum = 255-sum;
+	    
+	    dst[0] = sum > 127 ? 255 : 0;
+	  }
+      }
+  image.setRawData ();
+}
