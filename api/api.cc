@@ -200,6 +200,12 @@ void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x
   drawLine (*image, x, y, x2, y2, foreground);
 }
 
+// some drawing primitives
+void imageDrawAALine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
+{
+  drawAALine (*image, x, y, x2, y2, foreground);
+}
+
 void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
 {
   drawRectange (*image, x, y, x2, y2, foreground);
