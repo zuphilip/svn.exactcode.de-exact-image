@@ -1,6 +1,6 @@
 /*
- * Image Line
- * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
+ * Agg to ExactImage bridge.
+ * Copyright (C) 2007 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,14 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
  */
 
+#include "agg.hh"
 #include "Image.hh"
-void drawLine(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
-	      const Image::iterator& color);
-void drawAALine(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
-		const Image::iterator& color);
 
-void drawRectange(Image& img, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2,
-		  const Image::iterator& color);
+// the big methods later go here, ...

@@ -30,6 +30,13 @@ headercheck c++ iostream string iostream sstream fstream || \
 	status_error "Not all tested STL headers are present - please install them."
 
 pkgcheck x11 compile X11 atleast 11.0
+pkgcheck libagg pkg-config LIBAGG atleast 2.4 || \
+	status_error "
+		Anti-Grain Geometry requried for vector rasterizing was not found.
+		Agg can be obtained from: www.antigrain.com
+
+"
+
 if ! pkgcheck evas pkg-config EVAS atleast 0.9.9; then
 	cat <<-EOT
 

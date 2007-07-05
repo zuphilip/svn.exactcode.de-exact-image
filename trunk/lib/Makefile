@@ -12,6 +12,14 @@ else
 NOT_SRCS += bardecode.cc
 endif
 
+#ifeq "$(WITHLIBAGG)" "1"
+CPPFLAGS += $(LIBAGGINCS)
+LDFLAGS += $(LIBAGGLIBS)
+#else
+#NOT_SRCS += agg.cc
+#endif
+
+
 CPPFLAGS += -I lib/
 
 DEPS =
