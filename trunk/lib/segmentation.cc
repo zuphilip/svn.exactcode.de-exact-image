@@ -14,7 +14,7 @@
  * 
  */
 
-#include "line.hh"
+#include "vectorial.hh"
 #include "segmentation.hh"
 
 Segment::Segment(unsigned int ix, unsigned int iy, unsigned int iw, unsigned int ih, Segment* iparent)
