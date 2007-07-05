@@ -138,11 +138,10 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 void imageFastAutoCrop (Image* image);
 
 
-// some drawing primitives
-void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
-void imageDrawAALine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
-void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2);
-
+// vector elements
+void imageDrawLine (Image* image, double x, double y, double x2, double y2);
+void imageDrawRectange (Image* image, double x, double y, double x2, double y2);
+void imageDrawText (Image* image, double x, double y, char* text, double height);
 
 // advanced all-in-one algorithms
 void imageOptimize2BW (Image* image, int low = 0, int high = 255,

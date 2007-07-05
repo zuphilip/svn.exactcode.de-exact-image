@@ -18,7 +18,7 @@
 #include <empty-page.hh>
 #include <ContourMatching.hh>
 
-#include "line.hh"
+#include <vectorial.hh>
 
 #include "api.hh"
 
@@ -194,22 +194,23 @@ void imageFastAutoCrop (Image* image)
   fastAutoCrop (*image);
 }
 
-// some drawing primitives
-void imageDrawLine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
+// vector element rendering
+
+void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 {
   drawLine (*image, x, y, x2, y2, foreground);
 }
 
-// some drawing primitives
-void imageDrawAALine (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
-{
-  drawAALine (*image, x, y, x2, y2, foreground);
-}
-
-void imageDrawRectange (Image* image, unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
+void imageDrawRectange (Image* image, double x, double y, double x2, double y2)
 {
   drawRectange (*image, x, y, x2, y2, foreground);
 }
+
+void imageDrawText (Image* image, double x, double y, char* text, double height)
+{
+  drawText (*image, x, y, text, height, foreground);
+}
+
 
 void imageOptimize2BW (Image* image, int low, int high,
 		       int threshold,

@@ -37,7 +37,7 @@
 #include "Matrix.hh"
 #include "riemersma.h"
 #include "floyd-steinberg.h"
-#include "line.hh"
+#include "vectorial.hh"
 
 // let's reuse some parts of the official, stable API to avoid
 // duplicating code
