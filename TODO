@@ -8,10 +8,6 @@ copy on write
 sub-images
  ->
 
-some AALines leave a overly dark pixel in the bottom left pixel,
-probably migrat to Agg primitives anyway, ...
- 
-
 Loaders:
  - (optimized) palette saving
  - gzip / bzip2 / ... compressed streams
