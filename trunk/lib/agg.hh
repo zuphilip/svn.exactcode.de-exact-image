@@ -278,11 +278,12 @@ public:
     // m_ren->blend_solid_vspan(x, y, len, c, covers);
     if (c.a)
       {
+	typedef color_type::calc_type calc_type;
+	
+	Image::iterator it = m_img->begin();
+	
 	do 
 	  {
-	    typedef color_type::calc_type calc_type;
-	    
-	    Image::iterator it = m_img->begin();
 	    it = it.at (x, y);
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
@@ -295,6 +296,7 @@ public:
 	      {
 		blender_type::blend_pix(it, c.r, c.g, c.b, alpha, *covers);
 	      }
+	    ++y;
 	    ++covers;
 	  }
 	while(--len);
