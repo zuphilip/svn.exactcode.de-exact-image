@@ -12,17 +12,17 @@ else
 NOT_SRCS += bardecode.cc
 endif
 
-#ifeq "$(WITHLIBAGG)" "1"
+# we we use the built-in Agg, we depend on it, ...
+
+ifeq "$(WITHLIBAGG)" "0"
+DEPS += $(agg-2.4_BINARY)
+else
 CPPFLAGS += $(LIBAGGINCS)
 LDFLAGS += $(LIBAGGLIBS)
-#else
-#NOT_SRCS += agg.cc
-#endif
+endif
 
 
 CPPFLAGS += -I lib/
-
-DEPS =
 
 include build/bottom.make
 
