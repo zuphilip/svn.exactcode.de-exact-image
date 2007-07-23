@@ -90,3 +90,56 @@ void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 
   image.setRawData (new_data);
 }
+
+
+void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matrix_type* v_matrix, int xw, int yw,
+				      matrix_type src_add)
+{
+  uint8_t* data = image.getRawData();
+  matrix_type* tmp_data = (matrix_type*) malloc (image.w * image.h*sizeof(matrix_type));
+  
+  const int xr = xw / 2;
+  const int yr = yw / 2;
+  const int xmax = image.w-((xw+1)/2);
+  const int ymax = image.h-((yw+1)/2);
+
+  uint8_t* src_ptr = data;
+  matrix_type* tmp_ptr = tmp_data;
+
+  // transform the vertical convolution strip with h_matrix, leaving out the left/right borders
+  for (int y = 0; y < image.h; ++y) {
+    //printf("%d\n",y);
+    src_ptr = &data[(y * image.w)-xr];
+    tmp_ptr = &tmp_data[y * image.w];
+
+    for (int x = xr; x < xmax; ++x) {
+      tmp_ptr[x]=.0;
+      for (int dx = 0; dx < xw; ++dx)
+	tmp_ptr[x]+=((matrix_type)src_ptr[x+dx])*h_matrix[dx];
+    }
+  }
+
+  printf("here\n");
+
+  // transform the horizontal convolution strip with v_matrix, leaving out all borders
+  for (int x = xr; x < xmax; ++x) {
+
+    src_ptr = &data[x+(yr*image.w)];
+    tmp_ptr = &tmp_data[x];
+
+    int offs=0;
+    for (int y = yr; y < ymax; ++y) {
+      int doffs=0;
+      matrix_type sum=src_add * ((matrix_type) src_ptr[offs]);
+      for (int dy = 0; dy < yw; ++dy) {
+	sum += tmp_ptr[offs+doffs]*v_matrix[dy];
+	doffs+=image.w;
+      }
+      uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
+      src_ptr[offs]=z;
+      offs+=image.w;
+    }
+  }
+
+  free (tmp_data);
+}
