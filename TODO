@@ -38,6 +38,15 @@ Colorspaces:
  - sRGB vs. Adobe RGB
  - ...
 
++  /*
++     Basic colorspace: GRAY, GRAYA, RGB, RGBA, CMYK, YUV, YUVA
++     Bit depth:        INT1 INT2 INT4        INT8 INT16 INT32 FLOAT32 FLOAT64
++   */
+
+   uint8_t* getRawData () const;
+   uint8_t* getRawDataEnd () const;
+
+
 Frontends:
  - edentify:
    - more complete
@@ -47,4 +56,3 @@ Frontends:
    - channel cycling
    - thumbnailing
    - slideshow
-
