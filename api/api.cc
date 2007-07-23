@@ -312,7 +312,7 @@ double matchingScore(LogoRepresentation* representation, Contours* image_contour
   return representation->Score(image_contours);
 }
 
-// theese are valid after call to MatchingScore()
+// theese are valid after call to matchingScore()
 double logoAngle(LogoRepresentation* representation)
 {
   return representation->rot_angle;
