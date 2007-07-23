@@ -288,6 +288,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     }
     
     /*private_*/convolution_matrix (image, matrix, width, width, divisor);
+    delete (matrix);
   }
 #else
 
