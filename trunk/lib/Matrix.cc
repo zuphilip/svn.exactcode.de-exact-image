@@ -1,6 +1,7 @@
 /*
  * Convolution Matrix.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006, 2007 René Rebe, ExactCODE
+ * Copyright (C) 2007 Valentin Ziegler, ExactCODE
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -12,7 +13,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
  */
 
 #include "Matrix.hh"
@@ -119,8 +119,6 @@ void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matri
     }
   }
 
-  printf("here\n");
-
   // transform the horizontal convolution strip with v_matrix, leaving out all borders
   for (int x = xr; x < xmax; ++x) {
 
@@ -140,6 +138,8 @@ void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matri
       offs+=image.w;
     }
   }
+
+  image.setRawData (); // invalidate as altered
 
   free (tmp_data);
 }
