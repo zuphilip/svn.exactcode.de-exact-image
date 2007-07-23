@@ -245,7 +245,9 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     image.spp = 1; // converted data RGB8->GRAY8
     image.setRawData();
   }
-  
+
+  //#define OLD_CODE
+#ifdef OLD_CODE  
   // Convolution Matrix (unsharp mask a-like)
   {
     // compute kernel (convolution matrix to move over the iamge)
@@ -283,8 +285,39 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	std::cerr << std::endl;
     }
     
-    private_convolution_matrix (image, matrix, width, width, divisor);
+    /*private_*/convolution_matrix (image, matrix, width, width, divisor);
   }
+#else
+
+  // Convolution Matrix (unsharp mask a-like)
+  {
+    // compute kernel (convolution matrix to move over the iamge)
+    
+    const int width = radius * 2 + 1;
+    matrix_type divisor = 0;
+    float sd = standard_deviation;
+    
+    matrix_type* matrix = new matrix_type [width];
+    
+    for (int d = -radius; d <= radius; ++d) {
+      matrix_type v = (matrix_type) (exp (-((float)d*d) / (2. * sd * sd)) );
+      matrix[d+radius] = v;
+    }
+
+    // normalize (will not work with integer matrix type !)
+    for (int i=0; i<width; i++)
+      for (int j=0; j<width; j++)
+	divisor+=matrix[i]*matrix[j];
+    divisor=-1.0/sqrt(divisor); // we need to take the squareroot because matrix is applied twice
+    for (int i=0; i<width; i++)
+      matrix[i]*=divisor;
+    
+    decomposable_convolution_matrix (image, matrix, matrix, width, width,
+				     2.0);
+  }
+
+#endif
+
 }
 
 void differential_optimize2bw (Image& image,

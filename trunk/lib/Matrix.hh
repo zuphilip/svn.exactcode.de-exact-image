@@ -28,4 +28,10 @@ typedef double matrix_type;
 void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor);
 
+// convolution matrix code if matrix[i][j] is decomposable to h_matrix[i]*v_matrix[j]
+// the original image is multiplied with src_add and added to the result.
+void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matrix_type* v_matrix, int xw, int yw,
+				      matrix_type src_add);
+
+
 #endif
