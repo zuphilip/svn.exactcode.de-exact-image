@@ -274,10 +274,12 @@ void optimize2bw (Image& image, int low, int high, int threshold,
       for (int x = -radius; x <= radius; ++x) {
 	matrix_type* m = &matrix[x + radius + (y+radius)*width];
 	
+	
 	*m *= -1;
 	if (x == 0 && y == 0)
 	  *m += 2*divisor;
-	
+		
+
 	if (debug)
 	  std::cerr << *m << " ";
       }
@@ -298,7 +300,8 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     float sd = standard_deviation;
     
     matrix_type matrix[width];
-    
+    matrix_type matrix_2[width];
+
     for (int d = -radius; d <= radius; ++d) {
       matrix_type v = (matrix_type) (exp (-((float)d*d) / (2. * sd * sd)) );
       matrix[d+radius] = v;
@@ -307,11 +310,13 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 
     // normalize (will not work with integer matrix type !)
     divisor=1.0/divisor;
-    for (int i=0; i<width; i++)
+    for (int i=0; i<width; i++) {
       matrix[i]*=divisor;
+      matrix_2[i]=-matrix[i];
+    }
     
-    decomposable_convolution_matrix (image, matrix, matrix, width, width,
-				     0.0);
+    decomposable_convolution_matrix (image, matrix, matrix_2, width, width,
+				     2.0);
   }
 
 #endif
