@@ -129,10 +129,10 @@ void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matri
 
     int offs=0;
     for (int y = yr; y < ymax; ++y) {
-      int doffs=0;
+      int doffs=offs;
       matrix_type sum=src_add * ((matrix_type) src_ptr[offs]);
       for (int dy = 0; dy < yw; ++dy) {
-	sum += tmp_ptr[offs+doffs]*v_matrix[dy];
+	sum += tmp_ptr[doffs]*v_matrix[dy];
 	doffs+=image.w;
       }
       uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
