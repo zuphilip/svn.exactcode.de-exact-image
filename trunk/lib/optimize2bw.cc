@@ -30,6 +30,10 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 		  int sloppy_threshold,
 		  int radius, double standard_deviation)
 {
+  // do nothing if already at s/w, ...
+  if (image.spp == 1 && image.bps == 1)
+    return;
+  
   /* Convert to RGB to gray.
      If the threshold is to be determined automatically, use color info. */
   
@@ -175,6 +179,10 @@ void differential_optimize2bw (Image& image,
 			       int sloppy_threshold,
 			       int radius, double standard_deviation)
 {
+  // do nothing if already at s/w, ...
+  if (image.spp == 1 && image.bps == 1)
+    return;
+  
   colorspace_by_name (image, "gray8");
   
   Image src_image (image);
