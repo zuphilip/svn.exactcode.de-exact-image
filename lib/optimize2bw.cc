@@ -47,6 +47,13 @@
    center of the destination pixel in order to skip the expensive
    matrix convolution and thus improve performance */
 
+/*
+19:41 <valentin> btw, your original code might have an off-by-2 bug
+19:41 <valentin> but i am not sure because it is too complicated
+19:42 <valentin> you transform the strip xr <= x <= image.w-xr
+19:42 <valentin> but if xw=7 then xr=3
+*/
+
 static void private_convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 					matrix_type divisor)
 {
@@ -246,7 +253,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     image.setRawData();
   }
 
-  //#define OLD_CODE
+  #define OLD_CODE
 #ifdef OLD_CODE  
   // Convolution Matrix (unsharp mask a-like)
   {
@@ -287,7 +294,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	std::cerr << std::endl;
     }
     
-    /*private_*/convolution_matrix (image, matrix, width, width, divisor);
+    private_convolution_matrix (image, matrix, width, width, divisor);
     delete (matrix);
   }
 #else
