@@ -17,7 +17,7 @@
 
 #include "Matrix.hh"
 
-void convolution_matrix (Image& image, matrix_type* matrix, const int xw, const int yw,
+void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
   uint8_t* data = image.getRawData();
@@ -92,8 +92,8 @@ void convolution_matrix (Image& image, matrix_type* matrix, const int xw, const 
 }
 
 
-void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matrix_type* v_matrix,
-				      const int xw, const int yw, matrix_type src_add)
+void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matrix_type* v_matrix, int xw, int yw,
+				      matrix_type src_add)
 {
   uint8_t* data = image.getRawData();
   matrix_type* tmp_data = (matrix_type*) malloc (image.w * image.h*sizeof(matrix_type));
