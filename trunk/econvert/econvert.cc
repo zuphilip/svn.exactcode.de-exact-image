@@ -769,7 +769,7 @@ bool convert_descew2 (const Argument<bool>& arg)
 	    
 	    true
 	    )
-	  it2.setRGB (255, 255, 0), it2.set (it2);
+	  it2.setRGB ((uint16_t)255, (uint16_t)255, (uint16_t)0), it2.set (it2);
 	
 	++it1; ++it2; ++it3; ++it4; ++it5;
       }

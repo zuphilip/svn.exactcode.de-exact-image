@@ -646,7 +646,7 @@ public:
       }
     }
     
-    // return Luminance
+    // return RGB
     inline void getRGB(uint16_t* r, uint16_t* g, uint16_t* b) const
     {
       switch (type) {
@@ -663,6 +663,38 @@ public:
 	*r = value.rgb.r;
 	*g = value.rgb.g;
 	*b = value.rgb.b;
+	return;
+	break;
+      case CMYK8:
+	// TODO
+	break;
+      case YUV8:
+	// TODO
+	break;
+      }
+    }
+
+    // return RGB
+    inline void getRGB(double& r, double& g, double& b) const
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+	r = g = b = (double)value.gray / 0xff; return; break;
+      case GRAY16:
+	r = g = b = (double)value.gray / 0xffff; return; break;
+      case RGB8:
+	r = (double)value.rgb.r / 0xff;
+	g = (double)value.rgb.g / 0xff;
+	b = (double)value.rgb.b / 0xff;
+	return;
+	break;
+      case RGB16:
+	r = (double)value.rgb.r / 0xffff;
+	g = (double)value.rgb.g / 0xffff;
+	b = (double)value.rgb.b / 0xffff;
 	return;
 	break;
       case CMYK8:
@@ -720,6 +752,41 @@ public:
 	value.rgb.b = b;
 	return;
 	break;
+      case CMYK8:
+	// TODO
+	break;
+      case YUV8:
+	// TODO
+	break;
+      }
+    }
+
+    // set RGB
+    inline void setRGB(double r, double g, double b)
+    {
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+	value.gray = (int) ((.21267 * r + .71516 * g + .07217 * b) * 0xff);
+	return;
+	break;
+      case GRAY16:
+	value.gray = (int) ((.21267 * r + .71516 * g + .07217 * b) * 0xffff);
+	return;
+	break;
+      case RGB8:
+	value.rgb.r = (int) (r * 0xff);
+	value.rgb.g = (int) (g * 0xff);
+	value.rgb.b = (int) (b * 0xff);
+	return;
+	break;
+      case RGB16:
+	value.rgb.r = (int) (r * 0xffff);
+	value.rgb.g = (int) (g * 0xffff);
+	value.rgb.b = (int) (b * 0xffff);
+	return;
       case CMYK8:
 	// TODO
 	break;

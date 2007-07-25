@@ -146,7 +146,7 @@ double L1Dist(const Contours::Contour& a,
 }
 
 // not very efficient, yet effective
-static void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned int B)
+static void PutPixel(Image& img, int x, int y, uint16_t R, uint16_t G,  uint16_t B)
 {
   Image::iterator p=img.begin();
   p=p.at(x,y);

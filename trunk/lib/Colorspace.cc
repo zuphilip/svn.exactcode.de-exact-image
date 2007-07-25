@@ -616,17 +616,17 @@ static inline double convert (double val,
 
 void brightness_contrast_gamma (Image& image, double brightness, double contrast, double gamma)
 {
-  uint16_t r, g, b;
+  double r, g, b;
   
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
     {
       *it;
-      it.getRGB (&r, &g, &b);
-      // TODO: 16bity
-      r = convert ((double)r / 255.0, brightness, contrast, gamma) * 255.0;
-      g = convert ((double)g / 255.0, brightness, contrast, gamma) * 255.0;
-      b = convert ((double)b / 255.0, brightness, contrast, gamma) * 255.0;
+      it.getRGB (r, g, b);
+      
+      r = convert (r, brightness, contrast, gamma);
+      g = convert (g, brightness, contrast, gamma);
+      b = convert (b, brightness, contrast, gamma);
       
       it.setRGB (r, g, b);
       it.set(it);
