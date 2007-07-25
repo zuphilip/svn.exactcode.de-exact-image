@@ -572,3 +572,63 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
   }
   return true;
 }
+
+// --
+#include <math.h>
+
+static inline double getExponentContrast (double contrast) {
+  return (contrast < 0.0) ? 1.0 + contrast : ( (contrast == 1.0) ? 127 : 1.0 / (1.0 - contrast) );
+}
+
+static inline double getExponentGamma (double gamma) {
+  return 1.0 / gamma;
+}
+
+static inline double convert (double val,
+			      double brightness,
+			      double contrast,
+			      double gamma)
+{
+    /* apply brightness */
+    if (brightness < 0.0)
+        val = val * (1.0 + brightness);
+    else if (brightness > 0.0)
+        val = val + ((1.0 - val) * brightness);
+
+    /* apply contrast */
+    if (contrast != 0.0) {
+      double nvalue = (val > 0.5) ? 1.0 - val : val;
+      if (nvalue < 0.0)
+	nvalue = 0.0;
+      
+      nvalue = 0.5 * pow (2.0 * nvalue, getExponentContrast (contrast));
+      val = (val > 0.5) ? 1.0 - nvalue : nvalue;
+    }
+    
+    /* apply gamma */
+    if (gamma != 1.0) {
+      val = pow (val, getExponentGamma (gamma));
+    }
+    
+    return val;
+}
+
+
+void brightness_contrast_gamma (Image& image, double brightness, double contrast, double gamma)
+{
+  uint16_t r, g, b;
+  
+  Image::iterator end = image.end();
+  for (Image::iterator it = image.begin(); it != end; ++it)
+    {
+      *it;
+      it.getRGB (&r, &g, &b);
+      // TODO: 16bity
+      r = convert ((double)r / 255.0, brightness, contrast, gamma) * 255.0;
+      g = convert ((double)g / 255.0, brightness, contrast, gamma) * 255.0;
+      b = convert ((double)b / 255.0, brightness, contrast, gamma) * 255.0;
+      
+      it.setRGB (r, g, b);
+      it.set(it);
+    }
+}

@@ -150,12 +150,31 @@ bool convert_normalize (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_brightness (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  brightness_contrast_gamma (image, f, .0, 1.0);
+  return true;
+}
+
+bool convert_contrast (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  brightness_contrast_gamma (image, .0, f, 1.0);
+  return true;
+}
+
+bool convert_gamma (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  brightness_contrast_gamma (image, .0, .0, f);
+  return true;
+}
+
 bool convert_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  
   scale (image, f, f);
-  
   return true;
 }
 
@@ -909,6 +928,24 @@ int main (int argc, char* argv[])
   arg_normalize.Bind (convert_normalize);
   arglist.Add (&arg_normalize);
 
+  Argument<double> arg_brightness ("", "brightness",
+				   "change image brightness",
+				   0.0, 0, 1, true, true);
+  arg_brightness.Bind (convert_brightness);
+  arglist.Add (&arg_brightness);
+
+  Argument<double> arg_contrast ("", "contrast",
+				 "change image contrast",
+				 0.0, 0, 1, true, true);
+  arg_contrast.Bind (convert_contrast);
+  arglist.Add (&arg_contrast);
+
+  Argument<double> arg_gamma ("", "gamma",
+				 "change image gamma",
+				 0.0, 0, 1, true, true);
+  arg_gamma.Bind (convert_gamma);
+  arglist.Add (&arg_gamma);
+  
   Argument<double> arg_scale ("", "scale",
 			      "scale image data using a method suitable for specified factor",
 			      0.0, 0, 1, true, true);
