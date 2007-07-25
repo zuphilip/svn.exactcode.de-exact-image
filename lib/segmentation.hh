@@ -34,7 +34,7 @@ public:
   bool Subdivide(const FGMatrix& img, double tolerance, unsigned int min_length, bool horizontal);
 
   // Draws a (red) frame around the segment
-  void Draw(Image& output, unsigned int r=255, unsigned int g=0, unsigned int b=0);
+  void Draw(Image& output, uint16_t r = 255, uint16_t g = 0, uint16_t b = 0);
 
 private:
 

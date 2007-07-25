@@ -14,13 +14,18 @@
  */
 
 #include <agg_pixfmt_rgb.h>
+
 #include <agg_rendering_buffer.h>
+#include <agg_renderer_primitives.h>
 #include <agg_renderer_scanline.h>
 #include <agg_renderer_outline_aa.h>
+
+#include <agg_scanline_p.h>
+#include <agg_rasterizer_outline.h>
 #include <agg_rasterizer_outline_aa.h>
 #include <agg_rasterizer_scanline_aa.h>
 #include <agg_renderer_outline_aa.h>
-#include <agg_scanline_p.h>
+
 #include <agg_gsv_text.h>
 
 #include "Image.hh"
@@ -126,7 +131,14 @@ public:
   void copy_pixel(int x, int y, const color_type& c);
 
   //--------------------------------------------------------------------
-  void blend_pixel(int x, int y, const color_type& c, cover_type cover);
+  void blend_pixel(int x, int y, const color_type& c, cover_type cover)
+  {
+    // used in solid, primitive lines
+    Image::iterator it = m_img->begin();
+    it = it.at (x, y);
+    
+    blender_type::blend_pix(it, c.r, c.g, c.b, c.a, cover);
+  }
 
   //--------------------------------------------------------------------
   color_type pixel(int x, int y) const;
@@ -163,7 +175,7 @@ public:
 	if(alpha == color_type::base_mask)
 	  {
 	    // ((value_type*)&v)[order_type::A] = c.a;
-	    it.setRGB (c.r, c.g, c.b);
+	    it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 	    do
 	      {
 		it.set(it);
@@ -239,7 +251,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
-		it.setRGB (c.r, c.g, c.b);
+		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 		//p[order_type::A] = base_mask;
 		it.set(it);
 	      }
@@ -288,7 +300,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
-		it.setRGB (c.r, c.g, c.b);
+		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 		//p[order_type::A] = base_mask;
 		it.set(it);
 	      }
@@ -368,14 +380,22 @@ typedef agg::pixfmt_rgb24 pixfmt;
 
 typedef renderer_exact_image renderer_base;
 
-typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
-//typedef agg::renderer_primitives<renderer_base> renderer_prim;
-//typedef agg::rasterizer_outline<renderer_prim> rasterizer_outline;
-typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
-typedef agg::scanline_p8 scanline;
+/* render vector data */
+typedef agg::renderer_primitives<renderer_base> renderer_prim;
 typedef agg::renderer_outline_aa<renderer_base> renderer_oaa;
+
+typedef agg::renderer_scanline_bin_solid<renderer_base> renderer_bin;
+typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_aa;
+
+
+/* raster into final buffer */
+typedef agg::scanline_p8 scanline;
+
+typedef agg::rasterizer_outline<renderer_prim> rasterizer_outline;
+typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_oaa;
+typedef agg::rasterizer_scanline_aa<> rasterizer_scanline;
+
 //typedef agg::pattern_filter_bilinear_rgba8 pattern_filter;
 //typedef agg::line_image_pattern_pow2<pattern_filter> image_pattern;
 //typedef agg::renderer_outline_image<renderer_base, image_pattern> renderer_img;
-typedef agg::rasterizer_outline_aa<renderer_oaa> rasterizer_oaa;
 //typedef agg::rasterizer_outline_aa<renderer_img> rasterizer_oimg;

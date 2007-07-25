@@ -64,7 +64,7 @@ bool Segment::Subdivide(const FGMatrix& img, double tolerance, unsigned int min_
 }
 
 
-void Segment::Draw(Image& output, unsigned int r, unsigned int g, unsigned int b)
+void Segment::Draw(Image& output, uint16_t r, uint16_t g, uint16_t b)
 {
   Image::iterator color = output.begin();
   color.setRGB (r, g, b);
