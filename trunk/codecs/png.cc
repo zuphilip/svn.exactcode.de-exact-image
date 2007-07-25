@@ -258,6 +258,10 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   png_write_info (png_ptr, info_ptr);
   
   int stride = png_get_rowbytes (png_ptr, info_ptr);
+
+  /* swap bytes of 16 bit data as PNG stores in network-byte-order */
+  if (!Exact::NativeEndianTraits::IsBigendian)
+    png_set_swap(png_ptr);
   
   png_bytep row_pointers[1]; 
   /* The other way to write images */
