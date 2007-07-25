@@ -632,3 +632,34 @@ void brightness_contrast_gamma (Image& image, double brightness, double contrast
       it.set(it);
     }
 }
+
+void hue_saturation_lightness (Image& image, double hue, double saturation, double lightness)
+{
+  double h, s, v;
+  
+  Image::iterator end = image.end();
+  for (Image::iterator it = image.begin(); it != end; ++it)
+    {
+      //it = it.at(371, 86);
+      *it;
+      it.getHSV (h, s, v);
+      
+      h += hue;
+      
+      if (h < 0.)
+	h += 360.;
+      else if (h >= 360.)
+	h -= 360.;
+      
+      // TODO: this might not be accurate, double check, ...
+      s = s + s * saturation;
+      s = std::max (std::min (s, 1.), 0.);
+       
+      v = v + v * lightness;
+      v = std::max (std::min (v, 1.), 0.);
+      
+      it.setHSV (h, s, v);
+      it.set(it);
+      //return;
+    }
+}

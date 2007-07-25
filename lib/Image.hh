@@ -72,6 +72,9 @@
 
 #include <inttypes.h>
 #include <string>
+#include <math.h> // for floor
+
+#include <iostream>
 
 // just forward
 class ImageCodec;
@@ -706,6 +709,27 @@ public:
       }
     }
     
+    // return HSV
+    inline void getHSV(double& h, double& s, double& v) const
+    {
+      double r, g, b;
+      getRGB (r, g, b);
+      
+      const double min = std::min (std::min (r, g), b);
+      const double max = std::max (std::max (r, g), b);
+      const double delta = max - min;
+      
+      v = max;
+      s = max == .0 ? 0 : 1. - min / max;
+      
+      if (max == r) // yellow - magenta
+	h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
+      else if (max == g) // cyan - yellow
+	h = 60. * (b - r) / delta + 120.;
+      else // magenta - cyan
+	h = 60. * (r - g) / delta + 240.;
+    }
+    
     // set Luminance
     inline void setL (uint16_t L)
     {
@@ -794,6 +818,55 @@ public:
 	// TODO
 	break;
       }
+    }
+    
+    // set HSV
+    inline void setHSV(double h, double s, double v)
+    {
+      double r, g, b;
+      
+      h /= 60.;
+      const int i = (int) (floor(h)) % 6;
+      
+      const double f = h - i;
+      const double p = v * (1 - s);
+      const double q = v * (1 - f * s);
+      const double t = v * (1 - (1. - f) * s);
+      
+      switch (i) {
+      case 0:
+	r = v;
+	g = t;
+	b = p;
+	break;
+      case 1:
+	r = q;
+	g = v;
+	b = p;
+	break;
+      case 2:
+	r = p;
+	g = v;
+	b = t;
+	break;
+      case 3:
+	r = p;
+	g = q;
+	b = v;
+	break;
+      case 4:
+	r = t;
+	g = p;
+	b = v;
+	break;
+      default: // case 5:
+	r = v;
+	g = p;
+	b = q;
+	break;
+      }
+      
+      setRGB (r, g, b);
     }
     
     inline void set (const iterator& other) {
