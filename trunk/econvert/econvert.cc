@@ -178,6 +178,27 @@ bool convert_scale (const Argument<double>& arg)
   return true;
 }
 
+bool convert_hue (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  hue_saturation_lightness (image, f, 0, 0);
+  return true;
+}
+
+bool convert_saturation (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  hue_saturation_lightness (image, 0, f, 0);
+  return true;
+}
+
+bool convert_lightness (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  hue_saturation_lightness (image, 0, 0, f);
+  return true;
+}
+
 bool convert_nearest_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
@@ -945,6 +966,24 @@ int main (int argc, char* argv[])
 				 0.0, 0, 1, true, true);
   arg_gamma.Bind (convert_gamma);
   arglist.Add (&arg_gamma);
+
+  Argument<double> arg_hue ("", "hue",
+				 "change image hue",
+				 0.0, 0, 1, true, true);
+  arg_hue.Bind (convert_hue);
+  arglist.Add (&arg_hue);
+
+  Argument<double> arg_saturation ("", "saturation",
+				   "change image saturation",
+				   0.0, 0, 1, true, true);
+  arg_saturation.Bind (convert_saturation);
+  arglist.Add (&arg_saturation);
+
+  Argument<double> arg_lightness ("", "lightness",
+				  "change image lightness",
+				  0.0, 0, 1, true, true);
+  arg_lightness.Bind (convert_lightness);
+  arglist.Add (&arg_lightness);
   
   Argument<double> arg_scale ("", "scale",
 			      "scale image data using a method suitable for specified factor",
