@@ -802,6 +802,7 @@ public:
 protected:
 };
 
-typedef struct { unsigned char r, g, b; } rgb;
+typedef struct { uint8_t r, g, b; } rgb;
+typedef struct { uint16_t r, g, b; } rgb16;
 
 #endif
