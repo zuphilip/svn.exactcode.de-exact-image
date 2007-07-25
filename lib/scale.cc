@@ -28,6 +28,9 @@ void scale (Image& image, double scalex, double scaley)
 
 void nearest_scale (Image& new_image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+
   Image image;
   image.copyTransferOwnership (new_image);
   
@@ -50,6 +53,9 @@ void nearest_scale (Image& new_image, double scalex, double scaley)
 
 void bilinear_scale (Image& new_image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+
   Image image;
   image.copyTransferOwnership (new_image);
 
@@ -207,6 +213,9 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
 
 void box_scale (Image& new_image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+
   Image image;
   image.copyTransferOwnership (new_image);
   
@@ -312,6 +321,9 @@ inline Image::iterator CubicConvolution (int distance,
 
 void bicubic_scale (Image& new_image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+
   Image image;
   image.copyTransferOwnership (new_image);
   
@@ -369,6 +381,9 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
 
 void ddt_scale (Image& new_image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+
   Image image;
   image.copyTransferOwnership (new_image);
   
