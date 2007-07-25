@@ -21,7 +21,6 @@
 
 #include "ArgumentList.hh"
 
-#include "tiff.hh"
 #include "Image.hh"
 #include "Codecs.hh"
 
@@ -36,9 +35,8 @@ void flipX (Image& image)
     if (image.getCodec()->flipX(image))
       return;
   
-  int bytes = image.Stride();
+  const int stride = image.Stride();
   uint8_t* data = image.getRawData();
-  // TODO: 16bps
   switch (image.spp * image.bps)
     {
     case 1:
@@ -62,11 +60,11 @@ void flipX (Image& image)
 	
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    uint8_t* row = &data [y*bytes];
-	    for (int x = 0; x < bytes/2; ++x) {
+	    uint8_t* row = &data [y*stride];
+	    for (int x = 0; x < stride/2; ++x) {
 	      uint8_t v = row [x];
-	      row[x] = reversed_bits [row[bytes - 1 - x]];
-	      row[bytes - 1 - x] = reversed_bits[v];
+	      row[x] = reversed_bits [row[stride - 1 - x]];
+	      row[stride - 1 - x] = reversed_bits[v];
 	    }
 	  }
       }
@@ -75,11 +73,24 @@ void flipX (Image& image)
       {
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    uint8_t* row = &data [y*bytes];
-	    for (int x = 0; x < bytes/2; ++x) {
+	    uint8_t* row = &data [y*stride];
+	    for (int x = 0; x < image.w/2; ++x) {
 	      uint8_t v = row [x];
-	      row[x] = row[bytes - 1 - x];
-	      row[bytes - 1 - x] = v;
+	      row[x] = row[image.w - 1 - x];
+	      row[image.w - 1 - x] = v;
+	    }
+	  }
+      }
+      break;
+    case 16:
+      {
+	for (int y = 0; y < image.h; ++y)
+	  {
+	    uint16_t* row = (uint16_t*) &data [y*stride];
+	    for (int x = 0; x < image.w/2; ++x) {
+	      uint16_t v = row [x];
+	      row[x] = row[image.w - 1 - x];
+	      row[image.w - 1 - x] = v;
 	    }
 	  }
       }
@@ -87,9 +98,21 @@ void flipX (Image& image)
     case 24:
       {
 	for (int y = 0; y < image.h; ++y) {
-	  rgb* rgb_row = (rgb*) &data[y*bytes]; 
+	  rgb* rgb_row = (rgb*) &data[y*stride]; 
 	  for (int x = 0; x < image.w/2; ++x) {
 	    rgb v = rgb_row [x];
+	    rgb_row[x] = rgb_row[image.w - 1 - x];
+	    rgb_row[image.w - 1 - x] = v;
+	  }
+	}
+      }
+      break;
+    case 48:
+      {
+	for (int y = 0; y < image.h; ++y) {
+	  rgb16* rgb_row = (rgb16*) &data[y*stride]; 
+	  for (int x = 0; x < image.w/2; ++x) {
+	    rgb16 v = rgb_row [x];
 	    rgb_row[x] = rgb_row[image.w - 1 - x];
 	    rgb_row[image.w - 1 - x] = v;
 	  }
@@ -110,7 +133,6 @@ void flipY (Image& image)
     if (image.getCodec()->flipY(image))
       return;
   
-  // TODO: 16bps
   int bytes = image.Stride();
   uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
