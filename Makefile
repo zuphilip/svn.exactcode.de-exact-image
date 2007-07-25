@@ -27,6 +27,12 @@ CXXFLAGS += -march=i686
 CXXFLAGS += $(call cc-option,-mtune=pentium4,)
 endif
 
+# TODO: improve to match i[3456]86
+ifneq  "$(X_ARCH)" "i686"
+CFLAGS += -fPIC
+CXXFLAGS += -fPIC
+endif
+
 ifeq "$(X_ARCH)" "sparc64"
 CXXFLAGS += -mcpu=ultrasparc
 CXXFLAGS += $(call cc-option,-mtune=niagara,)
