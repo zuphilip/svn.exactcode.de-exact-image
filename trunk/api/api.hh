@@ -209,7 +209,7 @@ void deleteContours(Contours* contours);
 
 LogoRepresentation* newRepresentation(Contours* logo_contours,
 			    int max_feature_no=10,
-			    int max_avg_tolerance=10,
+			    int max_avg_tolerance=20,
 			    int reduction_shift=3,
 			    double maximum_angle=0.0,
 			    double angle_step=0.0);
