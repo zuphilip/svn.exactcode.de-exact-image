@@ -345,7 +345,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     cinfo.in_color_space = JCS_CMYK;
 
   if (cinfo.in_color_space == JCS_UNKNOWN) {
-    std::cerr << "Unhandled bps/spp combination." << std::endl;
+    if (image.bps < 8)
+      std::cerr << "JPEGCodec: JPEG can not hold less than 8 bit-per-channel." << std::endl;
+    else
+      std::cerr << "Unhandled bps/spp combination." << std::endl;
     jpeg_destroy_compress(&cinfo);
     return false;
   }
