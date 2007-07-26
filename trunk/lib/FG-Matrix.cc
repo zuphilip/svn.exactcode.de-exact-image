@@ -10,7 +10,7 @@ FGMatrix::FGMatrix(Image& image, unsigned int fg_threshold)
   for (; i!=end ; ++i) {
     data[row][line]=((*i).getL() < fg_threshold);
 
-    if (++row == image.w) {
+    if (++row == (unsigned int)image.w) {
       line++;
       row=0;
     }
