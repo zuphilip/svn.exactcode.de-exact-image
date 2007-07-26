@@ -24,7 +24,7 @@
 #include "Image.hh"
 
 void drawLine(Image& image, double x, double y, double x2, double y2,
-	      const Image::iterator& color)
+	      const Image::iterator& color, const drawStyle& style)
 {
 #if 0
   // asumes RGB for now
@@ -38,7 +38,7 @@ void drawLine(Image& image, double x, double y, double x2, double y2,
   profile.gamma (agg::gamma_power(1.2));  //optional
   profile.min_width (0.75);               //optional
   profile.smoother_width (3.0);           //optional
-  profile.width (1.0);                  //mandatory!
+  profile.width (style.width);                  //mandatory!
   
   renderer_exact_image ren_base (image);
   renderer_oaa ren (ren_base, profile);
@@ -57,15 +57,15 @@ void drawLine(Image& image, double x, double y, double x2, double y2,
 }
 
 void drawRectange(Image& image, double x, double y, double x2, double y2,
-		  const Image::iterator& color)
+		  const Image::iterator& color, const drawStyle& style)
 {
   // top / bottom
-  drawLine(image, x,  y,  x2, y,  color);
-  drawLine(image, x,  y2, x2, y2, color);
+  drawLine(image, x,  y,  x2, y,  color, style);
+  drawLine(image, x,  y2, x2, y2, color, style);
 
   // sides, avoid dubble set on corners
-  drawLine(image, x,  y+1, x,  y2-1, color);
-  drawLine(image, x2, y+1, x2, y2-1, color);
+  drawLine(image, x,  y+1, x,  y2-1, color, style);
+  drawLine(image, x2, y+1, x2, y2-1, color, style);
 }
 
 void drawText(Image& image, double x, double y, char* text, double height,

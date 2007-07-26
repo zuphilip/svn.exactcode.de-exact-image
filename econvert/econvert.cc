@@ -39,8 +39,13 @@
 #include "floyd-steinberg.h"
 #include "vectorial.hh"
 
-// let's reuse some parts of the official, stable API to avoid
-// duplicating code
+/* Let's reuse some parts of the official, stable API to avoid
+ * duplicating code.
+ *
+ * This also includes the foreground/background color and vector
+ * drawing style.
+ */
+
 #include "api/api.cc"
 
 #include <functional>
@@ -48,8 +53,6 @@
 using namespace Utility;
 
 Image image; // the global Image we work on
-Image::iterator background_color; // the background color
-Image::iterator foreground_color; // the foreground color
 
 Argument<int> arg_quality ("", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
@@ -889,10 +892,10 @@ bool convert_background (const Argument<std::string>& arg)
 bool convert_line (const Argument<std::string>& arg)
 {
   unsigned int x1, y1, x2, y2, n;
-
+  
   if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2)) == 4)
     {
-      drawLine(image, x1, y1, x2, y2, foreground_color);
+      drawLine(image, x1, y1, x2, y2, foreground_color, style);
       return true; 
     }
   

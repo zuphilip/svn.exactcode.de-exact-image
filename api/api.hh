@@ -137,8 +137,13 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 //  the bottom crop enabled by default)
 void imageFastAutoCrop (Image* image);
 
+// color controlls
+
+void setForegroundColor (double r, double g, double b);
+void setBackgroundColor (double r, double g, double b);
 
 // vector elements
+void setLineWidth (double width);
 void imageDrawLine (Image* image, double x, double y, double x2, double y2);
 void imageDrawRectange (Image* image, double x, double y, double x2, double y2);
 void imageDrawText (Image* image, double x, double y, char* text, double height);

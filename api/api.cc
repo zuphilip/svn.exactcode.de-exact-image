@@ -141,8 +141,8 @@ void imageSetYres (Image* image, int yres)
 
 // image manipulation
 
-static Image::iterator background;
-static Image::iterator foreground;
+static Image::iterator background_color;
+static Image::iterator foreground_color;
 
 bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
@@ -151,7 +151,7 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace)
 
 void imageRotate (Image* image, double angle)
 {
-  rotate (*image, angle, background);
+  rotate (*image, angle, background_color);
 }
 
 void imageFlipX (Image* image)
@@ -194,21 +194,40 @@ void imageFastAutoCrop (Image* image)
   fastAutoCrop (*image);
 }
 
-// vector element rendering
+// color controlls
+
+void setForegroundColor (double r, double g, double b)
+{
+  foreground_color.setRGB ((uint16_t)(r*0xff), (uint16_t)(g*0xff), (uint16_t)(b*0xff));
+}
+
+void setBackgroundColor (double r, double g, double b)
+{
+  background_color.setRGB ((uint16_t)(r*0xff), (uint16_t)(g*0xff), (uint16_t)(b*0xff));
+}
+
+// vector elements
+
+static drawStyle style;
+
+void setLineWidth (double width)
+{
+  style.width = width;
+}
 
 void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 {
-  drawLine (*image, x, y, x2, y2, foreground);
+  drawLine (*image, x, y, x2, y2, foreground_color, style);
 }
 
 void imageDrawRectange (Image* image, double x, double y, double x2, double y2)
 {
-  drawRectange (*image, x, y, x2, y2, foreground);
+  drawRectange (*image, x, y, x2, y2, foreground_color, style);
 }
 
 void imageDrawText (Image* image, double x, double y, char* text, double height)
 {
-  drawText (*image, x, y, text, height, foreground);
+  drawText (*image, x, y, text, height, foreground_color);
 }
 
 
