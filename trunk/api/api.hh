@@ -137,10 +137,14 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 //  the bottom crop enabled by default)
 void imageFastAutoCrop (Image* image);
 
-// color controlls
+// color controls
 
 void setForegroundColor (double r, double g, double b);
 void setBackgroundColor (double r, double g, double b);
+
+void imageInvert (Image* image);
+void imageBrightnessContrastGamma (Image* image, double brightness, double contrast, double gamma);
+void imageHueSaturationLightness (Image* image, double hue, double saturation, double lightness);
 
 // vector elements
 void setLineWidth (double width);
