@@ -631,6 +631,7 @@ void brightness_contrast_gamma (Image& image, double brightness, double contrast
       it.setRGB (r, g, b);
       it.set(it);
     }
+  image.setRawData();
 }
 
 void hue_saturation_lightness (Image& image, double hue, double saturation, double lightness)
@@ -662,6 +663,7 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
       it.set(it);
       //return;
     }
+  image.setRawData();
 }
 
 void invert (Image& image)
