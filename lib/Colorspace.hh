@@ -28,4 +28,6 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace);
 void brightness_contrast_gamma (Image& image, double b, double c, double g);
 void hue_saturation_lightness (Image& image, double h, double s, double v);
 
+void invert (Image& image);
+
 #endif
