@@ -1,3 +1,6 @@
+
+ - black / white- point
+
 Array subscription, ala:
 image[][]
 
@@ -6,7 +9,6 @@ type inside the image: RGB, YUV, CMYK
 cheap copies
 copy on write
 sub-images
- ->
 
 Loaders:
  - (optimized) palette saving
@@ -22,8 +24,8 @@ Algorithms:
  - faster and ddt scaling!
  - descew
  - descreen
+ - blur
  - sharp, unsharp
- - contrast, brightness
  - all the others
  - affine transforms
  - Barcode recognition
@@ -53,6 +55,5 @@ Frontends:
  - econvert:
    - seperate channels
  - edisplay:
-   - channel cycling
    - thumbnailing
    - slideshow
