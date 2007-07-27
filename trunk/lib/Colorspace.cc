@@ -663,3 +663,24 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
       //return;
     }
 }
+
+void invert (Image& image)
+{
+  double r, g, b;
+
+  Image::iterator end = image.end();
+  for (Image::iterator it = image.begin(); it != end; ++it)
+    {
+      *it;
+      it.getRGB (r, g, b);
+
+      /*inverts color*/
+      r = 1.0 - r;
+      g = 1.0 - g;
+      b = 1.0 - b;
+
+      it.setRGB (r, g, b);
+      it.set(it);
+    }
+  image.setRawData();
+}
