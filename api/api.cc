@@ -373,3 +373,18 @@ void drawMatchedContours(LogoRepresentation* representation, Image* image)
   }
 }
 
+
+void imageInvert (Image* image)
+{
+  invert (*image);
+}
+
+void imageBrightnessContrastGamma (Image* image, double brightness, double contrast, double gamma)
+{
+  brightness_contrast_gamma (*image, brightness, contrast, gamma);
+}
+
+void imageHueSaturationLightness (Image* image, double hue, double saturation, double lightness)
+{
+  hue_saturation_lightness (*image, hue, saturation, lightness);
+}
