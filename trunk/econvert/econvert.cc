@@ -274,6 +274,14 @@ bool convert_rotate (const Argument<double>& arg)
   return true;
 }
 
+bool convert_convolve (const Argument<double>& arg)
+{
+  const std::vector<double>& v = arg.Values ();
+  int n = sqrt(v.size());
+  convolution_matrix (image, &v[0], n, n, 1.0);
+  return true;
+}
+
 bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 {
   if (image.spp != 1 || image.bps != 8) {
@@ -1035,6 +1043,12 @@ int main (int argc, char* argv[])
 			       0, 1, true, true);
   arg_rotate.Bind (convert_rotate);
   arglist.Add (&arg_rotate);
+
+  Argument<double> arg_convolve ("", "convolve",
+			       "convolution matrix",
+			       1, 9999, true, true);
+  arg_convolve.Bind (convert_convolve);
+  arglist.Add (&arg_convolve);
 
   Argument<bool> arg_flip ("", "flip",
 			   "flip the image vertically",
