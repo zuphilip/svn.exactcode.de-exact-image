@@ -17,7 +17,7 @@
 
 #include "Matrix.hh"
 
-void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
+void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
   uint8_t* data = image.getRawData();
@@ -55,7 +55,7 @@ void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 	  uint8_t* data_row = src_ptr++ - kernel_offset;
 	  matrix_type sum1 = 0, sum2 = 0, sum3 = 0, sum4 = 0;
 
-	  matrix_type* matrix_row = matrix;
+	  const matrix_type* matrix_row = matrix;
 	  // in former times this was more readable and got overoptimized
 	  // for speed ,-)
 	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw) {
@@ -92,7 +92,7 @@ void convolution_matrix (Image& image, matrix_type* matrix, int xw, int yw,
 }
 
 
-void decomposable_convolution_matrix (Image& image, matrix_type* h_matrix, matrix_type* v_matrix, int xw, int yw,
+void decomposable_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
 				      matrix_type src_add)
 {
   uint8_t* data = image.getRawData();
