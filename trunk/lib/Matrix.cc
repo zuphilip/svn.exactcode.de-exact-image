@@ -16,10 +16,68 @@
  */
 
 #include "Matrix.hh"
+#include "Codecs.hh"
+
+void convolution_matrix_generic (Image& image, const matrix_type* matrix, int xw, int yw,
+				 matrix_type divisor)
+{
+  Image orig_image;
+  orig_image.copyTransferOwnership (image);
+  image.New (image.w, image.h);
+
+  Image::iterator dst_it = image.begin();
+  Image::iterator src_it = orig_image.begin();
+
+  const int xr = xw / 2;
+  const int yr = yw / 2;
+
+  const int _y1 = std::min (image.h, yr);
+  const int _y2 = std::max (image.h-yr, yr);
+  
+  divisor = 1 / divisor;
+  
+  for (int y = yr; y < image.h - yr; ++y)
+    {
+      dst_it = dst_it.at (xr, y);
+      for (int x = xr; x < image.w - xr; ++x)
+	{
+	  double r = 0.0, g = 0.0, b = 0.0;
+	  const matrix_type* _matrix = matrix;
+	  
+	  for (int ym = 0; ym < yw; ++ym) {
+	    src_it = src_it.at (x-xr, y-yr+ym);
+	    for (int xm = 0; xm < xw; ++xm) {
+	      *src_it;
+	      double _r, _g, _b;
+	      src_it.getRGB (_r, _g, _b);
+	      r += _r * *_matrix;
+	      g += _g * *_matrix;
+	      b += _b * *_matrix;
+	      ++src_it;
+	      ++_matrix;
+	    }
+	  }
+	  r *= divisor;
+	  g *= divisor;
+	  b *= divisor;
+	  
+	  r = std::min (std::max (r, 0.0), 1.0);
+	  g = std::min (std::max (g, 0.0), 1.0);
+	  b = std::min (std::max (b, 0.0), 1.0);
+	  
+	  dst_it.setRGB (r, g, b);
+	  dst_it.set (dst_it);
+	  ++dst_it;
+	}
+    }
+}
 
 void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
+  if (image.bps != 8 || image.spp != 1)
+    return convolution_matrix_generic (image, matrix, xw, yw, divisor);
+    
   uint8_t* data = image.getRawData();
   uint8_t* new_data = (uint8_t*) malloc (image.w * image.h);
   
@@ -90,7 +148,6 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
 
   image.setRawData (new_data);
 }
-
 
 void decomposable_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
 				      matrix_type src_add)
