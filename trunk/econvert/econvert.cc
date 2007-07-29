@@ -1031,7 +1031,7 @@ int main (int argc, char* argv[])
 				      0.0, 0, 1, true, true);
   arg_ddt_scale.Bind (convert_ddt_scale);
   arglist.Add (&arg_ddt_scale);
-
+  
   Argument<double> arg_box_scale ("", "box-scale",
 				   "(down)scale image data with box filter",
 				  0.0, 0, 1, true, true);
@@ -1046,7 +1046,7 @@ int main (int argc, char* argv[])
 
   Argument<double> arg_convolve ("", "convolve",
 			       "convolution matrix",
-			       1, 9999, true, true);
+			       0, 9999, true, true);
   arg_convolve.Bind (convert_convolve);
   arglist.Add (&arg_convolve);
 
