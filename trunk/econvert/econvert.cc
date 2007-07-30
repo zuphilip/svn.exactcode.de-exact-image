@@ -276,9 +276,14 @@ bool convert_rotate (const Argument<double>& arg)
 
 bool convert_convolve (const Argument<double>& arg)
 {
+  double devisor = 0;
   const std::vector<double>& v = arg.Values ();
   int n = sqrt(v.size());
-  convolution_matrix (image, &v[0], n, n, 1.0);
+  
+  for (int i = 0; i < v.size(); ++i)
+    devisor += v[i];
+  
+  convolution_matrix (image, &v[0], n, n, devisor);
   return true;
 }
 
