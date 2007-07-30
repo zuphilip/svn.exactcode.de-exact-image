@@ -30,12 +30,66 @@ void convolution_matrix_generic (Image& image, const matrix_type* matrix, int xw
 
   const int xr = xw / 2;
   const int yr = yw / 2;
-
-  const int _y1 = std::min (image.h, yr);
-  const int _y2 = std::max (image.h-yr, yr);
-  
+ 
   divisor = 1 / divisor;
   
+  // top & bottom
+  for (int y = 0; y < image.h; ++y)
+    {
+      for (int x = 0; x < image.w;)
+	{
+	  dst_it = dst_it.at (x, y);
+	  
+	  double r = 0.0, g = 0.0, b = 0.0;
+	  const matrix_type* _matrix = matrix;
+	  
+	  for (int ym = 0; ym < yw; ++ym) {
+	    
+	    int image_y = y-yr+ym;
+	    if (image_y < 0)
+	      image_y = 0 - image_y;
+	    else if (image_y >= image.h)
+	      image_y = image.h - (image_y - image.h) - 1;
+	    
+	    for (int xm = 0; xm < xw; ++xm) {
+	      
+	      int image_x = x-xr+xm;
+	      if (image_x < 0)
+		image_x = 0 - image_x;
+	      else if (image_x >= image.w)
+		image_x = image.w - (image_x - image.w) - 1;
+	      
+	      src_it = src_it.at (image_x, image_y);
+	      
+	      *src_it;
+	      double _r, _g, _b;
+	      src_it.getRGB (_r, _g, _b);
+	      r += _r * *_matrix;
+	      g += _g * *_matrix;
+	      b += _b * *_matrix;
+	      ++src_it;
+	      ++_matrix;
+	    }
+	  }
+	  r *= divisor;
+	  g *= divisor;
+	  b *= divisor;
+	  
+	  r = std::min (std::max (r, 0.0), 1.0);
+	  g = std::min (std::max (g, 0.0), 1.0);
+	  b = std::min (std::max (b, 0.0), 1.0);
+	  
+	  dst_it.setRGB (r, g, b);
+	  dst_it.set (dst_it);
+	  ++dst_it;
+	  
+	  ++x;
+	  if (x == xr && y >= yr && y < image.h - yr)
+	    x = image.w - xr;
+	}
+    }
+
+  //image area without border
   for (int y = yr; y < image.h - yr; ++y)
     {
       dst_it = dst_it.at (xr, y);
