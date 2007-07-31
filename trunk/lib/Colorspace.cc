@@ -1,7 +1,8 @@
 /*
  * Colorspace conversions..
- * Copyright (C) 2006, 2007 René Rebe
- * 
+ * Copyright (C) 2006, 2007 René Rebe, ExactCODE
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2. A copy of the GNU General
@@ -22,7 +23,7 @@
 
 #include "Endianess.hh"
 
-void normalize (Image& image, uint8_t low, uint8_t high)
+void normalize_gray8 (Image& image, uint8_t low, uint8_t high)
 {
   int histogram[256] = { 0 };
   
@@ -59,6 +60,51 @@ void normalize (Image& image, uint8_t low, uint8_t high)
     *it = ((int) *it * a + b) / 256;
 
   image.setRawData();
+}
+
+void normalize (Image& image, uint8_t l, uint8_t h)
+{
+  if (image.bps == 8 && image.spp == 1)
+    return normalize_gray8 (image, l, h);
+  
+  double low = 1.0;
+  double high = 0.0;
+
+  Image::iterator it = image.begin();
+  
+  double r, g, b;
+  for (; it != image.end(); ++it) {
+    *it;
+    it.getRGB(r, g, b);
+
+    if (r < low)
+      low = r;
+    if (r > high)
+      high = r;
+
+    if (g < low)
+      low = g;
+    if (g > high)
+      high = g;
+    
+    if (b < low)
+      low = b;
+    if (b > high)
+      high = b;
+  }
+  
+  const double fa = 1.0 / (high - low);
+  const double fb = fa * low;
+ 
+  std::cerr << "low: " << low << ", high: " << high << std::endl;
+  std::cerr << "a: " << fa<< " b: " << fb << std::endl;
+  
+  for (it = image.begin(); it != image.end(); ++it) {
+    *it;
+    it.getRGB (r, g, b);
+    it.setRGB (r * fa - fb, g * fa - fb, b * fa - fb);
+    it.set (it);
+  }
 }
 
 void colorspace_rgba8_to_rgb8 (Image& image)
