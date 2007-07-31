@@ -283,6 +283,9 @@ bool convert_convolve (const Argument<double>& arg)
   for (int i = 0; i < v.size(); ++i)
     divisor += v[i];
   
+  if (divisor == 0)
+    divisor = 1;
+  
   convolution_matrix (image, &v[0], n, n, divisor);
   return true;
 }
