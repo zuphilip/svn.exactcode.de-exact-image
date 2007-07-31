@@ -276,14 +276,14 @@ bool convert_rotate (const Argument<double>& arg)
 
 bool convert_convolve (const Argument<double>& arg)
 {
-  double devisor = 0;
+  double divisor = 0;
   const std::vector<double>& v = arg.Values ();
   int n = sqrt(v.size());
   
   for (int i = 0; i < v.size(); ++i)
-    devisor += v[i];
+    divisor += v[i];
   
-  convolution_matrix (image, &v[0], n, n, devisor);
+  convolution_matrix (image, &v[0], n, n, divisor);
   return true;
 }
 
@@ -317,7 +317,7 @@ bool convert_edge (const Argument<bool>& arg)
   return true;
 }
 
-bool convert_descew (const Argument<bool>& arg)
+bool convert_deskew (const Argument<bool>& arg)
 {
   using std::cout;
   using std::endl;
@@ -744,7 +744,7 @@ bool convert_descew (const Argument<bool>& arg)
   return true;
 }
 
-bool convert_descew2 (const Argument<bool>& arg)
+bool convert_deskew2 (const Argument<bool>& arg)
 {
   using std::cout;
   using std::endl;
@@ -1086,17 +1086,17 @@ int main (int argc, char* argv[])
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
-  Argument<bool> arg_descew ("", "descew",
-			     "descew digitalized paper",
+  Argument<bool> arg_deskew ("", "deskew",
+			     "deskew digitalized paper",
 			     0, 0, true, true);
-  arg_descew.Bind (convert_descew);
-  arglist.Add (&arg_descew);
+  arg_deskew.Bind (convert_deskew);
+  arglist.Add (&arg_deskew);
 
-  Argument<bool> arg_descew2 ("", "descew2",
-			     "descew digitalized paper try2",
+  Argument<bool> arg_deskew2 ("", "deskew2",
+			     "deskew digitalized paper try2",
 			     0, 0, true, true);
-  arg_descew2.Bind (convert_descew2);
-  arglist.Add (&arg_descew2);
+  arg_deskew2.Bind (convert_deskew2);
+  arglist.Add (&arg_deskew2);
   
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
