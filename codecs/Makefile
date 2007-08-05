@@ -37,7 +37,7 @@ NOT_SRCS += openexr.cc
 endif
 
 ifeq "$(WITHLCMS)" "1"
-LDFLAGS += -llcms
+LDFLAGS += $(LCMSLIBS)
 endif
 
 include build/top.make
