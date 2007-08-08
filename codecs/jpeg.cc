@@ -466,7 +466,8 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
   jpeg_finish_decompress(cinfo);
   jpeg_destroy_decompress(cinfo);
-
+  delete (cinfo);
+  
   // shadow data is still valid for more transformations
   image->setCodec (this);
 }
@@ -558,6 +559,7 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
      * We need to clean up the JPEG object, close the input file, and return.
      */
     jpeg_destroy_decompress (cinfo);
+    free (cinfo);
     return false;
   }
   
@@ -605,7 +607,8 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   /* This is an important step since it will release a good deal of memory. */
   jpeg_finish_decompress(cinfo);
   jpeg_destroy_decompress (cinfo);
-  
+  delete (cinfo);
+
   return true;
 }
 
