@@ -149,19 +149,15 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (out == NULL)
     return false;
   
-  int page = 0;
-  writeImageImpl (out, image, compress, page++);
-  // TIFFWriteDirectory (out);
-  
-  // writeImageImpl (out, image, compress, page++);
-  // TIFFWriteDirectory (out);
+  writeImageImpl (out, image, compress, 0);
 
   TIFFClose (out);
   
   return true;
 }
 
-bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress, int page)
+bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress,
+			       int page)
 {
   uint32 rowsperstrip = (uint32) - 1;
   
