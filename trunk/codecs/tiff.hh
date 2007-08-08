@@ -16,7 +16,7 @@ public:
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress);
   
-private:
+//private:
   
-  bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
+  static bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
 };

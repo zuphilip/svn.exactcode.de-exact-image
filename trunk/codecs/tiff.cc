@@ -232,6 +232,9 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     if (TIFFWriteScanline (out, image.getRawData() + row * stride, row, 0) < 0)
       return false;
   }
+  
+  TIFFWriteDirectory (out);
+  
   return true;
 }
 
