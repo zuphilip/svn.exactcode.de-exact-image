@@ -199,10 +199,12 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
-  if (image.spp == 1)
+  if (image.spp == 1 && image.bps == 1)
     // internally we actually have MINISBLACK, but some programs,
     // including the Apple Preview.app appear to ignore this bit
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE);
+  else if (image.spp == 1)
+    TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
   else if (false) { /* just saved for reference */
     uint16 rmap[256], gmap[256], bmap[256];
     for (int i = 0;i < 256; ++i) {
