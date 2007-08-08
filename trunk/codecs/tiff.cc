@@ -61,7 +61,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     case PHOTOMETRIC_PALETTE:
       break;
     default:
-      std::cerr << "TIFCodec: Bad photometric: " << (int)photometric << std::endl;
+      std::cerr << "TIFCodec: Unrecognized photometric: " << (int)photometric << std::endl;
       return false;
     }
   
@@ -107,13 +107,14 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
-      // invert if saved inverted
-      if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
-	for (uint8_t* i = data2; i != data2 + stride; ++i)
-	  *i ^= 0xFF;
-
       data2 += stride;
     }
+  
+  /* some post load fixup */
+  
+  /* invert if saved "inverted" */
+  if (photometric == PHOTOMETRIC_MINISWHITE)
+    invert (image);
   
   /* strange 16bit gray images ??? or GRAYA? */
   if (image.spp == 2)
