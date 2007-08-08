@@ -200,7 +200,9 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
   if (image.spp == 1)
-    TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
+    // internally we actually have MINISBLACK, but some programs,
+    // including the Apple Preview.app appear to ignore this bit
+    TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE);
   else if (false) { /* just saved for reference */
     uint16 rmap[256], gmap[256], bmap[256];
     for (int i = 0;i < 256; ++i) {
@@ -227,11 +229,30 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
 
-  int stride = image.Stride();
-  for (int row = 0; row < image.h; ++row) {
-    if (TIFFWriteScanline (out, image.getRawData() + row * stride, row, 0) < 0)
+  const int stride = image.Stride();
+  /* Note: we on-the-fly invert 1-bit data to please some historic apps */
+  
+  uint8_t* src = image.getRawData();
+  uint8_t* scanline = 0;
+  if (image.spp == 1)
+    scanline = (uint8_t*) malloc (stride);
+  else
+    scanline = src;
+  
+  for (int row = 0; row < image.h; ++row, src += stride) {
+    if (image.spp == 1) {
+      for (int i = 0; i < stride; ++i)
+        scanline [i] = src [i] ^ 0xFF;
+    }
+    else
+      scanline = src;
+    
+    if (TIFFWriteScanline (out, scanline, row, 0) < 0) {
+      if (scanline) free (scanline);
       return false;
+    }
   }
+  if (scanline) free (scanline);  
   
   TIFFWriteDirectory (out);
   
