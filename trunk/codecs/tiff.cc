@@ -234,20 +234,20 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   
   uint8_t* src = image.getRawData();
   uint8_t* scanline = 0;
-  if (image.spp == 1)
+  if (image.bps == 1)
     scanline = (uint8_t*) malloc (stride);
-  else
-    scanline = src;
   
   for (int row = 0; row < image.h; ++row, src += stride) {
-    if (image.spp == 1) {
+    int err = 0;
+    if (image.bps == 1) {
       for (int i = 0; i < stride; ++i)
         scanline [i] = src [i] ^ 0xFF;
+      err = TIFFWriteScanline (out, scanline, row, 0);
     }
     else
-      scanline = src;
+      err = TIFFWriteScanline (out, src, row, 0);
     
-    if (TIFFWriteScanline (out, scanline, row, 0) < 0) {
+    if (err < 0) {
       if (scanline) free (scanline);
       return false;
     }
