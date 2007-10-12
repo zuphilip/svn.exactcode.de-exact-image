@@ -56,6 +56,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
   std::vector<loader_ref>::iterator it;
+  if (loader)
   for (it = loader->begin(); it != loader->end(); ++it)
     {
       if (codec.empty()) // try via magic
@@ -91,6 +92,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
   
   std::vector<loader_ref>::iterator it;
+  if (loader)
   for (it = loader->begin(); it != loader->end(); ++it)
     {
       if (codec.empty()) // match extension
