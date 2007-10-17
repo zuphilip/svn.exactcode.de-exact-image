@@ -176,7 +176,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     if (c == "g3" || c == "fax")
       compression = COMPRESSION_CCITTFAX3;
     else if (c == "g4" || c == "group4")
-      compression = COMPRESSION_CCITTFAX3;
+      compression = COMPRESSION_CCITTFAX4;
     else if (c == "lzw")
       compression = COMPRESSION_LZW;
     else if (c == "deflate" || c == "zip")
