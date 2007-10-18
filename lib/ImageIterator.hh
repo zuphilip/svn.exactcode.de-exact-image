@@ -712,7 +712,7 @@
       }
     }
     
-    bool operator != (const iterator& other)
+    bool operator != (const iterator& other) const
     {
       switch (type) {
       case GRAY1:
