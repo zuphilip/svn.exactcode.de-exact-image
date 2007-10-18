@@ -79,6 +79,12 @@
 // just forward
 class ImageCodec;
 
+/// temp. state to migrate away from public member's
+#define DEPRECATED
+#ifndef DEPRECATED
+#define DEPRECATED __attribute__ ((deprecated))
+#endif
+
 class Image
 {
 protected:
@@ -170,8 +176,35 @@ public:
     } yuv;
   } ivalue_t;
 
+  int width () { return w; }
+  int height () { return h; }
+  
+  int stride () const {
+    return (w * spp * bps + 7) / 8;
+  }
+  
+  int Stride () const __attribute__ ((deprecated)) {
+    return stride ();
+  }
+  
+  int bitsPerSample () { return bps; }
+  int bitsPerPixel () { return bps * spp; }
+  int samplesPerPixel () { return spp; }
+
+  int xRes () { return xres; }
+  int yRes () { return yres; }
+
+  void setWidth (int _w) { w = _w; }
+  void setHeight (int _h) { h = _h; }
+
+  void setBitsPerSample (int _bps) { bps = _bps; }
+  void setSamplesPerPixel (int _spp) { spp = _spp; }
+
+  void setXRes (int _xres) { xres = _xres; }
+  void setYRes (int _yres) { yres = _yres; }
+
   /* TODO: should be unsigned */
-  int w, h, bps, spp, xres, yres;
+  int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED, xres DEPRECATED, yres DEPRECATED;
   
 public:
   
@@ -183,10 +216,6 @@ public:
   Image& operator= (Image& other);
   void copyTransferOwnership (Image& other);
   
-  int Stride () const {
-    return (w * spp * bps + 7) / 8;
-  }
-
   type_t Type () const {
     switch (spp*bps) {
     case 1:  return GRAY1;
@@ -207,19 +236,19 @@ public:
 #include "ImageIterator.hh"
 
   const_iterator begin () const {
-    return const_iterator(this, false);
+    return const_iterator (this, false);
   }
 
   const_iterator end () const {
-    return const_iterator(this, true);
+    return const_iterator (this, true);
   }
 
   iterator begin () {
-    return iterator(this, false);
+    return iterator (this, false);
   }
   
   iterator end () {
-    return iterator(this, true);
+    return iterator (this, true);
   }
 
   void copyMeta (const Image& other);
@@ -230,4 +259,5 @@ protected:
 typedef struct { uint8_t r, g, b; } rgb;
 typedef struct { uint16_t r, g, b; } rgb16;
 
+#undef DEPRECATED
 #endif
