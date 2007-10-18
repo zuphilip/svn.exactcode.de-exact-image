@@ -371,7 +371,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
     buffer[0] = (JSAMPLE*) image.getRawData() +
-      cinfo.next_scanline*image.Stride();
+      cinfo.next_scanline*image.stride();
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 

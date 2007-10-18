@@ -56,7 +56,7 @@ Image& Image::operator= (Image& other)
   uint8_t* d = other.getRawData();
   if (d) {
     New (w, h);
-    memcpy (data, d, Stride() * h);
+    memcpy (data, d, stride() * h);
   }
   else {
     setRawData();
@@ -87,7 +87,7 @@ uint8_t* Image::getRawData () const {
 
 uint8_t* Image::getRawDataEnd () const {
   // we call getRawData as it might have to query the codec to actually load it
-  return getRawData() + h * Stride();
+  return getRawData() + h * stride();
 }
 
 void Image::setRawData () {
@@ -120,7 +120,7 @@ void Image::New (int _w, int _h) {
   h = _h;
   
   // reuse:
-  setRawDataWithoutDelete ((uint8_t*) realloc (data, Stride() * h));
+  setRawDataWithoutDelete ((uint8_t*) realloc (data, stride() * h));
 }
 
 void Image::setDecoderID (const std::string& id) {

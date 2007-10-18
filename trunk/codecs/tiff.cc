@@ -88,7 +88,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
     image.yres = (int)_yres;
   
-  int stride = image.Stride();
+  int stride = image.stride();
 
   // printf ("w: %d h: %d\n", _w, _h);
   // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
@@ -232,7 +232,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
 
-  const int stride = image.Stride();
+  const int stride = image.stride();
   /* Note: we on-the-fly invert 1-bit data to please some historic apps */
   
   uint8_t* src = image.getRawData();
