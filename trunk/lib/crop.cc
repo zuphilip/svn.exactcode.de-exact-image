@@ -77,7 +77,7 @@ void fastAutoCrop (Image& image)
   // which value to compare against, get RGB of first pixel of the last line
   // iterator is a generic way to get RGB regardless of the bit-depth
   u_int16_t r = 0, g = 0, b = 0;
-  Image::iterator it = image.begin();
+  Image::const_iterator it = image.begin();
   it = it.at (0, image.h - 1);
   r = 0; g = 0; b = 0;
   (*it).getRGB (&r, &g, &b);
