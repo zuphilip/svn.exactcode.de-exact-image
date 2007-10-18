@@ -202,8 +202,8 @@ public:
     }
   }
 
-#include "ImageIterator.hh"
 #define CONST const
+#include "ImageIterator.hh"
 #include "ImageIterator.hh"
 
   const_iterator begin () const {
@@ -213,7 +213,7 @@ public:
   const_iterator end () const {
     return const_iterator(this, true);
   }
-  
+
   iterator begin () {
     return iterator(this, false);
   }
