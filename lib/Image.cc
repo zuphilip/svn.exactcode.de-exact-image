@@ -14,6 +14,7 @@
 
 #include <iostream>
 
+#define DEPRECATED
 #include "Image.hh"
 #include "Codecs.hh"
 
