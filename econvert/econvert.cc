@@ -131,7 +131,7 @@ bool convert_split (const Argument<std::string>& arg)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.setRawDataWithoutDelete
-        (image.getRawData() + i * split_image.Stride() * split_image.h);
+        (image.getRawData() + i * split_image.stride() * split_image.h);
       if (!ImageCodec::Write (arg.Get(i), split_image, quality, compression)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
@@ -325,7 +325,7 @@ bool convert_deskew (const Argument<bool>& arg)
   using std::cout;
   using std::endl;
   
-  uint8_t* new_data = (uint8_t*) malloc (image.Stride() * image.h);
+  uint8_t* new_data = (uint8_t*) malloc (image.stride() * image.h);
 
 #define pix(d,x,y) d[image.w*(y)+x]
   const int thr = 8;
@@ -458,7 +458,7 @@ bool convert_deskew (const Argument<bool>& arg)
 
   // visualize
   
-#define mark(x,y) {data[ image.Stride()* (y) + (x) ] = 0xff;}
+#define mark(x,y) {data[ image.stride()* (y) + (x) ] = 0xff;}
 
   int* hori_histogramm = new int [image.w];
   int* vert_histogramm = new int [image.h];
@@ -485,7 +485,7 @@ bool convert_deskew (const Argument<bool>& arg)
 	}
   }
   
-#define mark2(x,y,v) {data[ image.Stride()* (y) + (x) ] = v; }
+#define mark2(x,y,v) {data[ image.stride()* (y) + (x) ] = v; }
 
 #if 0  
   for (int x = 2; x < image.w-2; ++x) {

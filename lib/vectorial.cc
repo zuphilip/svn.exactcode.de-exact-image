@@ -29,7 +29,7 @@ void drawLine(Image& image, double x, double y, double x2, double y2,
 #if 0
   // asumes RGB for now
   agg::rendering_buffer rbuf (image.getRawData(),
-			     image.w, image.h, image.Stride());
+			     image.w, image.h, image.stride());
 
   pixfmt pixf (rbuf);
 #endif

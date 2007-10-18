@@ -23,7 +23,7 @@
     
     iterator (CONST Image* _image, bool end)
       : image (_image), type (_image->Type()),
-	stride (_image->Stride()), width (image->w)
+	stride (_image->stride()), width (image->w)
     {
       if (!end) {
 	ptr = (value_t*) image->getRawData();

@@ -38,7 +38,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   if (orig_bps < 8)
     colorspace_grayX_to_gray8 (image);
   
-  int stride = image.Stride();
+  int stride = image.stride();
   int cut_stride = stride * w / image.w;
   
   uint8_t* dst = image.getRawData ();
@@ -88,7 +88,7 @@ void fastAutoCrop (Image& image)
   if (r != 0 && r != 255)
     return; // not min nor max
   
-  const int stride = image.Stride();
+  const int stride = image.stride();
   
   // first determine the color to crop, for now we only accept full black or white
   int h = image.h-1;
