@@ -36,7 +36,7 @@
 	// TODO: bitpos= ...
       }
     }
-    
+
     inline void clear () {
       switch (type) {
       case GRAY1:
@@ -729,6 +729,20 @@
       }
 
     }
+
+#ifndef iterator
+
+    operator const_iterator ()
+    {
+	const_iterator it (image, false);
+        it._x = _x;
+        it.bitpos = bitpos;
+        it.ptr = ptr;
+	return it;
+    }
+
+#endif
+
   };
 
 #undef iterator
