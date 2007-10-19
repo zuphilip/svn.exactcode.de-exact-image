@@ -55,7 +55,7 @@ Image& Image::operator= (Image& other)
   
   uint8_t* d = other.getRawData();
   if (d) {
-    New (w, h);
+    resize (w, h);
     memcpy (data, d, stride() * h);
   }
   else {
@@ -115,7 +115,7 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::New (int _w, int _h) {
+void Image::resize (int _w, int _h) {
   w = _w;
   h = _h;
   

@@ -102,14 +102,15 @@ public:
   void setRawData (); // just mark modified
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
-  void New (int _w, int _h);
+  
+  void resize (int _w, int _h);
+  void New (int _w, int _h) __attribute__ ((deprecated)) { resize (_w, _h); }
   
   void setDecoderID (const std::string& id);
   const std::string& getDecoderID ();
   ImageCodec* getCodec();
   void setCodec (ImageCodec* _codec);
   
-
   bool isModified ();
   
   typedef enum {
@@ -191,8 +192,8 @@ public:
   int bitsPerPixel () { return bps * spp; }
   int samplesPerPixel () { return spp; }
 
-  int xRes () { return xres; }
-  int yRes () { return yres; }
+  int resolutionX () { return xres; }
+  int resolutionY () { return yres; }
 
   void setWidth (int _w) { w = _w; }
   void setHeight (int _h) { h = _h; }
@@ -200,8 +201,8 @@ public:
   void setBitsPerSample (int _bps) { bps = _bps; }
   void setSamplesPerPixel (int _spp) { spp = _spp; }
 
-  void setXRes (int _xres) { xres = _xres; }
-  void setYRes (int _yres) { yres = _yres; }
+  void setResolutionX (int _xres) { xres = _xres; }
+  void setResolutionY (int _yres) { yres = _yres; }
 
   /* TODO: should be unsigned */
   int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED, xres DEPRECATED, yres DEPRECATED;
