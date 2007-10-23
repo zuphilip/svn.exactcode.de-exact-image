@@ -39,7 +39,7 @@ namespace BarDecode
         {
             ++img_it;
             if ( x < img->w-1 ) {
-                ++x;
+                x += 1;
             } else {
                 x = 0;
                 ++y;
@@ -50,7 +50,14 @@ namespace BarDecode
 
         const value_type operator*() const
         {
-            return (uint16_t) img_it.getL() < (uint16_t) threshold;
+            // FIXME FIXME FIXME make this efficient!
+            Image::const_iterator uup = img->begin().at(x,(y >= 2 ? y-2 : y));
+            Image::const_iterator up = img->begin().at(x,(y > 0 ? y-1 : y));
+            Image::const_iterator down = img->begin().at(x,(y < img->h-1 ? y+1 : y));
+            Image::const_iterator ddown = img->begin().at(x,(y < img->h-2 ? y+2 : y));
+            *uup; *up; *down; *ddown;
+            double mean = ((double) (img_it.getL() + up.getL() + uup.getL() + down.getL() + ddown.getL()))/5;
+            return mean < threshold;
         }
             
         //value_type* operator->();

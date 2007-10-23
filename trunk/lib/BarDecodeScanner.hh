@@ -172,8 +172,20 @@ namespace BarDecode
             do {
                 ++mit;
                 if (mit.end()) break;
+
+                Modulizer ml = *mit, mu = *mit;
                 Scanner scanner(*mit);
                 cur = scanner();
+
+                if ( ! cur ) { 
+                    mu.set_unit( ml.get_unit() * 1.25);
+                    cur = (Scanner(mu))();
+                    if ( ! cur ) { 
+                        ml.set_unit( ml.get_unit() * 0.75);
+                        cur = (Scanner(ml))();
+                    }
+                }
+
             } while (! cur );
         }
 

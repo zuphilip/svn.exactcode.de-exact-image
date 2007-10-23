@@ -64,11 +64,9 @@ int main (int argc, char* argv[])
   // setup the argument list
   Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
-  Argument<std::string> arg_input ("i", "input", "input file",
-                                   1, 1);
+  Argument<std::string> arg_input ("i", "input", "input file", 1, 1);
 
-  Argument<std::string> arg_output ("o", "output", "output file",
-				    0, 1);
+  Argument<std::string> arg_output ("o", "output", "output file", 0,1);
 
   // optimize2bw options
 
