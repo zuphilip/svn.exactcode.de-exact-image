@@ -4,6 +4,8 @@
 #include <utility>
 #include <assert.h>
 
+#include <math.h>
+
 #include "Image.hh"
 #include "BarDecodePixelIterator.hh"
 
@@ -14,6 +16,7 @@ namespace BarDecode
     typedef std::pair<bool,uint> token_t; // (color,length in pixels)
     typedef std::pair<bool,uint> bar_t;   // (color, length in modules)
     typedef bool module_t;
+    typedef double unit_t;
 
     class Tokenizer
     {
@@ -60,9 +63,10 @@ namespace BarDecode
         typedef Modulizer self_t;
         typedef bar_t value_type;
 
-        Modulizer(const Tokenizer& tokenizer, unsigned int unit) :
+        Modulizer(const Tokenizer& tokenizer, unit_t unit, unsigned int quiet) :
             tokenizer(tokenizer),
             unit(unit),
+            quiet(quiet),
             cur_bar(),
             invalid(false)
         {
@@ -77,10 +81,10 @@ namespace BarDecode
             assert(! end());
             assert(! tokenizer.end());
             token_t t = tokenizer.next();
-            cur_bar = bar_t(t.first,t.second);
+            cur_bar = bar_t(t.first,lround((double)t.second/unit)); // FIXME add fuzzyness
 
             // check if token is valid bar
-            invalid = (cur_bar.second <= 0 || cur_bar.second > 4);
+            invalid = (cur_bar.second < 1 || cur_bar.second > 4);
             return *this;
         }
 
@@ -98,9 +102,13 @@ namespace BarDecode
         pos_t get_x() const { return tokenizer.get_x(); }
         pos_t get_y() const { return tokenizer.get_y(); }
 
+        unsigned int get_unit() const { return unit; }
+        unsigned int get_quiet() const { return quiet; }
+
     protected:
         Tokenizer tokenizer;
-        unsigned int unit;
+        unit_t unit;
+        unsigned int quiet;
         bar_t cur_bar;
         bool invalid;
     };
@@ -119,6 +127,7 @@ namespace BarDecode
             unit(0),
             valid(false)
         {
+            valid = true;
             next();
         }
 
@@ -126,7 +135,7 @@ namespace BarDecode
 
         value_type operator*() const
         {
-            return Modulizer(init,unit);
+            return Modulizer(init,unit,quiet);
         }
 
         // Try to find next modulizer
@@ -150,9 +159,12 @@ namespace BarDecode
             }
         }
 
+        // TODO considere all possibilities for unit and quiet instanciations
         void next()
         {
             assert(check_tokenizer());
+
+            valid = false;
 
             bool success = false;
             while ( ! success ) {
@@ -164,7 +176,7 @@ namespace BarDecode
                     if ( ! check_tokenizer() ) return;
                     t = tokenizer.next();
                 }
-                int quiet = t.second;
+                int quiet_pixel = t.second;
 
                 // remember tokenizer as init
                 // (tokenizer itself is advanced below by one token, since
@@ -178,11 +190,12 @@ namespace BarDecode
                 unit = t.second; // ASSUME: this holds for all codes! (FIXME verify assumption)
 
                 // check size of q
-                if (quiet >= 7*unit) { // EAN-8 specifc !!! FIXME
+                if (quiet_pixel >= 7*unit) { // EAN-8 specifc !!! FIXME
+                    quiet = lround((double)quiet_pixel/unit);
                     success = true;
                 }
-              
             }
+            valid = true;
             // we have got a hit
             // TODO initialize parameters
             // TODO maintain bitfield of possible types
@@ -192,7 +205,7 @@ namespace BarDecode
         Tokenizer tokenizer;
         Tokenizer init;
         unsigned int quiet;
-        unsigned int unit;
+        unit_t unit;
         bool valid;
     };
 
