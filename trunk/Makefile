@@ -56,7 +56,7 @@ ifeq "$(WITHLIBAGG)" "0"
 include agg-2.4/Makefile
 endif
 
-MODULES = lib codecs econvert edentify ContourMatching
+MODULES = lib codecs econvert edentify ContourMatching BarDecode
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
