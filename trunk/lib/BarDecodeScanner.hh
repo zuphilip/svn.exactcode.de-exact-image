@@ -2,8 +2,10 @@
 #define _BARDECODE_SCANNER_HH_
 
 #include <map>
+#include <vector>
+#include <string>
 
-#include "BarDecodeTokenizer.hh"
+#include "BarDecodeModulizer.hh"
 
 namespace BarDecode
 {
@@ -18,10 +20,10 @@ namespace BarDecode
     typedef std::vector<bar_t> bar_vector_t;
 
     enum {
-        ean8 = 1,
-        ean13 = 2,
-        upca = 4,
-        upce = 8,
+        ean8 = 1<<0,
+        ean13 = 1<<1,
+        upca = 1<<2,
+        upce = 1<<3,
     };
 
     // 0 means no match
@@ -31,8 +33,10 @@ namespace BarDecode
         typedef std::map<module_word_t,symbol_t> map_t;
 
     public:
-        translation_table_t(code_type_t);
-        translation_table_t();
+        translation_table_t(code_type_t) {};
+        translation_table_t() :
+            map()
+        {};
 
         virtual ~translation_table_t() {};
 
@@ -47,13 +51,29 @@ namespace BarDecode
         }
 
     private:
-        map_t& map;
+        map_t map;
     };
 
     struct scanner_result_t
     {
+        scanner_result_t() : 
+            valid(false), 
+            code(""),
+            x(0),
+            y(0)
+        {}
+        
+        scanner_result_t(const std::string& code, pos_t x, pos_t y) :
+            valid(true),
+            code(code),
+            x(x),
+            y(y)
+        {}
+
         bool valid;
         std::string code;
+        pos_t x;
+        pos_t y;
 
         operator bool() const
         {
@@ -61,13 +81,12 @@ namespace BarDecode
         }
     };
 
-    extern char* ean, eanaux, ean13_0;
     enum {
-        ean_normal_guard,
-        ean_center_guard,
-        ean_special_guard,
-        ean_add_on_guard,
-        ean_add_on_delineator
+        ean_normal_guard = 1,
+        ean_center_guard = 2,
+        ean_special_guard = 3,
+        ean_add_on_guard = 4,
+        ean_add_on_delineator = 5
     };
 
 
@@ -76,24 +95,49 @@ namespace BarDecode
     public:
 
         // modulizer points to first (black) module
-        Scanner(Modulizer modulizer)
-            : modulizer(modulizer)
+        Scanner(Modulizer modulizer) :
+            modulizer(modulizer),
+            table()
         {
+
         }
 
-        scanner_result_t operator()()
-        {
-            // try to match start marker
-            
-            
-            // adjust code_type
-            // update code_type of modulizer (TODO)
-            // Set parameter (most of all module_word_size)
+        void init_tables() const;
 
-            // scan modules according to code_type
-            return scanner_result_t();
+        uint add_bars(bar_vector_t& v,uint c)
+        {
+            size_t old_size = v.size();
+            v.resize(old_size + c);
+            for (uint i = 0; i < c; ++i) {
+                if (modulizer.end()) {
+                    v.resize(old_size + i);
+                    return i;
+                } else {
+                    v[old_size + i] = *modulizer;
+                    ++modulizer;
+                }
+            }
+            return c;
         }
 
+        uint get_bars(bar_vector_t& v,uint c)
+        {
+            v.resize(c);
+            for (uint i = 0; i < c; ++i) {
+                if (modulizer.end()) {
+                    v.resize(i);
+                    return i;
+                } else {
+                    v[i] = *modulizer;
+                    ++modulizer;
+                }
+            }
+            return c;
+        }
+
+        scanner_result_t operator()();
+
+        static uint modules_count(const bar_vector_t& v);
         static module_word_t get_module_word(const bar_vector_t& v);
         static bool get_parity(const module_word_t& w);
         static bool get_parity(const bar_vector_t& w);
@@ -114,7 +158,11 @@ namespace BarDecode
         BarCodeIterator(const Image* img, threshold_t threshold) :
             img(img),
             mit(img,threshold)
-        {}
+        {
+            if (! mit.end()) {
+                operator++();
+            }
+        }
 
         virtual ~BarCodeIterator() {}
 
@@ -126,7 +174,7 @@ namespace BarDecode
                 if (mit.end()) break;
                 Scanner scanner(*mit);
                 cur = scanner();
-            } while (! cur.valid);
+            } while (! cur );
         }
 
         value_type operator*() const

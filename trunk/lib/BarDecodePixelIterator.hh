@@ -29,19 +29,21 @@ namespace BarDecode
             threshold(threshold),
             x(0),
             y(0)
-        {}
+        {
+            *img_it;
+        }
 
         virtual ~PixelIterator() {};
 
         self_t& operator++()
         {
-            if ( x < img->w ) {
+            ++img_it;
+            if ( x < img->w-1 ) {
                 ++x;
             } else {
                 x = 0;
                 ++y;
             }
-            ++img_it;
             *img_it;
             return *this;
         };
@@ -71,7 +73,7 @@ namespace BarDecode
 
     protected:
         const Image* img;
-        Image::iterator img_it;
+        Image::const_iterator img_it;
         threshold_t threshold;
         pos_t x;
         pos_t y;

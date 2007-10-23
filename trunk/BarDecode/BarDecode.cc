@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <set>
 
 #include "ArgumentList.hh"
 #include "Codecs.hh"
@@ -43,6 +44,15 @@ void Draw(Image& img, const FGMatrix& c, unsigned int r, unsigned int g, unsigne
                 PutPixel(img, j,i, r, g, b);
             } 
         }
+    }
+}
+
+void Draw(Image& img, BarDecode::threshold_t threshold, unsigned int r, unsigned int g, unsigned int b)
+{
+    for (BarDecode::PixelIterator i(&img,threshold); ! i.end(); ++i) {
+        if (*i) {
+            PutPixel(img, i.get_x(),i.get_y(), r, g, b);
+        } 
     }
 }
 
@@ -131,8 +141,28 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 170;
 
-  
-  BarDecode::BarCodeIterator(&image,threshold);
-  
-  return 0;
+  std::set<std::string> codes;
+  BarDecode::BarCodeIterator it(&image,threshold);
+  while (! it.end() ) {
+      codes.insert(*it);
+      ++it;
+  }
+
+  for (std::set<std::string>::const_iterator it = codes.begin();
+       it != codes.end();
+       ++it) {
+      std::cout << *it << std::endl;
+  }
+
+  if (arg_output.Get() != "") {
+      Image o_image = image;
+      Draw(o_image,threshold,0,0,255);
+
+      if (!ImageCodec::Write(arg_output.Get(), o_image)) {
+          std::cerr << "Error writing output file." << std::endl;
+          return 1;
+      }
+  }
+ 
+  return codes.empty();
 }
