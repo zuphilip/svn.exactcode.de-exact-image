@@ -25,7 +25,7 @@ The semantic checker will not be implemented in the near future.
 
 =====================================================================
 The whole scanning can be performed a second time on an image that
-is rotated by 90 deg. Depending on the format it might be usefull
+is rotated by 90 deg. Depending on the format it might be useful
 to scan at 180 and 270 deg. as well. For the most common codes
 UPC-A and derivates this is not necessary because of parity encoding.
 
