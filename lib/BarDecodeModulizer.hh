@@ -102,8 +102,10 @@ namespace BarDecode
         pos_t get_x() const { return tokenizer.get_x(); }
         pos_t get_y() const { return tokenizer.get_y(); }
 
-        unsigned int get_unit() const { return unit; }
+        unit_t get_unit() const { return unit; }
         unsigned int get_quiet() const { return quiet; }
+
+        void set_unit(unit_t u) { unit = u; }
 
     protected:
         Tokenizer tokenizer;
