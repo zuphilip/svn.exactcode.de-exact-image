@@ -1,5 +1,7 @@
 #include "BarDecodeScanner.hh"
 
+#define SCANNER_DEBUG
+
 #define PUT_IN_TABLE(a,b,c) \
     a[b] = c; \
 
@@ -175,7 +177,6 @@ namespace BarDecode
 
         if (result == ean_normal_guard) {
 
-#define SCANNER_DEBUG
 #ifdef SCANNER_DEBUG
             std::cerr << "##### ean: (" << std::dec << x << ", " << y << "), unit=" 
                 << modulizer.get_unit() << ", quiet=" << modulizer.get_quiet() << " : " 
