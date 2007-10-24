@@ -1,6 +1,6 @@
 #include "BarDecodeScanner.hh"
 
-#define SCANNER_DEBUG
+//#define SCANNER_DEBUG
 
 #define PUT_IN_TABLE(a,b,c) \
     a[b] = c; \
