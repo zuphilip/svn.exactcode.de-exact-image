@@ -192,7 +192,7 @@ namespace BarDecode
                 if ( ! check_tokenizer() ) return;
                 t = tokenizer.next();
                 assert(t.first); // assert black
-                unit = t.second; // ASSUME: this holds for all codes! (FIXME verify assumption)
+                unit = t.second; // FIXME does not hold for all codes!
 
                 // check size of q
                 if (quiet_pixel >= 7*unit) { // EAN-8 specifc !!! FIXME
@@ -200,7 +200,7 @@ namespace BarDecode
                     success = true;
                 }
             }
-            valid = true;
+            if (check_tokenizer()) valid = true;
             // we have got a hit
             // TODO initialize parameters
             // TODO maintain bitfield of possible types
