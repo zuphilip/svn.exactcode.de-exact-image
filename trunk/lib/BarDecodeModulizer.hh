@@ -180,6 +180,9 @@ namespace BarDecode
                 }
                 int quiet_pixel = t.second;
 
+                // in any case we expect 7 pixel
+                if (quiet_pixel < 7) continue;
+
                 // remember tokenizer as init
                 // (tokenizer itself is advanced below by one token, since
                 //  cur position is black it is no valid quiet-zone, anyway)
