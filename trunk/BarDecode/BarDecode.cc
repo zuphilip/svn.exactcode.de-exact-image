@@ -133,7 +133,6 @@ int main (int argc, char* argv[])
   
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
-    std::cerr << "Threshold: " << threshold << std::endl;
   }
 
   if (arg_threshold.Get() == 0)
