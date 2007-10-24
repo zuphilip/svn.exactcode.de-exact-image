@@ -23,22 +23,18 @@ namespace BarDecode
 
         typedef bool value_type;
 
-        PixelIterator(const Image* img, threshold_t threshold = 0) :
+        PixelIterator(const Image* img, threshold_t threshold = 0, size_t it_size = 6) :
             img(img),
-            img_it(),
+            img_it(it_size),
             threshold(threshold),
             x(0),
             y(0)
         {
-            // FIXME insert a optimized code path for img->h >= 3
-            img_it[0] = img->begin();
-            img_it[1] = img_it[0].at(0,std::min(1,img->h));
-            img_it[2] = img_it[0].at(0,std::min(2,img->h));
-            img_it[3] = img_it[0].at(0,std::min(3,img->h));
-            *img_it[0];
-            *img_it[1];
-            *img_it[2];
-            *img_it[3];
+            // FIXME insert an optimized code path for img->h >= 3
+            for (uint i = 0; i < img_it.size(); ++i) {
+                img_it[i] = img->begin().at(0,std::min((int)i,img->h));
+                *img_it[i];
+            }
         }
 
         virtual ~PixelIterator() {};
@@ -47,30 +43,29 @@ namespace BarDecode
         {
             if ( x < img->w-1 ) {
                 ++x;
-                ++img_it[0];
-                ++img_it[1];
-                ++img_it[2];
-                ++img_it[3];
+                for (uint i = 0; i < img_it.size(); ++i) {
+                    ++img_it[i];
+                    *img_it[i];
+                }
             } else {
                 x = 0;
                 // FIXME insert a optimized code path for img->h >= y+3
-                y += 4;
-                img_it[0] = img_it[0].at(x,y+0);
-                img_it[1] = img_it[1].at(x,std::min(y+1,img->h));
-                img_it[2] = img_it[2].at(x,std::min(y+2,img->h));
-                img_it[3] = img_it[3].at(x,std::min(y+3,img->h));
+                y += img_it.size();
+                for (uint i = 0; i < img_it.size(); ++i) {
+                    img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h));
+                    *img_it[i];
+                }
             }
-            *img_it[0];
-            *img_it[1];
-            *img_it[2];
-            *img_it[3];
             return *this;
         };
 
         const value_type operator*() const
         {
-            double mean = ((double) (img_it[0].getL() + img_it[1].getL() + img_it[2].getL() + img_it[3].getL()))/4.0;
-            return mean < threshold;
+            double tmp=0;
+            for (uint i = 0; i < img_it.size(); ++i) {
+                tmp += img_it[i].getL();
+            }
+            return (tmp/img_it.size()) < threshold;
         }
             
         //value_type* operator->();
@@ -80,10 +75,9 @@ namespace BarDecode
         {
             // FIXME insert a optimized code path for img->h >= y+3
             self_t tmp = *this;
-            tmp.img_it[0] = tmp.img_it[0].at(x,y);
-            tmp.img_it[1] = tmp.img_it[1].at(x,std::min(y+1,img->h));
-            tmp.img_it[2] = tmp.img_it[2].at(x,std::min(y+2,img->h));
-            tmp.img_it[3] = tmp.img_it[3].at(x,std::min(y+3,img->h));
+            for (uint i = 0; i < img_it.size(); ++i) {
+                tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
+            }
             return tmp;
         }
 
@@ -93,11 +87,11 @@ namespace BarDecode
         threshold_t get_threshold() const { return threshold; }
         void set_threshold(threshold_t new_threshold) { threshold = new_threshold; }
 
-        bool end() const { return !(img_it[3] != img->end()); }
+        bool end() const { return !(img_it[img_it.size()-1] != img->end()); }
 
     protected:
         const Image* img;
-        Image::const_iterator img_it[4];
+        std::vector<Image::const_iterator> img_it;
         threshold_t threshold;
         pos_t x;
         pos_t y;
