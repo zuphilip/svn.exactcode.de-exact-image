@@ -22,6 +22,8 @@
 
 #include <algorithm>
 
+#include <list>
+
 #include "config.h"
 
 #include "ArgumentList.hh"
@@ -280,7 +282,7 @@ bool convert_convolve (const Argument<double>& arg)
   const std::vector<double>& v = arg.Values ();
   int n = sqrt(v.size());
   
-  for (int i = 0; i < v.size(); ++i)
+  for (unsigned int i = 0; i < v.size(); ++i)
     divisor += v[i];
   
   if (divisor == 0)
@@ -320,7 +322,187 @@ bool convert_edge (const Argument<bool>& arg)
   return true;
 }
 
-bool convert_deskew (const Argument<bool>& arg)
+/* We rely on a little hardware support to do reasonble fast but still
+   quality auto-crop and deskew:
+   
+   The first line(s) that are specified as argument are guaranteed to
+   be background raster. So we can simple compare the pixel data to
+   know where the background data is replaced by actual scanned data.
+   
+   This method is so straight forward it also shouldn't be patented
+   :-)! -ReneR
+
+   For optimal results at least 2, but even better more, background
+   raster lines need to be supplied.
+   
+   Improvement: Each scanner, especially different model series, has
+   it's own noise / dust pattern. To compensate, we use a dynamic
+   threshold per column - depending on the average distribution of the
+   background raster lines comparing against.
+   
+   Improvements: The deviation could be changed to be more sensitive
+   for lighter colors than dark colors, as most scannes produce
+   shadows on the borders of the paper.
+   
+   Optimization: As we are only interested in the boundaries of the
+   scanned material, we stop searching the inner area after the first
+   data points are gathered in all 4 boundary areas. */
+
+bool convert_deskew (const Argument<int>& arg)
+{
+  const int raster_rows = arg.Get();
+  
+  // dynamic threshold and reference value per column
+  Image reference_image; // one pixel high
+  reference_image.copyMeta (image);
+  reference_image.resize (image.width(), 1);
+  std::vector<double> threshold (image.width());
+  
+  Image::iterator it = image.begin();
+  Image::iterator it_ref = reference_image.begin ();
+  
+  for (int x = 0; x < image.width(); ++x, ++it_ref)
+    {
+      // average
+      double r, g, b, r_avg = 0, g_avg = 0, b_avg = 0;
+      for (int y = 0; y < raster_rows; ++y) {
+	it = it.at (x, y);
+	*it;
+	it.getRGB (r, g, b);
+	r_avg += r / raster_rows; g_avg += g / raster_rows; b_avg += b / raster_rows;
+      }
+      
+      // deviation -> threshold
+      threshold [x] = 0;
+      for (int y = 1; y < raster_rows; ++y) {
+	it = it.at (x, y);
+	*it;
+	it.getRGB (r, g, b);
+	threshold [x] += (fabs(r_avg-r) + fabs(g_avg-g) + fabs(b_avg-b)) / 3;
+      }
+      
+      // allow higher threshold than deviation of pixel data
+      threshold [x] *= 3;
+
+      if (threshold [x] < 0.01)
+	threshold [x] = 0.01;
+      else if (threshold [x] > 0.2)
+	threshold [x] = 0.2;
+      
+      // std::cerr << "[" << x << "]: " << threshold [x] << std::endl;;
+      
+      it_ref.setRGB (r_avg, g_avg, b_avg);
+      it_ref.set(it_ref);
+    }
+  
+  struct comperator {
+    bool operator() (Image::iterator& it_ref, Image::iterator& it, double threshold) {
+      *it; *it_ref;
+      double r, g, b, r2, g2, b2;
+      it_ref.getRGB (r, g, b);
+      it.getRGB (r2, g2, b2);
+      
+      // We do not average the RGB values to luminance, as a deviation
+      // in one of the channels alone can be significant enough.
+      return (fabs(r-r2) + fabs(g-g2) + fabs(b-b2)) > threshold;
+    }
+  } comperator;
+  
+  struct marker {
+    void operator() (Image::iterator& it, std::pair<int, int> point) {
+      it = it.at (point.first, point.second);
+      it.setRGB (1.,1.,1.);
+      it.set (it);
+    }
+  } marker;
+  
+  std::list<std::pair<int, int> > points_left, points_right, points_top, points_bottom;
+  
+  // left
+  for (int y = 0; y < image.height(); ++y)
+    {
+      it = it.at (0,y);
+      it_ref = reference_image.begin ();
+      
+      for (int x = 0; x < image.width(); ++x, ++it, ++it_ref)
+	{
+	  if (comperator(it_ref, it, threshold[x]))
+	    {
+	      points_left.push_back (std::pair<int,int> (x, y));
+	      break;
+	    }
+	}
+    }
+  
+  // right
+  for (int y = 0; y < image.height(); ++y)
+    {
+      it = it.at (image.width() - 1, y);
+      it_ref = it_ref.at (image.width() - 1, 0);
+      
+      for (int x = image.width(); x > 0; --x, --it, --it_ref)
+	{
+	  if (comperator(it_ref, it, threshold[x - 1]))
+	    {
+	      points_right.push_back (std::pair<int,int> (x - 1, y));
+	      break;
+	    }
+	}
+    }
+  
+  // top
+  for (int x = 0; x < image.width(); ++x)
+    {
+      it_ref = it_ref.at (x, 0);
+      for (int y = 0; y < image.height(); ++y)
+	{
+	  it = it.at (x, y);
+	  if (comperator(it_ref, it, threshold[x - 1]))
+	    {
+	      points_top.push_back (std::pair<int,int> (x - 1, y));
+	      break;
+	    }
+	}
+    }
+  
+  // bottom
+  for (int x = 0; x < image.width(); ++x)
+    {
+      it_ref = it_ref.at (x, 0);
+      for (int y = image.height(); y > 0; --y)
+	{
+	  it = it.at (x, y - 1);
+	  if (comperator(it_ref, it, threshold[x]))
+	    {
+	      points_bottom.push_back (std::pair<int,int> (x, y - 1));
+	      break;
+	    }
+	}	  
+    }
+  
+  brightness_contrast_gamma (image, -.75, .0, 1.0);
+  
+  for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
+       p != points_top.end(); ++p)
+    marker (it, *p);
+  
+  for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
+       p != points_bottom.end(); ++p)
+    marker (it, *p);
+  
+  for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
+       p != points_left.end(); ++p)
+    marker (it, *p);
+
+  for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
+       p != points_right.end(); ++p)
+    marker (it, *p);
+
+  return true;
+}
+
+
+bool convert_deskew1 (const Argument<int>& arg)
 {
   using std::cout;
   using std::endl;
@@ -1089,18 +1271,12 @@ int main (int argc, char* argv[])
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
-  Argument<bool> arg_deskew ("", "deskew",
+  Argument<int> arg_deskew ("", "deskew",
 			     "deskew digitalized paper",
-			     0, 0, true, true);
+			     0, 1, true, true);
   arg_deskew.Bind (convert_deskew);
   arglist.Add (&arg_deskew);
 
-  Argument<bool> arg_deskew2 ("", "deskew2",
-			     "deskew digitalized paper try2",
-			     0, 0, true, true);
-  arg_deskew2.Bind (convert_deskew2);
-  arglist.Add (&arg_deskew2);
-  
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
 					0, 1, true, true);
@@ -1144,7 +1320,6 @@ int main (int argc, char* argv[])
   arg_line.Bind (convert_line);
   arglist.Add (&arg_line);
 
- 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
     return 1;
