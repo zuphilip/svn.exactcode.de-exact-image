@@ -53,6 +53,17 @@ void Draw(Image& img, BarDecode::threshold_t threshold, unsigned int r, unsigned
 #endif
 
 
+using namespace BarDecode;
+
+struct comp {
+    bool operator() (const scanner_result_t& a, const scanner_result_t& b) const
+    {
+        if (a.type < b.type) return true;
+        else if (a.type > b.type) return false;
+        else return (a.code < b.code);
+    }
+};
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
@@ -100,17 +111,17 @@ int main (int argc, char* argv[])
     threshold = 130;
   }
 
-  std::set<std::string> codes;
-  BarDecode::BarcodeIterator it(&image,threshold,BarDecode::ean|BarDecode::code128);
+  std::set<scanner_result_t,comp> codes;
+  BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128);
   while (! it.end() ) {
-      codes.insert((*it).code);
+      codes.insert(*it);
       ++it;
   }
 
-  for (std::set<std::string>::const_iterator it = codes.begin();
+  for (std::set<scanner_result_t>::const_iterator it = codes.begin();
        it != codes.end();
        ++it) {
-      std::cout << *it << std::endl;
+      std::cout << it->code << " [type: " << it->type << " at: (" << it->x << "," << it->y << ")]" << std::endl;
   }
 
 #ifdef BARDECODE_DEBUG
