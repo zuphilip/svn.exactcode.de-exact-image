@@ -28,7 +28,8 @@ namespace BarDecode
             img_it(it_size),
             threshold(threshold),
             x(0),
-            y(0)
+            y(0),
+            lum(0)
         {
             // FIXME insert an optimized code path for img->h >= 3
             for (uint i = 0; i < img_it.size(); ++i) {
@@ -65,7 +66,8 @@ namespace BarDecode
             for (uint i = 0; i < img_it.size(); ++i) {
                 tmp += img_it[i].getL();
             }
-            return (tmp/img_it.size()) < threshold;
+            lum = tmp/img_it.size();
+            return lum < threshold;
         }
             
         //value_type* operator->();
@@ -89,12 +91,15 @@ namespace BarDecode
 
         bool end() const { return !(img_it[img_it.size()-1] != img->end()); }
 
+        double get_lum() const { return lum; }
+
     protected:
         const Image* img;
         std::vector<Image::const_iterator> img_it;
         threshold_t threshold;
         pos_t x;
         pos_t y;
+        mutable double lum;
 
     }; // class PixelIterator
 

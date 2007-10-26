@@ -14,7 +14,6 @@ namespace BarDecode
 
     // Shall we include absolut position?
     typedef std::pair<bool,uint> token_t; // (color,length in pixels)
-    typedef std::pair<bool,uint> bar_t;   // (color, length in modules)
     typedef bool module_t;
     typedef double unit_t;
 
@@ -23,25 +22,41 @@ namespace BarDecode
     public:
         Tokenizer(const Image* img,threshold_t threshold = 170) :
             img(img),
-            it(img,threshold)
+            it(img,threshold),
+            extra(0)
         {}
 
         virtual ~Tokenizer() {}
 
         // precondition: ! end()
+        // FIXME use extra only if u is small enough such that subpixel dimensions matter
         token_t next()
         {
             assert(! end());
-            int count = 0;
+            double count = 0;
             bool color = *it; // TODO simple alternation would safe the call of operator*
-            do { ++it; ++count; } while ( ! end() && color == *it );
-            return token_t(color,count);
+            do { 
+                ++it; 
+                ++count; 
+            } while ( ! end() && color == *it );
+
+            count -= extra;
+            double extra = ( *it ? 
+                             (it.get_lum() / 255.0) :
+                             (1- (it.get_lum() / 255.0))
+                           );
+            count += extra;
+            extra = 1 - extra;
+            return token_t(color,lround(count));
         }
 
         bool end() const { return it.end(); }
 
         threshold_t get_threshold() const { return it.get_threshold(); }
-        void set_threshold(threshold_t new_threshold) { it.set_threshold(new_threshold); }
+        void set_threshold(threshold_t new_threshold) 
+        { 
+            it.set_threshold(new_threshold); 
+        }
 
         pos_t get_x() const { return it.get_x(); }
         pos_t get_y() const { return it.get_y(); }
@@ -49,9 +64,10 @@ namespace BarDecode
     protected:
         const Image* img;
         PixelIterator it;
+        double extra;
     };
 
-
+#if 0
     // TODO put it in its own header ?
     // Move initialization code out of Modulizer. 
     // Assume that a Modulizer is initialized.
@@ -114,105 +130,7 @@ namespace BarDecode
         bar_t cur_bar;
         bool invalid;
     };
-
-
-    class ModulizerIterator
-    {
-    public:
-        typedef ModulizerIterator self_t;
-        typedef Modulizer value_type;
-
-        ModulizerIterator(const Image* img, threshold_t threshold) :
-            tokenizer(img,threshold),
-            init(tokenizer),
-            quiet(0),
-            unit(0),
-            valid(false)
-        {
-            valid = true;
-            next();
-        }
-
-        virtual ~ModulizerIterator() {}
-
-        value_type operator*() const
-        {
-            return Modulizer(init,unit,quiet);
-        }
-
-        // Try to find next modulizer
-        self_t& operator++()
-        {
-            assert(valid);
-            next();
-            return *this;
-        }
-
-        bool end() const { return ! valid; }
-
-    private:
-        bool check_tokenizer()
-        {
-            if ( tokenizer.end() ) { 
-                valid = false; 
-                return false;
-            } else {
-                return true;
-            }
-        }
-
-        // TODO considere all possibilities for unit and quiet instanciations
-        void next()
-        {
-            assert(check_tokenizer());
-
-            valid = false;
-
-            bool success = false;
-            while ( ! success ) {
-
-                // get next white module and interprete it as quiet-zone
-                if ( ! check_tokenizer() ) return;
-                token_t t = tokenizer.next();
-                if (t.first) {
-                    if ( ! check_tokenizer() ) return;
-                    t = tokenizer.next();
-                }
-                int quiet_pixel = t.second;
-
-                // in any case we expect 7 pixel
-                if (quiet_pixel < 7) continue;
-
-                // remember tokenizer as init
-                // (tokenizer itself is advanced below by one token, since
-                //  cur position is black it is no valid quiet-zone, anyway)
-                init = tokenizer;
-
-                // get black module and compute unit from it
-                if ( ! check_tokenizer() ) return;
-                t = tokenizer.next();
-                assert(t.first); // assert black
-                unit = t.second; // FIXME does not hold for all codes!
-
-                // check size of q
-                if (quiet_pixel >= 7*unit) { // EAN-8 specifc !!! FIXME
-                    quiet = lround((double)quiet_pixel/unit);
-                    success = true;
-                }
-            }
-            if (check_tokenizer()) valid = true;
-            // we have got a hit
-            // TODO initialize parameters
-            // TODO maintain bitfield of possible types
-        }
-
-    private:
-        Tokenizer tokenizer;
-        Tokenizer init;
-        unsigned int quiet;
-        unit_t unit;
-        bool valid;
-    };
+#endif
 
 
 }; // namespace BarDecode
