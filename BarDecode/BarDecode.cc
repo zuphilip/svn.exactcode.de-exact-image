@@ -101,9 +101,9 @@ int main (int argc, char* argv[])
   }
 
   std::set<std::string> codes;
-  BarDecode::BarCodeIterator it(&image,threshold);
+  BarDecode::BarcodeIterator it(&image,threshold,BarDecode::ean|BarDecode::code128);
   while (! it.end() ) {
-      codes.insert(*it);
+      codes.insert((*it).code);
       ++it;
   }
 

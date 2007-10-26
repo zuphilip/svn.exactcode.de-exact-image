@@ -13,64 +13,53 @@ namespace BarDecode
     // 16 bit should be enough we do not want to use all of these anyway.
     typedef uint16_t module_word_t;
 
-    typedef uint32_t code_type_t; // Bitset of types
+    typedef uint32_t codes_t; // Bitset of types
 
     typedef std::pair<char,bool> symbol_t; // where bool is the parity
 
-    typedef std::vector<bar_t> bar_vector_t;
+    typedef unsigned int psize_t; // size in pixel type
+    typedef unsigned int usize_t; // size in X unit
 
-    enum {
+    typedef double u_t; // type for X unit
+
+    enum code_t {
         ean8 = 1<<0,
         ean13 = 1<<1,
         upca = 1<<2,
+        ean = ean8|ean13|upca,
         upce = 1<<3,
+        code128 = 1<<4
     };
 
-    // 0 means no match
-    class translation_table_t
+    struct bar_vector_t : public std::vector<token_t> 
     {
-    private:
-        typedef std::map<module_word_t,symbol_t> map_t;
-
-    public:
-        translation_table_t(code_type_t) {};
-        translation_table_t() :
-            map()
-        {};
-
-        virtual ~translation_table_t() {};
-
-        symbol_t lookup(module_word_t mword) const
-        {
-            map_t::const_iterator tmp = map.find(mword);
-            if (tmp != map.end()) {
-                return tmp->second;
-            } else {
-                return symbol_t(0,0);
-            }
-        }
-
-    private:
-        map_t map;
+        bar_vector_t(int s) :
+            std::vector<token_t>(s),
+            psize(0)
+        {}
+        psize_t psize;
     };
 
     struct scanner_result_t
     {
         scanner_result_t() : 
-            valid(false), 
+            valid(false),
+            type(),
             code(""),
             x(0),
             y(0)
         {}
         
-        scanner_result_t(const std::string& code, pos_t x, pos_t y) :
+        scanner_result_t(code_t type, const std::string& code, pos_t x, pos_t y) :
             valid(true),
+            type(type),
             code(code),
             x(x),
             y(y)
         {}
 
         bool valid;
+        code_t type;
         std::string code;
         pos_t x;
         pos_t y;
@@ -81,15 +70,7 @@ namespace BarDecode
         }
     };
 
-    enum {
-        ean_normal_guard = 1,
-        ean_center_guard = 2,
-        ean_special_guard = 3,
-        ean_add_on_guard = 4,
-        ean_add_on_delineator = 5
-    };
-
-
+#if 0
     class Scanner
     {
     public:
@@ -104,36 +85,6 @@ namespace BarDecode
 
         void init_tables() const;
 
-        uint add_bars(bar_vector_t& v,uint c)
-        {
-            size_t old_size = v.size();
-            v.resize(old_size + c);
-            for (uint i = 0; i < c; ++i) {
-                if (modulizer.end()) {
-                    v.resize(old_size + i);
-                    return i;
-                } else {
-                    v[old_size + i] = *modulizer;
-                    ++modulizer;
-                }
-            }
-            return c;
-        }
-
-        uint get_bars(bar_vector_t& v,uint c)
-        {
-            v.resize(c);
-            for (uint i = 0; i < c; ++i) {
-                if (modulizer.end()) {
-                    v.resize(i);
-                    return i;
-                } else {
-                    v[i] = *modulizer;
-                    ++modulizer;
-                }
-            }
-            return c;
-        }
 
         scanner_result_t operator()();
 
@@ -147,66 +98,57 @@ namespace BarDecode
         code_type_t type;
         translation_table_t table;
     };
+#endif
 
 
-    class BarCodeIterator
+    class BarcodeIterator
     {
     public:
-        typedef BarCodeIterator self_t;
-        typedef std::string value_type;
+        typedef BarcodeIterator self_t;
+        typedef scanner_result_t value_type;
 
-        BarCodeIterator(const Image* img, threshold_t threshold) :
-            img(img),
-            mit(img,threshold)
+        static const psize_t min_quiet_psize = 7;
+
+        BarcodeIterator(const Image* img, threshold_t threshold, codes_t requested_codes) :
+            tokenizer(img,threshold),
+            requested_codes(requested_codes),
+            cur_barcode()
         {
-            if (! mit.end()) {
-                operator++();
-            }
+            if ( ! end() ) next();
         }
 
-        virtual ~BarCodeIterator() {}
-
-        self_t& operator++()
-        {
-            assert(! end());
-            do {
-                ++mit;
-                if (mit.end()) break;
-
-                Modulizer ml = *mit, mu = *mit;
-                Scanner scanner(*mit);
-                cur = scanner();
-
-                if ( ! cur ) { 
-                    mu.set_unit( ml.get_unit() * 1.25);
-                    cur = (Scanner(mu))();
-                    if ( ! cur ) { 
-                        ml.set_unit( ml.get_unit() * 0.75);
-                        cur = (Scanner(ml))();
-                    }
-                }
-
-            } while (! cur );
-        }
+        virtual ~BarcodeIterator() {}
 
         value_type operator*() const
         {
-            assert(! end());
-            return cur.code;
-
+            return cur_barcode;
         }
 
-        bool end() const
+        // Try to find next modulizer
+        self_t& operator++()
         {
-            return mit.end();
+            assert(! end());
+            next();
+            return *this;
         }
+
+        bool end() const { return tokenizer.end(); }
 
     private:
-        const Image* img;
-        ModulizerIterator mit;
-        scanner_result_t cur;
-    };
 
+        bool requested(code_t code) const
+        {
+            return code & requested_codes;
+        }
+
+        // TODO considere all possibilities for unit and quiet instanciations
+        void next();
+
+    private:
+        Tokenizer tokenizer;
+        codes_t requested_codes;
+        scanner_result_t cur_barcode;
+    };
 
 }; // namespace BarDecode
 
