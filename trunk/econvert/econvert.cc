@@ -351,6 +351,11 @@ bool convert_edge (const Argument<bool>& arg)
    likewise, as they usually are not part of a boundary line and
    decrease accurancy.
    
+   Improvement: We assume the page is centered and only search each
+   side / direction half way thru and the side's are are also only
+   tracked half way thru as the probability of cropping increases
+   significantly on the way down.
+   
    TODO: The deviation could be changed to be more sensitive for
    lighter colors than dark colors, as most scannes produce shadows on
    the borders of the paper that right now decrease accurancy. If we
@@ -428,12 +433,12 @@ bool convert_deskew (const Argument<int>& arg)
   std::list<std::pair<int, int> > points_left, points_right, points_top, points_bottom;
 
   // left
-  for (int y = 0; y < image.height(); ++y)
+  for (int y = 0; y < image.height() / 2; ++y)
     {
       it = it.at (0,y);
       it_ref = reference_image.begin ();
       
-      for (int x = 0; x < image.width(); ++x, ++it, ++it_ref)
+      for (int x = 0; x < image.width() / 2; ++x, ++it, ++it_ref)
 	{
 	  if (comperator(it_ref, it, threshold[x]))
 	    {
@@ -444,12 +449,12 @@ bool convert_deskew (const Argument<int>& arg)
     }
   
   // right
-  for (int y = 0; y < image.height(); ++y)
+  for (int y = 0; y < image.height() / 2; ++y)
     {
       it = it.at (image.width() - 1, y);
       it_ref = it_ref.at (image.width() - 1, 0);
       
-      for (int x = image.width(); x > 0; --x, --it, --it_ref)
+      for (int x = image.width(); x > image.width() / 2; --x, --it, --it_ref)
 	{
 	  if (comperator(it_ref, it, threshold[x - 1]))
 	    {
@@ -463,7 +468,7 @@ bool convert_deskew (const Argument<int>& arg)
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
-      for (int y = 0; y < image.height(); ++y)
+      for (int y = 0; y < image.height() / 2; ++y)
 	{
 	  it = it.at (x, y);
 	  if (comperator(it_ref, it, threshold[x]))
@@ -478,7 +483,7 @@ bool convert_deskew (const Argument<int>& arg)
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
-      for (int y = image.height(); y > 0; --y)
+      for (int y = image.height(); y > image.height() / 2; --y)
 	{
 	  it = it.at (x, y - 1);
 	  if (comperator(it_ref, it, threshold[x]))
