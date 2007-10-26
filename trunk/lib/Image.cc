@@ -49,7 +49,7 @@ void Image::copyMeta (const Image& other)
   yres = other.yres;
 }
 
-Image& Image::operator= (Image& other)
+Image& Image::operator= (const Image& other)
 {
   copyMeta (other);
   

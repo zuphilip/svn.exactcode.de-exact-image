@@ -177,8 +177,8 @@ public:
     } yuv;
   } ivalue_t;
 
-  int width () { return w; }
-  int height () { return h; }
+  int width () const { return w; }
+  int height () const { return h; }
   
   int stride () const {
     return (w * spp * bps + 7) / 8;
@@ -188,12 +188,12 @@ public:
     return stride ();
   }
   
-  int bitsPerSample () { return bps; }
-  int bitsPerPixel () { return bps * spp; }
-  int samplesPerPixel () { return spp; }
+  int bitsPerSample () const { return bps; }
+  int bitsPerPixel () const { return bps * spp; }
+  int samplesPerPixel () const { return spp; }
 
-  int resolutionX () { return xres; }
-  int resolutionY () { return yres; }
+  int resolutionX () const { return xres; }
+  int resolutionY () const { return yres; }
 
   void setWidth (int _w) { w = _w; }
   void setHeight (int _h) { h = _h; }
@@ -214,7 +214,7 @@ public:
   ~Image ();
   
   
-  Image& operator= (Image& other);
+  Image& operator= (const Image& other);
   void copyTransferOwnership (Image& other);
   
   type_t Type () const {
