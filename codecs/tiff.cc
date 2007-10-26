@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 René Rebe
+ * Copyright (C) 2005 - 2007 René Reb, ExactCODE GmbH, Berlin
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -83,10 +83,14 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   float _xres;
   if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
     image.xres = (int)_xres;
+  else
+    image.xres = 0;
   
   float _yres;
   if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
     image.yres = (int)_yres;
+  else
+    image.yres = 0;
   
   int stride = image.stride();
 
