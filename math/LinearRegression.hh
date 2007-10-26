@@ -36,19 +36,19 @@ public:
   void addRange (IT it, IT it_end) {
     for (; it != it_end; ++it)
       addPair (*it, false);
-    calculate();
+    calculate ();
   }
 
   bool haveData() const { return n > 2; }
   long size () const { return n; }
 
-  virtual double getA() const { return a; }
-  virtual double getB() const { return b; }
+  virtual double getA () const { return a; }
+  virtual double getB () const { return b; }
 
-  double getCoefDeterm() const  { return coefD; }
-  double getCoefCorrel() const { return coefC; }
-  double getStdErrorEst() const { return stdError; }
-  virtual double estimateY(const T& x) const { return (a + b * x); }
+  double getCoefDeterm () const { return coefD; }
+  double getCoefCorrel () const { return coefC; }
+  double getStdErrorEst () const { return stdError; }
+  virtual double estimateY (const T& x) const { return (a + b * x); }
 
 protected:
   long n;
