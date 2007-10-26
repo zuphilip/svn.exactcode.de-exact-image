@@ -41,6 +41,8 @@
 #include "floyd-steinberg.h"
 #include "vectorial.hh"
 
+#include "math/LinearRegression.hh"
+
 /* Let's reuse some parts of the official, stable API to avoid
  * duplicating code.
  *
@@ -409,10 +411,9 @@ bool convert_deskew (const Argument<int>& arg)
   } comperator;
   
   struct marker {
-    void operator() (Image::iterator& it, std::pair<int, int> point) {
+    void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
       it = it.at (point.first, point.second);
-      it.setRGB (1.,1.,1.);
-      it.set (it);
+      it.set (color);
     }
   } marker;
   
@@ -457,9 +458,9 @@ bool convert_deskew (const Argument<int>& arg)
       for (int y = 0; y < image.height(); ++y)
 	{
 	  it = it.at (x, y);
-	  if (comperator(it_ref, it, threshold[x - 1]))
+	  if (comperator(it_ref, it, threshold[x]))
 	    {
-	      points_top.push_back (std::pair<int,int> (x - 1, y));
+	      points_top.push_back (std::pair<int,int> (x, y));
 	      break;
 	    }
 	}
@@ -482,22 +483,107 @@ bool convert_deskew (const Argument<int>& arg)
   
   brightness_contrast_gamma (image, -.75, .0, 1.0);
   
+  Image::iterator top_color = image.begin (), bottom_color = image.begin (),
+    left_color = image.begin (), right_color = image.begin ();
+  
+  top_color.setRGB (1., .0, .0);
+  bottom_color.setRGB (.0, 1., .0);
+  left_color.setRGB (.0, .0, 1.);
+  right_color.setRGB (1., 1., .0);
+  
+  struct cleanup {
+    void operator() (std::list<std::pair<int, int> >& container, double max_dist = sqrt (2)) {
+      std::list<std::pair<int, int> >::iterator it = container.begin ();
+      
+      while (it != container.end())
+	{
+	  bool has_neighbor = false;
+	  
+	  if (it != container.begin()) {
+	    std::list<std::pair<int, int> >::iterator it_prev = it;
+	    --it_prev;
+	    
+	    if (dist (it, it_prev) <= max_dist)
+	      has_neighbor = true;
+	  }
+	  
+	  if (it != container.end()) {
+	    std::list<std::pair<int, int> >::iterator it_next = it;
+	    ++it_next;
+	    if (it_next != container.end()) {
+	      if (dist (it, it_next) <= max_dist)
+		has_neighbor = true;
+	    }
+	  }
+	  
+	  if (!has_neighbor) {
+	    it = container.erase (it);
+	    //std::cerr << "removed." << std::endl;
+	  }
+	  else {
+	    //std::cerr << "ok." << std::endl;
+	    ++it;
+	  }
+	}
+    }
+  private:
+    double dist (std::list<std::pair<int, int> >::iterator it1,
+		 std::list<std::pair<int, int> >::iterator it2)
+    {
+      const double xdist = std::abs(it1->first - it2->first);
+      const double ydist = std::abs(it1->second - it2->second);
+      
+      const double d = sqrt (xdist * xdist + ydist * ydist);
+
+      //std::cerr << "[" << it1->first << "," << it1->second
+      //	<< "] to [" << it2->first << "," << it2->second
+      //	<< "] dist: " << d << std::endl;
+      
+      return d;
+    }
+  } cleanup;
+  
+  cleanup (points_top);
+  cleanup (points_bottom);
+  cleanup (points_left);
+  cleanup (points_right);
+  
+  LinearRegression<double> reg_top, reg_bottom, reg_left, reg_right;
+  
   for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
-       p != points_top.end(); ++p)
-    marker (it, *p);
+       p != points_top.end(); ++p) {
+    marker (it, *p, top_color);
+  }
+  reg_top.addRange (points_top.begin(), points_top.end());
   
   for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
-       p != points_bottom.end(); ++p)
-    marker (it, *p);
+       p != points_bottom.end(); ++p) {
+    marker (it, *p, bottom_color);
+  }
+  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
   
   for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
-       p != points_left.end(); ++p)
-    marker (it, *p);
-
+       p != points_left.end(); ++p) {
+    marker (it, *p, left_color);
+    reg_left.addXY (p->second, p->first); // flip
+  }
+  
   for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
-       p != points_right.end(); ++p)
-    marker (it, *p);
+       p != points_right.end(); ++p) {
+    marker (it, *p, right_color);
+    reg_right.addXY (p->second, p->first); // flip
+  }
+  
+  std::cerr << "top: " << reg_top << std::endl
+	    << "bottom: " << reg_bottom << std::endl
+	    << "left: " << reg_left << std::endl
+	    << "right: " << reg_right << std::endl;
 
+  drawLine(image, 0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()), top_color, style);
+  drawLine(image, 0, reg_bottom.getA (), image.height(), reg_bottom.estimateY (image.width()), bottom_color, style);
+  drawLine(image, reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height(), left_color, style);
+  drawLine(image, reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height(), right_color, style);
+  
   return true;
 }
 
