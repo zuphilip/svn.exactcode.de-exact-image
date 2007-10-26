@@ -334,7 +334,7 @@ bool convert_edge (const Argument<bool>& arg)
    This method is so straight forward it also shouldn't be patented
    :-)! -ReneR
 
-   For optimal results at least 2, but even better more, background
+   For optimal results at least 4, but even better more, background
    raster lines need to be supplied.
    
    Improvement: Each scanner, especially different model series, has
@@ -342,13 +342,21 @@ bool convert_edge (const Argument<bool>& arg)
    threshold per column - depending on the average distribution of the
    background raster lines comparing against.
    
-   Improvements: The deviation could be changed to be more sensitive
-   for lighter colors than dark colors, as most scannes produce
-   shadows on the borders of the paper.
-   
    Optimization: As we are only interested in the boundaries of the
    scanned material, we stop searching the inner area after the first
-   data points are gathered in all 4 boundary areas. */
+   data points are gathered in all four boundary areas.
+   
+   Improvement: Border pixels are skipped as they are most often a
+   result from clipped paper. Non-neighbor pixels are skipped,
+   likewise, as they usually are not part of a boundary line and
+   decrease accurancy.
+   
+   TODO: The deviation could be changed to be more sensitive for
+   lighter colors than dark colors, as most scannes produce shadows on
+   the borders of the paper that right now decrease accurancy. If we
+   want to be fany, we could detect the paper color to decide whether
+   to be sensitive or lighter or darker changes.
+*/
 
 bool convert_deskew (const Argument<int>& arg)
 {
