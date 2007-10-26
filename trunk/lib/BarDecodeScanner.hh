@@ -28,8 +28,11 @@ namespace BarDecode
         upca = 1<<2,
         ean = ean8|ean13|upca,
         upce = 1<<3,
-        code128 = 1<<4
+        code128 = 1<<4,
+        gs1_128 = 1<<5
     };
+
+    std::ostream& operator<< (std::ostream& s, const code_t& t);
 
     struct bar_vector_t : public std::vector<token_t> 
     {

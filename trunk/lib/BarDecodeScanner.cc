@@ -17,6 +17,20 @@
 
 namespace BarDecode
 {
+    std::ostream& operator<< (std::ostream& s, const code_t& t)
+    {
+        switch(t) {
+        case ean8: return s << "ean8";
+        case ean13: return s << "ean13";
+        case upca: return s << "upca";
+        case ean8|ean13|upca: return s << "ean";
+        case upce: return s << "upce";
+        case code128: return s << "code128";
+        case gs1_128: return s << "GS1-128";
+        default: return s << "unknown barcode type";
+        }
+    }
+
     // TODO make all tables static (would be nice to have something like designated initializers
     // like in C99 in C++ as well...) We do not have. Hecne we need to work around.
     // possibly by encapsulating the tables into objects with constructors that
@@ -519,7 +533,7 @@ namespace BarDecode
        }
     }
 
-    // TODO FNC1 as first symbol indicates GS1-128
+    // FNC1 as first symbol indicates GS1-128
     //      in third or subsequent position: ascii 29.
     // TODO FNC2 (anywhere) concatenate barcode with next barcode
     // TODO FNC3 initialize or reprogram the barcode reader with the current code
@@ -561,6 +575,7 @@ namespace BarDecode
         char pre_symbol = table[mw];
 
         std::string code = "";
+        code_t type = code128;
         bool end = false;
         bool shift = false;
         ulong pos = 0;
@@ -583,8 +598,7 @@ namespace BarDecode
                     case CODEC: cur_code_set = code_set_c; break;
                     case FNC1: 
                                 if (pos == 1) {
-                                    // FIXME??? set type to GS1-128
-                                    code.push_back(29);
+                                    type = gs1_128;
                                 } else {
                                   code.push_back(29);
                                 }
@@ -623,7 +637,7 @@ namespace BarDecode
         } else {
             // remove checksum char from end of code
             code.resize(code.size()-1);
-            return scanner_result_t(code128,code,x,y);
+            return scanner_result_t(type,code,x,y);
         }
     }
 
@@ -737,13 +751,17 @@ namespace BarDecode
             return scanner_result_t();
         }
 
-        // for ean13: lookup bit 0
+        // get type and lookup bit 0 for ean13
+        code_t type = ean;
         if (symbols_count == 6) {
             result = ean13table[parities];
             if (! result) return scanner_result_t();
             std::string tmp = "";
             tmp.push_back(result);
             code = tmp + code;
+            type = (result == '0') ? upca : ean13;
+        } else {
+            type = ean8;
         }
 
         // adjust code_type
@@ -751,7 +769,7 @@ namespace BarDecode
         // Set parameter (most of all module_word_size)
 
         // scan modules according to code_type
-        return scanner_result_t(ean,code,x,y);
+        return scanner_result_t(type,code,x,y);
 
     }
 
