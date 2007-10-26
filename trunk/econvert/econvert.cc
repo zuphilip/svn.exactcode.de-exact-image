@@ -599,7 +599,7 @@ bool convert_deskew (const Argument<int>& arg)
 	    << "right: " << reg_right << std::endl;
 
   drawLine(image, 0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()), top_color, style);
-  drawLine(image, 0, reg_bottom.getA (), image.height(), reg_bottom.estimateY (image.width()), bottom_color, style);
+  drawLine(image, 0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()), bottom_color, style);
   drawLine(image, reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height(), left_color, style);
   drawLine(image, reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height(), right_color, style);
   
