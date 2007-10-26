@@ -418,7 +418,7 @@ bool convert_deskew (const Argument<int>& arg)
   } marker;
   
   std::list<std::pair<int, int> > points_left, points_right, points_top, points_bottom;
-  
+
   // left
   for (int y = 0; y < image.height(); ++y)
     {
@@ -486,17 +486,28 @@ bool convert_deskew (const Argument<int>& arg)
   Image::iterator top_color = image.begin (), bottom_color = image.begin (),
     left_color = image.begin (), right_color = image.begin ();
   
-  top_color.setRGB (1., .0, .0);
-  bottom_color.setRGB (.0, 1., .0);
-  left_color.setRGB (.0, .0, 1.);
-  right_color.setRGB (1., 1., .0);
+  top_color.setRGB (1., .0, .0); // red
+  bottom_color.setRGB (.0, 1., .0); // green
+  left_color.setRGB (.0, .0, 1.); // blue
+  right_color.setRGB (1., 1., .0); // yellow
   
   struct cleanup {
-    void operator() (std::list<std::pair<int, int> >& container, double max_dist = sqrt (2)) {
+    void operator() (std::list<std::pair<int, int> >& container, const Image& im,
+		     double max_dist = sqrt (2)) {
       std::list<std::pair<int, int> >::iterator it = container.begin ();
       
       while (it != container.end())
 	{
+	  // skip border pixels, as a cropped edge screws up the line angle
+	  
+	  if (it->first == 0 || it->first == (im.width() - 1) ||
+	      it->second == 0 || it->second == (im.width() - 1))
+	    {
+	      it = container.erase (it);
+	      // std::cerr << "removed border edge pixel." << std::endl;
+	      continue;
+	    }
+	  
 	  bool has_neighbor = false;
 	  
 	  if (it != container.begin()) {
@@ -543,10 +554,10 @@ bool convert_deskew (const Argument<int>& arg)
     }
   } cleanup;
   
-  cleanup (points_top);
-  cleanup (points_bottom);
-  cleanup (points_left);
-  cleanup (points_right);
+  cleanup (points_top, image);
+  cleanup (points_bottom, image);
+  cleanup (points_left, image);
+  cleanup (points_right, image);
   
   LinearRegression<double> reg_top, reg_bottom, reg_left, reg_right;
   
