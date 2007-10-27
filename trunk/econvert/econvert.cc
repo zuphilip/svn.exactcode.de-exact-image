@@ -352,9 +352,9 @@ bool convert_edge (const Argument<bool>& arg)
    decrease accurancy.
    
    Improvement: We assume the page is centered and only search each
-   side / direction half way thru and the side's are are also only
-   tracked half way thru as the probability of cropping increases
-   significantly on the way down.
+   side / direction half way thru and the side's are are also not
+   tracked all the way down thru as the probability of cropping
+   increases significantly down to the bottom.
    
    TODO: The deviation could be changed to be more sensitive for
    lighter colors than dark colors, as most scannes produce shadows on
@@ -424,16 +424,23 @@ bool convert_deskew (const Argument<int>& arg)
   } comparator;
   
   struct marker {
-    void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
-      it = it.at (point.first, point.second);
+    void operator() (Image::iterator& it, int x, int y, Image::iterator& color) {
+      it = it.at (x, y);
       it.set (color);
+    }
+    
+    void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
+      operator () (it, point.first, point.second, color);
     }
   } marker;
   
+  // left and right are x/y flipped due to linear regression
+  // calculation - the slope would be near inf. otherwise ...
+
   std::list<std::pair<int, int> > points_left, points_right, points_top, points_bottom;
 
   // left
-  for (int y = 0; y < image.height() / 2; ++y)
+  for (int y = 0; y < image.height() * 5 / 6; ++y)
     {
       it = it.at (0,y);
       it_ref = reference_image.begin ();
@@ -442,14 +449,14 @@ bool convert_deskew (const Argument<int>& arg)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      points_left.push_back (std::pair<int,int> (x, y));
+	      points_left.push_back (std::pair<int,int> (y, x)); // flipped
 	      break;
 	    }
 	}
     }
   
   // right
-  for (int y = 0; y < image.height() / 2; ++y)
+  for (int y = 0; y < image.height() * 5 / 6; ++y)
     {
       it = it.at (image.width() - 1, y);
       it_ref = it_ref.at (image.width() - 1, 0);
@@ -458,7 +465,7 @@ bool convert_deskew (const Argument<int>& arg)
 	{
 	  if (comparator(it_ref, it, threshold[x - 1]))
 	    {
-	      points_right.push_back (std::pair<int,int> (x - 1, y));
+	      points_right.push_back (std::pair<int,int> (y, x - 1)); // flipped
 	      break;
 	    }
 	}
@@ -494,6 +501,7 @@ bool convert_deskew (const Argument<int>& arg)
 	}	  
     }
   
+  // just for visualization
   brightness_contrast_gamma (image, -.75, .0, 1.0);
   
   Image::iterator top_color = image.begin (), bottom_color = image.begin (),
@@ -505,7 +513,7 @@ bool convert_deskew (const Argument<int>& arg)
   right_color.setRGB (1., 1., .0); // yellow
   
   struct cleanup {
-    void operator() (std::list<std::pair<int, int> >& container, const Image& im,
+    void byNeighbor (std::list<std::pair<int, int> >& container, const Image& im,
 		     double max_dist = sqrt (2)) {
       std::list<std::pair<int, int> >::iterator it = container.begin ();
       
@@ -550,12 +558,37 @@ bool convert_deskew (const Argument<int>& arg)
 	  }
 	}
     }
+    
+    void byDistance (std::list<std::pair<int, int> >& container, LinearRegression<double>& lr,
+		     double max_dist = 32) {
+      std::list<std::pair<int, int> >::iterator it = container.begin ();
+      
+      while (it != container.end())
+	{
+	  const double estimated_y = lr.estimateY (it->first);
+	  const double d = std::abs (estimated_y - it->second);
+	  
+	  //std::cerr << "[" << it->first << "," << it->second
+	  //          << "] to estimate [" << it->first << "," << estimated_y
+	  //          << "] dist: " << d << std::endl;
+	  
+	  if (d > max_dist) {
+	    it = container.erase (it);
+	    //std::cerr << "removed." << std::endl;
+	  } 
+	  else {
+	    //std::cerr << "ok." << std::endl;
+	    ++it;
+	  }
+	}
+    }
+    
   private:
     double dist (std::list<std::pair<int, int> >::iterator it1,
 		 std::list<std::pair<int, int> >::iterator it2)
     {
-      const double xdist = std::abs(it1->first - it2->first);
-      const double ydist = std::abs(it1->second - it2->second);
+      const double xdist = std::abs (it1->first - it2->first);
+      const double ydist = std::abs (it1->second - it2->second);
       
       const double d = sqrt (xdist * xdist + ydist * ydist);
 
@@ -566,37 +599,52 @@ bool convert_deskew (const Argument<int>& arg)
       return d;
     }
   } cleanup;
-  
-  cleanup (points_top, image);
-  cleanup (points_bottom, image);
-  cleanup (points_left, image);
-  cleanup (points_right, image);
+
+  cleanup.byNeighbor (points_top, image);
+  cleanup.byNeighbor (points_bottom, image);
+  cleanup.byNeighbor (points_left, image);
+  cleanup.byNeighbor (points_right, image);
   
   LinearRegression<double> reg_top, reg_bottom, reg_left, reg_right;
   
-  for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
-       p != points_top.end(); ++p) {
-    marker (it, *p, top_color);
-  }
   reg_top.addRange (points_top.begin(), points_top.end());
+  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
+  reg_left.addRange (points_left.begin(), points_left.end());
+  reg_right.addRange (points_right.begin(), points_right.end());
+  
+  // clean after first linear regression, flatten extrema
+
+  cleanup.byDistance (points_top, reg_top);
+  cleanup.byDistance (points_bottom, reg_bottom);
+  cleanup.byDistance (points_left, reg_left);
+  cleanup.byDistance (points_right, reg_right);
+  
+  // re-calculate
+  
+  reg_top.clear (); reg_bottom.clear (); reg_left.clear (); reg_right.clear ();
+    
+  reg_top.addRange (points_top.begin(), points_top.end());
+  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
+  reg_left.addRange (points_left.begin(), points_left.end());
+  reg_right.addRange (points_right.begin(), points_right.end());
+  
+  // just for visualization, draw markers
+  
+  for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
+       p != points_top.end(); ++p)
+    marker (it, p->first, p->second, top_color);
   
   for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
-       p != points_bottom.end(); ++p) {
-    marker (it, *p, bottom_color);
-  }
-  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
+       p != points_bottom.end(); ++p)
+    marker (it, p->first, p->second, bottom_color);
   
   for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
-       p != points_left.end(); ++p) {
-    marker (it, *p, left_color);
-    reg_left.addXY (p->second, p->first); // flip
-  }
+       p != points_left.end(); ++p)
+    marker (it, p->second, p->first, left_color); // flipped
   
   for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
-       p != points_right.end(); ++p) {
-    marker (it, *p, right_color);
-    reg_right.addXY (p->second, p->first); // flip
-  }
+       p != points_right.end(); ++p)
+    marker (it, p->second, p->first, right_color); // flipped
   
   std::cerr << "top: " << reg_top << std::endl
 	    << "bottom: " << reg_bottom << std::endl
