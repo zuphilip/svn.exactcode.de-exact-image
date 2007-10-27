@@ -13,7 +13,17 @@ class LinearRegression
 public:
   
   LinearRegression ()
-    : n (), sumX (), sumY (), sumXsquared (), sumYsquared (), sumXY () {};
+    : n (), sumX (), sumY (), sumXsquared (), sumYsquared (), sumXY () {}
+  
+  void clear () {
+    n = 0;
+    sumX = T ();
+    sumY = T ();
+    sumXsquared = T ();
+    sumYsquared = T ();
+    sumXY = T ();
+  }
+  
   
   template <typename T1>
   friend std::ostream& operator<< (std::ostream& s, LinearRegression<T1>& v);
@@ -86,7 +96,6 @@ protected:
   }
 };
 
-
 template <typename T1>
 std::ostream& operator<< (std::ostream& s, LinearRegression<T1>& v)
 {
@@ -95,4 +104,4 @@ std::ostream& operator<< (std::ostream& s, LinearRegression<T1>& v)
   return s;
 }
 
-#endif                      // end of linreg.h
+#endif
