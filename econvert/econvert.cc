@@ -410,7 +410,7 @@ bool convert_deskew (const Argument<int>& arg)
       it_ref.set(it_ref);
     }
   
-  struct comperator {
+  struct comparator {
     bool operator() (Image::iterator& it_ref, Image::iterator& it, double threshold) {
       *it; *it_ref;
       double r, g, b, r2, g2, b2;
@@ -421,7 +421,7 @@ bool convert_deskew (const Argument<int>& arg)
       // in one of the channels alone can be significant enough.
       return (fabs(r-r2) + fabs(g-g2) + fabs(b-b2)) > threshold;
     }
-  } comperator;
+  } comparator;
   
   struct marker {
     void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
@@ -440,7 +440,7 @@ bool convert_deskew (const Argument<int>& arg)
       
       for (int x = 0; x < image.width() / 2; ++x, ++it, ++it_ref)
 	{
-	  if (comperator(it_ref, it, threshold[x]))
+	  if (comparator(it_ref, it, threshold[x]))
 	    {
 	      points_left.push_back (std::pair<int,int> (x, y));
 	      break;
@@ -456,7 +456,7 @@ bool convert_deskew (const Argument<int>& arg)
       
       for (int x = image.width(); x > image.width() / 2; --x, --it, --it_ref)
 	{
-	  if (comperator(it_ref, it, threshold[x - 1]))
+	  if (comparator(it_ref, it, threshold[x - 1]))
 	    {
 	      points_right.push_back (std::pair<int,int> (x - 1, y));
 	      break;
@@ -471,7 +471,7 @@ bool convert_deskew (const Argument<int>& arg)
       for (int y = 0; y < image.height() / 2; ++y)
 	{
 	  it = it.at (x, y);
-	  if (comperator(it_ref, it, threshold[x]))
+	  if (comparator(it_ref, it, threshold[x]))
 	    {
 	      points_top.push_back (std::pair<int,int> (x, y));
 	      break;
@@ -486,7 +486,7 @@ bool convert_deskew (const Argument<int>& arg)
       for (int y = image.height(); y > image.height() / 2; --y)
 	{
 	  it = it.at (x, y - 1);
-	  if (comperator(it_ref, it, threshold[x]))
+	  if (comparator(it_ref, it, threshold[x]))
 	    {
 	      points_bottom.push_back (std::pair<int,int> (x, y - 1));
 	      break;
