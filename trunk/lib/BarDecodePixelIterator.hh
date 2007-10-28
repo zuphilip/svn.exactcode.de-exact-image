@@ -1,6 +1,8 @@
 #ifndef _BAR_DECODE_PIXEL_ITERATOR_HH_
 #define _BAR_DECODE_PIXEL_ITERATOR_HH_
 
+#define NDEBUG
+
 #include <iterator>
 
 #include "Image.hh"
@@ -11,6 +13,7 @@ namespace BarDecode
     typedef int pos_t;
     typedef int threshold_t;
 
+    template<int it_size = 4>
     class PixelIterator : 
         public std::iterator<std::output_iterator_tag,
                              bool,
@@ -23,7 +26,7 @@ namespace BarDecode
 
         typedef bool value_type;
 
-        PixelIterator(const Image* img, threshold_t threshold = 0, size_t it_size = 6) :
+        PixelIterator(const Image* img, threshold_t threshold = 0) :
             img(img),
             img_it(it_size),
             threshold(threshold),
@@ -32,7 +35,7 @@ namespace BarDecode
             lum(0)
         {
             // FIXME insert an optimized code path for img->h >= 3
-            for (uint i = 0; i < img_it.size(); ++i) {
+            for (uint i = 0; i < it_size; ++i) {
                 img_it[i] = img->begin().at(0,std::min((int)i,img->h));
                 *img_it[i];
             }
@@ -44,15 +47,15 @@ namespace BarDecode
         {
             if ( x < img->w-1 ) {
                 ++x;
-                for (uint i = 0; i < img_it.size(); ++i) {
+                for (uint i = 0; i < it_size; ++i) {
                     ++img_it[i];
                     *img_it[i];
                 }
             } else {
                 x = 0;
                 // FIXME insert a optimized code path for img->h >= y+3
-                y += img_it.size();
-                for (uint i = 0; i < img_it.size(); ++i) {
+                y += it_size;
+                for (uint i = 0; i < it_size; ++i) {
                     img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h));
                     *img_it[i];
                 }
@@ -63,10 +66,10 @@ namespace BarDecode
         const value_type operator*() const
         {
             double tmp=0;
-            for (uint i = 0; i < img_it.size(); ++i) {
+            for (uint i = 0; i < it_size; ++i) {
                 tmp += img_it[i].getL();
             }
-            lum = tmp/img_it.size();
+            lum = tmp/it_size;
             return lum < threshold;
         }
             
@@ -77,7 +80,7 @@ namespace BarDecode
         {
             // FIXME insert a optimized code path for img->h >= y+3
             self_t tmp = *this;
-            for (uint i = 0; i < img_it.size(); ++i) {
+            for (uint i = 0; i < it_size; ++i) {
                 tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
             }
             return tmp;
@@ -89,7 +92,7 @@ namespace BarDecode
         threshold_t get_threshold() const { return threshold; }
         void set_threshold(threshold_t new_threshold) { threshold = new_threshold; }
 
-        bool end() const { return !(img_it[img_it.size()-1] != img->end()); }
+        bool end() const { return !(img_it[it_size-1] != img->end()); }
 
         double get_lum() const { return lum; }
 
