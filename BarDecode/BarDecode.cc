@@ -108,7 +108,7 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() != 0) {
     threshold = arg_threshold.Get();
   } else {
-    threshold = 130;
+    threshold = 150;
   }
 
   std::set<scanner_result_t,comp> codes;
