@@ -22,13 +22,11 @@ General:
 Algorithms:
  - rgb_A_ iterator and thus scaling, rotation
  - faster and ddt scaling!
- - descew
  - descreen
  - blur
  - sharp, unsharp
  - all the others
  - affine transforms
- - Barcode recognition
  - 2D Baccode recognition: Datamatrix, Semacode, BeeTagg and QR 
 
 Colorspaces:
@@ -55,5 +53,8 @@ Frontends:
  - econvert:
    - seperate channels
  - edisplay:
+   - browsing
    - thumbnailing
    - slideshow
+   - partial decoding on load
+   - faster zooming
