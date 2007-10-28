@@ -345,7 +345,7 @@ int Viewer::Run (bool opengl)
       // TODO: move into X11 Helper ...
       
       XEvent ev;
-      int dnd_x, dnd_y;
+      int dnd_x = 0, dnd_y = 0;
       while (XCheckMaskEvent (dpy,
 			      ExposureMask |
 			      StructureNotifyMask |
