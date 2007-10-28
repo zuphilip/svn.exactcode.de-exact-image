@@ -27,9 +27,38 @@ namespace BarDecode
         case upce: return s << "upce";
         case code128: return s << "code128";
         case gs1_128: return s << "GS1-128";
+        case code39: return s << "code39";
+        case code39_mod43: return s << "code39_mod43";
+        case code39_ext: return s << "code39_ext";
         default: return s << "unknown barcode type";
         }
     }
+
+    struct code39_t
+    {
+        code39_t();
+
+        // NOTE: if the first char is SHIFT, then a further barcode is expected to
+        // be concatenated.
+
+        // Character set: A-Z0-9-. $/+% and DELIMITER
+
+        // Extended set: full ascii (by use of shift characters)
+        // Usage of extended set is not encoded, but needs to be requested explicitly.
+        // The code is first scaned normaly. The result is translated afterwards
+        // into extend encoding
+
+        // Usage of checksum is not encoded, but needs to be requested explicitly.
+        // If requested this is performed after completely having scanned the code.
+
+
+        // Decoding is based on a binary encoding of the width of bars (rather than
+        // modules). Since each symbol has 9 bars we need a table of size 512.
+        // Otherwith we would have needed size 2^(13 modules - 2 constant modules) = 2048.
+        // ((Maybe we could safe even a bit more by directly encoding 3 of 9 ???)
+
+        scanner_result_t scan(Tokenizer, psize_t) const;
+    };
 
     // TODO make all tables static (would be nice to have something like designated initializers
     // like in C99 in C++ as well...) We do not have. Hecne we need to work around.
@@ -49,6 +78,7 @@ namespace BarDecode
         scanner_result_t scan(Tokenizer, psize_t) const;
         std::string decode128(code_set_t code_set, module_word_t mw) const; 
         code_set_t shift_code_set(code_set_t code_set) const;
+        module_word_t get_key(module_word_t mw) const;
 
         DECLARE_TABLE(table,512);
         DECLARE_TABLE(aaux,10);
@@ -63,113 +93,113 @@ namespace BarDecode
         // Based on 11 bits, where the first bit is 1 and the last bit is 0,
         // hence only 9 bit are used for lookup.
         INIT_TABLE(table,512,no_entry);
-        PUT_IN_TABLE(table,0x166, 0);
-        PUT_IN_TABLE(table,0x136, 1);
-        PUT_IN_TABLE(table,0x133, 2);
-        PUT_IN_TABLE(table,0x4C, 3);
-        PUT_IN_TABLE(table,0x46, 4);
-        PUT_IN_TABLE(table,0x26, 5);
-        PUT_IN_TABLE(table,0x64, 6);
-        PUT_IN_TABLE(table,0x62, 7);
-        PUT_IN_TABLE(table,0x32, 8);
-        PUT_IN_TABLE(table,0x124, 9);
-        PUT_IN_TABLE(table,0x122, 10);
-        PUT_IN_TABLE(table,0x112, 11);
-        PUT_IN_TABLE(table,0xCE, 12);
-        PUT_IN_TABLE(table,0x6E, 13);
-        PUT_IN_TABLE(table,0x67, 14);
-        PUT_IN_TABLE(table,0xE6, 15);
-        PUT_IN_TABLE(table,0x76, 16);
-        PUT_IN_TABLE(table,0x73, 17);
-        PUT_IN_TABLE(table,0x139, 18);
-        PUT_IN_TABLE(table,0x12E, 19);
-        PUT_IN_TABLE(table,0x127, 20);
-        PUT_IN_TABLE(table,0x172, 21);
-        PUT_IN_TABLE(table,0x13A, 22);
-        PUT_IN_TABLE(table,0x1B7, 23);
-        PUT_IN_TABLE(table,0x1A6, 24);
-        PUT_IN_TABLE(table,0x196, 25);
-        PUT_IN_TABLE(table,0x193, 26);
-        PUT_IN_TABLE(table,0x1B2, 27);
-        PUT_IN_TABLE(table,0x19A, 28);
-        PUT_IN_TABLE(table,0x199, 29);
-        PUT_IN_TABLE(table,0x16C, 30);
-        PUT_IN_TABLE(table,0x163, 31);
-        PUT_IN_TABLE(table,0x11B, 32);
-        PUT_IN_TABLE(table,0x8C, 33);
-        PUT_IN_TABLE(table,0x2C, 34);
-        PUT_IN_TABLE(table,0x23, 35);
-        PUT_IN_TABLE(table,0xC4, 36);
-        PUT_IN_TABLE(table,0x34, 37);
-        PUT_IN_TABLE(table,0x31, 38);
-        PUT_IN_TABLE(table,0x144, 39);
-        PUT_IN_TABLE(table,0x114, 40);
-        PUT_IN_TABLE(table,0x111, 41);
-        PUT_IN_TABLE(table,0xDC, 42);
-        PUT_IN_TABLE(table,0xC7, 43);
-        PUT_IN_TABLE(table,0x37, 44);
-        PUT_IN_TABLE(table,0xEC, 45);
-        PUT_IN_TABLE(table,0xE3, 46);
-        PUT_IN_TABLE(table,0x3B, 47);
-        PUT_IN_TABLE(table,0x1BB, 48);
-        PUT_IN_TABLE(table,0x147, 49);
-        PUT_IN_TABLE(table,0x117, 50);
-        PUT_IN_TABLE(table,0x174, 51);
-        PUT_IN_TABLE(table,0x171, 52);
-        PUT_IN_TABLE(table,0x177, 53);
-        PUT_IN_TABLE(table,0x1AC, 54);
-        PUT_IN_TABLE(table,0x1A3, 55);
-        PUT_IN_TABLE(table,0x18B, 56);
-        PUT_IN_TABLE(table,0x1B4, 57);
-        PUT_IN_TABLE(table,0x1B1, 58);
-        PUT_IN_TABLE(table,0x18D, 59);
-        PUT_IN_TABLE(table,0x1BD, 60);
-        PUT_IN_TABLE(table,0x121, 61);
-        PUT_IN_TABLE(table,0x1C5, 62);
-        PUT_IN_TABLE(table,0x98, 63);
-        PUT_IN_TABLE(table,0x86, 64);
-        PUT_IN_TABLE(table,0x58, 65);
-        PUT_IN_TABLE(table,0x43, 66);
-        PUT_IN_TABLE(table,0x16, 67);
-        PUT_IN_TABLE(table,0x13, 68);
-        PUT_IN_TABLE(table,0xC8, 69);
-        PUT_IN_TABLE(table,0xC2, 70);
-        PUT_IN_TABLE(table,0x68, 71);
-        PUT_IN_TABLE(table,0x61, 72);
-        PUT_IN_TABLE(table,0x1A, 73);
-        PUT_IN_TABLE(table,0x19, 74);
-        PUT_IN_TABLE(table,0x109, 75);
-        PUT_IN_TABLE(table,0x128, 76);
-        PUT_IN_TABLE(table,0x1DD, 77);
-        PUT_IN_TABLE(table,0x10A, 78);
-        PUT_IN_TABLE(table,0x3D, 79);
-        PUT_IN_TABLE(table,0x9E, 80);
-        PUT_IN_TABLE(table,0x5E, 81);
-        PUT_IN_TABLE(table,0x4F, 82);
-        PUT_IN_TABLE(table,0xF2, 83);
-        PUT_IN_TABLE(table,0x7A, 84);
-        PUT_IN_TABLE(table,0x79, 85);
-        PUT_IN_TABLE(table,0x1D2, 86);
-        PUT_IN_TABLE(table,0x1CA, 87);
-        PUT_IN_TABLE(table,0x1C9, 88);
-        PUT_IN_TABLE(table,0x16F, 89);
-        PUT_IN_TABLE(table,0x17B, 90);
-        PUT_IN_TABLE(table,0x1DB, 91);
-        PUT_IN_TABLE(table,0xBC, 92);
-        PUT_IN_TABLE(table,0x8F, 93);
-        PUT_IN_TABLE(table,0x2F, 94);
-        PUT_IN_TABLE(table,0xF4, 95);
-        PUT_IN_TABLE(table,0xF1, 96);
-        PUT_IN_TABLE(table,0x1D4, 97);
-        PUT_IN_TABLE(table,0x1D1, 98);
-        PUT_IN_TABLE(table,0xEF, 99);
-        PUT_IN_TABLE(table,0xF7, 100);
-        PUT_IN_TABLE(table,0x1AF, 101);
-        PUT_IN_TABLE(table,0x1D7, 102);
-        PUT_IN_TABLE(table,0x142, 103);
-        PUT_IN_TABLE(table,0x148, 104);
-        PUT_IN_TABLE(table,0x14e, 105);
-        PUT_IN_TABLE(table,0x11d, 106);
+        PUT_IN_TABLE(table,0x166,0);
+        PUT_IN_TABLE(table,0x136,1);
+        PUT_IN_TABLE(table,0x133,2);
+        PUT_IN_TABLE(table,0x4C,3);
+        PUT_IN_TABLE(table,0x46,4);
+        PUT_IN_TABLE(table,0x26,5);
+        PUT_IN_TABLE(table,0x64,6);
+        PUT_IN_TABLE(table,0x62,7);
+        PUT_IN_TABLE(table,0x32,8);
+        PUT_IN_TABLE(table,0x124,9);
+        PUT_IN_TABLE(table,0x122,10);
+        PUT_IN_TABLE(table,0x112,11);
+        PUT_IN_TABLE(table,0xCE,12);
+        PUT_IN_TABLE(table,0x6E,13);
+        PUT_IN_TABLE(table,0x67,14);
+        PUT_IN_TABLE(table,0xE6,15);
+        PUT_IN_TABLE(table,0x76,16);
+        PUT_IN_TABLE(table,0x73,17);
+        PUT_IN_TABLE(table,0x139,18);
+        PUT_IN_TABLE(table,0x12E,19);
+        PUT_IN_TABLE(table,0x127,20);
+        PUT_IN_TABLE(table,0x172,21);
+        PUT_IN_TABLE(table,0x13A,22);
+        PUT_IN_TABLE(table,0x1B7,23);
+        PUT_IN_TABLE(table,0x1A6,24);
+        PUT_IN_TABLE(table,0x196,25);
+        PUT_IN_TABLE(table,0x193,26);
+        PUT_IN_TABLE(table,0x1B2,27);
+        PUT_IN_TABLE(table,0x19A,28);
+        PUT_IN_TABLE(table,0x199,29);
+        PUT_IN_TABLE(table,0x16C,30);
+        PUT_IN_TABLE(table,0x163,31);
+        PUT_IN_TABLE(table,0x11B,32);
+        PUT_IN_TABLE(table,0x8C,33);
+        PUT_IN_TABLE(table,0x2C,34);
+        PUT_IN_TABLE(table,0x23,35);
+        PUT_IN_TABLE(table,0xC4,36);
+        PUT_IN_TABLE(table,0x34,37);
+        PUT_IN_TABLE(table,0x31,38);
+        PUT_IN_TABLE(table,0x144,39);
+        PUT_IN_TABLE(table,0x114,40);
+        PUT_IN_TABLE(table,0x111,41);
+        PUT_IN_TABLE(table,0xDC,42);
+        PUT_IN_TABLE(table,0xC7,43);
+        PUT_IN_TABLE(table,0x37,44);
+        PUT_IN_TABLE(table,0xEC,45);
+        PUT_IN_TABLE(table,0xE3,46);
+        PUT_IN_TABLE(table,0x3B,47);
+        PUT_IN_TABLE(table,0x1BB,48);
+        PUT_IN_TABLE(table,0x147,49);
+        PUT_IN_TABLE(table,0x117,50);
+        PUT_IN_TABLE(table,0x174,51);
+        PUT_IN_TABLE(table,0x171,52);
+        PUT_IN_TABLE(table,0x177,53);
+        PUT_IN_TABLE(table,0x1AC,54);
+        PUT_IN_TABLE(table,0x1A3,55);
+        PUT_IN_TABLE(table,0x18B,56);
+        PUT_IN_TABLE(table,0x1B4,57);
+        PUT_IN_TABLE(table,0x1B1,58);
+        PUT_IN_TABLE(table,0x18D,59);
+        PUT_IN_TABLE(table,0x1BD,60);
+        PUT_IN_TABLE(table,0x121,61);
+        PUT_IN_TABLE(table,0x1C5,62);
+        PUT_IN_TABLE(table,0x98,63);
+        PUT_IN_TABLE(table,0x86,64);
+        PUT_IN_TABLE(table,0x58,65);
+        PUT_IN_TABLE(table,0x43,66);
+        PUT_IN_TABLE(table,0x16,67);
+        PUT_IN_TABLE(table,0x13,68);
+        PUT_IN_TABLE(table,0xC8,69);
+        PUT_IN_TABLE(table,0xC2,70);
+        PUT_IN_TABLE(table,0x68,71);
+        PUT_IN_TABLE(table,0x61,72);
+        PUT_IN_TABLE(table,0x1A,73);
+        PUT_IN_TABLE(table,0x19,74);
+        PUT_IN_TABLE(table,0x109,75);
+        PUT_IN_TABLE(table,0x128,76);
+        PUT_IN_TABLE(table,0x1DD,77);
+        PUT_IN_TABLE(table,0x10A,78);
+        PUT_IN_TABLE(table,0x3D,79);
+        PUT_IN_TABLE(table,0x9E,80);
+        PUT_IN_TABLE(table,0x5E,81);
+        PUT_IN_TABLE(table,0x4F,82);
+        PUT_IN_TABLE(table,0xF2,83);
+        PUT_IN_TABLE(table,0x7A,84);
+        PUT_IN_TABLE(table,0x79,85);
+        PUT_IN_TABLE(table,0x1D2,86);
+        PUT_IN_TABLE(table,0x1CA,87);
+        PUT_IN_TABLE(table,0x1C9,88);
+        PUT_IN_TABLE(table,0x16F,89);
+        PUT_IN_TABLE(table,0x17B,90);
+        PUT_IN_TABLE(table,0x1DB,91);
+        PUT_IN_TABLE(table,0xBC,92);
+        PUT_IN_TABLE(table,0x8F,93);
+        PUT_IN_TABLE(table,0x2F,94);
+        PUT_IN_TABLE(table,0xF4,95);
+        PUT_IN_TABLE(table,0xF1,96);
+        PUT_IN_TABLE(table,0x1D4,97);
+        PUT_IN_TABLE(table,0x1D1,98);
+        PUT_IN_TABLE(table,0xEF,99);
+        PUT_IN_TABLE(table,0xF7,100);
+        PUT_IN_TABLE(table,0x1AF,101);
+        PUT_IN_TABLE(table,0x1D7,102);
+        PUT_IN_TABLE(table,0x142,103);
+        PUT_IN_TABLE(table,0x148,104);
+        PUT_IN_TABLE(table,0x14e,105);
+        PUT_IN_TABLE(table,0x11d,106);
 
         // Range 96-105. Use offset -96
         INIT_TABLE(aaux,10,255);
@@ -359,7 +389,7 @@ namespace BarDecode
             for (uint i = 0; i < c; ++i) {
                 if (tok.end()) {
                     v.resize(old_size + i);
-                    return c;
+                    return i;
                 } else {
                     v[old_size + i] = tok.next();
                     v.psize += v[old_size+i].second;
@@ -375,7 +405,7 @@ namespace BarDecode
             for (uint i = 0; i < c; ++i) {
                 if (tok.end()) {
                     v.resize(i);
-                    return c;
+                    return i;
                 } else {
                     v[i] = tok.next();
                     v.psize += v[i].second;
@@ -480,18 +510,9 @@ namespace BarDecode
     };
 
     // "" indicates no_entry
-    std::string code128_t::decode128(code_set_t code_set, module_word_t mw) const
+    std::string code128_t::decode128(code_set_t code_set, module_word_t key) const
     {
-        // TODO
-        // assume first bit is 1 and last bit is 0
-        // use only the 9 bits inbetween for lookup
-        if ( ! ((1<<10)&mw) || (mw&1)) {
-            return "";
-        }
-        mw &= ((1<<10)-1);
-        mw >>= 1;
-
-        int c = table[mw];
+        int c = table[key];
         if (c == no_entry) return "";
         if (c == 106) return std::string(1,END);
         switch (code_set) {
@@ -522,6 +543,19 @@ namespace BarDecode
             break;
         default: assert(false);
         }
+    }
+
+    module_word_t code128_t::get_key(module_word_t mw) const
+    {
+        // assume first bit is 1 and last bit is 0
+        // use only the 9 bits inbetween for lookup
+        if ( ! ((1<<10)&mw) || (mw&1)) {
+            return 0;
+        }
+        mw &= ((1<<10)-1);
+        mw >>= 1;
+        
+        return mw;
     }
 
     code128_t::code_set_t code128_t::shift_code_set(code_set_t code_set) const
@@ -559,8 +593,8 @@ namespace BarDecode
 
         // expect start sequence
         code_set_t cur_code_set;
-        module_word_t mw = get_module_word(b,u,11);
-        std::string result = decode128(code_set_a,mw);
+        module_word_t key = get_key(get_module_word(b,u,11));
+        std::string result = decode128(code_set_a,key);
 
         switch (result[0]) {
         case STARTA: cur_code_set = code_set_a; break;
@@ -570,21 +604,21 @@ namespace BarDecode
         }
 
         // initialize checksum:
-        long checksum = table[mw]; 
-        // we add it here already because in the first run pre_symbol will be multiplied by 0
-        char pre_symbol = table[mw];
+        long checksum = table[key]; 
+        // we add it to checksum here already because in the first run pre_symbol will be multiplied by 0
+        long pre_symbol = table[key];
 
         std::string code = "";
         code_t type = code128;
         bool end = false;
         bool shift = false;
-        ulong pos = 0;
+        long pos = 0;
         while (! end) { 
             // get symbol
             if ( get_bars(tokenizer,b,6) != 6 ) return scanner_result_t();
-            module_word_t mw = get_module_word_adjust_u(b,u,11);
-            if ( ! mw ) return scanner_result_t();
-            result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), mw);
+            key = get_key(get_module_word_adjust_u(b,u,11));
+            if ( ! key ) return scanner_result_t();
+            result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), key);
             shift = false;
             switch (result.size()) {
             case 0: return scanner_result_t();
@@ -614,8 +648,10 @@ namespace BarDecode
             }
 
             // update checksum
-            if ( ! end ) checksum += pos * pre_symbol;
-            pre_symbol = table[mw];
+            if ( ! end ) {
+                checksum += pos * pre_symbol;
+                pre_symbol = table[key];
+            }
 
             // increment pos
             ++pos;
@@ -627,12 +663,13 @@ namespace BarDecode
 
         // expect a black bar of 2 modules to complete end
         if ( get_bars(tokenizer,b,1) != 1) return scanner_result_t();
-        mw = get_module_word_adjust_u(b,u,2);
+        module_word_t mw = get_module_word_adjust_u(b,u,2);
         if ( mw != 3) return scanner_result_t();
 
         // Checksum and return result
-        if (  checksum % 103 != pre_symbol ) {
+        if (  (checksum % 103) != pre_symbol ) {
             std::cerr << "WARNING: checksum test for code128 failed on \""<< code << "\"." << std::endl;
+            std::cerr << "         checksum: " << checksum << " % 103 = " << checksum % 103 << " != " << pre_symbol << std::endl;
             return scanner_result_t();
         } else {
             // remove checksum char from end of code

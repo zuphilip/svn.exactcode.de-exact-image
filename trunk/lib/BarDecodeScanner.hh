@@ -29,7 +29,10 @@ namespace BarDecode
         ean = ean8|ean13|upca,
         upce = 1<<3,
         code128 = 1<<4,
-        gs1_128 = 1<<5
+        gs1_128 = 1<<5,
+        code39 = 1<<6,
+        code39_mod43 = 1<<7,
+        code39_ext = 1<<8
     };
 
     std::ostream& operator<< (std::ostream& s, const code_t& t);
