@@ -73,7 +73,9 @@
 */
 
 bool deskew (Image& image, const int raster_rows)
-{  
+{
+  const bool debug = false;
+
   // dynamic threshold and reference value per column
   Image reference_image; // one pixel high
   reference_image.copyMeta (image);
@@ -209,6 +211,7 @@ bool deskew (Image& image, const int raster_rows)
     }
   
   // just for visualization
+  if (debug)
   brightness_contrast_gamma (image, -.75, .0, 1.0);
   
   Image::iterator top_color = image.begin (), bottom_color = image.begin (),
@@ -336,7 +339,7 @@ bool deskew (Image& image, const int raster_rows)
   reg_right.addRange (points_right.begin(), points_right.end());
   
   // just for visualization, draw markers
-  
+  if (debug) {
   for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
        p != points_top.end(); ++p)
     marker (it, p->first, p->second, top_color);
@@ -352,12 +355,14 @@ bool deskew (Image& image, const int raster_rows)
   for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
        p != points_right.end(); ++p)
     marker (it, p->second, p->first, right_color); // flipped
-  
+
+  if (debug)
   std::cerr << "top: " << reg_top << std::endl
 	    << "bottom: " << reg_bottom << std::endl
 	    << "left: " << reg_left << std::endl
 	    << "right: " << reg_right << std::endl;
-  
+  }
+
   class Line {
   public:
     typedef std::pair <double, double> point;
@@ -417,11 +422,13 @@ bool deskew (Image& image, const int raster_rows)
   Line line_bottom (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
   Line line_left (reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height());
   Line line_right (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
-  
+
+  if (debug) {
   line_top.draw (image, top_color, style);
   line_left.draw (image, left_color, style);
   line_right.draw (image, right_color, style);
   line_bottom.draw (image, bottom_color, style);
+  }
 
   Line::point p1, p2, p3, p4;
   if (line_top.intersection (line_left, p1) &&
@@ -436,12 +443,14 @@ bool deskew (Image& image, const int raster_rows)
       
       Line line_width = Line (line_left.mid(), line_right.mid());
       Line line_height = Line (line_top.mid(), line_bottom.mid());
-      
+
+      if (debug) {
       Image::iterator note_color = image.begin();
       note_color.setRGB (1.0, 1.0, 1.0);
       line_width.draw (image, note_color, style);
       line_height.draw (image, note_color, style);
-      
+      }
+
       // average angle
       double angle = (reg_top.getB() +
 		      reg_bottom.getB() +
@@ -449,24 +458,18 @@ bool deskew (Image& image, const int raster_rows)
 		      - reg_left.getB() ) / 4;
       
       angle = atan (angle) / M_PI * 180;
+      if (debug)
       std::cerr << "angle: " << angle << std::endl;
 
       Image* cropped_image = copy_crop_rotate (image,
 					       (unsigned int) p1.first, (unsigned int) p1.second,
 					       (unsigned int) line_width.length(), (unsigned int) line_height.length(),
 					       -angle);
-      image.copyMeta (*cropped_image);
       image.copyTransferOwnership (*cropped_image);
+      image.copyMeta (*cropped_image);
     }
   else
-    std::cerr << "lines parallel" << std::endl;
+    std::cerr << "lines parallel!?" << std::endl;
   
-  /*
-    Image* image_copped = copy_crop_rotate (image,
-    (unsigned int)x, (unsigned int)y,
-    10, unsigned int 10,
-    angle);
-  */
-
   return true;
 }
