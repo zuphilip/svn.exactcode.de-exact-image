@@ -58,7 +58,110 @@ namespace BarDecode
         // ((Maybe we could safe even a bit more by directly encoding 3 of 9 ???)
 
         scanner_result_t scan(Tokenizer, psize_t) const;
-    };
+        bool check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
+        module_word_t get_key(const bar_vector_t& b) const;
+        bool expect_n(Tokenizer& tok, psize_t old_psize) const;
+
+        static const char DELIMITER  = 254;
+        static const char no_entry = 255;
+
+        DECLARE_TABLE(table,512);
+        DECLARE_TABLE(aux,128);
+    } code39_impl;
+
+    code39_t::code39_t()
+    {
+        INIT_TABLE(table,512,no_entry);
+        PUT_IN_TABLE(table,0x34, '0');
+        PUT_IN_TABLE(table,0x121, '1');
+        PUT_IN_TABLE(table,0x61, '2');
+        PUT_IN_TABLE(table,0x160, '3');
+        PUT_IN_TABLE(table,0x31, '4');
+        PUT_IN_TABLE(table,0x130, '5');
+        PUT_IN_TABLE(table,0x70, '6');
+        PUT_IN_TABLE(table,0x25, '7');
+        PUT_IN_TABLE(table,0x124, '8');
+        PUT_IN_TABLE(table,0x64, '9');
+        PUT_IN_TABLE(table,0x109, 'A');
+        PUT_IN_TABLE(table,0x49, 'B');
+        PUT_IN_TABLE(table,0x148, 'C');
+        PUT_IN_TABLE(table,0x19, 'D');
+        PUT_IN_TABLE(table,0x118, 'E');
+        PUT_IN_TABLE(table,0x58, 'F');
+        PUT_IN_TABLE(table,0xD, 'G');
+        PUT_IN_TABLE(table,0x10C, 'H');
+        PUT_IN_TABLE(table,0x4C, 'I');
+        PUT_IN_TABLE(table,0x1C, 'J');
+        PUT_IN_TABLE(table,0x103, 'K');
+        PUT_IN_TABLE(table,0x43, 'L');
+        PUT_IN_TABLE(table,0x142, 'M');
+        PUT_IN_TABLE(table,0x13, 'N');
+        PUT_IN_TABLE(table,0x112, 'O');
+        PUT_IN_TABLE(table,0x52, 'P');
+        PUT_IN_TABLE(table,0x7, 'Q');
+        PUT_IN_TABLE(table,0x106, 'R');
+        PUT_IN_TABLE(table,0x46, 'S');
+        PUT_IN_TABLE(table,0x16, 'T');
+        PUT_IN_TABLE(table,0x181, 'U');
+        PUT_IN_TABLE(table,0xC1, 'V');
+        PUT_IN_TABLE(table,0x1C0, 'W');
+        PUT_IN_TABLE(table,0x91, 'X');
+        PUT_IN_TABLE(table,0x190, 'Y');
+        PUT_IN_TABLE(table,0xD0, 'Z');
+        PUT_IN_TABLE(table,0x85, '-');
+        PUT_IN_TABLE(table,0x184, '.');
+        PUT_IN_TABLE(table,0xC4, ' ');
+        PUT_IN_TABLE(table,0xA8, '$');
+        PUT_IN_TABLE(table,0xA2, '/');
+        PUT_IN_TABLE(table,0x8A, '+');
+        PUT_IN_TABLE(table,0x2A, '%');
+        PUT_IN_TABLE(table,0x94, DELIMITER);
+
+        INIT_TABLE(aux,128,no_entry);
+        PUT_IN_TABLE(aux,(uint)'0', 0);
+        PUT_IN_TABLE(aux,(uint)'1', 1);
+        PUT_IN_TABLE(aux,(uint)'2', 2);
+        PUT_IN_TABLE(aux,(uint)'3', 3);
+        PUT_IN_TABLE(aux,(uint)'4', 4);
+        PUT_IN_TABLE(aux,(uint)'5', 5);
+        PUT_IN_TABLE(aux,(uint)'6', 6);
+        PUT_IN_TABLE(aux,(uint)'7', 7);
+        PUT_IN_TABLE(aux,(uint)'8', 8);
+        PUT_IN_TABLE(aux,(uint)'9', 9);
+        PUT_IN_TABLE(aux,(uint)'A', 10);
+        PUT_IN_TABLE(aux,(uint)'B', 11);
+        PUT_IN_TABLE(aux,(uint)'C', 12);
+        PUT_IN_TABLE(aux,(uint)'D', 13);
+        PUT_IN_TABLE(aux,(uint)'E', 14);
+        PUT_IN_TABLE(aux,(uint)'F', 15);
+        PUT_IN_TABLE(aux,(uint)'G', 16);
+        PUT_IN_TABLE(aux,(uint)'H', 17);
+        PUT_IN_TABLE(aux,(uint)'I', 18);
+        PUT_IN_TABLE(aux,(uint)'J', 19);
+        PUT_IN_TABLE(aux,(uint)'K', 20);
+        PUT_IN_TABLE(aux,(uint)'L', 21);
+        PUT_IN_TABLE(aux,(uint)'M', 22);
+        PUT_IN_TABLE(aux,(uint)'N', 23);
+        PUT_IN_TABLE(aux,(uint)'O', 24);
+        PUT_IN_TABLE(aux,(uint)'P', 25);
+        PUT_IN_TABLE(aux,(uint)'Q', 26);
+        PUT_IN_TABLE(aux,(uint)'R', 27);
+        PUT_IN_TABLE(aux,(uint)'S', 28);
+        PUT_IN_TABLE(aux,(uint)'T', 29);
+        PUT_IN_TABLE(aux,(uint)'U', 30);
+        PUT_IN_TABLE(aux,(uint)'V', 31);
+        PUT_IN_TABLE(aux,(uint)'W', 32);
+        PUT_IN_TABLE(aux,(uint)'X', 33);
+        PUT_IN_TABLE(aux,(uint)'Y', 34);
+        PUT_IN_TABLE(aux,(uint)'Z', 35);
+        PUT_IN_TABLE(aux,(uint)'-', 36);
+        PUT_IN_TABLE(aux,(uint)'.', 37);
+        PUT_IN_TABLE(aux,(uint)' ', 38);
+        PUT_IN_TABLE(aux,(uint)'$', 39);
+        PUT_IN_TABLE(aux,(uint)'/', 40);
+        PUT_IN_TABLE(aux,(uint)'+', 41);
+        PUT_IN_TABLE(aux,(uint)'%', 42);
+    }
 
     // TODO make all tables static (would be nice to have something like designated initializers
     // like in C99 in C++ as well...) We do not have. Hecne we need to work around.
@@ -360,6 +463,10 @@ namespace BarDecode
                 // TODO set tokenizer to end of barcode
                 cur_barcode = result;
                 return;
+            } else if (requested(code39) && (result = code39_impl.scan(tokenizer,quiet_psize))) {
+                // TODO set tokenizer to end of barcode
+                cur_barcode = result;
+                return;
             }
 
             if ( end() ) return;
@@ -508,6 +615,120 @@ namespace BarDecode
         }
 
     };
+
+    module_word_t code39_t::get_key(const bar_vector_t& b) const
+    {
+#ifdef STRICT
+        u_t n_l = ((double) b.psize / 15.0); // ((b.size / (6*1+3*3)) * 1
+        u_t n_h = ((double) b.psize / 12.0); // ((b.size / (6*1+3*2)) * 1
+        u_t w_l = ((double) b.psize / 6.0);  // ((b.size / (6*1+3*2)) * 2
+        u_t w_h = ((double) b.psize / 5.0);   // ((b.size / (6*1+3*3)) * 3
+#else
+        u_t n_l = ((double) b.psize / 25.0);
+        u_t n_h = ((double) b.psize / 9.0);
+        u_t w_l = ((double) b.psize / 8.9);
+        u_t w_h = ((double) b.psize / 1.0);
+
+#endif
+        assert(b.size() == 9);
+        module_word_t r = 0;
+        for (uint i = 0; i < 9; ++i) {
+            r <<= 1;
+            if (w_l <= b[i].second && b[i].second <= w_h) r += 1;
+            else if (! (n_l <= b[i].second && b[i].second <= n_h)) return 0;
+        }
+        return r;
+    }
+
+    // psize = 0 means skip that test
+    bool code39_t::check_bar_vector(const bar_vector_t& b,psize_t old_psize) const
+    {
+        // check psize
+        // check colors
+        assert(b.size() == 9);
+#if 0
+        return 
+            (!old_psize || fabs((long)b.psize - (long)old_psize) < 0.5 * old_psize) && 
+            b[0].first && b[8].first;
+#else
+        if (old_psize && ! (fabs((long) b.psize - (long) old_psize) < 0.5 * old_psize)) {
+    //        std::cerr << "%%%%%%%% psize failure: old_psize=" << old_psize << ", new_psize=" << b.psize << std::endl;
+            return false;
+        }
+        if ( ! b[0].first && b[8].first ) {
+    //            std::cerr << "%%%%%%%% color failure" << std::endl;
+                return false;
+        }
+        return true;
+#endif
+    }
+
+    bool code39_t::expect_n(Tokenizer& tok, psize_t old_psize) const
+    {
+        using namespace scanner_utilities;
+        bar_vector_t b(1);
+        if ( get_bars(tok,b,1) != 1 || b[0].first ) return false;
+#ifdef STRICT
+        u_t n_l = ((double) old_psize / 15.0); // ((b.size / (6*1+3*3)) * 1
+        u_t n_h = ((double) old_psize / 12.0); // ((b.size / (6*1+3*2)) * 1
+#else
+        u_t n_l = ((double) old_psize / 25.0);
+        u_t n_h = ((double) old_psize / 9.0);
+#endif
+        return n_l <= b[0].second && b[0].second <= n_h;
+    }
+        
+
+    scanner_result_t code39_t::scan(Tokenizer tokenizer, psize_t quiet_psize) const
+    {
+        using namespace scanner_utilities;
+
+        // get x and y
+        pos_t x = tokenizer.get_x();
+        pos_t y = tokenizer.get_y();
+
+        //std::cerr << "%%%%%%%% try code39 at " << x << "," << y << std::endl;
+
+        // try to match start marker
+        bar_vector_t b(9);
+        if ( get_bars(tokenizer,b,9) != 9 ) return scanner_result_t();
+        if (! check_bar_vector(b) ) return scanner_result_t();
+
+        // check quiet_zone
+        if (quiet_psize < b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
+
+        // expect start sequence
+        module_word_t key = get_key(b);
+        if ( ! key || table[key] != DELIMITER ) {
+            // std::cerr << "%%%%%%%% invalid DELIMITER failure: " << key << " --> " << table[key] << std::endl;
+            return scanner_result_t();
+        }
+
+        std::string code = "";
+        psize_t old_psize;
+        bool end = false;
+        while (! end) {
+            old_psize = b.psize;
+            // consume narrow separator
+            if (! expect_n(tokenizer,old_psize)) return scanner_result_t();
+
+            // get new symbol
+            if ( get_bars(tokenizer,b,9) != 9) return scanner_result_t();
+            if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
+
+            key = get_key(b);
+            if (! key ) return scanner_result_t();
+            const char c = table[key];
+            switch(c) {
+            case no_entry: return scanner_result_t();
+            case DELIMITER: end = true; break;
+            default: code.push_back(c);
+            }
+        }
+
+        return scanner_result_t(code39,code,x,y);
+    }
+
 
     // "" indicates no_entry
     std::string code128_t::decode128(code_set_t code_set, module_word_t key) const

@@ -112,7 +112,7 @@ int main (int argc, char* argv[])
   }
 
   std::set<scanner_result_t,comp> codes;
-  BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128);
+  BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128|code39);
   while (! it.end() ) {
       codes.insert(*it);
       ++it;
