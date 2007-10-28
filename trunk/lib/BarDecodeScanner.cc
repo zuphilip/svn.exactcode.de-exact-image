@@ -57,13 +57,17 @@ namespace BarDecode
         // Otherwith we would have needed size 2^(13 modules - 2 constant modules) = 2048.
         // ((Maybe we could safe even a bit more by directly encoding 3 of 9 ???)
 
-        scanner_result_t scan(Tokenizer, psize_t) const;
+        scanner_result_t scan(Tokenizer&, psize_t) const;
         bool check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
         module_word_t get_key(const bar_vector_t& b) const;
         bool expect_n(Tokenizer& tok, psize_t old_psize) const;
 
         static const char DELIMITER  = 254;
         static const char no_entry = 255;
+
+        static const usize_t min_quiet_usize = 10;
+        static const usize_t min_quiet_usize_right = 10;
+
 
         DECLARE_TABLE(table,512);
         DECLARE_TABLE(aux,128);
@@ -178,7 +182,7 @@ namespace BarDecode
 
         code128_t();
 
-        scanner_result_t scan(Tokenizer, psize_t) const;
+        scanner_result_t scan(Tokenizer&, psize_t) const;
         std::string decode128(code_set_t code_set, module_word_t mw) const; 
         code_set_t shift_code_set(code_set_t code_set) const;
         module_word_t get_key(module_word_t mw) const;
@@ -355,7 +359,7 @@ namespace BarDecode
         static const usize_t min_quiet_usize = 7;
 
         ean_t();
-        scanner_result_t scan(Tokenizer, psize_t);
+        scanner_result_t scan(Tokenizer&, psize_t);
 
         DECLARE_TABLE(table,128);
         DECLARE_TABLE(ean13table,64);
@@ -453,21 +457,34 @@ namespace BarDecode
             //if ( end() ) return;
             //t = tokenizer.next();
 
+            Tokenizer backup_tokenizer = tokenizer;
             scanner_result_t result;
             // try scanning for all requested barcode types
-            if ( requested(ean) && (result = ean_impl.scan(tokenizer,quiet_psize)) ) {
-                // TODO set tokenizer to end of barcode
-                cur_barcode = result;
-                return;
-            } else if (requested(code128) && (result = code128_impl.scan(tokenizer,quiet_psize))) {
-                // TODO set tokenizer to end of barcode
-                cur_barcode = result;
-                return;
-            } else if (requested(code39) && (result = code39_impl.scan(tokenizer,quiet_psize))) {
-                // TODO set tokenizer to end of barcode
-                cur_barcode = result;
-                return;
+            if (requested(code39)) {
+                tokenizer =  backup_tokenizer;
+                if ((result = code39_impl.scan(tokenizer,quiet_psize))) {
+                    // TODO set tokenizer to end of barcode
+                    cur_barcode = result;
+                    return;
+                }
             }
+            if (requested(code128)) {
+                tokenizer =  backup_tokenizer;
+                if (result = code128_impl.scan(tokenizer,quiet_psize)) {
+                    // TODO set tokenizer to end of barcode
+                    cur_barcode = result;
+                    return;
+                }
+            } 
+            if ( requested(ean) ) {
+                tokenizer =  backup_tokenizer;
+                if ((result = ean_impl.scan(tokenizer,quiet_psize)) ) {
+                    // TODO set tokenizer to end of barcode
+                    cur_barcode = result;
+                    return;
+                }
+            } 
+            tokenizer = backup_tokenizer;
 
             if ( end() ) return;
             t = tokenizer.next();
@@ -679,7 +696,7 @@ namespace BarDecode
     }
         
 
-    scanner_result_t code39_t::scan(Tokenizer tokenizer, psize_t quiet_psize) const
+    scanner_result_t code39_t::scan(Tokenizer& tokenizer, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
 
@@ -690,12 +707,17 @@ namespace BarDecode
         //std::cerr << "%%%%%%%% try code39 at " << x << "," << y << std::endl;
 
         // try to match start marker
+        // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(9);
-        if ( get_bars(tokenizer,b,9) != 9 ) return scanner_result_t();
+        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if (b[0].second > 0.7 * b[1].second) return scanner_result_t();
+        if (b[1].second > 3.3 * b[0].second) return scanner_result_t();
+
+        if ( add_bars(tokenizer,b,7) != 7 ) return scanner_result_t();
         if (! check_bar_vector(b) ) return scanner_result_t();
 
-        // check quiet_zone
-        if (quiet_psize < b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
+        // check quiet_zone with respect to length of the first symbol
+        if (quiet_psize < (double) b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
 
         // expect start sequence
         module_word_t key = get_key(b);
@@ -794,7 +816,7 @@ namespace BarDecode
     // TODO FNC3 initialize or reprogram the barcode reader with the current code
     // TODO FNC4 switch to extended ascii (latin-1 as default)
     //      (quiet complicated usage refer to GS1 spec 5.3.3.4.2)
-    scanner_result_t code128_t::scan(Tokenizer tokenizer,psize_t quiet_psize) const
+    scanner_result_t code128_t::scan(Tokenizer& tokenizer,psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
 
@@ -804,7 +826,9 @@ namespace BarDecode
 
         // try to match start marker
         bar_vector_t b(6);
-        if ( get_bars(tokenizer,b,6) != 6) return scanner_result_t();
+        if (get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
+        if ( add_bars(tokenizer,b,4) != 4) return scanner_result_t();
 
         // get a first guess for u
         u_t u = (double) b.psize / 11; // 11 is the number of modules of the start sequence
@@ -903,7 +927,7 @@ namespace BarDecode
     //      (and skip this bar code in the future/ check for bottom quiet zone)
 
     // scanner_result_t() indicates failure
-    scanner_result_t ean_t::scan(Tokenizer tokenizer, psize_t quiet_psize)
+    scanner_result_t ean_t::scan(Tokenizer& tokenizer, psize_t quiet_psize)
     {
         using namespace scanner_utilities;
 
@@ -915,7 +939,9 @@ namespace BarDecode
 
         // try ean with 3 bars
         bar_vector_t b(3);
-        if ( get_bars(tokenizer,b,3) != 3) return scanner_result_t();
+        if ( get_bars(tokenizer,b,2) != 2) return scanner_result_t();
+        if ( b[0].second > 2 * b[1].second || b[0].second < 0.5 * b[1].second ) return scanner_result_t();
+        if ( add_bars(tokenizer,b,1) != 1) return scanner_result_t();
 
         // get a first guess for u
         u_t u = (double) b.psize / 3.0; // 3 is the number of modules of the start sequence
