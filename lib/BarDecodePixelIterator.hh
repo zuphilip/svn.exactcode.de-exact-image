@@ -13,7 +13,7 @@ namespace BarDecode
     typedef int pos_t;
     typedef int threshold_t;
 
-    template<int it_size = 4>
+    template<int it_size = 6>
     class PixelIterator : 
         public std::iterator<std::output_iterator_tag,
                              bool,
@@ -34,7 +34,7 @@ namespace BarDecode
             y(0),
             lum(0)
         {
-            // FIXME insert an optimized code path for img->h >= 3
+            // FIXME insert an optimized code path for img->h <= it_size
             for (uint i = 0; i < it_size; ++i) {
                 img_it[i] = img->begin().at(0,std::min((int)i,img->h));
                 *img_it[i];
@@ -53,7 +53,7 @@ namespace BarDecode
                 }
             } else {
                 x = 0;
-                // FIXME insert a optimized code path for img->h >= y+3
+                // FIXME insert an optimized code path for img->h >= y+it_size
                 y += it_size;
                 for (uint i = 0; i < it_size; ++i) {
                     img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h));
@@ -78,7 +78,7 @@ namespace BarDecode
 
         self_t at(pos_t x, pos_t y) const
         {
-            // FIXME insert a optimized code path for img->h >= y+3
+            // FIXME insert an optimized code path for img->h >= y+it_size
             self_t tmp = *this;
             for (uint i = 0; i < it_size; ++i) {
                 tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
