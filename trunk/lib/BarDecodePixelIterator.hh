@@ -13,7 +13,7 @@ namespace BarDecode
     typedef int pos_t;
     typedef int threshold_t;
 
-    template<int it_size = 6>
+    template<int it_size = 4>
     class PixelIterator : 
         public std::iterator<std::output_iterator_tag,
                              bool,
