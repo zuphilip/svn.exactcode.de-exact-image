@@ -1,3 +1,19 @@
+IDEAS:
+
+* calculate threshold dynamically: try to identify edges (or different
+  more or less constant levels) put the threshold inbetween.
+  * Try mean of bar code region (look ahead and adjust threshold)
+  * Try median of bar code region
+
+* Try to compensate single "flipped bits" (local noise: far to narrow
+  for a bar and no vertical continuity (but see also vertical interpolation)
+
+* Use a different metric on interpolation that considers more the media
+  (majority vote) or at least rules out extrem deviations
+
+* Compute angle (using first bar) and adjust vertical interpolation by 
+  advancing/ delaying the iterators.
+
 =====================================================================
 Tokenizer:
 split each line into tokens. A token is a pair
