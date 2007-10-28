@@ -63,7 +63,7 @@ namespace BarDecode
 
     protected:
         const Image* img;
-        PixelIterator it;
+        PixelIterator<> it;
         double extra;
     };
 
