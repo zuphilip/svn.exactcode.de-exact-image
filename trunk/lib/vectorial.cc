@@ -26,34 +26,36 @@
 void drawLine(Image& image, double x, double y, double x2, double y2,
 	      const Image::iterator& color, const drawStyle& style)
 {
-#if 0
-  // asumes RGB for now
-  agg::rendering_buffer rbuf (image.getRawData(),
-			     image.w, image.h, image.stride());
-
-  pixfmt pixf (rbuf);
-#endif
-  
   agg::line_profile_aa profile;
-  profile.gamma (agg::gamma_power(1.2));  //optional
-  profile.min_width (0.75);               //optional
-  profile.smoother_width (3.0);           //optional
-  profile.width (style.width);                  //mandatory!
+  profile.gamma (agg::gamma_power(1.2)); // optional
+  profile.min_width (0.75); // optional
+  profile.smoother_width (3.0); //optional
+  profile.width (style.width); // mandatory!
   
   renderer_exact_image ren_base (image);
   renderer_oaa ren (ren_base, profile);
-
+  
   uint16_t r, g, b;
   color.getRGB (&r, &g, &b);
-  ren.color (agg::rgba8(r,g,b));          //mandatory!
+  ren.color (agg::rgba8 (r,g,b)); // mandatory!
+  
   rasterizer_oaa ras (ren);
   
-  // ras.round_cap(true);                   //optional
-  // ras.accurate_join(true);               //optional
-  
-  ras.move_to_d (x, y);
-  ras.line_to_d (x2, y2);
-  ras.render (false);     //false means "don't close"
+  if (style.dash_length <= 0.0)
+    {
+      if (style.caps == drawStyle::ROUND)
+	ras.round_cap (true); // optional
+      /*
+      if (style.join == drawStyle::ACCURATE)
+	ras.accurate_join (true); // optional
+      */
+      ras.move_to_d (x, y);
+      ras.line_to_d (x2, y2);
+    }
+  else // with dashes
+    {
+    }
+  ras.render (false); // false means "don't close"
 }
 
 void drawRectange(Image& image, double x, double y, double x2, double y2,

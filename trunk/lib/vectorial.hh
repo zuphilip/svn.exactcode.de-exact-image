@@ -23,11 +23,23 @@ class drawStyle
 {
 public:
   drawStyle ()
-    : width (1.) {
+    : width (1), dash_length (0), caps (BUTT), join (DEFAULT) {
   }
   
   double width;
-  // TODO: intersections, pattern caps, etc.
+  double dash_length;
+  
+  enum {
+    BUTT,
+    SQUARE,
+    ROUND
+  } caps;
+
+  enum {
+    DEFAULT,
+    /* ACCURATE, MITER; ROUND, BEVEL, ... */
+  } join;
+  
 };
 
 void drawLine(Image& img, double x, double y, double x2, double y2,
