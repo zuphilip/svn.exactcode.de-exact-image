@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2007 René Reb, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     case PHOTOMETRIC_PALETTE:
       break;
     default:
-      std::cerr << "TIFCodec: Unrecognized photometric: " << (int)photometric << std::endl;
+      std::cerr << "Bad photometric: " << (int)photometric << std::endl;
       return false;
     }
   
@@ -83,16 +83,12 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   float _xres;
   if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
     image.xres = (int)_xres;
-  else
-    image.xres = 0;
   
   float _yres;
   if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
     image.yres = (int)_yres;
-  else
-    image.yres = 0;
   
-  int stride = image.stride();
+  int stride = image.Stride();
 
   // printf ("w: %d h: %d\n", _w, _h);
   // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
@@ -103,7 +99,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   if (photometric == PHOTOMETRIC_PALETTE)
     {
       if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
-	std::cerr << "TIFCodec: Error reading colormap." << std::endl;
+	std::cerr << "Error reading colormap." << std::endl;
     }
 
   uint8_t* data2 = image.getRawData();
@@ -111,14 +107,13 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
+      // invert if saved inverted
+      if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
+	for (uint8_t* i = data2; i != data2 + stride; ++i)
+	  *i ^= 0xFF;
+
       data2 += stride;
     }
-  
-  /* some post load fixup */
-  
-  /* invert if saved "inverted" */
-  if (photometric == PHOTOMETRIC_MINISWHITE)
-    invert (image);
   
   /* strange 16bit gray images ??? or GRAYA? */
   if (image.spp == 2)
@@ -148,22 +143,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
 bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  TIFF* out;
-  
-  out = TIFFStreamOpen ("", stream);
-  if (out == NULL)
-    return false;
-  
-  writeImageImpl (out, image, compress, 0);
-
-  TIFFClose (out);
-  
-  return true;
-}
-
-bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress,
-			       int page)
-{
+  TIFF *out;
   uint32 rowsperstrip = (uint32) - 1;
   
   uint16 compression = COMPRESSION_NONE;
@@ -180,7 +160,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     if (c == "g3" || c == "fax")
       compression = COMPRESSION_CCITTFAX3;
     else if (c == "g4" || c == "group4")
-      compression = COMPRESSION_CCITTFAX4;
+      compression = COMPRESSION_CCITTFAX3;
     else if (c == "lzw")
       compression = COMPRESSION_LZW;
     else if (c == "deflate" || c == "zip")
@@ -188,15 +168,14 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     else if (c == "none")
       compression = COMPRESSION_NONE;
     else
-      std::cerr << "TIFCodec: Unrecognized compression option '" << compress << "'" << std::endl;
+      std::cerr << "Unrecognized compression option '" << compress << "'" << std::endl;
   }
   
-  if (page) {
-    TIFFSetField (out, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-    TIFFSetField (out, TIFFTAG_PAGENUMBER, page, 0); // total number unknown
-    // TIFFSetField (out, TIFFTAG_PAGENAME, page_name);
-  }
-  
+
+  out = TIFFStreamOpen ("", stream);
+  if (out == NULL)
+    return false;
+   
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, image.w);
   TIFFSetField (out, TIFFTAG_IMAGELENGTH, image.h);
   TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, image.bps);
@@ -204,15 +183,12 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_PLANARCONFIG, PLANARCONFIG_CONTIG);
 
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
-  if (image.spp == 1 && image.bps == 1)
-    // internally we actually have MINISBLACK, but some programs,
-    // including the Apple Preview.app appear to ignore this bit
-    TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE);
-  else if (image.spp == 1)
+  if (image.spp == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
   else if (false) { /* just saved for reference */
     uint16 rmap[256], gmap[256], bmap[256];
-    for (int i = 0;i < 256; ++i) {
+    int i;
+    for (i=0;i<256;++i) {
       rmap[i] = gmap[i] = bmap[i] = i * 0xffff / 255;
     }
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
@@ -236,32 +212,15 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
 
-  const int stride = image.stride();
-  /* Note: we on-the-fly invert 1-bit data to please some historic apps */
-  
-  uint8_t* src = image.getRawData();
-  uint8_t* scanline = 0;
-  if (image.bps == 1)
-    scanline = (uint8_t*) malloc (stride);
-  
-  for (int row = 0; row < image.h; ++row, src += stride) {
-    int err = 0;
-    if (image.bps == 1) {
-      for (int i = 0; i < stride; ++i)
-        scanline [i] = src [i] ^ 0xFF;
-      err = TIFFWriteScanline (out, scanline, row, 0);
+  int stride = image.Stride();
+  for (int row = 0; row < image.h; row++)
+    {
+      if (TIFFWriteScanline (out,
+                             image.getRawData() + row * stride, row, 0) < 0)
+	break;
     }
-    else
-      err = TIFFWriteScanline (out, src, row, 0);
-    
-    if (err < 0) {
-      if (scanline) free (scanline);
-      return false;
-    }
-  }
-  if (scanline) free (scanline);  
   
-  TIFFWriteDirectory (out);
+  TIFFClose (out);
   
   return true;
 }

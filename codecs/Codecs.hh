@@ -63,9 +63,10 @@ public:
   virtual bool flipX (Image& image);
   virtual bool flipY (Image& image);
   virtual bool rotate (Image& image, double angle);
-  virtual bool crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
   virtual bool toGray (Image& image);
   virtual bool scale (Image& image, double xscale, double yscale);
+  
+  // TODO: virtual bool crop (...);
   
 protected:
   

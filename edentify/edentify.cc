@@ -68,7 +68,7 @@ int main (int argc, char* argv[])
     {
       std::cerr << "Exact image identification (edentify)."
 		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2006 - 2007 by ExactCODE and Archivista" << std::endl
+                <<  " - Copyright (C) 2006 by René Rebe and Archivista" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -183,8 +183,8 @@ int main (int argc, char* argv[])
 	
 	if (image.xres && image.yres)
 	  std::cout << " @ " << image.xres << "x" << image.yres << "dpi ("
-		    << 254 * image.w / image.xres / 10 << "x"
-		    << 254 * image.h / image.yres / 10 << "mm)";
+		    << 1000 * image.w / image.xres / 254 << "x"
+		    << 1000 * image.h / image.yres / 254 << "mm)";
 	
 	int bits = image.bps * image.spp;
 	std::cout << " " << bits << " bit" << (bits>1 ? "s" : "") << ", "

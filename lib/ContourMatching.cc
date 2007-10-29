@@ -2,7 +2,7 @@
 #include <math.h>
 #include <iostream>
 
-const unsigned int logo_trans_before_rot=10000; // TODO: calculate useful value !!
+const unsigned int logo_trans_before_rot=10000; // TODO: calculate usefull value !!
 
 class LengthSorter
 {
@@ -419,7 +419,7 @@ bool LogoRepresentation::Optimize(double& score)
   bool improvement=false;
 
   const double start_angle_delta=2.0;
-  const double end_angle_delta=0.01; // was 0.1 -ReneR 2007-08-06
+  const double end_angle_delta=0.1;
   double delta=start_angle_delta;
   do {
     bool success=false;

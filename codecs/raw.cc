@@ -25,8 +25,8 @@ bool RAWCodec::readImage (std::istream* stream, Image& image)
 {
   image.New (image.w, image.h);
   
-  return (size_t) stream->readsome ((char*)image.getRawData(), image.stride()*image.h)
-    == (size_t) image.stride()*image.h;
+  return (size_t) stream->readsome ((char*)image.getRawData(), image.Stride()*image.h)
+    == (size_t) image.Stride()*image.h;
 }
 
 bool RAWCodec::writeImage (std::ostream* stream, Image& image, int quality,
@@ -35,9 +35,9 @@ bool RAWCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (!image.getRawData())
     return false;
 
-  return stream->write ((char*)image.getRawData(), image.stride()*image.h)
+  return stream->write ((char*)image.getRawData(), image.Stride()*image.h)
     /* ==
-       (size_t) image.stride()*image.h*/;
+       (size_t) image.Stride()*image.h*/;
 }
 
 RAWCodec raw_loader;

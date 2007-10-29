@@ -96,7 +96,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     const int base_align = 4;
     const int stride_align = 4;
     
-    int stride = image->stride ();
+    int stride = image->Stride ();
     int new_stride = (stride + stride_align - 1) / stride_align * stride_align;
     
     // realloc the data to the maximal working set of memory we
@@ -220,7 +220,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
   bbitmap.bmType = 1; // bitmap type version, fixed v1
   bbitmap.bmWidth = image->w;
   bbitmap.bmHeight = image->h;
-  bbitmap.bmWidthBytes = image->stride();
+  bbitmap.bmWidthBytes = image->Stride();
   bbitmap.bmPlanes = 1; // the library is documented to only take 1
   bbitmap.bmBitsPixel = image->bps * image->spp; // 1, 4 and 8 appeared to work
   bbitmap.bmBits = image->getRawData(); // our class' bitmap data
@@ -229,7 +229,7 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
     std::cerr << "  @: " << (void*) image->getRawData()
 	      << ", w: " << image->w << ", h: " << image->h
 	      << ", spp: " << image->spp << ", bps: " << image->bps
-	      << ", stride: " << image->stride()
+	      << ", stride: " << image->Stride()
 	      << ", res: " << image->xres << std::endl;
   
   char** bar_codes;

@@ -22,8 +22,6 @@
 
 #include <algorithm>
 
-#include <list>
-
 #include "config.h"
 
 #include "ArgumentList.hh"
@@ -36,13 +34,9 @@
 #include "scale.hh"
 #include "crop.hh"
 #include "rotate.hh"
-#include "deskew.hh"
-
 #include "Matrix.hh"
-
 #include "riemersma.h"
 #include "floyd-steinberg.h"
-
 #include "vectorial.hh"
 
 /* Let's reuse some parts of the official, stable API to avoid
@@ -137,7 +131,7 @@ bool convert_split (const Argument<std::string>& arg)
     {
       std::cerr << "Writing file: " << arg.Get(i) << std::endl;
       split_image.setRawDataWithoutDelete
-        (image.getRawData() + i * split_image.stride() * split_image.h);
+        (image.getRawData() + i * split_image.Stride() * split_image.h);
       if (!ImageCodec::Write (arg.Get(i), split_image, quality, compression)) {
 	err = 1;
 	std::cerr << "Error writing output file." << std::endl;
@@ -286,7 +280,7 @@ bool convert_convolve (const Argument<double>& arg)
   const std::vector<double>& v = arg.Values ();
   int n = sqrt(v.size());
   
-  for (unsigned int i = 0; i < v.size(); ++i)
+  for (int i = 0; i < v.size(); ++i)
     divisor += v[i];
   
   if (divisor == 0)
@@ -316,12 +310,6 @@ bool convert_dither_riemersma (const Argument<int>& arg)
   return true;
 }
 
-bool convert_deskew (const Argument<int>& arg)
-{
-  deskew (image, arg.Get());
-  return true;
-}
-
 bool convert_edge (const Argument<bool>& arg)
 {
   matrix_type matrix[] = { -1.0, 0.0,  1.0,
@@ -329,6 +317,503 @@ bool convert_edge (const Argument<bool>& arg)
                            -1.0, 0.0, -1.0 };
 
   convolution_matrix (image, matrix, 3, 3, (matrix_type)3.0);
+  return true;
+}
+
+bool convert_deskew (const Argument<bool>& arg)
+{
+  using std::cout;
+  using std::endl;
+  
+  uint8_t* new_data = (uint8_t*) malloc (image.Stride() * image.h);
+
+#define pix(d,x,y) d[image.w*(y)+x]
+  const int thr = 8;
+
+  uint8_t* data = image.getRawData();
+ 
+  // accumulate deltas
+  for (int x = 0; x < image.w-1; ++x) {
+    for (int y = 0; y < image.h-1; ++y)
+      {
+	int i = std::abs ((int)pix(data,x,y) - pix(data,x+1,y));
+	i += std::abs ((int)pix(data,x,y) - pix(data,x,y+1));
+	if (i > thr)
+	  pix(new_data,x,y) += i*2;
+      }
+  }
+
+  // denoise
+  for (int i = 0; i < 2; ++i) {
+    for (int x = 2; x < image.w-2; ++x) {
+      for (int y = 2; y < image.h-2; ++y) {
+	if (pix(new_data,x,y)) {
+	  int z = 0;
+	  
+	  if (pix(new_data,x-2,y))
+	    ++z;
+	  if (pix(new_data,x-1,y))
+	    ++z;
+	  if (pix(new_data,x+1,y))
+	    ++z;
+	  if (pix(new_data,x+2,y))
+	    ++z;
+	  
+	  if (pix(new_data,x,y-2))
+	    ++z;
+	  if (pix(new_data,x,y-1))
+	    ++z;
+	  if (pix(new_data,x,y+1))
+	    ++z;
+	  if (pix(new_data,x,y+2))
+	    ++z;
+	  
+	  if (z < 4)
+	    pix(new_data,x,y) = 0;
+	}
+      }
+    }
+  }
+  for (int x = 0; x < image.w; ++x) {
+    pix(new_data,x,0) = pix(new_data,x,1) = 0;
+    pix(new_data,x,image.h-2) = pix(new_data,x,image.h-1) = 0;
+  }
+  
+  for (int y = 0; y < image.h; ++y) {
+    pix(new_data,0,y) = pix(new_data,1,y) = 0;
+    pix(new_data,image.w-2,y) = pix(new_data,image.w-1,y) = 0;
+  }
+   
+  
+  // analyze phase, mark first contrast change coordinates
+  int *top, *bottom, *left, *right;
+  top = new int[image.w];
+  bottom = new int[image.w];
+  left = new int[image.h];
+  right = new int[image.h];
+
+  // area defines
+  const int top_border = std::min (32, image.h/5);
+  const int left_border = image.w/2;
+  const int right_border = image.w/2;
+  const int bottom_border = image.h/4;
+
+  // top/bottom
+  for (int x = 1; x < image.w-1; ++x) {
+    top[x] = 0;
+    //cout << x << ":";
+
+    for (int y = 0; y < top_border; ++y)
+      {
+        if (pix(new_data,x,y) > 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) > 0)
+	  {
+             //cout << " top: " << y;
+             top[x] = y;
+             break;
+          }
+      }
+    bottom[x] = 0;
+    for (int y = image.h-1; y >= bottom_border; --y)
+      {
+        if (pix(new_data,x,y) > 0 && (pix(new_data,x-1,y) || pix(new_data,x+1,y) ) > 0)
+	  {
+             //cout << " bottom: " << y;
+             bottom[x] = y;
+             break;
+          }
+      }
+    //cout << endl;
+  }
+
+
+  // sides
+  for (int y = 1; y < image.h-1; ++y) {
+    left[y] = 0;
+    //cout << y << ":";
+    for (int x = 0; x < left_border; ++x)
+      {
+        if (pix(new_data,x,y) > 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) > 0)
+	  {
+             //cout << " left: " << x;
+             left[y] = x;
+             break;
+          }
+      }
+    right[y] = 0;
+    for (int x = image.w-1; x >= right_border; --x)
+      {
+        if (pix(new_data,x,y) > 0 && (pix(new_data,x,y-1) || pix(new_data,x,y+1) ) > 0)
+	  {
+             //cout << " right: " << x;
+             right[y] = x;
+             break;
+          }
+      }
+    //cout << endl;
+  }
+
+  image.setRawData (new_data);
+  data = image.getRawData();
+       
+
+  // visualize
+  
+#define mark(x,y) {data[ image.Stride()* (y) + (x) ] = 0xff;}
+
+  int* hori_histogramm = new int [image.w];
+  int* vert_histogramm = new int [image.h];
+  
+  for (int x = 1; x < image.w-1; ++x) {
+	if (top[x]) {
+	  vert_histogramm[top[x]]++;
+          mark (x, top[x]);
+	}
+	if (bottom[x]) {
+	  vert_histogramm[bottom[x]]++;
+          mark (x, bottom[x]);
+	}
+  }
+
+  for (int y = 1; y < image.h-1; ++y) {
+	if (left[y]) {
+	  hori_histogramm[left[y]]++;
+          mark (left[y], y);
+	}
+	if (right[y]) {
+	  hori_histogramm[right[y]]++;
+          mark (right[y], y);
+	}
+  }
+  
+#define mark2(x,y,v) {data[ image.Stride()* (y) + (x) ] = v; }
+
+#if 0  
+  for (int x = 2; x < image.w-2; ++x) {
+    mark2(x,image.h/2-2,0xff);
+    mark2(x,image.h/2-1,hori_histogramm[x]);
+    mark2(x,image.h/2,  hori_histogramm[x]);
+    mark2(x,image.h/2+1,hori_histogramm[x]);
+    mark2(x,image.h/2+2,0xff);
+  }
+  
+  for (int y = 2; y < image.h-2; ++y) {
+    mark2(image.w/2-2,y,0xff);
+    mark2(image.w/2-1,y,vert_histogramm[y]);
+    mark2(image.w/2,  y,vert_histogramm[y]);
+    mark2(image.w/2+1,y,vert_histogramm[y]);
+    mark2(image.w/2+2,y,0xff);
+  }
+#endif
+  
+  // find first histogramm spikes
+  const int thr2 = 48; // min pixel count we want to trace the line
+  
+  int spike;
+  std::vector<std::pair<int,int> > points;
+  std::map<int,int> angles;
+  
+  double left_angle, right_angle, bottom_angle;
+  
+  const int mindist = 32;
+  
+  points.clear();
+  spike = 0;
+  for (int x = 1; x < left_border; ++x) {
+    int z = hori_histogramm[x] +
+      hori_histogramm[x+1] +
+      hori_histogramm[x+2] +
+      hori_histogramm[x+3];
+    
+    if (spike == 0 && z > thr2)
+      spike = x;
+    
+    if (spike != 0 && z < thr2) {
+      cout << "left spike: " << spike << " - " << x << endl;
+      
+      // collect all points in the given area
+      for (int y = 1; y < image.h-1; ++y) {
+	for (int xx = spike; xx < x; ++xx) {
+	  if (pix(new_data,xx,y) == 0xff) {
+	    points.push_back (std::pair<int,int> (xx,y));
+	    // y += mindist; // skip some points to reduce cpu load
+	    break;
+	  }
+	}
+      }
+      break;
+    }
+  }
+  
+  // ---
+   cout << "size: " << points.size() << endl;
+  angles.clear();
+  for (std::vector<std::pair<int,int> >::iterator it = points.begin(); it != points.end(); ++it)
+    {
+      std::vector<std::pair<int,int> >::iterator it2 = it;
+      for (++it2; it2 != points.end(); ++it2)
+	{
+	  std::pair<int,int> p1, p2;
+	  if (it->second < it2->second) {
+	    p1 = *it; p2 = *it2;
+	  }
+	  else {
+	    p1 = *it2; p2 = *it;
+	  }
+	  
+	  double dx = p2.first - p1.first;
+	  double dy = p2.second - p1.second;
+	  if (dy > mindist) {
+	    int angle = (int)(-atan (dx/dy) / M_PI * 180 * 100);
+	    angles[angle] ++;
+	  }
+	}
+    }
+  
+  // most accuring angle:
+  {
+    std::map<int,int>::iterator high = angles.begin();
+    for (std::map<int,int>::iterator it = angles.begin();
+	 it != angles.end(); ++it) {
+      //cout << "1 " << it->second << " " << it->first << endl;
+      if (it->first != 0 && it->second > high->second) {
+	high = it;
+      }
+    }
+    
+    left_angle = (double)high->first / 100;
+    cout << "Left angle: " << left_angle << endl;
+  }
+
+  points.clear();
+  spike = 0;
+  for (int x = image.w-1; x > right_border; --x) {
+    int z = hori_histogramm[x] +
+      hori_histogramm[x-1] +
+      hori_histogramm[x-2] +
+      hori_histogramm[x-3];
+    
+    if (spike == 0 && z > thr2)
+      spike = x;
+    
+    if (spike != 0 && z < thr2) {
+      cout << "right spike: " << spike << " - " << x << endl;
+      
+      // collect all points in the given area
+      for (int y = 1; y < image.h-1; ++y) {
+	for (int xx = spike; xx > x; --xx) {
+	  if (pix(new_data,xx,y) == 0xff) {
+	    points.push_back (std::pair<int,int> (xx,y));
+	    // y += mindist; // skip some points to reduce cpu load
+	    break;
+	  }
+	}
+      }
+      break;
+    }
+  }
+
+  cout << "size: " << points.size() << endl;
+  angles.clear();
+  for (std::vector<std::pair<int,int> >::iterator it = points.begin(); it != points.end(); ++it)
+    {
+      std::vector<std::pair<int,int> >::iterator it2 = it;
+      for (++it2; it2 != points.end(); ++it2)
+	{
+	  std::pair<int,int> p1, p2;
+	  if (it->second < it2->second) {
+	    p1 = *it; p2 = *it2;
+	  }
+	  else {
+	    p1 = *it2; p2 = *it;
+	  }
+	  
+	  double dx = p2.first - p1.first;
+	  double dy = p2.second - p1.second;
+	  if (dy > mindist) {
+	    int angle = (int)(-atan (dx/dy) / M_PI * 180 * 100);
+	    angles[angle] ++;
+	  }
+	}
+    }
+  
+  // most accuring angle:
+  {
+    std::map<int,int>::iterator high = angles.begin();
+    for (std::map<int,int>::iterator it = angles.begin();
+	 it != angles.end(); ++it) {
+      //cout << "2 " << it->second << " " << it->first << endl;
+      if (it->first != 0 && it->second > high->second) {
+	high = it;
+      }
+    }
+    right_angle = (double)high->first / 100;
+    cout << "Right angle: " << right_angle << endl;
+  }
+  
+  // ----------
+
+  points.clear();
+  spike = 0;
+  for (int y = image.h-1; y > bottom_border; --y) {
+    int z = vert_histogramm[y] +
+      vert_histogramm[y-1] +
+      vert_histogramm[y-2] +
+      vert_histogramm[y-3];
+    
+    if (spike == 0 && z > thr2)
+      spike = y;
+    
+    if (spike != 0 && z < thr2) {
+      cout << "rbottom spike: " << spike << " - " << y << endl;
+      
+      // collect all points in the given area
+      for (int x = 1; x < image.w-1; ++x) {
+	for (int yy = spike; yy > y; --yy) {
+	  if (pix(new_data,x,yy) == 0xff) {
+	    points.push_back (std::pair<int,int> (x,yy));
+	    // y += mindist; // skip some points to reduce cpu load
+	    break;
+	  }
+	}
+      }
+      break;
+    }
+  }
+  
+  cout << "size: " << points.size() << endl;
+  angles.clear();
+  for (std::vector<std::pair<int,int> >::iterator it = points.begin(); it != points.end(); ++it)
+    {
+      std::vector<std::pair<int,int> >::iterator it2 = it;
+      for (++it2; it2 != points.end(); ++it2)
+	{
+	  std::pair<int,int> p1, p2;
+	  if (it->first < it2->first) {
+	    p1 = *it; p2 = *it2;
+	  }
+	  else {
+	    p1 = *it2; p2 = *it;
+	  }
+	  
+	  double dx = p2.first - p1.first;
+	  double dy = p2.second - p1.second;
+	  
+	  if (dx > mindist) {
+	    int angle = (int)(atan (dy/dx) / M_PI * 180 * 100);
+	    angles[angle] ++;
+	  }
+	}
+    }
+  
+  // most accuring angle:
+  {
+    std::map<int,int>::iterator high = angles.begin();
+    for (std::map<int,int>::iterator it = angles.begin();
+	 it != angles.end(); ++it) {
+      //cout << "3 " << it->second << " " << it->first << endl;
+      if (it->first !=0 && it->second > high->second) {
+	high = it;
+      }
+    }
+    
+    bottom_angle = (double)high->first / 100;
+    cout << "Bottom angle: " << bottom_angle << endl;
+  }
+  
+  delete[] top;
+  delete[] bottom;
+  delete[] left;
+  delete[] right;
+ 
+  double angle = .0;
+  int n = 0;
+  
+  if (left_angle != .0) {
+    angle -= left_angle; ++n;
+  }
+
+  if (right_angle != .0) {
+    angle -= right_angle; ++n;
+  }
+  
+  if (bottom_angle != .0) {
+    angle -= bottom_angle; ++n;
+  }
+  angle /= n;
+  
+  cout << "rotating: " << angle << endl;
+  rotate (image, angle, background_color);
+  
+  return true;
+}
+
+bool convert_deskew2 (const Argument<bool>& arg)
+{
+  using std::cout;
+  using std::endl;
+  
+  // find identical vertical pixels
+  Image::iterator it1 = image.begin();
+  Image::iterator it2 = image.begin();
+  Image::iterator it3 = image.begin();
+  Image::iterator it4 = image.begin();
+  Image::iterator it5 = image.begin();
+  it2 = it2.at (0, 1);
+  it3 = it3.at (0, 2);
+  it4 = it4.at (0, 3);
+  it5 = it5.at (0, 4);
+  
+  for (int y = 0; y < image.h-4; ++y) {
+    for (int x = 0; x < image.w; ++x)
+      {
+#define get(x,r,g,b) {				\
+	  uint16_t _r, _g, _b;			\
+	  *x;					\
+	  x.getRGB (&_r, &_g, &_b);		\
+	  r = _r; g = _g; b = _b;		\
+	}
+	
+	int r1, g1, b1;
+	get (it1,r1,g1,b1);
+	
+	int r2, g2, b2;
+	get (it2,r2,g2,b2);
+	
+	int r3, g3, b3;
+	get (it3,r3,g3,b3);
+
+	int r4, g4, b4;
+	get (it4,r4,g4,b4);
+
+	int r5, g5, b5;
+	get (it5,r5,g5,b5);
+	
+	const int n = 2;
+	
+	if (
+	    r2 >= r1-n && r2 <= r1+n &&
+	    g2 >= g1-n && g2 <= g1+n &&
+	    b2 >= b1-n && b2 <= b1+n &&
+	    
+	    r2 >= r3-n && r2 <= r3+n &&
+	    g2 >= g3-n && g2 <= g3+n &&
+	    b2 >= b3-n && b2 <= b3+n &&
+
+	    r2 >= r4-n && r2 <= r4+n &&
+	    g2 >= g4-n && g2 <= g4+n &&
+	    b2 >= b4-n && b2 <= b4+n &&
+
+	    r2 >= r5-n && r2 <= r5+n &&
+	    g2 >= g5-n && g2 <= g5+n &&
+	    b2 >= b5-n && b2 <= b5+n &&
+	    
+	    true
+	    )
+	  it2.setRGB ((uint16_t)255, (uint16_t)255, (uint16_t)0), it2.set (it2);
+	
+	++it1; ++it2; ++it3; ++it4; ++it5;
+      }
+  }
   return true;
 }
 
@@ -604,12 +1089,18 @@ int main (int argc, char* argv[])
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
-  Argument<int> arg_deskew ("", "deskew",
+  Argument<bool> arg_deskew ("", "deskew",
 			     "deskew digitalized paper",
-			     0, 1, true, true);
+			     0, 0, true, true);
   arg_deskew.Bind (convert_deskew);
   arglist.Add (&arg_deskew);
 
+  Argument<bool> arg_deskew2 ("", "deskew2",
+			     "deskew digitalized paper try2",
+			     0, 0, true, true);
+  arg_deskew2.Bind (convert_deskew2);
+  arglist.Add (&arg_deskew2);
+  
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
 					0, 1, true, true);
@@ -653,6 +1144,7 @@ int main (int argc, char* argv[])
   arg_line.Bind (convert_line);
   arglist.Add (&arg_line);
 
+ 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
     return 1;

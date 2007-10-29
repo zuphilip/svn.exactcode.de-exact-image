@@ -294,10 +294,10 @@ void colorspace_grayX_to_rgb8 (Image& image)
 void colorspace_gray1_to_gray2 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 2;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -334,10 +334,10 @@ void colorspace_gray1_to_gray2 (Image& image)
 void colorspace_gray1_to_gray4 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 4;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -376,10 +376,10 @@ void colorspace_gray1_to_gray4 (Image& image)
 void colorspace_gray1_to_gray8 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 8;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
  
   for (int row = 0; row < image.h; ++row)
@@ -714,21 +714,8 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
 
 void invert (Image& image)
 {
-  if (image.spp == 1 && image.bps == 1) {
-      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-        *it = *it ^ 0xFF;
-      image.setRawData();
-      return;
-  }
-  if (image.bps == 8) {
-      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-        *it = 0xFF - *it;
-      image.setRawData();
-      return;
-  }
-  
   double r, g, b;
-  
+
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
     {

@@ -35,7 +35,7 @@ void flipX (Image& image)
     if (image.getCodec()->flipX(image))
       return;
   
-  const int stride = image.stride();
+  const int stride = image.Stride();
   uint8_t* data = image.getRawData();
   switch (image.spp * image.bps)
     {
@@ -133,7 +133,7 @@ void flipY (Image& image)
     if (image.getCodec()->flipY(image))
       return;
   
-  int bytes = image.stride();
+  int bytes = image.Stride();
   uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
     {
@@ -326,7 +326,7 @@ void rotate (Image& image, double angle, Image::iterator background)
   
   Image orig_image = image;
   
-  image.setRawData ((uint8_t*) malloc (image.stride()*image.h));
+  image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   
@@ -370,7 +370,7 @@ void rotate (Image& image, double angle, Image::iterator background)
   image.setRawData ();
 }
 
-Image* copy_crop_rotate (Image& image, int x_start, int y_start,
+Image* copy_crop_rotate (Image& image, unsigned int x_start, unsigned int y_start,
 			 unsigned int w, unsigned int h,
 			 double angle)
 {
@@ -392,13 +392,13 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   const double cached_sin = sin (angle);
   const double cached_cos = cos (angle);
 
-  Image::iterator background = image.begin(); background.setL (0);
+  Image::iterator background = image.begin();  background.setL (0);
   
-  for (int y = 0; y < h; ++y)
-      for (int x = 0; x < w; ++x)
+  for(int y = 0; y < h; ++y)
+      for(int x = 0; x < w; ++x)
 	{
-	  const double ox = ((double) x * cached_cos + y * cached_sin) + x_start;
-	  const double oy = ((double)-x * cached_sin + y * cached_cos) + y_start;
+	  const double ox = (  x * cached_cos + y * cached_sin) + x_start;
+	  const double oy = (- x * cached_sin + y * cached_cos) + y_start;
 	  
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h) {
