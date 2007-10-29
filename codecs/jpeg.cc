@@ -507,7 +507,7 @@ bool JPEGCodec::crop (Image& image, unsigned int x, unsigned int y, unsigned int
   
   // TODO: account for residual cropping
   
-  return false;
+  return true;
 }
 
 bool JPEGCodec::toGray (Image& image)
