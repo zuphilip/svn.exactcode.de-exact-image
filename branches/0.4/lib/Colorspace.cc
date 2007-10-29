@@ -714,8 +714,21 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
 
 void invert (Image& image)
 {
+  if (image.spp == 1 && image.bps == 1) {
+      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
+        *it = *it ^ 0xFF;
+      image.setRawData();
+      return;
+  }
+  if (image.bps == 8) {
+      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
+        *it = 0xFF - *it;
+      image.setRawData();
+      return;
+  }
+  
   double r, g, b;
-
+  
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
     {

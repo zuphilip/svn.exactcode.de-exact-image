@@ -27,7 +27,7 @@ public:
       data[x]=source.data[x+ix]+iy;
   }
   
-  ~DataMatrix()
+  virtual ~DataMatrix()
   {
     if (master)
       for (unsigned int x=0; x<w; x++)
