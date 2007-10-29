@@ -219,6 +219,11 @@ bool ImageCodec::rotate (Image& image, double ayngle)
   return false;
 }
 
+bool ImageCodec::crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+  return false;
+}
+
 bool ImageCodec::toGray (Image& image)
 {
   return false;
