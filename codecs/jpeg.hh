@@ -32,6 +32,7 @@ public:
   virtual bool flipX (Image& image);
   virtual bool flipY (Image& image);
   virtual bool rotate (Image& image, double angle);
+  virtual bool crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
   virtual bool toGray (Image& image);
   virtual bool scale (Image& image, double xscale, double yscale);
   
@@ -42,7 +43,8 @@ private:
   // internals and helper
   bool readMeta (std::istream* stream, Image& image);
   bool doTransform (JXFORM_CODE code, Image& image,
-		    std::ostream* stream = 0, bool to_gray = false);
+		    std::ostream* stream = 0, bool to_gray = false, bool crop = false,
+		    unsigned int x = 0, unsigned int y = 0, unsigned int w = 0, unsigned int h = 0);
   
   std::stringstream private_copy;
 };
