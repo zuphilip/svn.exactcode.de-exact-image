@@ -372,7 +372,7 @@ void rotate (Image& image, double angle, Image::iterator background)
 
 Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
-			 double angle)
+			 double angle, Image::iterator background)
 {
   angle = fmod (angle, 360);
   if (angle < 0)
@@ -392,8 +392,6 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   const double cached_sin = sin (angle);
   const double cached_cos = cos (angle);
 
-  Image::iterator background = image.begin(); background.setL (0);
-  
   for (int y = 0; y < h; ++y)
       for (int x = 0; x < w; ++x)
 	{
