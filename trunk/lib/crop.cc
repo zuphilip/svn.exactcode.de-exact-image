@@ -2,6 +2,8 @@
 #include <algorithm>
 
 #include "Image.hh"
+#include "Codecs.hh"
+
 #include "Colorspace.hh"
 
 #include "crop.hh"
@@ -19,7 +21,10 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   if (x == 0 && y == 0 && w == image.w && h == image.h)
     return;
   
-  // TODO: Call thru codec, e.g. optimized for JPEG
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->crop(image, x, y, w, h))
+      return;
+  
   /*
     std::cerr << "after limiting: " << x << " " << y
     << " " << w << " " << h << std::endl;
