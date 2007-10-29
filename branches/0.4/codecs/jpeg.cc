@@ -488,15 +488,26 @@ bool JPEGCodec::flipY (Image& image)
 
 bool JPEGCodec::rotate (Image& image, double angle)
 {
-  if (angle == 90) 
-    { doTransform (JXFORM_ROT_90, image); return true; }
-  if (angle == 180)
-    { doTransform (JXFORM_ROT_180, image); return true; }
-  if (angle == 270)
-    { doTransform (JXFORM_ROT_270, image); return true; }
-
-  // no acceleration, fall thru
+  // so roate if the first fraction is zero
+  switch ((int)(angle * 10)) {
+  case 900:  doTransform (JXFORM_ROT_90, image); return true;
+  case 1800: doTransform (JXFORM_ROT_180, image); return true;
+  case 2700: doTransform (JXFORM_ROT_270, image); return true;
+  default:
+    ; // no acceleration, fall thru
+  }
+  
   return false;
+}
+
+bool JPEGCodec::crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+{
+  doTransform (JXFORM_NONE, image, 0 /* stream */, false /* to gray */, true /* crop */,
+	       x, y, w, h);
+  
+  // TODO: account for residual cropping
+  
+  return true;
 }
 
 bool JPEGCodec::toGray (Image& image)
@@ -592,10 +603,12 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   /* ratio is defined by X_density/Y_density even when density_unit=0. */
   switch (cinfo->density_unit)           /* JFIF code for pixel size units */
     {
-    case 1: image.xres = cinfo->X_density;           /* Horizontal pixel density */
-      image.yres = cinfo->Y_density;          /* Vertical pixel density */
+    case 1:
+      image.xres = cinfo->X_density;
+      image.yres = cinfo->Y_density;
       break;
-    case 2: image.xres = cinfo->X_density * 254 / 100;
+    case 2:
+      image.xres = cinfo->X_density * 254 / 100;
       image.yres = cinfo->Y_density * 254 / 100;
       break;
     default:
@@ -613,7 +626,8 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
 }
 
 bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
-			     std::ostream* s, bool to_gray)
+			     std::ostream* s, bool to_gray, bool crop,
+			     unsigned int x, unsigned int y, unsigned int w, unsigned int h)
 {
   jpeg_transform_info transformoption; /* image transformation options */
   
@@ -646,7 +660,20 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   
   transformoption.transform = code;
   transformoption.trim = TRUE;
+  transformoption.perfect = FALSE;
   transformoption.force_grayscale = to_gray ? TRUE : FALSE;
+  
+  transformoption.crop = crop ? TRUE : FALSE;
+  if (crop) {
+    transformoption.crop_xoffset = x;
+    transformoption.crop_xoffset_set = JCROP_POS;
+    transformoption.crop_yoffset = y;
+    transformoption.crop_yoffset_set = JCROP_POS;
+    transformoption.crop_width = w;
+    transformoption.crop_width_set = JCROP_POS;
+    transformoption.crop_height = h;
+    transformoption.crop_height_set = JCROP_POS;
+  }
   
   /* Any space needed by a transform option must be requested before
    * jpeg_read_coefficients so that memory allocation will be done right.
@@ -662,13 +689,15 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   /* Adjust destination parameters if required by transform options;
    * also find out which set of coefficient arrays will hold the output.
    */
-  if (code == JXFORM_NONE && !to_gray)
-    dst_coef_arrays = src_coef_arrays;
-  else
+  if (transformoption.transform != JXFORM_NONE ||
+      transformoption.force_grayscale ||
+      transformoption.crop)
     dst_coef_arrays = jtransform_adjust_parameters(&srcinfo, &dstinfo,
 						   src_coef_arrays,
 						   &transformoption);
-
+  else
+    dst_coef_arrays = src_coef_arrays;
+  
   /* Specify data destination for compression */
   cpp_stream_dest (&dstinfo, s ? s : &stream);
   
