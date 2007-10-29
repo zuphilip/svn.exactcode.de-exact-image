@@ -462,11 +462,15 @@ bool deskew (Image& image, const int raster_rows)
       std::cerr << "angle: " << angle << std::endl;
 
       if (!debug) {
-      Image* cropped_image = copy_crop_rotate (image,
-					       (unsigned int) p1.first, (unsigned int) p1.second,
-					       (unsigned int) line_width.length(), (unsigned int) line_height.length(),
-					       -angle);
-      image.copyTransferOwnership (*cropped_image);
+	// TODO: fill with nearest in-document color, or so ...
+	Image::iterator background = image.begin(); background.setL (255);
+	
+	Image* cropped_image =
+	  copy_crop_rotate (image,
+			    (unsigned int) p1.first, (unsigned int) p1.second,
+			    (unsigned int) line_width.length(), (unsigned int) line_height.length(),
+			    -angle, background);
+	image.copyTransferOwnership (*cropped_image);
       image.copyMeta (*cropped_image);
       }
     }
