@@ -48,6 +48,9 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 
 #CXXFLAGS += $(call cc-option,-mfpmath=sse,)
 
+# we have some unimplemented colorspaces in the Image::iterator :-(
+CXXFLAGS += $(call cc-option,-Wno-switch -Wno-switch-enum,)
+
 # enable built-in version in case a system version is not present
 ifeq "$(WITHLIBAGG)" "0"
 include agg-2.4/Makefile

@@ -339,13 +339,14 @@ int Viewer::Run (bool opengl)
 
   bool quit = false;
   Utility::Timer timer;
+  int dnd_x = 0, dnd_y = 0;
+
   while (image_loaded && !quit)
     {
       // process X11 events ...
       // TODO: move into X11 Helper ...
       
       XEvent ev;
-      int dnd_x, dnd_y;
       while (XCheckMaskEvent (dpy,
 			      ExposureMask |
 			      StructureNotifyMask |

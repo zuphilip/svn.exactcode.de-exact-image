@@ -370,7 +370,7 @@ void rotate (Image& image, double angle, Image::iterator background)
   image.setRawData ();
 }
 
-Image* copy_crop_rotate (Image& image, unsigned int x_start, unsigned int y_start,
+Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
 			 double angle)
 {
@@ -392,13 +392,13 @@ Image* copy_crop_rotate (Image& image, unsigned int x_start, unsigned int y_star
   const double cached_sin = sin (angle);
   const double cached_cos = cos (angle);
 
-  Image::iterator background = image.begin();  background.setL (0);
+  Image::iterator background = image.begin(); background.setL (0);
   
-  for(int y = 0; y < h; ++y)
-      for(int x = 0; x < w; ++x)
+  for (int y = 0; y < h; ++y)
+      for (int x = 0; x < w; ++x)
 	{
-	  const double ox = (  x * cached_cos + y * cached_sin) + x_start;
-	  const double oy = (- x * cached_sin + y * cached_cos) + y_start;
+	  const double ox = ((double) x * cached_cos + y * cached_sin) + x_start;
+	  const double oy = ((double)-x * cached_sin + y * cached_cos) + y_start;
 	  
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h) {
