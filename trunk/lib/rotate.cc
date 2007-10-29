@@ -287,7 +287,7 @@ void rot90 (Image& image, int angle)
 }
 
 
-void rotate (Image& image, double angle, Image::iterator background)
+void rotate (Image& image, double angle, const Image::iterator& background)
 {
   angle = fmod (angle, 360);
   if (angle < 0)
@@ -372,7 +372,7 @@ void rotate (Image& image, double angle, Image::iterator background)
 
 Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
-			 double angle, Image::iterator background)
+			 double angle, const Image::iterator& background)
 {
   angle = fmod (angle, 360);
   if (angle < 0)
