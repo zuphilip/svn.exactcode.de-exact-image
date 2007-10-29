@@ -381,7 +381,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       break;
     }
   
-  stride = image.stride ();
+  stride = image.Stride ();
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
   
@@ -403,7 +403,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   case BMPC_BITFIELDS:
     // we unpack bitfields to plain RGB
     image.bps = 8;
-    stride = image.stride ();
+    stride = image.Stride ();
     
   case BMPC_RGB:
     {
@@ -638,7 +638,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
   
-  int stride = image.stride ();
+  int stride = image.Stride ();
   
   memset (&file_hdr, 0, sizeof (file_hdr));
   memset (&info_hdr, 0, sizeof (info_hdr));
@@ -656,7 +656,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   info_hdr.iPlanes = 1;
   info_hdr.iBitCount = image.spp * image.bps;
   info_hdr.iCompression = BMPC_RGB;
-  info_hdr.iSizeImage  = image.stride()*image.h; // TODO: compressed size
+  info_hdr.iSizeImage  = image.Stride()*image.h; // TODO: compressed size
   info_hdr.iXPelsPerMeter = (int32_t) (image.xres * 100 / 2.54);
   info_hdr.iYPelsPerMeter = (int32_t) (image.yres * 100 / 2.54);
   info_hdr.iClrUsed = 0; // TODO

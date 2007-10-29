@@ -35,7 +35,7 @@ void flipX (Image& image)
     if (image.getCodec()->flipX(image))
       return;
   
-  const int stride = image.stride();
+  const int stride = image.Stride();
   uint8_t* data = image.getRawData();
   switch (image.spp * image.bps)
     {
@@ -133,7 +133,7 @@ void flipY (Image& image)
     if (image.getCodec()->flipY(image))
       return;
   
-  int bytes = image.stride();
+  int bytes = image.Stride();
   uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
     {
@@ -326,7 +326,7 @@ void rotate (Image& image, double angle, Image::iterator background)
   
   Image orig_image = image;
   
-  image.setRawData ((uint8_t*) malloc (image.stride()*image.h));
+  image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   

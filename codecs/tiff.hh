@@ -15,8 +15,4 @@ public:
   virtual bool readImage (std::istream* stream, Image& image);
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress);
-  
-//private:
-  
-  static bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
 };

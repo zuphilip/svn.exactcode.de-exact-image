@@ -72,7 +72,7 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
       const int bps = image.bps;
       const int spb = 8 / bps; // Samples Per Byte
       const int mask = (1 << bps) - 1;
-      const int stride = image.stride ();
+      const int stride = image.Stride ();
       const int bshift = 8 - bps;
       const int bscale = 255 / mask;
       
@@ -120,7 +120,7 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
   /* handcrafted due popular request */
   if (new_image.spp == 1 && new_image.bps == 8)
     {
-      const int stride = image.stride ();
+      const int stride = image.Stride ();
       uint8_t* dst = new_image.getRawData();
       
       for (int y = 0; y < new_image.h; ++y) {
@@ -149,7 +149,7 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
    /* handcrafted due popular request */
   if (new_image.spp == 3 && new_image.bps == 8)
     {
-      const int stride = image.stride ();
+      const int stride = image.Stride ();
       uint8_t* dst = new_image.getRawData();
       
       for (int y = 0; y < new_image.h; ++y) {

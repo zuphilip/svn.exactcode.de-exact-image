@@ -294,10 +294,10 @@ void colorspace_grayX_to_rgb8 (Image& image)
 void colorspace_gray1_to_gray2 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 2;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -334,10 +334,10 @@ void colorspace_gray1_to_gray2 (Image& image)
 void colorspace_gray1_to_gray4 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 4;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -376,10 +376,10 @@ void colorspace_gray1_to_gray4 (Image& image)
 void colorspace_gray1_to_gray8 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 8;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
  
   for (int row = 0; row < image.h; ++row)

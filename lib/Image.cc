@@ -14,7 +14,6 @@
 
 #include <iostream>
 
-#define DEPRECATED
 #include "Image.hh"
 #include "Codecs.hh"
 
@@ -49,14 +48,14 @@ void Image::copyMeta (const Image& other)
   yres = other.yres;
 }
 
-Image& Image::operator= (const Image& other)
+Image& Image::operator= (Image& other)
 {
   copyMeta (other);
   
   uint8_t* d = other.getRawData();
   if (d) {
-    resize (w, h);
-    memcpy (data, d, stride() * h);
+    New (w, h);
+    memcpy (data, d, Stride() * h);
   }
   else {
     setRawData();
@@ -87,7 +86,7 @@ uint8_t* Image::getRawData () const {
 
 uint8_t* Image::getRawDataEnd () const {
   // we call getRawData as it might have to query the codec to actually load it
-  return getRawData() + h * stride();
+  return getRawData() + h * Stride();
 }
 
 void Image::setRawData () {
@@ -115,12 +114,12 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h) {
+void Image::New (int _w, int _h) {
   w = _w;
   h = _h;
   
   // reuse:
-  setRawDataWithoutDelete ((uint8_t*) realloc (data, stride() * h));
+  setRawDataWithoutDelete ((uint8_t*) realloc (data, Stride() * h));
 }
 
 void Image::setDecoderID (const std::string& id) {

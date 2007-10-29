@@ -85,7 +85,7 @@ bool GIFCodec::readImage (std::istream* stream, Image& image)
 	for (int i = 0; i < 4; ++i)
 	  for (int j = Row + InterlacedOffset[i]; j < Row + Height;
 	       j += InterlacedJumps[i]) {
-	    if (DGifGetLine(GifFile, &image.getRawData()[j*image.stride()+Col],
+	    if (DGifGetLine(GifFile, &image.getRawData()[j*image.Stride()+Col],
 			    Width) == GIF_ERROR) {
 	      PrintGifError();
 	      return false;
@@ -94,7 +94,7 @@ bool GIFCodec::readImage (std::istream* stream, Image& image)
       }
       else {
 	for (int i = 0; i < Height; ++i) {
-	  if (DGifGetLine(GifFile, &image.getRawData()[Row++ * image.stride()+Col],
+	  if (DGifGetLine(GifFile, &image.getRawData()[Row++ * image.Stride()+Col],
 			  Width) == GIF_ERROR) {
 	    PrintGifError();
 	    return false;

@@ -23,23 +23,11 @@ class drawStyle
 {
 public:
   drawStyle ()
-    : width (1), dash_length (0), caps (BUTT), join (DEFAULT) {
+    : width (1.) {
   }
   
   double width;
-  double dash_length;
-  
-  enum {
-    BUTT,
-    SQUARE,
-    ROUND
-  } caps;
-
-  enum {
-    DEFAULT,
-    /* ACCURATE, MITER; ROUND, BEVEL, ... */
-  } join;
-  
+  // TODO: intersections, pattern caps, etc.
 };
 
 void drawLine(Image& img, double x, double y, double x2, double y2,
@@ -50,32 +38,5 @@ void drawRectange(Image& img, double x, double y, double x2, double y2,
 
 void drawText(Image& image, double x, double y, char* text, double height,
 	      const Image::iterator& color);
-
-// new, final (?) API
-
-#if 0
-void beginPath(context);
-void moveTo (context,x,y);
-void addLineTo (context,x,y);
-void addCurveTo (context,c1x, c1y, c2x, c2y, x, y);
-void addQuadCurveTo ();
-void closePath (context);
-void setLineWidth (context, width);
-void drawPath (context, path-styling?);
-
-// joins
-// line caps
-// line dashing
-// fill
-// clipping
-// anti-aliasing
-
-// utilties
-// rect
-// arc
-// roundedRect
-
-
-#endif
 
 #endif
