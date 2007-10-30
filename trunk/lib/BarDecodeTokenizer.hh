@@ -6,6 +6,8 @@
 
 #include <math.h>
 
+#include <algorithm>
+
 #include "Image.hh"
 #include "BarDecodePixelIterator.hh"
 
@@ -33,11 +35,32 @@ namespace BarDecode
         token_t next()
         {
             assert(! end());
+
+#define DYNAMIC_THRESHOLD
+#ifdef DYNAMIC_THRESHOLD
+            long sum = 0;
+#endif
+
             double count = 0;
             bool color = *it; // TODO simple alternation would safe the call of operator*
             do { 
+
+#ifdef DYNAMIC_THRESHOLD
+                sum += it.get_lum();
+#endif
+
+                ++count;
                 ++it; 
-                ++count; 
+
+#ifdef DYNAMIC_THRESHOLD
+                int mean = (double) sum / count;
+                if ( ! color && it.get_lum() < mean - 30) {
+                    it.set_threshold(std::max(it.get_threshold(),std::min(mean - 30,220)));
+                } else if ( color && it.get_lum() > mean + 30) {
+                    it.set_threshold(std::min(it.get_threshold(),std::max(mean + 30,80)));
+                }
+#endif
+
             } while ( ! end() && color == *it );
 
             count -= extra;
