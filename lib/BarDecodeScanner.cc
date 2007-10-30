@@ -476,9 +476,10 @@ namespace BarDecode
     void BarcodeIterator::next()
     {
         assert( ! end());
-        token_t t = tokenizer.next();
 
         while ( ! end() ) {
+
+            token_t t = tokenizer.next();
 
             // goto next white space of psize >= min_quiet_psize
             while (t.first || t.second < min_quiet_psize) { // while black ...
@@ -487,9 +488,37 @@ namespace BarDecode
             }
             assert(! t.first); // assert white
 
-            psize_t quiet_psize = t.second;
-            //if ( end() ) return;
-            //t = tokenizer.next();
+            /* ***************************** */
+            // preliminary checks
+
+            // FIXME move some of the computations into tokenizer by stopping the tokenizer
+            // on linebreaks?
+            
+            // FIXME handle linebreaks in scanners: fail on linebreak;
+
+
+            // consider line breaks; (alternatively we can stop the tokenizer at each linebreak!)
+            psize_t quiet_psize = t.second < tokenizer.get_x() ? t.second : tokenizer.get_x();
+
+            // each (non empty) Barcode has at least 24 modules (including both quiet zones)!
+            if (tokenizer.get_x() + 17 > tokenizer.get_img()->w ) continue;
+
+            // check quiet_zone against minimal requirement from all code types
+            Tokenizer tmp_tok = tokenizer;
+            if ( end() ) return;
+            token_t lookahead = tmp_tok.next();
+            if (lookahead.second * 3 > quiet_psize) {
+                tokenizer = tmp_tok;
+                continue;
+            }
+
+            // line break at black bar:
+            if (tmp_tok.get_x() <= lookahead.second) continue;
+
+            // not enough space left on line for minimal barcode width:
+            if (lookahead.second/3.0 * 14 + tokenizer.get_x() >= tokenizer.get_img()->w) continue;
+
+            /* ***************************** */
 
             Tokenizer backup_tokenizer = tokenizer;
             scanner_result_t result;
@@ -529,7 +558,6 @@ namespace BarDecode
             tokenizer = backup_tokenizer;
 
             if ( end() ) return;
-            t = tokenizer.next();
         }
     }    
 
