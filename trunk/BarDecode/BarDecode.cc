@@ -7,7 +7,7 @@
 #include "ArgumentList.hh"
 #include "Codecs.hh"
 
-#include "BarDecodeModulizer.hh"
+#include "BarDecodeTokenizer.hh"
 #include "BarDecodeScanner.hh"
 
 using namespace Utility;
