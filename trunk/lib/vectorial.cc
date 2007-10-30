@@ -24,6 +24,8 @@
 #include "Image.hh"
 
 #include "agg_conv_dash.h"
+#include "agg_conv_curve.h"
+#include "agg_conv_smooth_poly1.h"
 #include "agg_path_storage.h"
 
 // ---
@@ -46,8 +48,15 @@ void Path::addLineTo (double x, double y)
   path.line_to (x, y);
 }
 
-void Path::addCurveTo (double, double, double, double, double, double)
+void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
+		       double x, double y)
 {
+  path.curve4 (c1x, c1y, c2x, c2y, x, y);
+  
+  // agg::conv_smooth_poly1<agg::path_storage> smooth (path);
+  // // smooth.smooth_value (1.0);
+  // agg::conv_curve<agg::conv_smooth_poly1<agg::path_storage> > curve (smooth);
+  // // path = curve;
 }
 
 void Path::close ()
@@ -95,9 +104,11 @@ void Path::draw (Image& image)
   rasterizer_scanline ras;
   scanline sl;
   
+  agg::conv_curve<agg::path_storage> smooth (path);
+  
   if (dashes.empty ())
     {
-      agg::conv_stroke<agg::path_storage> stroke (path);
+      agg::conv_stroke<agg::conv_curve<agg::path_storage> > stroke (smooth);
       
       //stroke.line_cap (cap);
       //stroke.line_cap (agg::round_cap);
@@ -108,8 +119,8 @@ void Path::draw (Image& image)
     }
   else
     {
-      typedef agg::conv_dash<agg::path_storage> dash_t;
-      dash_t dash (path);
+      typedef agg::conv_dash<agg::conv_curve<agg::path_storage> > dash_t;
+      dash_t dash (smooth);
       //dash.dash_start (offset);
       for (std::vector<double>::const_iterator i = dashes.begin ();
 	   i != dashes.end ();) {
