@@ -212,7 +212,7 @@ bool deskew (Image& image, const int raster_rows)
   
   // just for visualization
   if (debug)
-  brightness_contrast_gamma (image, -.75, .0, 1.0);
+    brightness_contrast_gamma (image, -.75, .0, 1.0);
   
   Image::iterator top_color = image.begin (), bottom_color = image.begin (),
     left_color = image.begin (), right_color = image.begin ();
@@ -322,47 +322,6 @@ bool deskew (Image& image, const int raster_rows)
   reg_left.addRange (points_left.begin(), points_left.end());
   reg_right.addRange (points_right.begin(), points_right.end());
   
-  // clean after first linear regression, flatten extrema
-
-  cleanup.byDistance (points_top, reg_top);
-  cleanup.byDistance (points_bottom, reg_bottom);
-  cleanup.byDistance (points_left, reg_left);
-  cleanup.byDistance (points_right, reg_right);
-  
-  // re-calculate
-  
-  reg_top.clear (); reg_bottom.clear (); reg_left.clear (); reg_right.clear ();
-    
-  reg_top.addRange (points_top.begin(), points_top.end());
-  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
-  reg_left.addRange (points_left.begin(), points_left.end());
-  reg_right.addRange (points_right.begin(), points_right.end());
-  
-  // just for visualization, draw markers
-  if (debug) {
-  for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
-       p != points_top.end(); ++p)
-    marker (it, p->first, p->second, top_color);
-  
-  for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
-       p != points_bottom.end(); ++p)
-    marker (it, p->first, p->second, bottom_color);
-  
-  for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
-       p != points_left.end(); ++p)
-    marker (it, p->second, p->first, left_color); // flipped
-  
-  for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
-       p != points_right.end(); ++p)
-    marker (it, p->second, p->first, right_color); // flipped
-
-  if (debug)
-  std::cerr << "top: " << reg_top << std::endl
-	    << "bottom: " << reg_bottom << std::endl
-	    << "left: " << reg_left << std::endl
-	    << "right: " << reg_right << std::endl;
-  }
-
   class Line {
   public:
     typedef std::pair <double, double> point;
@@ -415,8 +374,67 @@ bool deskew (Image& image, const int raster_rows)
   private:
     point p1, p2;
   };
-
+  
   drawStyle style;
+  // just for visualization, draw markers
+  if (debug) {
+    style.width = 0.75;
+    style.dash.push_back (12);
+    style.dash.push_back (6);
+    
+    Line line_top_pre (0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()));
+    Line line_bottom_pre (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
+    Line line_left_pre (reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height());
+    Line line_right_pre (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
+    
+    line_top_pre.draw (image, top_color, style);
+    line_bottom_pre.draw (image, bottom_color, style);
+    line_left_pre.draw (image, left_color, style);
+    line_right_pre.draw (image, right_color, style);
+    
+    style.dash.clear ();
+    style.width = 1.0;
+  }
+  
+  // clean after first linear regression, flatten extrema
+
+  cleanup.byDistance (points_top, reg_top);
+  cleanup.byDistance (points_bottom, reg_bottom);
+  cleanup.byDistance (points_left, reg_left);
+  cleanup.byDistance (points_right, reg_right);
+  
+  // re-calculate
+  
+  reg_top.clear (); reg_bottom.clear (); reg_left.clear (); reg_right.clear ();
+    
+  reg_top.addRange (points_top.begin(), points_top.end());
+  reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
+  reg_left.addRange (points_left.begin(), points_left.end());
+  reg_right.addRange (points_right.begin(), points_right.end());
+  
+  // just for visualization, draw markers
+  if (debug) {
+    for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
+	 p != points_top.end(); ++p)
+      marker (it, p->first, p->second, top_color);
+  
+    for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
+	 p != points_bottom.end(); ++p)
+      marker (it, p->first, p->second, bottom_color);
+  
+    for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
+	 p != points_left.end(); ++p)
+      marker (it, p->second, p->first, left_color); // flipped
+  
+    for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
+	 p != points_right.end(); ++p)
+      marker (it, p->second, p->first, right_color); // flipped
+
+    std::cerr << "top: " << reg_top << std::endl
+	      << "bottom: " << reg_bottom << std::endl
+	      << "left: " << reg_left << std::endl
+	      << "right: " << reg_right << std::endl;
+  }
   
   Line line_top (0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()));
   Line line_bottom (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
@@ -424,10 +442,10 @@ bool deskew (Image& image, const int raster_rows)
   Line line_right (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
 
   if (debug) {
-  line_top.draw (image, top_color, style);
-  line_left.draw (image, left_color, style);
-  line_right.draw (image, right_color, style);
-  line_bottom.draw (image, bottom_color, style);
+    line_top.draw (image, top_color, style);
+    line_left.draw (image, left_color, style);
+    line_right.draw (image, right_color, style);
+    line_bottom.draw (image, bottom_color, style);
   }
 
   Line::point p1, p2, p3, p4;
@@ -444,13 +462,6 @@ bool deskew (Image& image, const int raster_rows)
       Line line_width = Line (line_left.mid(), line_right.mid());
       Line line_height = Line (line_top.mid(), line_bottom.mid());
 
-      if (debug) {
-      Image::iterator note_color = image.begin();
-      note_color.setRGB (1.0, 1.0, 1.0);
-      line_width.draw (image, note_color, style);
-      line_height.draw (image, note_color, style);
-      }
-
       // average angle
       double angle = (reg_top.getB() +
 		      reg_bottom.getB() +
@@ -458,10 +469,16 @@ bool deskew (Image& image, const int raster_rows)
 		      - reg_left.getB() ) / 4;
       
       angle = atan (angle) / M_PI * 180;
-      if (debug)
-      std::cerr << "angle: " << angle << std::endl;
-
-      if (!debug) {
+      
+      if (debug) {
+	std::cerr << "angle: " << angle << std::endl;
+	
+	Image::iterator note_color = image.begin();
+	note_color.setRGB (1.0, 1.0, 1.0);
+	line_width.draw (image, note_color, style);
+	line_height.draw (image, note_color, style);
+      }
+      else {
 	// TODO: fill with nearest in-document color, or so ...
 	Image::iterator background = image.begin(); background.setL (255);
 	
@@ -471,7 +488,7 @@ bool deskew (Image& image, const int raster_rows)
 			    (unsigned int) line_width.length(), (unsigned int) line_height.length(),
 			    -angle, background);
 	image.copyTransferOwnership (*cropped_image);
-      image.copyMeta (*cropped_image);
+	image.copyMeta (*cropped_image);
       }
     }
   else
