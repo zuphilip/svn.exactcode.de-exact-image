@@ -76,25 +76,6 @@ void drawRectangle(Image& image, double x, double y, double x2, double y2,
   uint16_t r, g, b;
   color.getRGB (&r, &g, &b);
 
-#if 0
-  renderer_aa ren_aa (ren_base);
-  rasterizer_scanline ras_aa;
-  scanline sl;
-  
-  ras_aa.add_path (path);
-  
-  ren_aa.color (agg::rgba8 (r, g, b));
-  agg::render_scanlines (ras_aa, sl, ren_aa);
-#endif
-  
-#if 1
-  agg::conv_stroke<agg::path_storage> stroke (path);
-  //stroke.line_cap (cap);
-  //stroke.line_join (join);
-  stroke.width (style.width);
-  //freeze was here std::cout << "\t adding path!" << std::endl;
-  // theRasterizer->add_path(stroke);
-
   agg::line_profile_aa profile;
   profile.gamma (agg::gamma_power(1.2)); // optional
   profile.min_width (0.75); // optional
@@ -102,9 +83,24 @@ void drawRectangle(Image& image, double x, double y, double x2, double y2,
   profile.width (style.width); // mandatory!
   
   renderer_oaa ren (ren_base, profile);
-
   ren.color (agg::rgba8 (r, g, b));
 
+#if 0
+  rasterizer_scanline ras;
+  scanline sl;
+  
+  ras.add_path (path);
+  
+  agg::render_scanlines (ras, sl, ren);
+#else
+  agg::conv_stroke<agg::path_storage> stroke (path);
+  
+  //stroke.line_cap (cap);
+  //stroke.line_join (join);
+  stroke.width (style.width);
+  //freeze was here std::cout << "\t adding path!" << std::endl;
+  // theRasterizer->add_path(stroke);
+  
   rasterizer_oaa ras (ren);
   ras.add_path (stroke);
   
@@ -120,8 +116,8 @@ void drawText (Image& image, double x, double y, char* text, double height,
   uint16_t r, g, b;
   color.getRGB (&r, &g, &b);
   
-  renderer_aa ren_aa (ren_base);
-  rasterizer_scanline ras_aa;
+  renderer_aa ren (ren_base);
+  rasterizer_scanline ras;
   scanline sl;
   
   agg::gsv_text t;
@@ -131,8 +127,8 @@ void drawText (Image& image, double x, double y, char* text, double height,
   t.start_point (x, y);
   agg::conv_stroke<agg::gsv_text> stroke (t);
   stroke.width (1.0);
-  ras_aa.add_path (stroke);
+  ras.add_path (stroke);
   
-  ren_aa.color (agg::rgba8 (r, g, b));
-  agg::render_scanlines (ras_aa, sl, ren_aa);
+  ren.color (agg::rgba8 (r, g, b));
+  agg::render_scanlines (ras, sl, ren);
 }
