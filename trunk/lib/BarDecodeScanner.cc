@@ -1250,9 +1250,16 @@ namespace BarDecode
             type = ean8;
         }
 
-        // adjust code_type
-        // update code_type of modulizer (TODO)
-        // Set parameter (most of all module_word_size)
+        // checksum test
+        int check = code[code.size()-1] - 48;
+        code.erase(code.size()-1);
+        int sum = 0;
+        int f = 3;
+        for (int i = (int)code.size()-1; i >= 0; --i) {
+            sum += (code[i]-48)*f;
+            f = ((f==1) ? 3 : 1);
+        }
+        if (10-(sum % 10) != check) return scanner_result_t();
 
         // scan modules according to code_type
         return scanner_result_t(type,code,x,y);
