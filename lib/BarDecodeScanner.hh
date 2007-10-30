@@ -32,7 +32,8 @@ namespace BarDecode
         gs1_128 = 1<<5,
         code39 = 1<<6,
         code39_mod43 = 1<<7,
-        code39_ext = 1<<8
+        code39_ext = 1<<8,
+        code25i = 1<<9
     };
 
     std::ostream& operator<< (std::ostream& s, const code_t& t);

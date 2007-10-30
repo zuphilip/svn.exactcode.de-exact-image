@@ -30,9 +30,44 @@ namespace BarDecode
         case code39: return s << "code39";
         case code39_mod43: return s << "code39_mod43";
         case code39_ext: return s << "code39_ext";
+        case code25i: return s << "code25i";
         default: return s << "unknown barcode type";
         }
     }
+
+    struct code25i_t
+    {
+        code25i_t();
+
+        static const int START_SEQUENCE = 0xA;
+        static const int END_SEQUENCE = 0xD;
+        static const char no_entry = 255;
+
+        static const usize_t min_quiet_usize = 10;
+        static const usize_t min_quiet_usize_right = 10;
+
+        scanner_result_t scan(Tokenizer&, psize_t) const;
+        bool check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
+        std::pair<module_word_t,module_word_t> get_keys(const bar_vector_t& b) const;
+
+        DECLARE_TABLE(table,0x18);
+    } code25i_impl;
+
+    code25i_t::code25i_t()
+    {
+        INIT_TABLE(table,0x18,no_entry);
+        PUT_IN_TABLE(table,0x6,'0');
+        PUT_IN_TABLE(table,0x11,'1');
+        PUT_IN_TABLE(table,0x9,'2');
+        PUT_IN_TABLE(table,0x18,'3');
+        PUT_IN_TABLE(table,0x5,'4');
+        PUT_IN_TABLE(table,0x14,'5');
+        PUT_IN_TABLE(table,0xC,'6');
+        PUT_IN_TABLE(table,0x3,'7');
+        PUT_IN_TABLE(table,0x12,'8');
+        PUT_IN_TABLE(table,0xA,'9');
+    }
+
 
     struct code39_t
     {
@@ -67,7 +102,6 @@ namespace BarDecode
 
         static const usize_t min_quiet_usize = 10;
         static const usize_t min_quiet_usize_right = 10;
-
 
         DECLARE_TABLE(table,512);
         DECLARE_TABLE(aux,128);
@@ -468,6 +502,14 @@ namespace BarDecode
                     return;
                 }
             }
+            if (requested(code25i)) {
+                tokenizer =  backup_tokenizer;
+                if ((result = code25i_impl.scan(tokenizer,quiet_psize))) {
+                    // TODO set tokenizer to end of barcode
+                    cur_barcode = result;
+                    return;
+                }
+            }
             if (requested(code128)) {
                 tokenizer =  backup_tokenizer;
                 if (result = code128_impl.scan(tokenizer,quiet_psize)) {
@@ -633,6 +675,138 @@ namespace BarDecode
 
     };
 
+    std::pair<module_word_t,module_word_t> code25i_t::get_keys(const bar_vector_t& b) const
+    {
+#ifdef STRICT
+        u_t n_l = ((double) b.psize / 18.0); // (((b.size/2) / (3*1+2*3)) * 1
+        u_t n_h = ((double) b.psize / 14.0); // (((b.size/2) / (3*1+2*2)) * 1
+        u_t w_l = ((double) b.psize / 7.0);  // (((b.size/2) / (3*1+2*2)) * 2
+        u_t w_h = ((double) b.psize / 6.0);   // (((b.size/2) / (3*1+2*3)) * 3
+#else
+        u_t n_l = ((double) b.psize / 36.0);
+        u_t n_h = ((double) b.psize / 11.0);
+        u_t w_l = ((double) b.psize / 10.0);
+        u_t w_h = ((double) b.psize / 1.0);
+
+#endif
+        assert(b.size() == 10);
+        module_word_t r1 = 0;
+        module_word_t r2 = 0;
+        for (uint i = 0; i < 10; ++i) {
+            r1 <<= 1;
+            if (w_l <= b[i].second && b[i].second <= w_h) r1 += 1;
+            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+              //  std::cerr << "%%%%%%%% key1 failure: size=" << b[i].second << ", b.psize=" << b.psize << std::endl;
+                return std::make_pair(0,0);
+            }
+
+            ++i;
+            r2 <<= 1;
+            if (w_l <= b[i].second && b[i].second <= w_h) r2 += 1;
+            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+             //   std::cerr << "%%%%%%%% key2 failure: size=" << b[i].second << ", b.psize=" << b.psize << std::endl;
+                return std::make_pair(0,0);
+            }
+        }
+        return std::make_pair(r1,r2);
+    }
+
+    // psize = 0 means skip that test
+    bool code25i_t::check_bar_vector(const bar_vector_t& b,psize_t old_psize) const
+    {
+        // check psize
+        // check colors
+        assert(b.size() == 10);
+#if 0
+        return 
+            (!old_psize || fabs((long)b.psize - (long)old_psize) < 0.5 * old_psize) && 
+            b[0].first && b[8].first;
+#else
+        if (old_psize && ! (fabs((long) b.psize - (long) old_psize) < 0.5 * old_psize)) {
+            // std::cerr << "%%%%%%%% psize failure: old_psize=" << old_psize << ", new_psize=" << b.psize << std::endl;
+            return false;
+        }
+        if ( ! b[0].first || b[9].first ) {
+                // std::cerr << "%%%%%%%% color failure" << std::endl;
+                return false;
+        }
+        return true;
+#endif
+    }
+
+
+    scanner_result_t code25i_t::scan(Tokenizer& tokenizer, psize_t quiet_psize) const
+    {
+        using namespace scanner_utilities;
+
+        // get x and y
+        pos_t x = tokenizer.get_x();
+        pos_t y = tokenizer.get_y();
+
+        // try to match start marker
+        // do relatively cheap though rough test on the first two bars only.
+        bar_vector_t b(4);
+        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if (b[0].second < 0.7 * b[1].second || b[0].second > 1.3 * b[1].second) return scanner_result_t();
+
+        // check quiet_zone with respect to length of the first symbol
+        if (quiet_psize < (double) b[0].second * 10 * 0.7) return scanner_result_t(); // 10 x quiet zone
+
+        if ( add_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if (b[0].second < 0.7 * b[2].second || b[0].second > 1.3 * b[2].second) return scanner_result_t();
+        if (b[0].second < 0.7 * b[3].second || b[0].second > 1.3 * b[3].second) return scanner_result_t();
+
+        u_t u = b.psize / 4.0;
+
+        // std::cerr << "%%%%%%%% code25i: quiet zone ok" << std::endl;
+
+        std::string code = "";
+        psize_t old_psize = 0;
+        bool end = false;
+        while (! end) {
+
+            // get new symbols
+            if ( get_bars(tokenizer,b,3) != 3) return scanner_result_t();
+
+            // check END sequence and expect quiet zone
+            if ( (b.psize / (double) b[0].second) > 2 * 0.7 &&
+                 (b.psize / (double) b[0].second) < 2 * 1.3 &&
+                 (b.psize / (double) b[1].second) > 4 * 0.7 &&
+                 (b.psize / (double) b[1].second) < 4 * 1.3 &&
+                 (b.psize / (double) b[2].second) > 4 * 0.7 &&
+                 (b.psize / (double) b[2].second) < 4 * 1.3) {
+                // FIXME make this in a more performant way
+                Tokenizer tok = tokenizer;
+                token_t t = tok.next();
+                if (t.second > b.psize * 2) {
+                    break;
+                }
+            }
+
+            if ( add_bars(tokenizer,b,7) != 7) return scanner_result_t();
+            if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
+            old_psize = b.psize;
+
+            // std::cerr << "%%%%%%%% code25i: got 7 bars" << std::endl;
+
+            std::pair<module_word_t,module_word_t> keys = get_keys(b);
+            if (! keys.first || ! keys.second ) return scanner_result_t();
+            // std::cerr << "%%%%%%%% code25i - keys: " << std::hex << keys.first << " " << std::hex << keys.second << std::dec << std::endl;
+
+            const char c1 = table[keys.first];
+            // std::cerr << "%%%%%%%% code25i c1:" << c1 << std::endl;
+            if (c1 == no_entry) return scanner_result_t();
+            code.push_back(c1);
+
+            const char c2 = table[keys.second];
+            if (c2 == no_entry) return scanner_result_t();
+            code.push_back(c2);
+        }
+        if ( code.empty() ) return scanner_result_t();
+        else return scanner_result_t(code25i,code,x,y);
+    }
+
+
     module_word_t code39_t::get_key(const bar_vector_t& b) const
     {
 #ifdef STRICT
@@ -672,7 +846,7 @@ namespace BarDecode
     //        std::cerr << "%%%%%%%% psize failure: old_psize=" << old_psize << ", new_psize=" << b.psize << std::endl;
             return false;
         }
-        if ( ! b[0].first && b[8].first ) {
+        if ( ! (b[0].first && b[8].first) ) {
     //            std::cerr << "%%%%%%%% color failure" << std::endl;
                 return false;
         }
