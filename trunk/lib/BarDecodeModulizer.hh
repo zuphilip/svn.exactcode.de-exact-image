@@ -60,6 +60,7 @@ namespace BarDecode
 
         pos_t get_x() const { return it.get_x(); }
         pos_t get_y() const { return it.get_y(); }
+        const Image* get_img() const { return img; }
 
     protected:
         const Image* img;
