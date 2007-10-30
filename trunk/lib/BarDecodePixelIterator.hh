@@ -32,7 +32,8 @@ namespace BarDecode
             threshold(threshold),
             x(0),
             y(0),
-            lum(0)
+            lum(0),
+            valid_cache(false)
         {
             // FIXME insert an optimized code path for img->h <= it_size
             for (uint i = 0; i < it_size; ++i) {
@@ -45,6 +46,7 @@ namespace BarDecode
 
         self_t& operator++()
         {
+            valid_cache = false;
             if ( x < img->w-1 ) {
                 ++x;
                 for (uint i = 0; i < it_size; ++i) {
@@ -65,12 +67,20 @@ namespace BarDecode
 
         const value_type operator*() const
         {
+            if (valid_cache) return cache;
             double tmp=0;
+            //uint16_t min = 255;
+            //uint16_t max = 0;
             for (uint i = 0; i < it_size; ++i) {
+                //min = std::min(min,img_it[i].getL());
+                //max = std::max(max,img_it[i].getL());
                 tmp += img_it[i].getL();
             }
-            lum = tmp/it_size;
-            return lum < threshold;
+            //lum = (tmp - (double) (min+max)) / (double) (it_size-2);
+            lum = tmp / (double) it_size;
+            cache = lum < threshold;
+            valid_cache = true;
+            return cache;
         }
             
         //value_type* operator->();
@@ -83,6 +93,7 @@ namespace BarDecode
             for (uint i = 0; i < it_size; ++i) {
                 tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
             }
+            tmp.valid_cache = false;
             return tmp;
         }
 
@@ -90,11 +101,22 @@ namespace BarDecode
         pos_t get_y() const { return y; }
 
         threshold_t get_threshold() const { return threshold; }
-        void set_threshold(threshold_t new_threshold) { threshold = new_threshold; }
+
+        void set_threshold(threshold_t new_threshold) 
+        {
+            valid_cache = false;
+            threshold = new_threshold; 
+        }
 
         bool end() const { return !(img_it[it_size-1] != img->end()); }
 
-        double get_lum() const { return lum; }
+        double get_lum() const 
+        {
+            if (! valid_cache) {
+                operator*();
+            }
+            return lum;
+        }
 
     protected:
         const Image* img;
@@ -103,6 +125,8 @@ namespace BarDecode
         pos_t x;
         pos_t y;
         mutable double lum;
+        mutable bool cache;
+        mutable bool valid_cache;
 
     }; // class PixelIterator
 
