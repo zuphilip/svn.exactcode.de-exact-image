@@ -65,6 +65,7 @@ namespace BarDecode
             return *this;
         };
 
+        // FIXME it seems that the median (or something similar) is the better choice.
         const value_type operator*() const
         {
             if (valid_cache) return cache;
