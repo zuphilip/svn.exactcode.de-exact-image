@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#include "BarDecodeModulizer.hh"
+#include "BarDecodeTokenizer.hh"
 
 namespace BarDecode
 {
