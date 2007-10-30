@@ -703,6 +703,8 @@ namespace BarDecode
 
     };
 
+//#define STRICT // seems too strict!
+
     std::pair<module_word_t,module_word_t> code25i_t::get_keys(const bar_vector_t& b) const
     {
 #ifdef STRICT
