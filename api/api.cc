@@ -220,9 +220,9 @@ void imageDrawLine (Image* image, double x, double y, double x2, double y2)
   drawLine (*image, x, y, x2, y2, foreground_color, style);
 }
 
-void imageDrawRectange (Image* image, double x, double y, double x2, double y2)
+void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
 {
-  drawRectange (*image, x, y, x2, y2, foreground_color, style);
+  drawRectangle (*image, x, y, x2, y2, foreground_color, style);
 }
 
 void imageDrawText (Image* image, double x, double y, char* text, double height)

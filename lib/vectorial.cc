@@ -23,6 +23,8 @@
 #include "agg.hh"
 #include "Image.hh"
 
+#include "agg_path_storage.h"
+
 void drawLine(Image& image, double x, double y, double x2, double y2,
 	      const Image::iterator& color, const drawStyle& style)
 {
@@ -58,27 +60,67 @@ void drawLine(Image& image, double x, double y, double x2, double y2,
   ras.render (false); // false means "don't close"
 }
 
-void drawRectange(Image& image, double x, double y, double x2, double y2,
-		  const Image::iterator& color, const drawStyle& style)
+void drawRectangle(Image& image, double x, double y, double x2, double y2,
+		   const Image::iterator& color, const drawStyle& style)
 {
-  // top / bottom
-  drawLine(image, x,  y,  x2, y,  color, style);
-  drawLine(image, x,  y2, x2, y2, color, style);
+  agg::path_storage path;
 
-  // sides, avoid dubble set on corners
-  drawLine(image, x,  y+1, x,  y2-1, color, style);
-  drawLine(image, x2, y+1, x2, y2-1, color, style);
+  path.move_to (x, y);
+  path.line_to (x2, y);
+  path.line_to (x2, y2);
+  path.line_to (x, y2);
+  path.close_polygon ();
+  
+  renderer_exact_image ren_base (image);
+  
+  uint16_t r, g, b;
+  color.getRGB (&r, &g, &b);
+
+#if 0
+  renderer_aa ren_aa (ren_base);
+  rasterizer_scanline ras_aa;
+  scanline sl;
+  
+  ras_aa.add_path (path);
+  
+  ren_aa.color (agg::rgba8 (r, g, b));
+  agg::render_scanlines (ras_aa, sl, ren_aa);
+#endif
+  
+#if 1
+  agg::conv_stroke<agg::path_storage> stroke (path);
+  //stroke.line_cap (cap);
+  //stroke.line_join (join);
+  stroke.width (style.width);
+  //freeze was here std::cout << "\t adding path!" << std::endl;
+  // theRasterizer->add_path(stroke);
+
+  agg::line_profile_aa profile;
+  profile.gamma (agg::gamma_power(1.2)); // optional
+  profile.min_width (0.75); // optional
+  profile.smoother_width (3.0); //optional
+  profile.width (style.width); // mandatory!
+  
+  renderer_oaa ren (ren_base, profile);
+
+  ren.color (agg::rgba8 (r, g, b));
+
+  rasterizer_oaa ras (ren);
+  ras.add_path (stroke);
+  
+  ras.render (false); // false means "don't close"
+#endif
 }
 
-void drawText(Image& image, double x, double y, char* text, double height,
-		const Image::iterator& color)
+void drawText (Image& image, double x, double y, char* text, double height,
+	       const Image::iterator& color)
 {
   renderer_exact_image ren_base (image);
 
   uint16_t r, g, b;
   color.getRGB (&r, &g, &b);
   
-  renderer_aa ren_aa(ren_base);
+  renderer_aa ren_aa (ren_base);
   rasterizer_scanline ras_aa;
   scanline sl;
   
@@ -91,6 +133,6 @@ void drawText(Image& image, double x, double y, char* text, double height,
   stroke.width (1.0);
   ras_aa.add_path (stroke);
   
-  ren_aa.color (agg::rgba8(0,0,0));
+  ren_aa.color (agg::rgba8 (r, g, b));
   agg::render_scanlines (ras_aa, sl, ren_aa);
 }
