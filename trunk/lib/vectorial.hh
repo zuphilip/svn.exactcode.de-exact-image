@@ -20,6 +20,8 @@
 #include "Image.hh"
 #include <vector>
 
+#include "agg_path_storage.h"
+
 class drawStyle
 {
 public:
@@ -41,6 +43,32 @@ public:
     /* ACCURATE, MITER; ROUND, BEVEL, ... */
   } join;
   
+};
+
+class Path
+{
+public:
+  Path ();
+  ~Path ();
+
+  void moveTo (double x, double y);
+  void addLineTo (double x, double y);
+  void addCurveTo (double, double, double, double, double, double);
+  void close ();
+  
+  void setFillColor (double r, double g, double b, double a = 1.0);
+  void setLineWidth (double width);
+  void setLineDash (double offset, const std::vector<double>& dashes);
+  void setLineDash (double offset, const double* dashes, int n);
+  
+  void draw (Image& image);
+  
+protected:
+  agg::path_storage path;
+  
+  // quick hack ("for now")
+  double r, g, b, a, line_width;
+  std::vector <double> dashes;
 };
 
 void drawLine(Image& img, double x, double y, double x2, double y2,

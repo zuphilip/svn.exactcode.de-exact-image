@@ -26,34 +26,83 @@
 #include "agg_conv_dash.h"
 #include "agg_path_storage.h"
 
-void renderPath (Image& image, agg::path_storage& path,
-		 const Image::iterator& color, const drawStyle& style)
+// ---
+
+Path::Path ()
+{
+}
+
+Path::~Path ()
+{
+}
+
+void Path::moveTo (double x, double y)
+{
+  path.move_to (x, y);
+}
+
+void Path::addLineTo (double x, double y)
+{
+  path.line_to (x, y);
+}
+
+void Path::addCurveTo (double, double, double, double, double, double)
+{
+}
+
+void Path::close ()
+{
+  path.close_polygon ();
+}
+
+void Path::setFillColor (double _r, double _g, double _b, double _a)
+{
+  r = _r;
+  g = _g;
+  b = _b;
+  a = _a;
+}
+
+void Path::setLineWidth (double width)
+{
+  line_width = width;
+}
+
+void Path::setLineDash (double offset, const std::vector<double>& _dashes)
+{
+  dashes = _dashes;
+}
+
+void Path::setLineDash (double offset, const double* _dashes, int n)
+{
+  dashes.clear ();
+  for (; n; n--, _dashes++)
+    dashes.push_back (*_dashes);
+}
+  
+void Path::draw (Image& image)
 {
   renderer_exact_image ren_base (image);
   
-  uint16_t r, g, b;
-  color.getRGB (&r, &g, &b);
-
   agg::line_profile_aa profile;
   profile.gamma (agg::gamma_power(1.2)); // optional
-  profile.min_width (0.75); // optional
-  profile.smoother_width (3.0); //optional
-  profile.width (style.width); // mandatory!
+  //profile.min_width (0.75); // optional
+  //profile.smoother_width (3.0); //optional
   
   renderer_aa ren (ren_base);
-  ren.color (agg::rgba8 (r, g, b));
+  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
 
   rasterizer_scanline ras;
   scanline sl;
   
-  if (style.dash.empty ())
+  if (dashes.empty ())
     {
       agg::conv_stroke<agg::path_storage> stroke (path);
       
       //stroke.line_cap (cap);
-      stroke.line_cap (agg::round_cap);
-      stroke.line_join (agg::round_join);
-      stroke.width (style.width);
+      //stroke.line_cap (agg::round_cap);
+      //stroke.line_join (agg::round_join);
+      stroke.width (line_width);
       
       ras.add_path (stroke);
     }
@@ -62,10 +111,10 @@ void renderPath (Image& image, agg::path_storage& path,
       typedef agg::conv_dash<agg::path_storage> dash_t;
       dash_t dash (path);
       //dash.dash_start (offset);
-      for (std::vector<double>::const_iterator i = style.dash.begin ();
-	   i != style.dash.end ();) {
+      for (std::vector<double>::const_iterator i = dashes.begin ();
+	   i != dashes.end ();) {
 	double a = *i++, b;
-	if (i != style.dash.end ())
+	if (i != dashes.end ())
 	  b = *i++;
 	else
 	  break; // TODO: warn or exception ?
@@ -76,7 +125,7 @@ void renderPath (Image& image, agg::path_storage& path,
       
       //stroke.line_cap (cap);
       //stroke.line_join (join);
-      stroke.width (style.width);
+      stroke.width (line_width);
 	
       ras.add_path (stroke);
     }
@@ -84,29 +133,39 @@ void renderPath (Image& image, agg::path_storage& path,
   agg::render_scanlines (ras, sl, ren);
 }
 
+// --
+
 void drawLine(Image& image, double x, double y, double x2, double y2,
 	      const Image::iterator& color, const drawStyle& style)
 {
-  agg::path_storage path;
+  Path path;
+  path.moveTo (x, y);
+  path.addLineTo (x2, y2);
+
+  path.setLineWidth (style.width);
+  double r, g, b;
+  color.getRGB (r, g, b);
+  path.setFillColor (r, g, b);
   
-  path.move_to (x, y);
-  path.line_to (x2, y2);
-  
-  renderPath (image, path, color, style);
+  path.draw (image);
 }
 
 void drawRectangle(Image& image, double x, double y, double x2, double y2,
 		   const Image::iterator& color, const drawStyle& style)
 {
-  agg::path_storage path;
+  Path path;
+  path.moveTo (x, y);
+  path.addLineTo (x2, y);
+  path.addLineTo (x2, y2);
+  path.addLineTo (x, y2);
+  path.close ();
   
-  path.move_to (x, y);
-  path.line_to (x2, y);
-  path.line_to (x2, y2);
-  path.line_to (x, y2);
-  path.close_polygon ();
+  path.setLineWidth (style.width);
+  double r, g, b;
+  color.getRGB (r, g, b);
+  path.setFillColor (r, g, b);
   
-  renderPath (image, path, color, style);
+  path.draw (image);
 }
 
 void drawText (Image& image, double x, double y, char* text, double height,
