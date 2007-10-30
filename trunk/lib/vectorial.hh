@@ -18,16 +18,17 @@
 #define VECTORIAL_HH
 
 #include "Image.hh"
+#include <vector>
 
 class drawStyle
 {
 public:
   drawStyle ()
-    : width (1), dash_length (0), caps (BUTT), join (DEFAULT) {
+    : width (1), caps (BUTT), join (DEFAULT) {
   }
   
   double width;
-  double dash_length;
+  std::vector <double> dash;
   
   enum {
     BUTT,
