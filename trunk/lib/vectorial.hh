@@ -45,7 +45,7 @@ public:
 void drawLine(Image& img, double x, double y, double x2, double y2,
 	      const Image::iterator& color, const drawStyle& style);
 
-void drawRectange(Image& img, double x, double y, double x2, double y2,
+void drawRectangle(Image& img, double x, double y, double x2, double y2,
 		  const Image::iterator& color, const drawStyle& style);
 
 void drawText(Image& image, double x, double y, char* text, double height,

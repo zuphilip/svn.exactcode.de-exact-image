@@ -69,7 +69,7 @@ void Segment::Draw(Image& output, uint16_t r, uint16_t g, uint16_t b)
   Image::iterator color = output.begin();
   color.setRGB (r, g, b);
   drawStyle style; style.width = 1.0;
-  drawRectange(output, x, y, x+w-1, y+h-1, color, style);
+  drawRectangle(output, x, y, x+w-1, y+h-1, color, style);
 }
 
 
