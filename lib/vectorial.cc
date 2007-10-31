@@ -81,7 +81,7 @@ void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
 void Path::end ()
 {
   // TODO: check if we need to pass an arg to not implicitly close the path
-  path.end_poly ();
+  path.end_poly (agg::path_flags_none);
 }
 
 void Path::close ()
