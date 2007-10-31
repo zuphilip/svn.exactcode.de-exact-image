@@ -59,6 +59,7 @@ public:
   // or explicitly differentiate by naming this one QuadCurve ???
   void addCurveTo (double, double, double, double, double, double);
 
+  void end ();
   void close ();
   
   void setFillColor (double r, double g, double b, double a = 1.0);
@@ -73,13 +74,19 @@ public:
   void setLineJoin (line_join_t join);
   
   /* TODO:
-     - fill (none, non-zero, odd-even)
      - clip
      - control anti-aliasing
      (- gradients)
   */
   
-  void draw (Image& image, bool fill = false);
+  enum filling_rule_t
+    {
+      fill_non_zero = agg::fill_non_zero,
+      fill_even_odd = agg::fill_even_odd,
+      fill_none = 0xff
+    };
+
+  void draw (Image& image, filling_rule_t fill = fill_none);
   
 protected:
   agg::path_storage path;
