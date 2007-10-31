@@ -154,6 +154,7 @@ void drawLine(Image& image, double x, double y, double x2, double y2,
   path.addLineTo (x2, y2);
 
   path.setLineWidth (style.width);
+  path.setLineDash (0, style.dash);
   double r, g, b;
   color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
@@ -172,6 +173,8 @@ void drawRectangle(Image& image, double x, double y, double x2, double y2,
   path.close ();
   
   path.setLineWidth (style.width);
+  path.setLineDash (0, style.dash);
+
   double r, g, b;
   color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
