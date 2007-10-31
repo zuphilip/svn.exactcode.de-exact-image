@@ -42,10 +42,7 @@ public:
 
   void moveTo (double x, double y);
   void addLineTo (double x, double y);
-  void addCurveTo (double, double, double, double);
-  // or explicitly differentiate by naming this one QuadCurve ???
-  void addCurveTo (double, double, double, double, double, double);
-  
+
   /* TODO:
      - addRect
      - addArc
@@ -53,6 +50,11 @@ public:
      - addEllipse
   */
   
+  
+  void addCurveTo (double, double, double, double);
+  // or explicitly differentiate by naming this one QuadCurve ???
+  void addCurveTo (double, double, double, double, double, double);
+
   void close ();
   
   void setFillColor (double r, double g, double b, double a = 1.0);
@@ -73,13 +75,13 @@ public:
      (- gradients)
   */
   
-  void draw (Image& image);
+  void draw (Image& image, bool fill = false);
   
 protected:
   agg::path_storage path;
   
   // quick hack ("for now")
-  double r, g, b, a, line_width;
+  double r, g, b, a, line_width, dashes_start_offset;
   std::vector <double> dashes;
   
   line_cap_t line_cap;
