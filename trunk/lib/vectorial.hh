@@ -20,29 +20,18 @@
 #include "Image.hh"
 #include <vector>
 
+#include "agg_math_stroke.h"
 #include "agg_path_storage.h"
 
 class drawStyle
 {
 public:
   drawStyle ()
-    : width (1), caps (BUTT), join (DEFAULT) {
+    : width (1) {
   }
   
   double width;
   std::vector <double> dash;
-  
-  enum {
-    BUTT,
-    SQUARE,
-    ROUND
-  } caps;
-
-  enum {
-    DEFAULT,
-    /* ACCURATE, MITER; ROUND, BEVEL, ... */
-  } join;
-  
 };
 
 class Path
@@ -54,12 +43,33 @@ public:
   void moveTo (double x, double y);
   void addLineTo (double x, double y);
   void addCurveTo (double, double, double, double, double, double);
+  
+  /* TODO:
+     - addRect
+     - addArc
+     - addArcTo
+     - addEllipse
+  */
+  
   void close ();
   
   void setFillColor (double r, double g, double b, double a = 1.0);
   void setLineWidth (double width);
   void setLineDash (double offset, const std::vector<double>& dashes);
   void setLineDash (double offset, const double* dashes, int n);
+  
+  typedef agg::line_cap_e line_cap_t;
+  void setLineCap (line_cap_t cap);
+  
+  typedef agg::line_join_e line_join_t;
+  void setLineJoin (line_join_t join);
+  
+  /* TODO:
+     - fill (none, non-zero, odd-even)
+     - clip
+     - control anti-aliasing
+     (- gradients)
+  */
   
   void draw (Image& image);
   
@@ -69,6 +79,9 @@ protected:
   // quick hack ("for now")
   double r, g, b, a, line_width;
   std::vector <double> dashes;
+  
+  line_cap_t line_cap;
+  line_join_t line_join;
 };
 
 void drawLine(Image& img, double x, double y, double x2, double y2,
