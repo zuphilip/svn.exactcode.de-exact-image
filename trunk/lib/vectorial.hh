@@ -42,6 +42,8 @@ public:
 
   void moveTo (double x, double y);
   void addLineTo (double x, double y);
+  void addCurveTo (double, double, double, double);
+  // or explicitly differentiate by naming this one QuadCurve ???
   void addCurveTo (double, double, double, double, double, double);
   
   /* TODO:

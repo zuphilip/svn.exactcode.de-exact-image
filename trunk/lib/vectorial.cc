@@ -48,6 +48,12 @@ void Path::addLineTo (double x, double y)
   path.line_to (x, y);
 }
 
+void Path::addCurveTo (double c1x, double c1y,
+		       double x, double y)
+{
+  path.curve3 (c1x, c1y, x, y);
+}
+
 void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
 		       double x, double y)
 {
@@ -178,7 +184,8 @@ void drawRectangle(Image& image, double x, double y, double x2, double y2,
   
   path.setLineWidth (style.width);
   path.setLineDash (0, style.dash);
-
+  path.setLineJoin (agg::miter_join);
+  
   double r, g, b;
   color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
