@@ -52,11 +52,6 @@ void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
 		       double x, double y)
 {
   path.curve4 (c1x, c1y, c2x, c2y, x, y);
-  
-  // agg::conv_smooth_poly1<agg::path_storage> smooth (path);
-  // // smooth.smooth_value (1.0);
-  // agg::conv_curve<agg::conv_smooth_poly1<agg::path_storage> > curve (smooth);
-  // // path = curve;
 }
 
 void Path::close ()
@@ -88,7 +83,17 @@ void Path::setLineDash (double offset, const double* _dashes, int n)
   for (; n; n--, _dashes++)
     dashes.push_back (*_dashes);
 }
-  
+
+void Path::setLineCap (line_cap_t cap)
+{
+  line_cap = cap;
+}
+
+void Path::setLineJoin (line_join_t join)
+{
+  line_join = join;
+}
+
 void Path::draw (Image& image)
 {
   renderer_exact_image ren_base (image);
@@ -110,9 +115,8 @@ void Path::draw (Image& image)
     {
       agg::conv_stroke<agg::conv_curve<agg::path_storage> > stroke (smooth);
       
-      //stroke.line_cap (cap);
-      //stroke.line_cap (agg::round_cap);
-      //stroke.line_join (agg::round_join);
+      stroke.line_cap (line_cap);
+      stroke.line_join (line_join);
       stroke.width (line_width);
       
       ras.add_path (stroke);
@@ -134,8 +138,8 @@ void Path::draw (Image& image)
       
       agg::conv_stroke<dash_t> stroke (dash);
       
-      //stroke.line_cap (cap);
-      //stroke.line_join (join);
+      stroke.line_cap (line_cap);
+      stroke.line_join (line_join);
       stroke.width (line_width);
 	
       ras.add_path (stroke);
