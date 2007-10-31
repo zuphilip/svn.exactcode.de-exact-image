@@ -78,6 +78,12 @@ void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
   path.curve4 (c1x, c1y, c2x, c2y, x, y);
 }
 
+void Path::end ()
+{
+  // TODO: check if we need to pass an arg to not implicitly close the path
+  path.end_poly ();
+}
+
 void Path::close ()
 {
   path.close_polygon ();
@@ -120,7 +126,7 @@ void Path::setLineJoin (line_join_t join)
   line_join = join;
 }
 
-void Path::draw (Image& image, bool fill)
+void Path::draw (Image& image, filling_rule_t fill)
 {
   renderer_exact_image ren_base (image);
   
@@ -132,7 +138,7 @@ void Path::draw (Image& image, bool fill)
 
   agg::conv_curve<agg::path_storage> smooth (path);
   
-  if (!fill)
+  if (fill == fill_none)
     {
       agg::line_profile_aa profile;
       profile.gamma (agg::gamma_power(1.2)); // optional
@@ -174,6 +180,8 @@ void Path::draw (Image& image, bool fill)
 	}
     }
   else {
+    // just cast, we use a toll-free enum bridge
+    ras.filling_rule ((agg::filling_rule_e)fill);
     ras.add_path (smooth);
   }
   
