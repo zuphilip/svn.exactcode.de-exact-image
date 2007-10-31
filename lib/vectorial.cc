@@ -31,6 +31,8 @@
 // ---
 
 Path::Path ()
+  : line_width (1.0), dashes_start_offset (0.0),
+    line_cap (agg::butt_cap), line_join (agg::miter_join)
 {
 }
 
@@ -80,11 +82,13 @@ void Path::setLineWidth (double width)
 
 void Path::setLineDash (double offset, const std::vector<double>& _dashes)
 {
+  dashes_start_offset = offset;
   dashes = _dashes;
 }
 
 void Path::setLineDash (double offset, const double* _dashes, int n)
 {
+  dashes_start_offset = offset;
   dashes.clear ();
   for (; n; n--, _dashes++)
     dashes.push_back (*_dashes);
@@ -100,57 +104,63 @@ void Path::setLineJoin (line_join_t join)
   line_join = join;
 }
 
-void Path::draw (Image& image)
+void Path::draw (Image& image, bool fill)
 {
   renderer_exact_image ren_base (image);
   
-  agg::line_profile_aa profile;
-  profile.gamma (agg::gamma_power(1.2)); // optional
-  //profile.min_width (0.75); // optional
-  //profile.smoother_width (3.0); //optional
-  
   renderer_aa ren (ren_base);
   ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
-
+  
   rasterizer_scanline ras;
   scanline sl;
-  
+
   agg::conv_curve<agg::path_storage> smooth (path);
   
-  if (dashes.empty ())
+  if (!fill)
     {
-      agg::conv_stroke<agg::conv_curve<agg::path_storage> > stroke (smooth);
+      agg::line_profile_aa profile;
+      profile.gamma (agg::gamma_power(1.2)); // optional
+      //profile.min_width (0.75); // optional
+      //profile.smoother_width (3.0); //optional
       
-      stroke.line_cap (line_cap);
-      stroke.line_join (line_join);
-      stroke.width (line_width);
-      
-      ras.add_path (stroke);
+      if (dashes.empty ())
+	{
+	  agg::conv_stroke<agg::conv_curve<agg::path_storage> > stroke (smooth);
+	  
+	  stroke.line_cap (line_cap);
+	  stroke.line_join (line_join);
+	  stroke.width (line_width);
+	  
+	  ras.add_path (stroke);
+	}
+      else
+	{
+	  typedef agg::conv_dash<agg::conv_curve<agg::path_storage> > dash_t;
+	  dash_t dash (smooth);
+	  dash.dash_start (dashes_start_offset);
+	  for (std::vector<double>::const_iterator i = dashes.begin ();
+	       i != dashes.end ();) {
+	    double a = *i++, b;
+	    if (i != dashes.end ())
+	      b = *i++;
+	    else
+	      break; // TODO: warn or exception ?
+	    dash.add_dash (a, b);
+	  }
+	  
+	  agg::conv_stroke<dash_t> stroke (dash);
+	  
+	  stroke.line_cap (line_cap);
+	  stroke.line_join (line_join);
+	  stroke.width (line_width);
+	  
+	  ras.add_path (stroke);
+	}
     }
-  else
-    {
-      typedef agg::conv_dash<agg::conv_curve<agg::path_storage> > dash_t;
-      dash_t dash (smooth);
-      //dash.dash_start (offset);
-      for (std::vector<double>::const_iterator i = dashes.begin ();
-	   i != dashes.end ();) {
-	double a = *i++, b;
-	if (i != dashes.end ())
-	  b = *i++;
-	else
-	  break; // TODO: warn or exception ?
-	dash.add_dash (a, b);
-      }
-      
-      agg::conv_stroke<dash_t> stroke (dash);
-      
-      stroke.line_cap (line_cap);
-      stroke.line_join (line_join);
-      stroke.width (line_width);
-	
-      ras.add_path (stroke);
-    }
-
+  else {
+    ras.add_path (smooth);
+  }
+  
   agg::render_scanlines (ras, sl, ren);
 }
 
