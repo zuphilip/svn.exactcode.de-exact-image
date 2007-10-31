@@ -50,6 +50,22 @@ void Path::addLineTo (double x, double y)
   path.line_to (x, y);
 }
 
+void Path::addArcTo (double rx, double ry,  double angle,
+		     double x, double y)
+{
+  path.arc_to (rx, ry, angle,
+	       false /*large arc */, false /* sweep */,
+	       x, y);
+}
+
+void Path::addArc (double rx, double ry,  double angle,
+		     double dx, double dy)
+{
+  path.arc_to (rx, ry, angle,
+	       false /*large arc */, false /* sweep */,
+	       dx, dy);
+}
+
 void Path::addCurveTo (double c1x, double c1y,
 		       double x, double y)
 {

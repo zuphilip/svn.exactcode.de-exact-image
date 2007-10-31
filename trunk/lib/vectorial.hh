@@ -42,11 +42,15 @@ public:
 
   void moveTo (double x, double y);
   void addLineTo (double x, double y);
+  
+  void addArcTo (double rx, double ry,  double angle,
+		 double x, double y);
 
+  void addArc (double rx, double ry,  double angle,
+	       double dx, double dy);
+  
   /* TODO:
      - addRect
-     - addArc
-     - addArcTo
      - addEllipse
   */
   
