@@ -66,10 +66,10 @@ bool Segment::Subdivide(const FGMatrix& img, double tolerance, unsigned int min_
 
 void Segment::Draw(Image& output, uint16_t r, uint16_t g, uint16_t b)
 {
-  Image::iterator color = output.begin();
-  color.setRGB (r, g, b);
-  drawStyle style; style.width = 1.0;
-  drawRectangle(output, x, y, x+w-1, y+h-1, color, style);
+  Path path;
+  path.setFillColor ((double)r/255, (double)g/255, (double)b/255);
+  path.addRect (x, y, x+w-1, y+h-1);
+  path.draw (output);
 }
 
 

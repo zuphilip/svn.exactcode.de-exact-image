@@ -367,33 +367,38 @@ bool deskew (Image& image, const int raster_rows)
     }
     
     // just quick
-    void draw (Image& image, Image::iterator color, drawStyle style) {
-      drawLine (image, p1.first, p1.second, p2.first, p2.second, color, style);
+    void draw (Path& path, Image& image, const Image::iterator& color) {
+      double r, g, b; color.getRGB (r, g, b);
+      path.setFillColor (r, g, b);
+      path.moveTo (p1.first, p1.second);
+      path.addLineTo (p2.first, p2.second);
+      path.draw (image);
+      path.clear ();
     };
     
   private:
     point p1, p2;
   };
   
-  drawStyle style;
+  Path path;
   // just for visualization, draw markers
   if (debug) {
-    style.width = 0.75;
-    style.dash.push_back (12);
-    style.dash.push_back (6);
+    path.setLineWidth (0.75);
+    double dashes [] = { 12, 6 };
+    path.setLineDash (0, dashes, 2);
     
     Line line_top_pre (0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()));
     Line line_bottom_pre (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
     Line line_left_pre (reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height());
     Line line_right_pre (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
     
-    line_top_pre.draw (image, top_color, style);
-    line_bottom_pre.draw (image, bottom_color, style);
-    line_left_pre.draw (image, left_color, style);
-    line_right_pre.draw (image, right_color, style);
+    line_top_pre.draw (path, image, top_color);
+    line_bottom_pre.draw (path, image, bottom_color);
+    line_left_pre.draw (path, image, left_color);
+    line_right_pre.draw (path, image, right_color);
     
-    style.dash.clear ();
-    style.width = 1.0;
+    path.setLineDash (0, NULL, 0);
+    path.setLineWidth (1.0);
   }
   
   // clean after first linear regression, flatten extrema
@@ -442,10 +447,10 @@ bool deskew (Image& image, const int raster_rows)
   Line line_right (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
 
   if (debug) {
-    line_top.draw (image, top_color, style);
-    line_left.draw (image, left_color, style);
-    line_right.draw (image, right_color, style);
-    line_bottom.draw (image, bottom_color, style);
+    line_top.draw (path, image, top_color);
+    line_left.draw (path, image, left_color);
+    line_right.draw (path, image, right_color);
+    line_bottom.draw (path, image, bottom_color);
   }
 
   Line::point p1, p2, p3, p4;
@@ -475,8 +480,8 @@ bool deskew (Image& image, const int raster_rows)
 	
 	Image::iterator note_color = image.begin();
 	note_color.setRGB (1.0, 1.0, 1.0);
-	line_width.draw (image, note_color, style);
-	line_height.draw (image, note_color, style);
+	line_width.draw (path, image, note_color);
+	line_height.draw (path, image, note_color);
       }
       else {
 	// TODO: fill with nearest in-document color, or so ...
