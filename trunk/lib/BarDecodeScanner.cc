@@ -898,6 +898,19 @@ namespace BarDecode
 #endif
         return n_l <= b[0].second && b[0].second <= n_h;
     }
+
+    namespace debug
+    {
+        void print_bar_vector(const bar_vector_t& b)
+        {
+            std::cerr << "[ ";
+            for (size_t i = 0; i < b.size(); ++i) {
+                std::cerr << "(" << b[i].first << "," << b[i].second << ") ";
+            }
+            std::cerr << "]" << std::endl;
+        }
+
+    };
         
 
     scanner_result_t code39_t::scan(Tokenizer& tokenizer, psize_t quiet_psize) const
