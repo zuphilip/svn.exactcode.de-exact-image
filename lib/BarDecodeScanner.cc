@@ -1257,10 +1257,12 @@ namespace BarDecode
         if (symbols_count == 6) {
             result = ean13table[parities];
             if (! result) return scanner_result_t();
-            std::string tmp = "";
-            tmp.push_back(result);
-            code = tmp + code;
-            type = (result == '0') ? upca : ean13;
+            if ( result == '0' ) {
+                type = upca;
+            } else {
+                code = std::string(1,result) + code;
+                type = ean13;
+            }
         } else {
             type = ean8;
         }
