@@ -979,7 +979,7 @@ namespace BarDecode
         case code_set_c:
             if (c < 100) {
                 char str[2];
-                sprintf(str,"%2d",(int)c);
+                sprintf(str,"%02d",c);
                 return std::string(str);
             } else {
                 return std::string(1,caux[c-96]);
