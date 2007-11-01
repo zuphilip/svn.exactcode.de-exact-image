@@ -2,7 +2,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include <set>
+#include <map>
 
 #include "ArgumentList.hh"
 #include "Codecs.hh"
@@ -111,17 +111,18 @@ int main (int argc, char* argv[])
     threshold = 150;
   }
 
-  std::set<scanner_result_t,comp> codes;
+  std::map<scanner_result_t,int,comp> codes;
   BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128|code39|code25i);
   while (! it.end() ) {
-      codes.insert(*it);
+      ++codes[*it];
       ++it;
   }
 
-  for (std::set<scanner_result_t>::const_iterator it = codes.begin();
+  for (std::map<scanner_result_t,int>::const_iterator it = codes.begin();
        it != codes.end();
        ++it) {
-      std::cout << it->code << " [type: " << it->type << " at: (" << it->x << "," << it->y << ")]" << std::endl;
+      if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
+      std::cout << it->first.code << " [type: " << it->first.type << " at: (" << it->first.x << "," << it->first.y << ")]" << std::endl;
   }
 
 #ifdef BARDECODE_DEBUG
