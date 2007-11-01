@@ -77,37 +77,6 @@ namespace BarDecode
         }
     };
 
-#if 0
-    class Scanner
-    {
-    public:
-
-        // modulizer points to first (black) module
-        Scanner(Modulizer modulizer) :
-            modulizer(modulizer),
-            table()
-        {
-
-        }
-
-        void init_tables() const;
-
-
-        scanner_result_t operator()();
-
-        static uint modules_count(const bar_vector_t& v);
-        static module_word_t get_module_word(const bar_vector_t& v);
-        static bool get_parity(const module_word_t& w);
-        static bool get_parity(const bar_vector_t& w);
-
-    protected:
-        Modulizer modulizer;
-        code_type_t type;
-        translation_table_t table;
-    };
-#endif
-
-
     class BarcodeIterator
     {
     public:
