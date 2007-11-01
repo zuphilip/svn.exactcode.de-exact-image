@@ -95,6 +95,8 @@ namespace BarDecode
                 tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
             }
             tmp.valid_cache = false;
+            tmp.x = x;
+            tmp.y = y;
             return tmp;
         }
 

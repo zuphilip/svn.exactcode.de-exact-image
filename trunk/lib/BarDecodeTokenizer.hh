@@ -85,6 +85,13 @@ namespace BarDecode
         pos_t get_y() const { return it.get_y(); }
         const Image* get_img() const { return img; }
 
+        Tokenizer at(pos_t x, pos_t y) const
+        {
+            Tokenizer tmp = *this;
+            tmp.it = it.at(x,y);
+            return tmp;
+        }
+
     protected:
         const Image* img;
         PixelIterator<> it;
