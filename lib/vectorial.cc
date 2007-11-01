@@ -50,6 +50,15 @@ void Path::addLineTo (double x, double y)
   path.line_to (x, y);
 }
 
+void Path::addRect (double x, double y, double x2, double y2)
+{
+  moveTo (x, y);
+  addLineTo (x2, y);
+  addLineTo (x2, y);
+  addLineTo (x, y);
+  close ();
+}
+
 void Path::addArcTo (double rx, double ry,  double angle,
 		     double x, double y)
 {
@@ -77,16 +86,37 @@ void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
 {
   path.curve4 (c1x, c1y, c2x, c2y, x, y);
 }
-
+/*
+void Path::addText (char* text, double height)
+{
+  agg::gsv_text t;
+  t.flip (true);
+  t.size (height);
+  t.text (text);
+  t.start_point (x, y);
+  
+  agg::conv_stroke<agg::gsv_text> stroke (t);
+  stroke.width (1.0);
+  ras.add_path (stroke);
+  
+  ren.color (agg::rgba8(r, g, b, a));
+  agg::render_scanlines (ras, sl, ren);
+}
+*/
 void Path::end ()
 {
-  // TODO: check if we need to pass an arg to not implicitly close the path
+  // do not close the path, we have ::close() for that purpose
   path.end_poly (agg::path_flags_none);
 }
 
 void Path::close ()
 {
   path.close_polygon ();
+}
+
+void Path::clear ()
+{
+  path.remove_all ();
 }
 
 void Path::setFillColor (double _r, double _g, double _b, double _a)
@@ -188,53 +218,11 @@ void Path::draw (Image& image, filling_rule_t fill)
   agg::render_scanlines (ras, sl, ren);
 }
 
-// --
-
-void drawLine(Image& image, double x, double y, double x2, double y2,
-	      const Image::iterator& color, const drawStyle& style)
-{
-  Path path;
-  path.moveTo (x, y);
-  path.addLineTo (x2, y2);
-
-  path.setLineWidth (style.width);
-  path.setLineDash (0, style.dash);
-  double r, g, b;
-  color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  path.draw (image);
-}
-
-void drawRectangle(Image& image, double x, double y, double x2, double y2,
-		   const Image::iterator& color, const drawStyle& style)
-{
-  Path path;
-  path.moveTo (x, y);
-  path.addLineTo (x2, y);
-  path.addLineTo (x2, y2);
-  path.addLineTo (x, y2);
-  path.close ();
-  
-  path.setLineWidth (style.width);
-  path.setLineDash (0, style.dash);
-  path.setLineJoin (agg::miter_join);
-  
-  double r, g, b;
-  color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  path.draw (image);
-}
-
-void drawText (Image& image, double x, double y, char* text, double height,
-	       const Image::iterator& color)
+void Path::drawText (Image& image, double x, double y,
+		     char* text, double height)
 {
   renderer_exact_image ren_base (image);
 
-  uint16_t r, g, b;
-  color.getRGB (&r, &g, &b);
-  
   renderer_aa ren (ren_base);
   rasterizer_scanline ras;
   scanline sl;
@@ -246,8 +234,9 @@ void drawText (Image& image, double x, double y, char* text, double height,
   t.start_point (x, y);
   agg::conv_stroke<agg::gsv_text> stroke (t);
   stroke.width (1.0);
+  
   ras.add_path (stroke);
   
-  ren.color (agg::rgba8 (r, g, b));
+  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
   agg::render_scanlines (ras, sl, ren);
 }

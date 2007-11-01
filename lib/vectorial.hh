@@ -23,17 +23,6 @@
 #include "agg_math_stroke.h"
 #include "agg_path_storage.h"
 
-class drawStyle
-{
-public:
-  drawStyle ()
-    : width (1) {
-  }
-  
-  double width;
-  std::vector <double> dash;
-};
-
 class Path
 {
 public:
@@ -42,6 +31,7 @@ public:
 
   void moveTo (double x, double y);
   void addLineTo (double x, double y);
+  void addRect (double x, double y, double x2, double y2);
   
   void addArcTo (double rx, double ry,  double angle,
 		 double x, double y);
@@ -50,17 +40,20 @@ public:
 	       double dx, double dy);
   
   /* TODO:
-     - addRect
      - addEllipse
   */
-  
-  
+    
   void addCurveTo (double, double, double, double);
   // or explicitly differentiate by naming this one QuadCurve ???
   void addCurveTo (double, double, double, double, double, double);
-
+  
+  // TODO: sophisticated text API, including font to use,
+  // kerning, hinting, transform, etc.
+  // void addText (char* text, double height);
+  
   void end ();
   void close ();
+  void clear (); // path data, not the style
   
   void setFillColor (double r, double g, double b, double a = 1.0);
   void setLineWidth (double width);
@@ -87,6 +80,9 @@ public:
     };
 
   void draw (Image& image, filling_rule_t fill = fill_none);
+  // temp. simple text draw method
+  void drawText (Image& image, double x, double y,
+		 char* text, double height);
   
 protected:
   agg::path_storage path;
@@ -98,41 +94,5 @@ protected:
   line_cap_t line_cap;
   line_join_t line_join;
 };
-
-void drawLine(Image& img, double x, double y, double x2, double y2,
-	      const Image::iterator& color, const drawStyle& style);
-
-void drawRectangle(Image& img, double x, double y, double x2, double y2,
-		  const Image::iterator& color, const drawStyle& style);
-
-void drawText(Image& image, double x, double y, char* text, double height,
-	      const Image::iterator& color);
-
-// new, final (?) API
-
-#if 0
-void beginPath(context);
-void moveTo (context,x,y);
-void addLineTo (context,x,y);
-void addCurveTo (context,c1x, c1y, c2x, c2y, x, y);
-void addQuadCurveTo ();
-void closePath (context);
-void setLineWidth (context, width);
-void drawPath (context, path-styling?);
-
-// joins
-// line caps
-// line dashing
-// fill
-// clipping
-// anti-aliasing
-
-// utilties
-// rect
-// arc
-// roundedRect
-
-
-#endif
 
 #endif
