@@ -846,8 +846,8 @@ namespace BarDecode
         u_t w_h = ((double) b.psize / 5.0);   // ((b.size / (6*1+3*3)) * 3
 #else
         u_t n_l = ((double) b.psize / 25.0);
-        u_t n_h = ((double) b.psize / 9.0);
-        u_t w_l = ((double) b.psize / 8.9);
+        u_t n_h = ((double) b.psize / 8.0);
+        u_t w_l = ((double) b.psize / 7.9);
         u_t w_h = ((double) b.psize / 1.0);
 
 #endif
@@ -894,7 +894,7 @@ namespace BarDecode
         u_t n_h = ((double) old_psize / 12.0); // ((b.size / (6*1+3*2)) * 1
 #else
         u_t n_l = ((double) old_psize / 25.0);
-        u_t n_h = ((double) old_psize / 9.0);
+        u_t n_h = ((double) old_psize / 7.0);
 #endif
         return n_l <= b[0].second && b[0].second <= n_h;
     }
