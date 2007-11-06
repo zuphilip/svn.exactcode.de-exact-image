@@ -127,11 +127,14 @@ int main (int argc, char* argv[])
 	   it != codes.end();
 	   ++it) {
 	if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
-	  if (multiple_files)
-	    std::cout << *file << ": ";
-	std::cout << it->first.code << " [type: " << it->first.type << " at: (" << it->first.x << "," << it->first.y << ")]" << std::endl;
+	  {
+	    if (multiple_files)
+	      std::cout << *file << ": ";
+	    std::cout << it->first.code << " [type: " << it->first.type
+		      << " at: (" << it->first.x << "," << it->first.y
+		      << ")]" << std::endl;
+	  }
       }
-      
 #ifdef BARDECODE_DEBUG
       if (arg_output.Get() != "") {
 	Image o_image = image;
