@@ -66,18 +66,15 @@ struct comp {
 
 int main (int argc, char* argv[])
 {
-  ArgumentList arglist;
+  ArgumentList arglist (true); // enable residual gathering
   
   // setup the argument list
   Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
-  Argument<std::string> arg_input ("i", "input", "input file", 1, 1);
-
   Argument<int> arg_threshold ("t", "threshold",
 			       "bi-level threshold value", 0, 0, 1);
 
   arglist.Add (&arg_help);
-  arglist.Add (&arg_input);
   arglist.Add (&arg_threshold);
 
 #ifdef BARDECODE_DEBUG
@@ -89,53 +86,65 @@ int main (int argc, char* argv[])
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "barcode recognition module of the exact-image library"
-                <<  " - Copyright 2007 - 2008 by René Rebe" << std::endl
-                <<  " - Copyright 2007 - 2008 by Lars Kuhtz" << std::endl
+                <<  " - Copyright 2007 by René Rebe, ExactCODE" << std::endl
+                <<  " - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
       return 1;
     }
 
+  const std::vector<std::string>& filenames = arglist.Residuals();
   Image image;
-  if (!ImageCodec::Read (arg_input.Get(), image)) {
-    std::cerr << "Error reading input file." << std::endl;
-    return 1;
-  }
-
-  // convert to 1-bit (threshold)
-  int threshold = 0;
-  if (arg_threshold.Get() != 0) {
-    threshold = arg_threshold.Get();
-  } else {
-    threshold = 150;
-  }
-
-  std::map<scanner_result_t,int,comp> codes;
-  BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128|code39|code25i);
-  while (! it.end() ) {
-      ++codes[*it];
-      ++it;
-  }
-
-  for (std::map<scanner_result_t,int>::const_iterator it = codes.begin();
-       it != codes.end();
-       ++it) {
-      if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
-      std::cout << it->first.code << " [type: " << it->first.type << " at: (" << it->first.x << "," << it->first.y << ")]" << std::endl;
-  }
-
+  int errors = 0;
+  bool multiple_files = filenames.size () > 1;
+  
+  for (std::vector<std::string>::const_iterator file = filenames.begin();
+       file != filenames.end ();
+       ++file)
+    {
+      if (!ImageCodec::Read (*file, image)) {
+	std::cerr << "Error reading " << *file << std::endl;
+	++errors;
+      }
+      
+      // convert to 1-bit (threshold)
+      int threshold = 0;
+      if (arg_threshold.Get() != 0) {
+	threshold = arg_threshold.Get();
+      } else {
+	threshold = 150;
+      }
+      
+      std::map<scanner_result_t,int,comp> codes;
+      BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128|code39|code25i);
+      while (! it.end() ) {
+	++codes[*it];
+	++it;
+      }
+      
+      for (std::map<scanner_result_t,int>::const_iterator it = codes.begin();
+	   it != codes.end();
+	   ++it) {
+	if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
+	  if (multiple_files)
+	    std::cout << *file << ": ";
+	std::cout << it->first.code << " [type: " << it->first.type << " at: (" << it->first.x << "," << it->first.y << ")]" << std::endl;
+      }
+      
 #ifdef BARDECODE_DEBUG
-  if (arg_output.Get() != "") {
-      Image o_image = image;
-      Draw(o_image,threshold,0,0,255);
-
-      if (!ImageCodec::Write(arg_output.Get(), o_image)) {
+      if (arg_output.Get() != "") {
+	Image o_image = image;
+	Draw(o_image,threshold,0,0,255);
+	
+	if (!ImageCodec::Write(arg_output.Get(), o_image)) {
           std::cerr << "Error writing output file." << std::endl;
           return 1;
+	}
       }
-  }
 #endif
- 
-  return codes.empty();
+      if (codes.empty())
+	++errors;
+    }
+  return errors;
 }
