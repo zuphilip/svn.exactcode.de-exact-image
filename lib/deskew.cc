@@ -25,7 +25,12 @@
 #include "Image.hh"
 #include "Colorspace.hh"
 #include "rotate.hh"
+
+//#define DEBUG
+
+#ifdef DEBUG
 #include "vectorial.hh"
+#endif
 
 #include "deskew.hh"
 
@@ -131,7 +136,8 @@ bool deskew (Image& image, const int raster_rows)
       return (fabs(r-r2) + fabs(g-g2) + fabs(b-b2)) > threshold;
     }
   } comparator;
-  
+
+#ifdef DEBUG
   struct marker {
     void operator() (Image::iterator& it, int x, int y, Image::iterator& color) {
       it = it.at (x, y);
@@ -142,6 +148,7 @@ bool deskew (Image& image, const int raster_rows)
       operator () (it, point.first, point.second, color);
     }
   } marker;
+#endif
   
   // left and right are x/y flipped due to linear regression
   // calculation - the slope would be near inf. otherwise ...
@@ -366,6 +373,7 @@ bool deskew (Image& image, const int raster_rows)
       return sqrt (xrel*xrel + yrel*yrel);
     }
     
+#ifdef DEBUG
     // just quick
     void draw (Path& path, Image& image, const Image::iterator& color) {
       double r, g, b; color.getRGB (r, g, b);
@@ -375,14 +383,16 @@ bool deskew (Image& image, const int raster_rows)
       path.draw (image);
       path.clear ();
     };
+#endif
     
   private:
     point p1, p2;
   };
-  
+
+#ifdef DEBUG  
   Path path;
   // just for visualization, draw markers
-  if (debug) {
+  {
     path.setLineWidth (0.75);
     double dashes [] = { 12, 6 };
     path.setLineDash (0, dashes, 2);
@@ -400,6 +410,7 @@ bool deskew (Image& image, const int raster_rows)
     path.setLineDash (0, NULL, 0);
     path.setLineWidth (1.0);
   }
+#endif
   
   // clean after first linear regression, flatten extrema
 
@@ -416,9 +427,10 @@ bool deskew (Image& image, const int raster_rows)
   reg_bottom.addRange (points_bottom.begin(), points_bottom.end());
   reg_left.addRange (points_left.begin(), points_left.end());
   reg_right.addRange (points_right.begin(), points_right.end());
-  
+
+#ifdef DEBUG
   // just for visualization, draw markers
-  if (debug) {
+  {
     for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
 	 p != points_top.end(); ++p)
       marker (it, p->first, p->second, top_color);
@@ -440,18 +452,22 @@ bool deskew (Image& image, const int raster_rows)
 	      << "left: " << reg_left << std::endl
 	      << "right: " << reg_right << std::endl;
   }
-  
+#endif
+
   Line line_top (0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()));
   Line line_bottom (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
   Line line_left (reg_left.getA (), 0, reg_left.estimateY (image.height()), image.height());
   Line line_right (reg_right.getA (), 0, reg_right.estimateY (image.height()), image.height());
 
-  if (debug) {
+
+#ifdef DEBUG
+  {
     line_top.draw (path, image, top_color);
     line_left.draw (path, image, left_color);
     line_right.draw (path, image, right_color);
     line_bottom.draw (path, image, bottom_color);
   }
+#endif
 
   Line::point p1, p2, p3, p4;
   if (line_top.intersection (line_left, p1) &&
@@ -475,15 +491,14 @@ bool deskew (Image& image, const int raster_rows)
       
       angle = atan (angle) / M_PI * 180;
       
-      if (debug) {
+#ifdef DEBUG
 	std::cerr << "angle: " << angle << std::endl;
 	
 	Image::iterator note_color = image.begin();
 	note_color.setRGB (1.0, 1.0, 1.0);
 	line_width.draw (path, image, note_color);
 	line_height.draw (path, image, note_color);
-      }
-      else {
+#else
 	// TODO: fill with nearest in-document color, or so ...
 	Image::iterator background = image.begin(); background.setL (255);
 	
@@ -494,7 +509,7 @@ bool deskew (Image& image, const int raster_rows)
 			    -angle, background);
 	image.copyTransferOwnership (*cropped_image);
 	image.copyMeta (*cropped_image);
-      }
+ #endif
     }
   else
     std::cerr << "lines parallel!?" << std::endl;
