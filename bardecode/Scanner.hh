@@ -1,11 +1,11 @@
-#ifndef _BARDECODE_SCANNER_HH_
-#define _BARDECODE_SCANNER_HH_
+#ifndef _SCANNER_HH_
+#define _SCANNER_HH_
 
 #include <map>
 #include <vector>
 #include <string>
 
-#include "BarDecodeTokenizer.hh"
+#include "Tokenizer.hh"
 
 namespace BarDecode
 {
@@ -128,4 +128,4 @@ namespace BarDecode
 
 }; // namespace BarDecode
 
-#endif // _BARDECODE_SCANNER_HH_
+#endif // _SCANNER_HH_
