@@ -1,4 +1,3 @@
-
 include build/top.make
 
 BINARY = lib
@@ -22,7 +21,6 @@ LDFLAGS += $(LIBAGGLIBS)
 endif
 
 
-CPPFLAGS += -I lib/
+CPPFLAGS += -I lib
 
 include build/bottom.make
-
