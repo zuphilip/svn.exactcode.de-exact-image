@@ -1,12 +1,10 @@
 include build/top.make
 
-# build each .cc file as executable - if this is not desired
-# in the future a list must be supplied manually ...
-BINARY = $(basename $(notdir $(wildcard $(X_MODULE)/*.cc)))
+BINARY = bardecode
+BINARY_EXT = $(X_LIBEXT)
 
-BINARY_EXT = $(X_EXEEXT)
-DEPS = $(lib_BINARY) $(codecs_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT)
+DEPS = 
 
-CPPFLAGS += -I utility
+CPPFLAGS += -I bardecode
 
 include build/bottom.make
