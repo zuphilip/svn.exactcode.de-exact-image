@@ -1,4 +1,4 @@
-#include "BarDecodeScanner.hh"
+#include "Scanner.hh"
 
 //#define SCANNER_DEBUG
 

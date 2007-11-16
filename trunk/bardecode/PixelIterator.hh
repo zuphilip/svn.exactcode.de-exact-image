@@ -1,5 +1,5 @@
-#ifndef _BAR_DECODE_PIXEL_ITERATOR_HH_
-#define _BAR_DECODE_PIXEL_ITERATOR_HH_
+#ifndef _PIXEL_ITERATOR_HH_
+#define _PIXEL_ITERATOR_HH_
 
 #define NDEBUG
 
@@ -135,4 +135,4 @@ namespace BarDecode
 
 }; // namespace BarDecode
 
-#endif // _BAR_DECODE_PIXEL_ITERATOR_HH_
+#endif // _PIXEL_ITERATOR_HH_

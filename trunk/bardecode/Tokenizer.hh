@@ -1,5 +1,5 @@
-#ifndef _BARDECODE_TOKENIZER_HH_
-#define _BARDECODE_TOKENIZER_HH_
+#ifndef _TOKENIZER_HH_
+#define _TOKENIZER_HH_
 
 #include <utility>
 #include <assert.h>
@@ -9,7 +9,7 @@
 #include <algorithm>
 
 #include "Image.hh"
-#include "BarDecodePixelIterator.hh"
+#include "PixelIterator.hh"
 
 namespace BarDecode
 {
@@ -100,4 +100,4 @@ namespace BarDecode
 
 }; // namespace BarDecode
 
-#endif // _BARDECODE_TOKENIZER_HH_
+#endif // _TOKENIZER_HH_
