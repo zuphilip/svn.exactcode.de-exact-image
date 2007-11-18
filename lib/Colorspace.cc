@@ -254,7 +254,7 @@ void colorspace_grayX_to_gray8 (Image& image)
   Image gray8_image;
   gray8_image.bps = 8;
   gray8_image.spp = 1;
-  gray8_image.New (image.w, image.h);
+  gray8_image.resize (image.w, image.h);
 
   Image::iterator it = image.begin();
   Image::iterator gray8_it = gray8_image.begin();
@@ -277,7 +277,7 @@ void colorspace_grayX_to_rgb8 (Image& image)
   Image rgb_image;
   rgb_image.bps = 8;
   rgb_image.spp = 3;
-  rgb_image.New (image.w, image.h);
+  rgb_image.resize (image.w, image.h);
   
   Image::iterator it = image.begin();
   Image::iterator rgb_it = rgb_image.begin();
