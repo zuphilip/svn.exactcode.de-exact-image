@@ -37,6 +37,11 @@
       }
     }
 
+    value_t* end_ptr() const
+    {
+        return (value_t*) image->getRawDataEnd();
+    }
+
     inline void clear () {
       switch (type) {
       case GRAY1:
@@ -383,6 +388,95 @@
 	ptr = (value_t*) ((uint8_t*) ptr + 6); break;
       case CMYK8:
 	ptr = (value_t*) ((uint8_t*) ptr + 4); break;
+      }
+      return *this;
+    }
+    
+    inline iterator& down() {
+      switch (type) {
+      case GRAY1:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            ptr = (value_t*) ((uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)));
+            --bitpos; ++_x;
+            if (bitpos < 0) {
+                bitpos = 7;
+                ptr = (value_t*) ((uint8_t*) ptr + 1);
+            } else if (_x == width) {
+                ptr = end_ptr();
+            }
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case GRAY2:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            ptr = (value_t*) ((uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)));
+            bitpos -= 2; ++_x;
+            if (bitpos < 0) {
+                bitpos = 7;
+                ptr = (value_t*) ((uint8_t*) ptr + 1);
+            } else if (_x == width) {
+                ptr = end_ptr();
+            }
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case GRAY4:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            ptr = (value_t*) ((uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)));
+            bitpos -= 4; ++_x;
+            if (bitpos < 0) {
+                bitpos = 7;
+                ptr = (value_t*) ((uint8_t*) ptr + 1);
+            } else if (_x == width) {
+                ptr = end_ptr();
+            }
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case GRAY8:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 1 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 1);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case GRAY16:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 2 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 2);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case RGB8:
+      case YUV8:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 3 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 3);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case RGB16:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 6 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 6);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
+      case CMYK8:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 4 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 4);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
       }
       return *this;
     }
