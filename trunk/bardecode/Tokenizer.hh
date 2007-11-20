@@ -19,12 +19,13 @@ namespace BarDecode
     typedef bool module_t;
     typedef double unit_t;
 
+    template<bool vertical = false>
     class Tokenizer
     {
     public:
-        Tokenizer(const Image* img,threshold_t threshold = 170) :
+        Tokenizer(const Image* img, int concurrent_lines = 4, int line_skip = 8, threshold_t threshold = 150) :
             img(img),
-            it(img,threshold),
+            it(img,concurrent_lines,line_skip,threshold),
             extra(0)
         {}
 
@@ -38,36 +39,35 @@ namespace BarDecode
 
 #define DYNAMIC_THRESHOLD
 #ifdef DYNAMIC_THRESHOLD
-            long sum = 0;
+            double sum = 0;
 #endif
 
             double count = 0;
             bool color = *it; // TODO simple alternation would safe the call of operator*
+            double lum = it.get_lum();
             do { 
 
 #ifdef DYNAMIC_THRESHOLD
-                sum += it.get_lum();
+                sum += lum;
 #endif
 
                 ++count;
                 ++it; 
+                lum = it.get_lum();
 
 #ifdef DYNAMIC_THRESHOLD
-                int mean = (double) sum / count;
-                if ( ! color && it.get_lum() < mean - 30) {
-                    it.set_threshold(std::max(it.get_threshold(),std::min(mean - 30,220)));
-                } else if ( color && it.get_lum() > mean + 30) {
-                    it.set_threshold(std::min(it.get_threshold(),std::max(mean + 30,80)));
+                double mean =  sum / count;
+                if ( ! color && lum < mean - 30) {
+                    it.set_threshold(lround(std::max((double)it.get_threshold(),std::min(mean - 30,220.0))));
+                } else if ( color && lum > mean + 30) {
+                    it.set_threshold(lround(std::min((double)it.get_threshold(),std::max(mean + 30,80.0))));
                 }
 #endif
 
             } while ( ! end() && color == *it );
 
             count -= extra;
-            double extra = ( *it ? 
-                             (it.get_lum() / 255.0) :
-                             (1- (it.get_lum() / 255.0))
-                           );
+            double extra = ( *it ?  (lum / 255.0) : (1- (lum / 255.0)));
             count += extra;
             extra = 1 - extra;
             return token_t(color,lround(count));
@@ -94,7 +94,7 @@ namespace BarDecode
 
     protected:
         const Image* img;
-        PixelIterator<> it;
+        PixelIterator<vertical> it;
         double extra;
     };
 

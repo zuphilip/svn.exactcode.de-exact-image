@@ -15,8 +15,6 @@ namespace BarDecode
 
     typedef uint32_t codes_t; // Bitset of types
 
-    typedef std::pair<char,bool> symbol_t; // where bool is the parity
-
     typedef unsigned int psize_t; // size in pixel type
     typedef unsigned int usize_t; // size in X unit
 
@@ -33,7 +31,16 @@ namespace BarDecode
         code39 = 1<<6,
         code39_mod43 = 1<<7,
         code39_ext = 1<<8,
-        code25i = 1<<9
+        code25i = 1<<9,
+        any_code = 0xfff
+    };
+
+    enum directions_t {
+        left_right = 1<<0,
+        top_down = 1<<1,
+        right_left = 1<<2,
+        down_top = 1<<3,
+        any_direction = 0xf
     };
 
     std::ostream& operator<< (std::ostream& s, const code_t& t);
@@ -77,17 +84,26 @@ namespace BarDecode
         }
     };
 
+
+    template<bool vertical = false>
     class BarcodeIterator
     {
     public:
         typedef BarcodeIterator self_t;
         typedef scanner_result_t value_type;
+        typedef Tokenizer<vertical> tokenizer_t;
 
         static const psize_t min_quiet_psize = 7;
 
-        BarcodeIterator(const Image* img, threshold_t threshold, codes_t requested_codes) :
-            tokenizer(img,threshold),
+        BarcodeIterator(const Image* img,
+                        threshold_t threshold = 150,
+                        codes_t requested_codes = any_code, 
+                        directions_t directions = any_direction,
+                        int concurrent_lines = 4,
+                        int line_skip = 8) :
+            tokenizer(img,concurrent_lines,line_skip,threshold),
             requested_codes(requested_codes),
+            directions(directions),
             cur_barcode()
         {
             if ( ! end() ) next();
@@ -121,11 +137,14 @@ namespace BarDecode
         void next();
 
     private:
-        Tokenizer tokenizer;
+        tokenizer_t tokenizer;
         codes_t requested_codes;
+        directions_t directions;
         scanner_result_t cur_barcode;
     };
 
 }; // namespace BarDecode
+
+#include "Scanner.tcc"
 
 #endif // _SCANNER_HH_
