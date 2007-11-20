@@ -13,8 +13,8 @@ namespace BarDecode
     typedef int pos_t;
     typedef int threshold_t;
 
-    template<int it_size = 4>
-    class PixelIterator : 
+    template<bool vertical = false>
+    class PixelIterator :
         public std::iterator<std::output_iterator_tag,
                              bool,
                              std::ptrdiff_t>
@@ -26,8 +26,10 @@ namespace BarDecode
 
         typedef bool value_type;
 
-        PixelIterator(const Image* img, threshold_t threshold = 0) :
+        PixelIterator(const Image* img, int concurrent_lines = 4, int line_skip = 8, threshold_t threshold = 0) :
             img(img),
+            it_size(concurrent_lines),
+            line_skip(line_skip),
             img_it(it_size),
             threshold(threshold),
             x(0),
@@ -37,7 +39,7 @@ namespace BarDecode
         {
             // FIXME insert an optimized code path for img->h <= it_size
             for (uint i = 0; i < it_size; ++i) {
-                img_it[i] = img->begin().at(0,std::min((int)i,img->h));
+                img_it[i] = img->begin().at(0,std::min((int)i,img->h-1));
                 *img_it[i];
             }
         }
@@ -55,11 +57,22 @@ namespace BarDecode
                 }
             } else {
                 x = 0;
-                // FIXME insert an optimized code path for img->h >= y+it_size
-                y += it_size;
-                for (uint i = 0; i < it_size; ++i) {
-                    img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h));
-                    *img_it[i];
+                int todo = (img->h-1) - y;
+                if ( todo > line_skip + (it_size-1) ) {
+                    y += line_skip;
+                    for (uint i = 0; i < it_size; ++i) {
+                        img_it[i] = img_it[i].at(x,y+(int)i);
+                        *img_it[i];
+                    }
+                } else if ( todo <= 0 ) {
+                    // we are at the end
+                    ++img_it[it_size-1];
+                } else {
+                    y += line_skip;
+                    for (uint i = 0; i < it_size; ++i) {
+                        img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h-1));
+                        *img_it[i];
+                    }
                 }
             }
             return *this;
@@ -78,7 +91,7 @@ namespace BarDecode
                 tmp += img_it[i].getL();
             }
             //lum = (tmp - (double) (min+max)) / (double) (it_size-2);
-            lum = tmp / (double) it_size;
+            lum = tmp / it_size;
             cache = lum < threshold;
             valid_cache = true;
             return cache;
@@ -123,6 +136,8 @@ namespace BarDecode
 
     protected:
         const Image* img;
+        int it_size;
+        int line_skip;
         std::vector<Image::const_iterator> img_it;
         threshold_t threshold;
         pos_t x;
@@ -131,7 +146,142 @@ namespace BarDecode
         mutable bool cache;
         mutable bool valid_cache;
 
-    }; // class PixelIterator
+    }; // class PixelIterator<vertical = true>
+
+    // vertical iteration
+    template<>
+    class PixelIterator<true> : 
+        public std::iterator<std::output_iterator_tag,
+                             bool,
+                             std::ptrdiff_t>
+    {
+    protected:
+        typedef PixelIterator self_t;
+
+    public:
+
+        typedef bool value_type;
+
+        PixelIterator(const Image* img, int concurrent_lines = 4, int line_skip = 8, threshold_t threshold = 0) :
+            img(img),
+            it_size(concurrent_lines),
+            line_skip(line_skip),
+            img_it(it_size),
+            threshold(threshold),
+            x(0),
+            y(0),
+            lum(0),
+            valid_cache(false)
+        {
+            // FIXME insert an optimized code path for img->h <= it_size
+            for (uint i = 0; i < it_size; ++i) {
+                img_it[i] = img->begin().at(std::min((int)i,img->w-1),0);
+                *img_it[i];
+            }
+        }
+
+        virtual ~PixelIterator() {};
+
+        self_t& operator++()
+        {
+            valid_cache = false;
+            if ( y < img->h-1 ) {
+                ++y;
+                for (uint i = 0; i < it_size; ++i) {
+                    img_it[i].down();
+                    *img_it[i];
+                }
+            } else {
+                y = 0;
+                int todo = (img->w-1) - x;
+                if ( todo > line_skip + (it_size-1) ) {
+                    x += line_skip;
+                    for (unsigned int i = 0; i < it_size; ++i) {
+                        img_it[i] = img_it[i].at(x+(int) i,y);
+                        *img_it[i];
+                    }
+                } else if ( todo <= 0 ) {
+                    img_it[it_size-1] = img->end();
+                } else {
+                    x += line_skip;
+                    for (uint i = 0; i < it_size; ++i) {
+                        img_it[i] = img_it[i].at(std::min(x+(int)i,img->w-1),y);
+                        *img_it[i];
+                    }
+                }
+            }
+            return *this;
+        };
+
+        // FIXME it seems that the median (or something similar) is the better choice.
+        const value_type operator*() const
+        {
+            if (valid_cache) return cache;
+            double tmp=0;
+            //uint16_t min = 255;
+            //uint16_t max = 0;
+            for (uint i = 0; i < it_size; ++i) {
+                //min = std::min(min,img_it[i].getL());
+                //max = std::max(max,img_it[i].getL());
+                tmp += img_it[i].getL();
+            }
+            //lum = (tmp - (double) (min+max)) / (double) (it_size-2);
+            lum = tmp / it_size;
+            cache = lum < threshold;
+            valid_cache = true;
+            return cache;
+        }
+            
+        //value_type* operator->();
+        //const value_type* operator->() const;
+
+        self_t at(pos_t x, pos_t y) const
+        {
+            // FIXME insert an optimized code path for img->h >= y+it_size
+            self_t tmp = *this;
+            for (unsigned int i = 0; i < it_size; ++i) {
+                tmp.img_it[i] = tmp.img_it[i].at(std::min(x+(int)i,img->w-1),y);
+            }
+            tmp.valid_cache = false;
+            tmp.x = x;
+            tmp.y = y;
+            return tmp;
+        }
+
+        pos_t get_x() const { return x; }
+        pos_t get_y() const { return y; }
+
+        threshold_t get_threshold() const { return threshold; }
+
+        void set_threshold(threshold_t new_threshold) 
+        {
+            valid_cache = false;
+            threshold = new_threshold; 
+        }
+
+        bool end() const { return !(img_it[it_size-1] != img->end()); }
+
+        double get_lum() const 
+        {
+            if (! valid_cache) {
+                operator*();
+            }
+            return lum;
+        }
+
+    protected:
+        const Image* img;
+        int it_size;
+        int line_skip;
+        std::vector<Image::const_iterator> img_it;
+        threshold_t threshold;
+        pos_t x;
+        pos_t y;
+        mutable double lum;
+        mutable bool cache;
+        mutable bool valid_cache;
+
+    }; // class PixelIterator<vertical = true>
 
 }; // namespace BarDecode
 

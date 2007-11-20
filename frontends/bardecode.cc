@@ -12,42 +12,12 @@
 
 using namespace Utility;
 
+//#define BARDECODE_DEBUG
 #ifdef BARDECODE_DEBUG
-// not very efficient, yet effective
-void PutPixel(Image& img, int x, int y, uint16_t R, uint16_t G,  uint16_t B)
+void down_test(Image& img)
 {
-  Image::iterator p=img.begin();
-  p=p.at(x,y);
-  p.setRGB(R, G, B);
-  p.set(p);
-}
-
-void clear_image(Image& img)
-{
-    for (Image::iterator p = img.begin(); p != img.end(); ++p) {
-        p.clear();
-        p.set(p);
-    }
-    img.setRawData();
-}
-
-void Draw(Image& img, const FGMatrix& c, unsigned int r, unsigned int g, unsigned int b)
-{
-    for (unsigned int i=0; i<c.h; i++) {
-        for (unsigned int j=0; j<c.w; j++) {
-            if (c(j,i)) {
-                PutPixel(img, j,i, r, g, b);
-            } 
-        }
-    }
-}
-
-void Draw(Image& img, BarDecode::threshold_t threshold, unsigned int r, unsigned int g, unsigned int b)
-{
-    for (BarDecode::PixelIterator i(&img,threshold); ! i.end(); ++i) {
-        if (*i) {
-            PutPixel(img, i.get_x(),i.get_y(), r, g, b);
-        } 
+    for (Image::const_iterator it = img.begin(); it != img.end(); it.down()) {
+        *it;
     }
 }
 #endif
@@ -72,22 +42,32 @@ int main (int argc, char* argv[])
   Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
   Argument<int> arg_threshold ("t", "threshold",
-			       "bi-level threshold value", 0, 0, 1);
+			       "bi-level threshold value", 150, 0, 1);
+
+  Argument<int> arg_concurrent_lines ("c", "concurrent-lines",
+			       "number of lines that are scanned concurrently", 4, 0, 1);
+
+  Argument<int> arg_line_skip ("s", "line-skip",
+			       "number of lines that are skipped", 8, 0, 1);
+
+  Argument<int> arg_directions (
+      "d", 
+      "directions",
+      "bitfield of directions to be scanned (0 none,1 left-to-right,2 top-down, 4 right-to-left, 8-down-top, 15 any)", 
+      15, 0, 1);
 
   arglist.Add (&arg_help);
   arglist.Add (&arg_threshold);
-
-#ifdef BARDECODE_DEBUG
-  Argument<std::string> arg_output ("o", "output", "output file", 0,1);
-  arglist.Add (&arg_output);
-#endif
+  arglist.Add (&arg_directions);
+  arglist.Add (&arg_concurrent_lines);
+  arglist.Add (&arg_line_skip);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "barcode recognition module of the exact-image library"
-                <<  " - Copyright 2007 by René Rebe, ExactCODE" << std::endl
-                <<  " - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
+      std::cerr << "barcode recognition module of the exact-image library" << std::endl
+                <<  "    - Copyright 2007 by René Rebe, ExactCODE" << std::endl
+                <<  "    - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -108,19 +88,27 @@ int main (int argc, char* argv[])
 	++errors;
       }
       
-      // convert to 1-bit (threshold)
-      int threshold = 0;
-      if (arg_threshold.Get() != 0) {
-	threshold = arg_threshold.Get();
-      } else {
-	threshold = 150;
-      }
-      
+      int threshold = arg_threshold.Get();
+      directions_t directions = (directions_t) arg_directions.Get();
+      int concurrent_lines = arg_concurrent_lines.Get();
+      int line_skip = arg_line_skip.Get();
+
       std::map<scanner_result_t,int,comp> codes;
-      BarDecode::BarcodeIterator it(&image,threshold,ean|code128|gs1_128|code39|code25i);
-      while (! it.end() ) {
-	++codes[*it];
-	++it;
+      if ( directions&(left_right|right_left) ) {
+          BarDecode::BarcodeIterator<> it(&image,threshold,ean|code128|gs1_128|code39|code25i,directions,concurrent_lines,line_skip);
+          while (! it.end() ) {
+              ++codes[*it];
+              ++it;
+          }
+      }
+
+      if ( directions&(top_down|down_top) ) {
+          directions_t dir = (directions_t) (directions&(top_down|down_top)>>1);
+          BarDecode::BarcodeIterator<true> it(&image,threshold,ean|code128|gs1_128|code39|code25i,dir,concurrent_lines,line_skip);
+          while (! it.end() ) {
+              ++codes[*it];
+              ++it;
+          }
       }
       
       for (std::map<scanner_result_t,int>::const_iterator it = codes.begin();
@@ -136,15 +124,7 @@ int main (int argc, char* argv[])
 	  }
       }
 #ifdef BARDECODE_DEBUG
-      if (arg_output.Get() != "") {
-	Image o_image = image;
-	Draw(o_image,threshold,0,0,255);
-	
-	if (!ImageCodec::Write(arg_output.Get(), o_image)) {
-          std::cerr << "Error writing output file." << std::endl;
-          return 1;
-	}
-      }
+      down_test(image);
 #endif
       if (codes.empty())
 	++errors;

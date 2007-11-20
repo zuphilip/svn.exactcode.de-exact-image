@@ -1,7 +1,7 @@
 include build/top.make
 
-BINARY = bardecode
-BINARY_EXT = $(X_LIBEXT)
+#BINARY = bardecode
+#BINARY_EXT = $(X_LIBEXT)
 
 DEPS = 
 
