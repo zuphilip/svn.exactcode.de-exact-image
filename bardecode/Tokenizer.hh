@@ -66,10 +66,13 @@ namespace BarDecode
 
             } while ( ! end() && color == *it );
 
+#define SUBPIXEL_ADJUST
+#ifdef SUBPIXEL_ADJUST
             count -= extra;
             double extra = ( *it ?  (lum / 255.0) : (1- (lum / 255.0)));
             count += extra;
             extra = 1 - extra;
+#endif
             return token_t(color,lround(count));
         }
 
@@ -95,7 +98,9 @@ namespace BarDecode
     protected:
         const Image* img;
         PixelIterator<vertical> it;
+#ifdef SUBPIXEL_ADJUST
         double extra;
+#endif
     };
 
 }; // namespace BarDecode
