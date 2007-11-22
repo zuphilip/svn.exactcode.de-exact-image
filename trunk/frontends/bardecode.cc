@@ -103,7 +103,7 @@ int main (int argc, char* argv[])
       }
 
       if ( directions&(top_down|down_top) ) {
-          directions_t dir = (directions_t) (directions&(top_down|down_top)>>1);
+          directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
           BarDecode::BarcodeIterator<true> it(&image,threshold,ean|code128|gs1_128|code39|code25i,dir,concurrent_lines,line_skip);
           while (! it.end() ) {
               ++codes[*it];
@@ -116,11 +116,10 @@ int main (int argc, char* argv[])
 	   ++it) {
 	if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
 	  {
-	    if (multiple_files)
-	      std::cout << *file << ": ";
-	    std::cout << it->first.code << " [type: " << it->first.type
-		      << " at: (" << it->first.x << "," << it->first.y
-		      << ")]" << std::endl;
+	    if (multiple_files) std::cout << *file << ": ";
+            std::cout << it->first.code << " [type: " << it->first.type
+                << " at: (" << it->first.x << "," << it->first.y
+                << ")]" << std::endl;
 	  }
       }
 #ifdef BARDECODE_DEBUG
