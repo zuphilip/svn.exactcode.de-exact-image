@@ -57,7 +57,7 @@ namespace BarDecode
 
 #ifdef DYNAMIC_THRESHOLD
                 double mean =  sum / count+1;
-                static const int contrast_threshold = 50;
+                static const int contrast_threshold = 30;
                 if ( ! color && lum > it.get_threshold() && lum < mean - contrast_threshold) {
                     // std::cerr << "0 adjust from " << it.get_threshold() << " to ";
                     //it.set_threshold(lround(std::max((double)it.get_threshold(),std::min((mean - contrast_threshold)/2,220.0))));
@@ -69,8 +69,9 @@ namespace BarDecode
                     it.set_threshold(lround(std::max((mean + contrast_threshold),80.0)));
                     //std::cerr << it.get_threshold() << std::endl;
                 } 
-#if 0
-                else if ( color && count > 10 && lum < it.get_threshold() && lum < mean - contrast_threshold /* && it.get_threshold() > initial_threshold*/) {
+#if 1
+                //else if ( color && count > 20 && lum < it.get_threshold() && lum < mean - contrast_threshold && it.get_threshold() > initial_threshold) {
+                else if ( color && count > 50 && lum < it.get_threshold() && lum < mean - contrast_threshold /*&& it.get_threshold() > initial_threshold*/) {
                     color = false;
                     // std::cerr << "2 adjust from " << it.get_threshold() << " to ";
                     it.set_threshold(lround(mean - contrast_threshold));
