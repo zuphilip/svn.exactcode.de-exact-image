@@ -47,34 +47,34 @@ namespace BarDecode
         // modifies the paramter vector to hold result
         
         // FIXME make use of bound --> implement support in Tokenizer!
-        template<class Tokenizer>
-        uint add_bars(Tokenizer& tok, bar_vector_t& v, uint c, psize_t bound = 0)
+        template<class TIT>
+        uint add_bars(TIT& start, TIT end, bar_vector_t& v, uint c, psize_t bound = 0)
         {
             size_t old_size = v.size();
             v.resize(old_size + c);
             for (uint i = 0; i < c; ++i) {
-                if (tok.end()) {
+                if (start == end) {
                     v.resize(old_size + i);
                     return i;
                 } else {
-                    v[old_size + i] = tok.next();
+                    v[old_size + i] = *++start;
                     v.psize += v[old_size+i].second;
                 }
             }
             return c;
         }
 
-        template<class Tokenizer>
-        uint get_bars(Tokenizer& tok, bar_vector_t& v,uint c, psize_t bound = 0)
+        template<class TIT>
+        uint get_bars(TIT& start, TIT end, bar_vector_t& v,uint c, psize_t bound = 0)
         {
             v.resize(c);
             v.psize = 0;
             for (uint i = 0; i < c; ++i) {
-                if (tok.end()) {
+                if (start == end) {
                     v.resize(i);
                     return i;
                 } else {
-                    v[i] = tok.next();
+                    v[i] = *++start;
                     v.psize += v[i].second;
                 }
             }

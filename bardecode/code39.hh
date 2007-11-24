@@ -28,18 +28,18 @@ namespace BarDecode
         // Otherwith we would have needed size 2^(13 modules - 2 constant modules) = 2048.
         // ((Maybe we could safe even a bit more by directly encoding 3 of 9 ???)
 
-        template<class Tokenizer>
-        scanner_result_t scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
 
-        template<class Tokenizer>
-        scanner_result_t reverse_scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
 
         bool check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
         module_word_t get_key(const bar_vector_t& b) const;
         module_word_t reverse_get_key(const bar_vector_t& b) const;
         
-        template<class Tokenizer>
-        bool expect_n(Tokenizer& tok, psize_t old_psize) const;
+        template<class TIT>
+        bool expect_n(TIT& start, TIT end, psize_t old_psize) const;
 
         static const char DELIMITER  = 254;
         static const char no_entry = 255;
@@ -214,12 +214,12 @@ namespace BarDecode
 #endif
     }
 
-    template<class Tokenizer>
-    bool code39_t::expect_n(Tokenizer& tok, psize_t old_psize) const
+    template<class TIT>
+    bool code39_t::expect_n(TIT& start, TIT end, psize_t old_psize) const
     {
         using namespace scanner_utilities;
         bar_vector_t b(1);
-        if ( get_bars(tok,b,1) != 1 || b[0].first ) return false;
+        if ( get_bars(start,end,b,1) != 1 || b[0].first ) return false;
 #ifdef STRICT
         u_t n_l = ((double) old_psize / 15.0); // ((b.size / (6*1+3*3)) * 1
         u_t n_h = ((double) old_psize / 12.0); // ((b.size / (6*1+3*2)) * 1
@@ -230,23 +230,19 @@ namespace BarDecode
         return n_l <= b[0].second && b[0].second <= n_h;
     }
 
-    template<class Tokenizer>
-    scanner_result_t code39_t::scan(Tokenizer& tokenizer, psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code39_t::scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
-
-        // get x and y
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
 
         // try to match start marker
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(9);
-        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if (b[0].second > 0.7 * b[1].second) return scanner_result_t();
         if (b[1].second > 3.3 * b[0].second) return scanner_result_t();
 
-        if ( add_bars(tokenizer,b,7) != 7 ) return scanner_result_t();
+        if ( add_bars(start,end,b,7) != 7 ) return scanner_result_t();
         if (! check_bar_vector(b) ) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
@@ -260,14 +256,14 @@ namespace BarDecode
 
         std::string code = "";
         psize_t old_psize;
-        bool end = false;
-        while (! end) {
+        bool at_end = false;
+        while (! at_end) {
             old_psize = b.psize;
             // consume narrow separator
-            if (! expect_n(tokenizer,old_psize)) return scanner_result_t();
+            if (! expect_n(start,end,old_psize)) return scanner_result_t();
 
             // get new symbol
-            if ( get_bars(tokenizer,b,9) != 9) return scanner_result_t();
+            if ( get_bars(start,end,b,9) != 9) return scanner_result_t();
             if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
 
             key = get_key(b);
@@ -275,7 +271,7 @@ namespace BarDecode
             const char c = table[key];
             switch(c) {
             case (uint8_t) no_entry: return scanner_result_t();
-            case (uint8_t) DELIMITER: end = true; break;
+            case (uint8_t) DELIMITER: at_end = true; break;
             default: code.push_back(c);
             }
         }
@@ -283,23 +279,19 @@ namespace BarDecode
         return scanner_result_t(code39,code,x,y);
     }
 
-    template<class Tokenizer>
-    scanner_result_t code39_t::reverse_scan(Tokenizer& tokenizer, psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code39_t::reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
-
-        // get x and y // FIXME what do we expect here for reverse scans?
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
 
         // try to match start marker
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(9);
-        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if (b[0].second > 1.7 * b[1].second) return scanner_result_t();
         if (b[1].second > 1.7 * b[0].second) return scanner_result_t();
 
-        if ( add_bars(tokenizer,b,7) != 7 ) return scanner_result_t();
+        if ( add_bars(start,end,b,7) != 7 ) return scanner_result_t();
         if (! check_bar_vector(b) ) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
@@ -313,14 +305,14 @@ namespace BarDecode
 
         std::string code = "";
         psize_t old_psize;
-        bool end = false;
-        while (! end) {
+        bool at_end = false;
+        while (! at_end) {
             old_psize = b.psize;
             // consume narrow separator
-            if (! expect_n(tokenizer,old_psize)) return scanner_result_t();
+            if (! expect_n(start,end,old_psize)) return scanner_result_t();
 
             // get new symbol
-            if ( get_bars(tokenizer,b,9) != 9) return scanner_result_t();
+            if ( get_bars(start,end,b,9) != 9) return scanner_result_t();
             if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
 
             key = reverse_get_key(b);
@@ -328,7 +320,7 @@ namespace BarDecode
             const char c = table[key];
             switch(c) {
             case (uint8_t) no_entry: return scanner_result_t();
-            case (uint8_t) DELIMITER: end = true; break;
+            case (uint8_t) DELIMITER: at_end = true; break;
             default: code.push_back(c);
             }
         }

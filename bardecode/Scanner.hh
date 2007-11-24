@@ -92,6 +92,7 @@ namespace BarDecode
         typedef BarcodeIterator self_t;
         typedef scanner_result_t value_type;
         typedef Tokenizer<vertical> tokenizer_t;
+        typedef std::vector<token_t> token_line_t;
 
         static const psize_t min_quiet_psize = 7;
 
@@ -104,7 +105,12 @@ namespace BarDecode
             tokenizer(img,concurrent_lines,line_skip,threshold),
             requested_codes(requested_codes),
             directions(directions),
-            cur_barcode()
+            cur_barcode(),
+            token_line(),
+            x(),
+            y(),
+            ti(),
+            te()
         {
             if ( ! end() ) next();
         }
@@ -128,12 +134,20 @@ namespace BarDecode
 
     private:
 
+        long pixel_diff(token_line_t::const_iterator a, const token_line_t::const_iterator& b)
+        {
+            long ret = 0;
+            while( a != b ) {
+                ret += (a++)->second;
+            }
+            return ret;
+        }
+
         bool requested(code_t code) const
         {
             return code & requested_codes;
         }
 
-        // TODO considere all possibilities for unit and quiet instanciations
         void next();
 
     private:
@@ -141,6 +155,9 @@ namespace BarDecode
         codes_t requested_codes;
         directions_t directions;
         scanner_result_t cur_barcode;
+        token_line_t token_line;
+        pos_t x, y;
+        token_line_t::const_iterator ti,te;
     };
 
 }; // namespace BarDecode

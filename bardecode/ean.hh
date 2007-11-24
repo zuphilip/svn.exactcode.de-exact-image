@@ -20,8 +20,8 @@ namespace BarDecode
 
         ean_t();
         
-        template<class Tokenizer>
-        scanner_result_t scan(Tokenizer&, psize_t, directions_t dir = any_direction);
+        template<class TIT>
+        scanner_result_t scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t, directions_t dir = any_direction);
 
         DECLARE_TABLE(table,128);
         DECLARE_TABLE(ean13table,64);
@@ -101,25 +101,21 @@ namespace BarDecode
     }
 
     // scanner_result_t() indicates failure
-    template<class Tokenizer>
-    scanner_result_t ean_t::scan(Tokenizer& tokenizer, psize_t quiet_psize, directions_t dir)
+    template<class TIT>
+    scanner_result_t ean_t::scan(TIT& start, TIT end, pos_t x, pos_t y,psize_t quiet_psize, directions_t dir)
     {
         using namespace scanner_utilities;
 
         bool scan_reverted = dir & right_left;
         bool scan_normal = dir & left_right;
 
-        // get x and y
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
-
         // try to match start marker
 
         // try ean with 3 bars
         bar_vector_t b(3);
-        if ( get_bars(tokenizer,b,2) != 2) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2) return scanner_result_t();
         if ( b[0].second > 2 * b[1].second || b[0].second < 0.5 * b[1].second ) return scanner_result_t();
-        if ( add_bars(tokenizer,b,1) != 1) return scanner_result_t();
+        if ( add_bars(start,end,b,1) != 1) return scanner_result_t();
 
         // get a first guess for u
         u_t u = (double) b.psize / 3.0; // 3 is the number of modules of the start sequence
@@ -149,7 +145,7 @@ namespace BarDecode
         bool reverted = false;
         do {
             // get symbol
-            if ( get_bars(tokenizer,b,4) != 4 ) return scanner_result_t();
+            if ( get_bars(start,end,b,4) != 4 ) return scanner_result_t();
 
             // decide if to go for a symbol (7 modules) or the center_guard (4 modules)
             // FIXME FIXME FIXME Getting this right is crucial! Do not use a value that is to big
@@ -181,7 +177,7 @@ namespace BarDecode
         if ( ! symbols_count ) return scanner_result_t();
 
         // consume the next bar (it belongs to the center_guard, that we expect)
-        if (add_bars(tokenizer,b,1) != 1) return scanner_result_t();
+        if (add_bars(start,end,b,1) != 1) return scanner_result_t();
 
         // expect the center guard (with 5 modules)
         mw = get_module_word_adjust_u(b,u,5);
@@ -192,7 +188,7 @@ namespace BarDecode
         // Decode the second half of the barcode // TODO
         for (uint i = 0; i < symbols_count; ++i) {
 
-            if ( get_bars(tokenizer,b,4) != 4 ) return scanner_result_t();
+            if ( get_bars(start,end,b,4) != 4 ) return scanner_result_t();
             module_word_t mw = get_module_word_adjust_u(b,u,7);
             if ( ! mw ) return scanner_result_t();
             if (reverted) {
@@ -213,7 +209,7 @@ namespace BarDecode
         }
 
         // expect normal guard
-        if ( get_bars(tokenizer,b,3) != 3) return scanner_result_t();
+        if ( get_bars(start,end,b,3) != 3) return scanner_result_t();
         mw = get_module_word_adjust_u(b,u,3);
         if ( ! mw ) return scanner_result_t();
         result = auxtable[mw];
