@@ -364,6 +364,8 @@ namespace BarDecode
         module_word_t mw = get_module_word_adjust_u(b,u,2);
         if ( mw != 3) return scanner_result_t();
 
+        if (code.size() <= 1) return scanner_result_t();
+
         // Checksum and return result
         if (  (checksum % 103) != pre_symbol ) {
             std::cerr << "WARNING: checksum test for code128 failed on \""<< code << "\"." << std::endl;
@@ -418,6 +420,8 @@ namespace BarDecode
             if ( ! key || is_no_entry(key) ) return scanner_result_t();
             else key_list.push_front(key);
         } 
+
+        if (key_list.size() <= 1) return scanner_result_t();
 
         // decode key_list (including check-summing)
         return decode_key_list(key_list,x,y);
