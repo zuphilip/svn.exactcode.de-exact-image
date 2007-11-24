@@ -186,6 +186,7 @@ namespace BarDecode
         // TODO check for special guard (we need to implement add_bar() method
 
         // Decode the second half of the barcode // TODO
+        if (symbols_count != 6 && symbols_count != 4) return scanner_result_t();
         for (uint i = 0; i < symbols_count; ++i) {
 
             if ( get_bars(start,end,b,4) != 4 ) return scanner_result_t();
