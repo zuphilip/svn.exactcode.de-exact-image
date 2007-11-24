@@ -16,11 +16,11 @@ namespace BarDecode
         static const usize_t min_quiet_usize = 10;
         static const usize_t min_quiet_usize_right = 10;
 
-        template<class Tokenizer>
-        scanner_result_t scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
 
-        template<class Tokenizer>
-        scanner_result_t reverse_scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
 
         bool check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
         bool reverse_check_bar_vector(const bar_vector_t& b,psize_t old_psize = 0) const;
@@ -155,25 +155,21 @@ namespace BarDecode
 #endif
     }
 
-    template<class Tokenizer>
-    scanner_result_t code25i_t::scan(Tokenizer& tokenizer, psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code25i_t::scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
-
-        // get x and y // FIXME
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
 
         // try to match start marker
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(4);
-        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if (b[0].second < 0.7 * b[1].second || b[0].second > 1.3 * b[1].second) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
         if (quiet_psize < (double) b[0].second * 10 * 0.7) return scanner_result_t(); // 10 x quiet zone
 
-        if ( add_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if ( add_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if (b[0].second < 0.7 * b[2].second || b[0].second > 1.3 * b[2].second) return scanner_result_t();
         if (b[0].second < 0.7 * b[3].second || b[0].second > 1.3 * b[3].second) return scanner_result_t();
 
@@ -181,11 +177,11 @@ namespace BarDecode
 
         std::string code = "";
         psize_t old_psize = 0;
-        bool end = false;
-        while (! end) {
+        bool at_end = false;
+        while (! at_end) {
 
             // get new symbols
-            if ( get_bars(tokenizer,b,3) != 3) return scanner_result_t();
+            if ( get_bars(start,end,b,3) != 3) return scanner_result_t();
 
             // check END sequence and expect quiet zone
             if ( (b.psize / (double) b[0].second) > 2 * 0.7 &&
@@ -195,14 +191,12 @@ namespace BarDecode
                  (b.psize / (double) b[2].second) > 4 * 0.7 &&
                  (b.psize / (double) b[2].second) < 4 * 1.3) {
                 // FIXME make this in a more performant way
-                Tokenizer tok = tokenizer;
-                token_t t = tok.next();
-                if (t.second > b.psize * 2) {
+                if ((start+1)->second > b.psize * 2) {
                     break;
                 }
             }
 
-            if ( add_bars(tokenizer,b,7) != 7) return scanner_result_t();
+            if ( add_bars(start,end,b,7) != 7) return scanner_result_t();
             if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
             old_psize = b.psize;
 
@@ -221,35 +215,31 @@ namespace BarDecode
         else return scanner_result_t(code25i,code,x,y);
     }
 
-    template<class Tokenizer>
-    scanner_result_t code25i_t::reverse_scan(Tokenizer& tokenizer, psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code25i_t::reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
 
-        // get x and y // FIXME
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
-
         // try to match end marker: 1 1 2
         bar_vector_t b(3);
-        if ( get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if ( b[0].second < 0.7 * b[1].second || b[0].second > 1.3 * b[1].second ) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
         if (quiet_psize < (double) b[0].second * 10 * 0.7) return scanner_result_t(); // 10 x quiet zone
 
-        if ( add_bars(tokenizer,b,1) != 1 ) return scanner_result_t();
+        if ( add_bars(start,end,b,1) != 1 ) return scanner_result_t();
         if ( b[0].second < 0.5 * 0.7 * b[2].second || b[0].second > 0.5 * 1.3 * b[2].second ) return scanner_result_t();
 
         //u_t u = b.psize / 4.0;
 
         std::string code = "";
         psize_t old_psize = 0;
-        bool end = false;
-        while (! end) {
+        bool at_end = false;
+        while (! at_end) {
 
             // get new symbols
-            if ( get_bars(tokenizer,b,4) != 4) return scanner_result_t();
+            if ( get_bars(start,end,b,4) != 4) return scanner_result_t();
 
             // check START sequence and expect quiet zone
             if ( (b.psize / (double) b[0].second) > 4 * 0.7 &&
@@ -261,14 +251,12 @@ namespace BarDecode
                  (b.psize / (double) b[3].second) > 4 * 0.7 &&
                  (b.psize / (double) b[3].second) < 4 * 1.3) {
                 // FIXME make this in a more performant way
-                Tokenizer tok = tokenizer;
-                token_t t = tok.next();
-                if (t.second > b.psize * 2) {
+                if ((start+1)->second > b.psize * 2) {
                     break;
                 }
             }
 
-            if ( add_bars(tokenizer,b,6) != 6 ) return scanner_result_t();
+            if ( add_bars(start,end,b,6) != 6 ) return scanner_result_t();
             if (! reverse_check_bar_vector(b,old_psize) ) return scanner_result_t();
             old_psize = b.psize;
 

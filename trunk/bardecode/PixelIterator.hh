@@ -134,6 +134,10 @@ namespace BarDecode
             return lum;
         }
 
+        long get_x_size() const { return img->w; }
+        long get_y_size() const { return img->h; }
+        long get_line_length() const { return get_x_size(); }
+
     protected:
         const Image* img;
         int it_size;
@@ -145,7 +149,6 @@ namespace BarDecode
         mutable double lum;
         mutable bool cache;
         mutable bool valid_cache;
-
     }; // class PixelIterator<vertical = true>
 
     // vertical iteration
@@ -268,6 +271,10 @@ namespace BarDecode
             }
             return lum;
         }
+
+        long get_x_size() const { return img->w; }
+        long get_y_size() const { return img->h; }
+        long get_line_length() const { return get_y_size(); }
 
     protected:
         const Image* img;

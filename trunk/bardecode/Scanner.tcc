@@ -19,7 +19,7 @@ namespace BarDecode
     };
 
     // TODO make all tables static (would be nice to have something like designated initializers
-    // like in C99 in C++ as well...) We do not have. Hecne we need to work around.
+    // like in C99 in C++ as well...) We do not have. Hence we need to work around.
     // possibly by encapsulating the tables into objects with constructors that
     // perform the initialization.
     template<bool v>
@@ -27,104 +27,112 @@ namespace BarDecode
     {
         assert( ! end());
 
-        while ( ! end() ) {
+        pos_t& vx = v ? y : x;
+        pos_t& vy = v ? x : y;
 
-            token_t t = tokenizer.next();
+        while (! end() ) {
 
-            // goto next white space of psize >= min_quiet_psize
-            while (t.first || t.second < min_quiet_psize) { // while black ...
-                if ( end() ) return;
-                else t = tokenizer.next();
+            if (ti == te) {
+                vx = 0;
+                vy = v ? tokenizer.get_x() : tokenizer.get_y();
+                tokenizer.next_line(token_line);
+                ti = token_line.begin();
+                te = token_line.end();
+            }
+
+            // goto next white space of psize >= min_quiet_psize, that is followed by black
+
+            if ( ti+1 == te ) { ++ti; continue; }
+            token_t t = *ti;
+            token_t lookahead = *(ti+1);
+
+            while (! lookahead.first || t.first || t.second < min_quiet_psize) { // while black ...
+                if ( end()) return;
+                else {
+                    vx += t.second;
+                    t = lookahead;
+                    lookahead = *((++ti)+1);
+
+                }
             }
             assert(! t.first); // assert white
 
             /* ***************************** */
             // preliminary checks
 
-            // FIXME move some of the computations into tokenizer by stopping the tokenizer
-            // on linebreaks?
-            
-            // FIXME handle linebreaks in scanners: fail on linebreak;
-
-
-            // consider line breaks; (alternatively we can stop the tokenizer at each linebreak!)
-            psize_t quiet_psize = (pos_t) t.second < tokenizer.get_x() ? t.second : tokenizer.get_x();
-
             // each (non empty) Barcode has at least 24 modules (including both quiet zones)!
-            if (tokenizer.get_x() + 17 > tokenizer.get_img()->w ) continue;
+            if (te - ti < 24) { ti = te; continue; }
+
+            psize_t quiet_psize = t.second;
 
             // check quiet_zone against minimal requirement from all code types
-            tokenizer_t tmp_tok = tokenizer;
-            if ( end() ) return;
-            token_t lookahead = tmp_tok.next();
-            if (lookahead.second * 3 > quiet_psize) {
-                tokenizer = tmp_tok;
-                continue;
-            }
-
-            // line break at black bar:
-            if (tmp_tok.get_x() <= (pos_t) lookahead.second) continue;
+            if (lookahead.second * 3 > quiet_psize) { vx += t.second; ++ti; continue;}
 
             // not enough space left on line for minimal barcode width:
-            if (lookahead.second/3.0 * 14 + tokenizer.get_x() >= tokenizer.get_img()->w) continue;
+            //if (lookahead.second/3.0 * 14 + tokenizer.get_x() >= tokenizer.get_img()->w) continue;
 
             /* ***************************** */
 
-            tokenizer_t backup_tokenizer = tokenizer;
+            token_line_t::const_iterator backup_i = ti;
             scanner_result_t result;
             // try scanning for all requested barcode types
             if (directions&left_right && requested(code39)) {
-                tokenizer =  backup_tokenizer;
-                if ((result = code39_impl.scan(tokenizer,quiet_psize))) {
+                if ((result = code39_impl.scan(ti,te,x+ti->second,y,quiet_psize))) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             }
             if ( directions&right_left && requested(code39)) {
-                tokenizer =  backup_tokenizer;
-                if ((result = code39_impl.reverse_scan(tokenizer,quiet_psize))) {
+                ti =  backup_i;
+                if ((result = code39_impl.reverse_scan(ti,te,x+ti->second,y,quiet_psize))) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             }
             if ( directions&left_right && requested(code25i)) {
-                tokenizer =  backup_tokenizer;
-                if ((result = code25i_impl.scan(tokenizer,quiet_psize))) {
+                ti =  backup_i;
+                if ((result = code25i_impl.scan(ti,te,x+ti->second,y,quiet_psize))) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             }
             if ( directions&right_left && requested(code25i)) {
-                tokenizer =  backup_tokenizer;
-                if ((result = code25i_impl.reverse_scan(tokenizer,quiet_psize))) {
+                ti =  backup_i;
+                if ((result = code25i_impl.reverse_scan(ti,te,x+ti->second,y,quiet_psize))) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             }
             if ( directions&left_right && requested(code128)) {
-                tokenizer =  backup_tokenizer;
-                if (result = code128_impl.scan(tokenizer,quiet_psize)) {
+                ti =  backup_i;
+                if (result = code128_impl.scan(ti,te,x+ti->second,y,quiet_psize)) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             } 
             if ( directions&right_left && requested(code128)) {
-                tokenizer =  backup_tokenizer;
-                if (result = code128_impl.reverse_scan(tokenizer,quiet_psize)) {
+                ti =  backup_i;
+                if (result = code128_impl.reverse_scan(ti,te,x+ti->second,y,quiet_psize)) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
             } 
             if ( directions&(left_right|right_left) && requested(ean) ) {
-                tokenizer =  backup_tokenizer;
-                if ((result = ean_impl.scan(tokenizer,quiet_psize,directions)) ) {
+                ti =  backup_i;
+                if ((result = ean_impl.scan(ti,te,x+ti->second,y,quiet_psize,directions)) ) {
                     cur_barcode = result;
+                    vx += pixel_diff(backup_i,ti);
                     return;
                 }
-            } 
-            tokenizer = backup_tokenizer;
-
-            if ( end() ) return;
+            }
+            vx += backup_i->second;
+            ti = ++backup_i;
         }
     }    
 }; // namespace BarDecode

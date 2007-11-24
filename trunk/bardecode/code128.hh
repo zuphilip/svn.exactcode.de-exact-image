@@ -18,11 +18,11 @@ namespace BarDecode
 
         code128_t();
 
-        template<class Tokenizer>
-        scanner_result_t scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
         
-        template<class Tokenizer>
-        scanner_result_t reverse_scan(Tokenizer&, psize_t) const;
+        template<class TIT>
+        scanner_result_t reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
 
         std::string decode128(code_set_t code_set, module_word_t mw) const; 
         code_set_t shift_code_set(code_set_t code_set) const;
@@ -272,20 +272,16 @@ namespace BarDecode
     // TODO FNC3 initialize or reprogram the barcode reader with the current code
     // TODO FNC4 switch to extended ascii (latin-1 as default)
     //      (quiet complicated usage refer to GS1 spec 5.3.3.4.2)
-    template<class Tokenizer>
-    scanner_result_t code128_t::scan(Tokenizer& tokenizer,psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code128_t::scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
 
-        // get x and y
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
-
         // try to match start marker
         bar_vector_t b(6);
-        if (get_bars(tokenizer,b,2) != 2 ) return scanner_result_t();
+        if (get_bars(start,end,b,2) != 2 ) return scanner_result_t();
         if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
-        if ( add_bars(tokenizer,b,4) != 4) return scanner_result_t();
+        if ( add_bars(start,end,b,4) != 4) return scanner_result_t();
 
         // get a first guess for u
         u_t u = (double) b.psize / 11; // 11 is the number of modules of the start sequence
@@ -312,12 +308,12 @@ namespace BarDecode
 
         std::string code = "";
         code_t type = code128;
-        bool end = false;
+        bool at_end = false;
         bool shift = false;
         long pos = 0;
-        while (! end) { 
+        while (! at_end) { 
             // get symbol
-            if ( get_bars(tokenizer,b,6) != 6 ) return scanner_result_t();
+            if ( get_bars(start,end,b,6) != 6 ) return scanner_result_t();
             key = get_key(get_module_word_adjust_u(b,u,11));
             if ( ! key ) return scanner_result_t();
             result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), key);
@@ -327,7 +323,7 @@ namespace BarDecode
             case 2: code += result; break;
             case 1: 
                     switch (result[0]) {
-                    case END: end = true; break;
+                    case END: at_end = true; break;
                     case SHIFT: shift = true; break;
                     case CODEA: cur_code_set = code_set_a; break;
                     case CODEB: cur_code_set = code_set_b; break;
@@ -350,7 +346,7 @@ namespace BarDecode
             }
 
             // update checksum
-            if ( ! end ) {
+            if ( ! at_end ) {
                 checksum += pos * pre_symbol;
                 pre_symbol = table[key];
             }
@@ -364,7 +360,7 @@ namespace BarDecode
         } 
 
         // expect a black bar of 2 modules to complete end
-        if ( get_bars(tokenizer,b,1) != 1) return scanner_result_t();
+        if ( get_bars(start,end,b,1) != 1) return scanner_result_t();
         module_word_t mw = get_module_word_adjust_u(b,u,2);
         if ( mw != 3) return scanner_result_t();
 
@@ -389,23 +385,19 @@ namespace BarDecode
     // 5. until: starta, startb, or startc is found
     // 6. decode keys in reverted order and compute checksum (using code from loop body above)
     // return
-    template<class Tokenizer>
-    scanner_result_t code128_t::reverse_scan(Tokenizer& tokenizer,psize_t quiet_psize) const
+    template<class TIT>
+    scanner_result_t code128_t::reverse_scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t quiet_psize) const
     {
         using namespace scanner_utilities;
-
-        // get x and y
-        pos_t x = tokenizer.get_x();
-        pos_t y = tokenizer.get_y();
 
         // try to match end marker
 
         // expect a black bar of 2 modules
         bar_vector_t b(7);
-        if ( get_bars(tokenizer,b,2) != 2) return scanner_result_t();
+        if ( get_bars(start,end,b,2) != 2) return scanner_result_t();
         if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
 
-        if ( add_bars(tokenizer,b,5) != 5) return scanner_result_t();
+        if ( add_bars(start,end,b,5) != 5) return scanner_result_t();
 
         // get a first guess for u
         u_t u = (double) b.psize / 13; // 13 is the number of modules of the end sequence
@@ -421,7 +413,7 @@ namespace BarDecode
         std::list<module_word_t> key_list;
         while (! is_start_key(key) ) { 
             // get symbol
-            if ( get_bars(tokenizer,b,6) != 6 ) return scanner_result_t();
+            if ( get_bars(start,end,b,6) != 6 ) return scanner_result_t();
             key = get_key(reverse_get_module_word_adjust_u(b,u,11));
             if ( ! key || is_no_entry(key) ) return scanner_result_t();
             else key_list.push_front(key);
