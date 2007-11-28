@@ -27,7 +27,7 @@ int getNextHeaderNumber (std::istream* stream)
   case '\r':
     stream->get (); // consume silently
     // comment line?
-    if (stream->peek () == '#') {
+    while (stream->peek () == '#') {
       std::string str;
       std::getline (*stream, str); // consume comment line
     }
