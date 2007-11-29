@@ -33,6 +33,8 @@
 
 #include "Colorspace.hh"
 
+#include "low-level.hh"
+
 #include "scale.hh"
 #include "crop.hh"
 #include "rotate.hh"
@@ -394,6 +396,12 @@ bool convert_invert (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_deinterlace (const Argument<bool>& arg)
+{
+  deinterlace (image);
+  return true;
+}
+
 bool convert_background (const Argument<std::string>& arg)
 {
   // parse
@@ -647,6 +655,11 @@ int main (int argc, char* argv[])
   arg_invert.Bind (convert_invert);
   arglist.Add (&arg_invert);
 
+  Argument<bool> arg_deinterlace ("", "deinterlace",
+				  "shuffleg every 2nd line",
+				  0, 0, true, true);
+  arg_deinterlace.Bind (convert_deinterlace);
+  arglist.Add (&arg_deinterlace);
 
   Argument<std::string> arg_background ("", "background",
 					"background color used for operations",
