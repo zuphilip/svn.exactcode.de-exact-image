@@ -46,15 +46,13 @@ namespace BarDecode
             token_t t = *ti;
             token_t lookahead = *(ti+1);
 
-            while (! lookahead.first || t.first || t.second < min_quiet_psize) { // while black ...
-                if ( end()) return;
-                else {
-                    vx += t.second;
-                    t = lookahead;
-                    lookahead = *((++ti)+1);
-
-                }
+            while ((! lookahead.first || t.first || t.second < min_quiet_psize) && (++ti + 1 != te) ) { // while black ...
+                vx += t.second;
+                t = lookahead;
+                lookahead = *(ti+1);
             }
+            if ( ti+1 == te ) { ++ti; continue; }
+            
             assert(! t.first); // assert white
 
             /* ***************************** */
