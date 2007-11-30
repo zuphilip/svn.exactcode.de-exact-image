@@ -1,6 +1,8 @@
 #ifndef _TOKENIZER_HH_
 #define _TOKENIZER_HH_
 
+#define NDEBUG
+
 #include <utility>
 #include <assert.h>
 
@@ -56,7 +58,7 @@ namespace BarDecode
 #endif
 
 #ifdef DYNAMIC_THRESHOLD
-                double mean =  sum / count+1;
+                double mean =  sum / count;
                 static const int contrast_threshold = 30;
                 if ( ! color && lum > it.get_threshold() && lum < mean - contrast_threshold) {
                     // std::cerr << "0 adjust from " << it.get_threshold() << " to ";
