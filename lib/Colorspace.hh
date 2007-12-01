@@ -1,6 +1,8 @@
 #ifndef COLORSPACE_HH
 #define COLORSPACE_HH
 
+#include "Image.hh"
+
 void normalize (Image& image, unsigned char low = 0, unsigned char high = 0);
 
 void colorspace_rgb8_to_gray8 (Image& image);
