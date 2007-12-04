@@ -64,9 +64,10 @@ namespace BarDecode
                         img_it[i] = img_it[i].at(x,y+(int)i);
                         *img_it[i];
                     }
-                } else if ( todo <= 0 ) {
+                } else if ( todo <= line_skip ) {
                     // we are at the end
-                    ++img_it[it_size-1];
+                    //++img_it[it_size-1];
+                    img_it[it_size-1] = img->end();
                 } else {
                     y += line_skip;
                     for (uint i = 0; i < it_size; ++i) {
@@ -203,7 +204,7 @@ namespace BarDecode
                         img_it[i] = img_it[i].at(x+(int) i,y);
                         *img_it[i];
                     }
-                } else if ( todo <= 0 ) {
+                } else if ( todo <= line_skip ) {
                     img_it[it_size-1] = img->end();
                 } else {
                     x += line_skip;
