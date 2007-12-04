@@ -165,18 +165,22 @@ namespace BarDecode
             module_word_t mw = get_module_word(b,u,m);
             if ( ! mw ) {
                 // try to adjust u
-                u_t new_u = b.psize / m;
+                u_t new_u = b.psize / (double) m;
 
                 // if nothing changes it makes no sense to try again
                 if (new_u == u) return 0;
 
                 if ( fabs(new_u - u) <= u*0.4 ) {
-                    u = (new_u*2 + u) / 3;
+                    u = (new_u*2.0 + u) / 3.0;
                 } else {
                     return 0;
                 }
                 // and try again
                 mw = get_module_word(b,u,m);
+                if ( ! mw ) {
+                    mw = get_module_word(b,u*0.75,m);
+                    if (! mw ) mw = get_module_word(b,u*1.25,m);
+                }
                 return mw;
             }
             return mw;
@@ -187,18 +191,22 @@ namespace BarDecode
             module_word_t mw = reverse_get_module_word(b,u,m);
             if ( ! mw ) {
                 // try to adjust u
-                u_t new_u = b.psize / m;
+                u_t new_u = b.psize / (double) m;
 
                 // if nothing changes it makes no sense to try again
                 if (new_u == u) return 0;
 
                 if ( fabs(new_u - u) <= u*0.4 ) {
-                    u = (new_u*2 + u) / 3;
+                    u = (new_u*2.0 + u) / 3.0;
                 } else {
                     return 0;
                 }
                 // and try again
                 mw = reverse_get_module_word(b,u,m);
+                if ( ! mw ) {
+                    mw = reverse_get_module_word(b,u*0.75,m);
+                    if (! mw ) mw = reverse_get_module_word(b,u*1.25,m);
+                }
                 return mw;
             }
             return mw;
