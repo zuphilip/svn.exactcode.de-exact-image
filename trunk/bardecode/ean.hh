@@ -1,6 +1,8 @@
 #ifndef _EAN_HH_
 #define _EAN_HH_
 
+#define NDEBUG
+
 #include "scanner_utils.hh"
 
 namespace BarDecode
@@ -16,7 +18,8 @@ namespace BarDecode
             add_on_delineator = 5
         };
 
-        static const usize_t min_quiet_usize = 7;
+        static const usize_t min_quiet_usize = 5;
+//        static const usize_t min_quiet_usize = 7;
 
         ean_t();
         
