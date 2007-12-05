@@ -44,7 +44,8 @@ namespace BarDecode
         static const char DELIMITER  = 254;
         static const char no_entry = 255;
 
-        static const usize_t min_quiet_usize = 10;
+        static const usize_t min_quiet_usize = 5;
+        //static const usize_t min_quiet_usize = 10;
         static const usize_t min_quiet_usize_right = 10;
 
         DECLARE_TABLE(table,512);
@@ -239,14 +240,15 @@ namespace BarDecode
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(9);
         if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
-        if (b[0].second > 0.7 * b[1].second) return scanner_result_t();
-        if (b[1].second > 3.3 * b[0].second) return scanner_result_t();
+        if (b[0].second > 0.8 * b[1].second) return scanner_result_t();
+        if (b[1].second > 3.5 * b[0].second) return scanner_result_t();
 
         if ( add_bars(start,end,b,7) != 7 ) return scanner_result_t();
         if (! check_bar_vector(b) ) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
-        if (quiet_psize < (double) b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
+        //if (quiet_psize < (double) b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
+        if (quiet_psize < (double) b.psize * 0.4) return scanner_result_t(); // 10 x quiet zone
 
         // expect start sequence
         module_word_t key = get_key(b);
