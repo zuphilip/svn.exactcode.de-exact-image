@@ -127,7 +127,7 @@ namespace BarDecode
         if ( u > max_u<ean_t>(quiet_psize) ) return scanner_result_t();
 
         // expect start sequence
-        module_word_t mw = get_module_word(b,u,3);
+        module_word_t mw = get_module_word_adjust_u(b,u,3);
         char result = auxtable[mw];
         std::string code = "";
         if (result != normal_guard) return scanner_result_t();
