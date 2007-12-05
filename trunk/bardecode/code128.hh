@@ -280,8 +280,13 @@ namespace BarDecode
         // try to match start marker
         bar_vector_t b(6);
         if (get_bars(start,end,b,2) != 2 ) return scanner_result_t();
+
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 %%%%%%%%%%%%%" << std::endl;
+
         if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
         if ( add_bars(start,end,b,4) != 4) return scanner_result_t();
+
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 0" << std::endl;
 
         // get a first guess for u
         u_t u = (double) b.psize / 11; // 11 is the number of modules of the start sequence
@@ -289,9 +294,16 @@ namespace BarDecode
         // check if u is within max_u imposed by quiet_zone
         if ( u > max_u<code128_t>(quiet_psize) ) return scanner_result_t();
 
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 1" << std::endl;
+
         // expect start sequence
         code_set_t cur_code_set;
-        module_word_t key = get_key(get_module_word(b,u,11));
+        module_word_t key = get_key(get_module_word_adjust_u(b,u,11));
+
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 b: "; debug::print_bar_vector(b);
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 mw: " << get_module_word(b,u,11) << std::endl;
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << std::endl;
+
         std::string result = decode128(code_set_a,key);
 
         switch (result[0]) {
@@ -300,6 +312,8 @@ namespace BarDecode
         case STARTC: cur_code_set = code_set_c; break;
         default: return scanner_result_t();
         }
+
+        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 2 result: " << result << std::endl;
 
         // initialize checksum:
         long checksum = table[key]; 
@@ -315,7 +329,15 @@ namespace BarDecode
             // get symbol
             if ( get_bars(start,end,b,6) != 6 ) return scanner_result_t();
             key = get_key(get_module_word_adjust_u(b,u,11));
+
+            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 b: "; debug::print_bar_vector(b);
+            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 mw: " << get_module_word_adjust_u(b,u,11) << std::endl;
+            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << std::endl;
+
             if ( ! key ) return scanner_result_t();
+
+            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 3" << std::endl;
+
             result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), key);
             shift = false;
             switch (result.size()) {

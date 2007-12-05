@@ -163,52 +163,92 @@ namespace BarDecode
         module_word_t get_module_word_adjust_u(const bar_vector_t& b, u_t& u, usize_t m)
         {
             module_word_t mw = get_module_word(b,u,m);
-            if ( ! mw ) {
+            if (mw) goto end;
+
+            {
                 // try to adjust u
                 u_t new_u = b.psize / (double) m;
 
                 // if nothing changes it makes no sense to try again
-                if (new_u == u) return 0;
-
-                if ( fabs(new_u - u) <= u*0.4 ) {
-                    u = (new_u*2.0 + u) / 3.0;
-                } else {
-                    return 0;
+                if (new_u != u) {
+                    if ( fabs(new_u - u) <= u*0.4 ) {
+                        u = (new_u*2.0 + u) / 3.0;
+                    } else {
+                        return 0;
+                    }
+                    mw = get_module_word(b,u,m);
                 }
-                // and try again
-                mw = get_module_word(b,u,m);
-                if ( ! mw ) {
-                    mw = get_module_word(b,u*0.75,m);
-                    if (! mw ) mw = get_module_word(b,u*1.25,m);
-                }
-                return mw;
             }
+            if (mw) goto end;
+
+            mw = get_module_word(b,u*0.75,m);
+            if (mw) goto end;
+            mw = get_module_word(b,u*1.25,m);
+            if (mw) goto end;
+            {
+                bar_vector_t b_tmp(b);
+                for (size_t i = 0; i < b_tmp.size(); ++i) {
+                    if (b_tmp[i].first) b_tmp[i].second += 1;
+                    else b_tmp[i].second -= 1;
+                }
+                mw = get_module_word(b_tmp,u,m);
+            }
+            if (mw) goto end;
+            {
+                bar_vector_t b_tmp2(b);
+                for (size_t i = 0; i < b_tmp2.size(); ++i) {
+                    if (! b_tmp2[i].first) b_tmp2[i].second += 1;
+                    else b_tmp2[i].second -= 1;
+                }
+                mw = get_module_word(b_tmp2,u,m);
+            }
+end:
             return mw;
         }
 
         module_word_t reverse_get_module_word_adjust_u(const bar_vector_t& b, u_t& u, usize_t m)
         {
             module_word_t mw = reverse_get_module_word(b,u,m);
-            if ( ! mw ) {
+            if (mw) goto end;
+            
+            {
                 // try to adjust u
                 u_t new_u = b.psize / (double) m;
 
                 // if nothing changes it makes no sense to try again
-                if (new_u == u) return 0;
-
-                if ( fabs(new_u - u) <= u*0.4 ) {
-                    u = (new_u*2.0 + u) / 3.0;
-                } else {
-                    return 0;
+                if (new_u != u) {
+                    if ( fabs(new_u - u) <= u*0.4 ) {
+                        u = (new_u*2.0 + u) / 3.0;
+                    } else {
+                        return 0;
+                    }
+                    mw = get_module_word(b,u,m);
                 }
-                // and try again
-                mw = reverse_get_module_word(b,u,m);
-                if ( ! mw ) {
-                    mw = reverse_get_module_word(b,u*0.75,m);
-                    if (! mw ) mw = reverse_get_module_word(b,u*1.25,m);
-                }
-                return mw;
             }
+            if (mw) goto end;
+
+            mw = get_module_word(b,u*0.75,m);
+            if (mw) goto end;
+            mw = get_module_word(b,u*1.25,m);
+            if (mw) goto end;
+            {
+                bar_vector_t b_tmp(b);
+                for (size_t i = 0; i < b_tmp.size(); ++i) {
+                    if (b_tmp[i].first) b_tmp[i].second += 1;
+                    else b_tmp[i].second -= 1;
+                }
+                mw = get_module_word(b_tmp,u,m);
+            }
+            if (mw) goto end;
+            {
+                bar_vector_t b_tmp2(b);
+                for (size_t i = 0; i < b_tmp2.size(); ++i) {
+                    if (! b_tmp2[i].first) b_tmp2[i].second += 1;
+                    else b_tmp2[i].second -= 1;
+                }
+                mw = get_module_word(b_tmp2,u,m);
+            }
+end:
             return mw;
         }
 
