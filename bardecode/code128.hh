@@ -240,7 +240,7 @@ namespace BarDecode
                 return std::string(1,aaux[c-96]);
             }
             break;
-        default: assert(false);
+        default: assert(false); return "";
         }
     }
 
