@@ -13,7 +13,7 @@ namespace BarDecode
         static const char no_entry = 255;
         enum code_set_t { code_set_a, code_set_b, code_set_c };
      
-        static const usize_t min_quiet_usize = 10; 
+        static const usize_t min_quiet_usize = 5; 
         static const usize_t min_quiet_usize_right = 10;
 
         code128_t();
