@@ -41,6 +41,10 @@ namespace BarDecode
 
             result.clear();
 
+            it.set_threshold(initial_threshold);
+
+            //std::cerr << "========== 0 " << it.get_threshold() <<  std::endl;
+
             bool color = *it;
             double count = 1;
             double lum;
@@ -59,12 +63,13 @@ namespace BarDecode
 
 #ifdef DYNAMIC_THRESHOLD
                 double mean =  sum / count;
+                //std::cerr << "---------------- lum=" << lum << " sum=" << sum << " count=" << count << " mean=" << mean << std::endl;
                 static const int contrast_threshold = 30;
                 if ( ! color && lum > it.get_threshold() && lum < mean - contrast_threshold) {
-                    // std::cerr << "0 adjust from " << it.get_threshold() << " to ";
+                    //std::cerr << "0 adjust from " << it.get_threshold() << " to ";
                     //it.set_threshold(lround(std::max((double)it.get_threshold(),std::min((mean - contrast_threshold)/2,220.0))));
                     it.set_threshold(lround(std::min((mean - contrast_threshold),220.0)));
-                    //std::cerr << it.get_threshold() << std::endl;
+                    //std::cerr << it.get_threshold() << " mean: " << mean << std::endl;
                 } else if ( color && lum < it.get_threshold() && lum > mean + contrast_threshold) {
                     //std::cerr << "1 adjust from " << it.get_threshold() << " to ";
                     //it.set_threshold(lround(std::min((double)it.get_threshold(),std::max((mean + contrast_threshold)/2,80.0))));
@@ -75,7 +80,7 @@ namespace BarDecode
                 //else if ( color && count > 20 && lum < it.get_threshold() && lum < mean - contrast_threshold && it.get_threshold() > initial_threshold) {
                 else if ( color && count > 50 && lum < it.get_threshold() && lum < mean - contrast_threshold /*&& it.get_threshold() > initial_threshold*/) {
                     color = false;
-                    // std::cerr << "2 adjust from " << it.get_threshold() << " to ";
+                    //std::cerr << "2 adjust from " << it.get_threshold() << " to ";
                     it.set_threshold(lround(mean - contrast_threshold));
                     //it.set_threshold(initial_threshold);
                     //std::cerr << it.get_threshold() << std::endl;
