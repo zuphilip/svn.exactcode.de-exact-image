@@ -395,7 +395,11 @@ namespace BarDecode
             return scanner_result_t();
         } else {
             // remove checksum char from end of code
-            code.resize(code.size()-1);
+            if (cur_code_set == code_set_c) {
+                code.resize(code.size()-2);
+            } else {
+                code.resize(code.size()-1);
+            }
             return scanner_result_t(type,code,x,y);
         }
     }
