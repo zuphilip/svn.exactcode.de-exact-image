@@ -14,7 +14,7 @@ namespace BarDecode
         enum code_set_t { code_set_a, code_set_b, code_set_c };
      
         static const usize_t min_quiet_usize = 5; 
-        static const usize_t min_quiet_usize_right = 10;
+        static const usize_t min_quiet_usize_right = 5;
 
         code128_t();
 
@@ -281,7 +281,7 @@ namespace BarDecode
         bar_vector_t b(6);
         if (get_bars(start,end,b,2) != 2 ) return scanner_result_t();
 
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 %%%%%%%%%%%%%" << std::endl;
+        // std::cerr << "\n%%%%%%%%%%%%%%%%%%% code128 %%%%%%%%%%%%%" << std::endl;
 
         if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
         if ( add_bars(start,end,b,4) != 4) return scanner_result_t();
@@ -332,13 +332,14 @@ namespace BarDecode
 
             //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 b: "; debug::print_bar_vector(b);
             //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 mw: " << get_module_word_adjust_u(b,u,11) << std::endl;
-            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << std::endl;
-
             if ( ! key ) return scanner_result_t();
 
             //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 3" << std::endl;
 
             result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), key);
+
+            // std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << ", result: " << result << std::endl;
+
             shift = false;
             switch (result.size()) {
             case 0: return scanner_result_t();

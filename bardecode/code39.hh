@@ -46,7 +46,7 @@ namespace BarDecode
 
         static const usize_t min_quiet_usize = 5;
         //static const usize_t min_quiet_usize = 10;
-        static const usize_t min_quiet_usize_right = 10;
+        static const usize_t min_quiet_usize_right = 5;
 
         DECLARE_TABLE(table,512);
         DECLARE_TABLE(aux,128);
