@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <cctype>
 
 #include "ArgumentList.hh"
 #include "Codecs.hh"
@@ -25,13 +26,26 @@ void down_test(Image& img)
 
 using namespace BarDecode;
 
-struct comp {
-    bool operator() (const scanner_result_t& a, const scanner_result_t& b) const
+namespace {
+
+    struct comp {
+        bool operator() (const scanner_result_t& a, const scanner_result_t& b) const
+        {
+            if (a.type < b.type) return true;
+            else if (a.type > b.type) return false;
+            else return (a.code < b.code);
+        }
+    };
+
+    std::string filter_non_printable(const std::string& s)
     {
-        if (a.type < b.type) return true;
-        else if (a.type > b.type) return false;
-        else return (a.code < b.code);
+        std::string result;
+        for (size_t i = 0; i < s.size(); ++i) {
+            if ( std::isprint(s[i]) ) result.push_back(s[i]);
+        }
+        return result;
     }
+
 };
 
 int main (int argc, char* argv[])
@@ -117,7 +131,7 @@ int main (int argc, char* argv[])
 	if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
 	  {
 	    if (multiple_files) std::cout << *file << ": ";
-            std::cout << it->first.code << " [type: " << it->first.type
+            std::cout << filter_non_printable(it->first.code) << " [type: " << it->first.type
                 << " at: (" << it->first.x << "," << it->first.y
                 << ")]" << std::endl;
 	  }
