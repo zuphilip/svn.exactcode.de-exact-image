@@ -154,7 +154,7 @@ namespace BarDecode
         u_t w_l = ((double) b.psize / 6.0);  // ((b.size / (6*1+3*2)) * 2
         u_t w_h = ((double) b.psize / 5.0);   // ((b.size / (6*1+3*3)) * 3
 #else
-        u_t n_l = ((double) b.psize / 25.0);
+        u_t n_l = ((double) b.psize / 30.0);
         u_t n_h = ((double) b.psize / 8.0);
         u_t w_l = ((double) b.psize / 7.9);
         u_t w_h = ((double) b.psize / 1.0);
@@ -178,7 +178,7 @@ namespace BarDecode
         u_t w_l = ((double) b.psize / 6.0);  // ((b.size / (6*1+3*2)) * 2
         u_t w_h = ((double) b.psize / 5.0);   // ((b.size / (6*1+3*3)) * 3
 #else
-        u_t n_l = ((double) b.psize / 25.0);
+        u_t n_l = ((double) b.psize / 30.0);
         u_t n_h = ((double) b.psize / 8.0);
         u_t w_l = ((double) b.psize / 7.9);
         u_t w_h = ((double) b.psize / 1.0);
@@ -225,7 +225,7 @@ namespace BarDecode
         u_t n_l = ((double) old_psize / 15.0); // ((b.size / (6*1+3*3)) * 1
         u_t n_h = ((double) old_psize / 12.0); // ((b.size / (6*1+3*2)) * 1
 #else
-        u_t n_l = ((double) old_psize / 25.0);
+        u_t n_l = ((double) old_psize / 30.0);
         u_t n_h = ((double) old_psize / 7.0);
 #endif
         return n_l <= b[0].second && b[0].second <= n_h;
@@ -290,14 +290,14 @@ namespace BarDecode
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(9);
         if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
-        if (b[0].second > 1.7 * b[1].second) return scanner_result_t();
-        if (b[1].second > 1.7 * b[0].second) return scanner_result_t();
+        if (b[0].second > 1.8 * b[1].second) return scanner_result_t();
+        if (b[1].second > 1.8 * b[0].second) return scanner_result_t();
 
         if ( add_bars(start,end,b,7) != 7 ) return scanner_result_t();
         if (! check_bar_vector(b) ) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
-        if (quiet_psize < (double) b.psize * 0.7) return scanner_result_t(); // 10 x quiet zone
+        if (quiet_psize < (double) b.psize * 0.4) return scanner_result_t(); // 10 x quiet zone
 
         // expect start sequence
         module_word_t key = reverse_get_key(b);
