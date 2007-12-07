@@ -153,7 +153,8 @@ namespace BarDecode
             // decide if to go for a symbol (7 modules) or the center_guard (4 modules)
             // FIXME FIXME FIXME Getting this right is crucial! Do not use a value that is to big
             if ( symbols_count == 6 ) break;
-            if ( symbols_count == 4 && fabs(((double)b.psize / 4.0) - u) <= (u * 0.3) ) break;
+            //if ( symbols_count == 4 && fabs(((double)b.psize / 4.0) - u) <= (u * 0.25) ) break;
+            if ( symbols_count == 4 && get_module_word(b,u,4) ) break;
            
             // lets assume 7 modules
             module_word_t mw = get_module_word_adjust_u(b,u,7);
