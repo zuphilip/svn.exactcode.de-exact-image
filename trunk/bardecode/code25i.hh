@@ -15,7 +15,7 @@ namespace BarDecode
 
         static const usize_t min_quiet_usize = 5;
         //static const usize_t min_quiet_usize = 10;
-        static const usize_t min_quiet_usize_right = 10;
+        static const usize_t min_quiet_usize_right = 5;
 
         template<class TIT>
         scanner_result_t scan(TIT& start, TIT end, pos_t x, pos_t y, psize_t) const;
