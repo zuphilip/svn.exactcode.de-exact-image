@@ -98,7 +98,7 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im)
   
   im.bps = 16;
   im.spp = 3;
-  im.New(width, height);
+  im.resize(width, height);
   
   // the non-linear gamma by default
   uint16_t lut [0x10000];

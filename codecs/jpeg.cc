@@ -444,7 +444,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   /* JSAMPLEs per row in output buffer */
   int row_stride = cinfo->output_width * cinfo->output_components;
 
-  image->New (image->w, image->h);
+  image->resize (image->w, image->h);
   
   /* Step 6: jpeg_read_scanlines(...); */
   

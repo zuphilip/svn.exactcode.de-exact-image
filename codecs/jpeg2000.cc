@@ -210,7 +210,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   std::cout << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
-  im.New (im.w, im.h);
+  im.resize (im.w, im.h);
   uint8_t* data = im.getRawData ();
   uint8_t* data_ptr = data;
 

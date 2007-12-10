@@ -82,7 +82,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
   image.xres = image.yres = 0;
   
   // allocate data, if necessary
-  image.New (image.w, image.h);
+  image.resize (image.w, image.h);
   
   // consume the left over spaces and newline 'till the data begins
   {

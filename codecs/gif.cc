@@ -52,7 +52,7 @@ bool GIFCodec::readImage (std::istream* stream, Image& image)
   image.bps = 8;
   image.xres = 0;
   image.yres = 0;
-  image.New (GifFile->SWidth,GifFile->SHeight);
+  image.resize (GifFile->SWidth,GifFile->SHeight);
   
   /* Scan the content of the GIF file and load the image(s) in: */
   do {
