@@ -1,6 +1,10 @@
 #ifndef _SCANNER_UTILS_HH_
 #define _SCANNER_UTILS_HH_
 
+#if __APPLE__
+#include <sys/types.h>
+#endif
+
 #define PUT_IN_TABLE(a,b,c) \
     a[b] = c; \
 
