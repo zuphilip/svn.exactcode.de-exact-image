@@ -1,5 +1,5 @@
 /*
- * Page boundary detection for auto-crop and deskew.
+ * Page boundary detection for auto-crop and de-skew.
  * Copyright (C) 2006, 2007 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 
 #include "Image.hh"
 #include "Colorspace.hh"
+#include "crop.hh"
 #include "rotate.hh"
 
 //#define DEBUG
@@ -39,7 +40,7 @@
 #include <functional>
 
 /* We rely on a little hardware support to do reasonble fast but still
-   quality auto-crop and deskew:
+   quality auto-crop and de-skew:
    
    The first line(s) that are specified as argument are guaranteed to
    be background raster. So we can simple compare the pixel data to
@@ -79,7 +80,11 @@
 
 bool deskew (Image& image, const int raster_rows)
 {
+#ifdef DEBUG
+  const bool debug = true;
+#else
   const bool debug = false;
+#endif
 
   // dynamic threshold and reference value per column
   Image reference_image; // one pixel high
@@ -101,24 +106,24 @@ bool deskew (Image& image, const int raster_rows)
 	r_avg += r / raster_rows; g_avg += g / raster_rows; b_avg += b / raster_rows;
       }
       
-      // deviation -> threshold
-      threshold [x] = 0;
-      for (int y = 1; y < raster_rows; ++y) {
+      // deviations -> threshold
+      threshold[x] = 0;
+      for (int y = 0; y < raster_rows; ++y) {
 	it = it.at (x, y);
 	*it;
 	it.getRGB (r, g, b);
 	threshold [x] += (fabs(r_avg-r) + fabs(g_avg-g) + fabs(b_avg-b)) / 3;
       }
       
-      // allow higher threshold than deviation of pixel data
-      threshold [x] *= 3;
+      // allow a slightly higher threshold than deviation of pixel data
+      threshold[x] = threshold[x] * 2; // / raster_rows;
 
-      if (threshold [x] < 0.01)
-	threshold [x] = 0.01;
-      else if (threshold [x] > 0.2)
-	threshold [x] = 0.2;
+      if (threshold[x] < 1./256)
+	threshold[x] = 1./256;
+      else if (threshold[x] > 0.1)
+	threshold[x] = 0.1;
       
-      // std::cerr << "[" << x << "]: " << threshold [x] << std::endl;;
+      // std::cerr << "[" << x << "]: " << threshold[x] << std::endl;;
       
       it_ref.setRGB (r_avg, g_avg, b_avg);
       it_ref.set(it_ref);
@@ -143,10 +148,25 @@ bool deskew (Image& image, const int raster_rows)
       it = it.at (x, y);
       it.set (color);
     }
-    
     void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
       operator () (it, point.first, point.second, color);
     }
+
+    void operator() (Image::iterator& it, int x, int y, Image::iterator& color, double alpha) {
+      it = it.at (x, y);
+      double r1, r2, g1, g2, b1, b2;
+      *it;
+      it.getRGB (r1, g1, b1);
+      color.getRGB (r2, g2, b2);
+      it.setRGB (r1 * (1.-alpha) + r2 * alpha,
+                 g1 * (1.-alpha) + g2 * alpha,
+                 b1 * (1.-alpha) + b2 * alpha);
+      it.set (it);
+    }
+    void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color, double alpha) {
+      operator () (it, point.first, point.second, color, alpha);
+    }
+
   } marker;
 #endif
   
@@ -393,6 +413,23 @@ bool deskew (Image& image, const int raster_rows)
   Path path;
   // just for visualization, draw markers
   {
+    for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
+         p != points_top.end(); ++p)
+      marker (it, p->first, p->second, top_color, .5);
+
+    for (std::list<std::pair<int,int> >::iterator p = points_bottom.begin();
+         p != points_bottom.end(); ++p)
+      marker (it, p->first, p->second, bottom_color, .5);
+
+    for (std::list<std::pair<int,int> >::iterator p = points_left.begin();
+         p != points_left.end(); ++p)
+      marker (it, p->second, p->first, left_color, .5); // flipped
+
+    for (std::list<std::pair<int,int> >::iterator p = points_right.begin();
+         p != points_right.end(); ++p)
+      marker (it, p->second, p->first, right_color, .5); // flipped
+
+
     path.setLineWidth (0.75);
     double dashes [] = { 12, 6 };
     path.setLineDash (0, dashes, 2);
@@ -501,14 +538,21 @@ bool deskew (Image& image, const int raster_rows)
 #else
 	// TODO: fill with nearest in-document color, or so ...
 	Image::iterator background = image.begin(); background.setL (255);
-	
-	Image* cropped_image =
+
+	std::cerr << "angle: " << angle << std::endl;
+	if (fabs(angle) < 0.01) {
+	  Image* cropped_image =
 	  copy_crop_rotate (image,
 			    (unsigned int) p1.first, (unsigned int) p1.second,
 			    (unsigned int) line_width.length(), (unsigned int) line_height.length(),
 			    -angle, background);
-	image.copyTransferOwnership (*cropped_image);
-	image.copyMeta (*cropped_image);
+	  image.copyTransferOwnership (*cropped_image);
+	  image.copyMeta (*cropped_image);
+	} else {
+	  crop (image,
+		(unsigned int) p1.first, (unsigned int) p1.second,
+	        (unsigned int) line_width.length(), (unsigned int) line_height.length());
+	}
  #endif
     }
   else
