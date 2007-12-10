@@ -23,7 +23,7 @@
 
 bool RAWCodec::readImage (std::istream* stream, Image& image)
 {
-  image.New (image.w, image.h);
+  image.resize (image.w, image.h);
   
   return (size_t) stream->readsome ((char*)image.getRawData(), image.stride()*image.h)
     == (size_t) image.stride()*image.h;

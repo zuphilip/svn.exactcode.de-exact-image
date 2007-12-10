@@ -173,7 +173,7 @@ bool PNGCodec::readImage (std::istream* stream, Image& image)
   /* Allocate the memory to hold the image using the fields of info_ptr. */
   int stride = png_get_rowbytes (png_ptr, info_ptr);
   
-  image.New (image.w, image.h);
+  image.resize (image.w, image.h);
   png_bytep row_pointers[1];
   
   /* The other way to read images - deal with interlacing: */
