@@ -7,6 +7,10 @@
 
 #include "Image.hh"
 
+#ifdef __APPLE__
+#include <sys/types.h>
+#endif
+
 namespace BarDecode
 {
 
