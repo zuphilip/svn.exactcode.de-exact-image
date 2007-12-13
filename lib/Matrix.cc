@@ -101,7 +101,7 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
   
   Image orig_image;
   orig_image.copyTransferOwnership (image);
-  image.New (image.w, image.h);
+  image.resize (image.w, image.h);
 
   Image::iterator dst_it = image.begin();
   Image::iterator src_it = orig_image.begin();
