@@ -384,7 +384,7 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   
   Image* new_image = new Image;
   new_image->copyMeta (image);
-  new_image->New (w, h);
+  new_image->resize (w, h);
   
   Image::iterator it = new_image->begin();
   Image::iterator orig_it = image.begin();
