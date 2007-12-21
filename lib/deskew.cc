@@ -125,12 +125,12 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       }
       
       // allow a slightly higher threshold than deviation of pixel data
-      threshold[x] = 50 * threshold[x] / raster_rows;
+      threshold[x] = 48 * threshold[x] / raster_rows;
 
-      if (threshold[x] < 1./256)
-	threshold[x] = 1./256;
-      else if (threshold[x] > 0.1)
-	threshold[x] = 0.1;
+      if (threshold[x] < 2./255)
+	threshold[x] = 2./255;
+      else if (threshold[x] > 32./255)
+	threshold[x] = 32./255;
       
       // std::cerr << "[" << x << "]: " << threshold[x] << std::endl;;
       
