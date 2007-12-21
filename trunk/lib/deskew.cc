@@ -87,8 +87,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 #endif
   
   deskew_rect rect;
-  rect.x = 0;
-  rect.y = 0;
+  rect.x = rect.x_back = 0;
+  rect.y = rect.y_back = 0;
   rect.width = image.width();
   rect.height = image.height();
   rect.angle = 0;
@@ -542,6 +542,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       rect.width = line_width.length();
       rect.height = line_height.length();
       rect.angle = -angle;
+      rect.x_back = image.width() - 1 - p2.first;
+      rect.y_back = p2.second;
       
 #ifdef DEBUG
 	std::cerr << "angle: " << angle << std::endl;
