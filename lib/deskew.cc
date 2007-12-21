@@ -78,14 +78,21 @@
    to be sensitive or lighter or darker changes.
 */
 
-bool deskew (Image& image, const int raster_rows)
+deskew_rect deskewParameters (Image& image, int raster_rows)
 {
 #ifdef DEBUG
   const bool debug = true;
 #else
   const bool debug = false;
 #endif
-
+  
+  deskew_rect rect;
+  rect.x = 0;
+  rect.y = 0;
+  rect.width = image.width();
+  rect.height = image.height();
+  rect.angle = 0;
+  
   // dynamic threshold and reference value per column
   Image reference_image; // one pixel high
   reference_image.copyMeta (image);
@@ -94,6 +101,8 @@ bool deskew (Image& image, const int raster_rows)
   
   Image::iterator it = image.begin();
   Image::iterator it_ref = reference_image.begin ();
+  
+  const int border_margin = 2; // skip border pixels, as a cropped edge screws up the line angle
   
   for (int x = 0; x < image.width(); ++x, ++it_ref)
     {
@@ -116,7 +125,7 @@ bool deskew (Image& image, const int raster_rows)
       }
       
       // allow a slightly higher threshold than deviation of pixel data
-      threshold[x] = threshold[x] * 2; // / raster_rows;
+      threshold[x] = 50 * threshold[x] / raster_rows;
 
       if (threshold[x] < 1./256)
 	threshold[x] = 1./256;
@@ -185,7 +194,8 @@ bool deskew (Image& image, const int raster_rows)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      points_left.push_back (std::pair<int,int> (y, x)); // flipped
+	      if (x > border_margin - 1)
+		points_left.push_back (std::pair<int,int> (y, x)); // flipped
 	      break;
 	    }
 	}
@@ -201,7 +211,8 @@ bool deskew (Image& image, const int raster_rows)
 	{
 	  if (comparator(it_ref, it, threshold[x - 1]))
 	    {
-	      points_right.push_back (std::pair<int,int> (y, x - 1)); // flipped
+	      if (x < image.width() - border_margin)
+		points_right.push_back (std::pair<int,int> (y, x - 1)); // flipped
 	      break;
 	    }
 	}
@@ -211,12 +222,15 @@ bool deskew (Image& image, const int raster_rows)
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
-      for (int y = 0; y < image.height() / 2; ++y)
+      // this is off-by one intentionally -ReneR
+      const int y_offset = raster_rows + 1;
+      for (int y = y_offset; y < image.height() / 4; ++y)
 	{
 	  it = it.at (x, y);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      points_top.push_back (std::pair<int,int> (x, y));
+	      if (y > y_offset + border_margin - 1)
+		points_top.push_back (std::pair<int,int> (x, y));
 	      break;
 	    }
 	}
@@ -231,7 +245,8 @@ bool deskew (Image& image, const int raster_rows)
 	  it = it.at (x, y - 1);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      points_bottom.push_back (std::pair<int,int> (x, y - 1));
+	      if (y < image.height() - border_margin)
+		points_bottom.push_back (std::pair<int,int> (x, y - 1));
 	      break;
 	    }
 	}	  
@@ -256,16 +271,6 @@ bool deskew (Image& image, const int raster_rows)
       
       while (it != container.end())
 	{
-	  // skip border pixels, as a cropped edge screws up the line angle
-	  
-	  if (it->first == 0 || it->first == (im.width() - 1) ||
-	      it->second == 0 || it->second == (im.width() - 1))
-	    {
-	      it = container.erase (it);
-	      // std::cerr << "removed border edge pixel." << std::endl;
-	      continue;
-	    }
-	  
 	  bool has_neighbor = false;
 	  
 	  if (it != container.begin()) {
@@ -528,6 +533,12 @@ bool deskew (Image& image, const int raster_rows)
       
       angle = atan (angle) / M_PI * 180;
       
+      rect.x = p1.first;
+      rect.y = p1.second;
+      rect.width = line_width.length();
+      rect.height = line_height.length();
+      rect.angle = -angle;
+      
 #ifdef DEBUG
 	std::cerr << "angle: " << angle << std::endl;
 	
@@ -535,28 +546,34 @@ bool deskew (Image& image, const int raster_rows)
 	note_color.setRGB (1.0, 1.0, 1.0);
 	line_width.draw (path, image, note_color);
 	line_height.draw (path, image, note_color);
-#else
-	// TODO: fill with nearest in-document color, or so ...
-	Image::iterator background = image.begin(); background.setL (255);
-
-	std::cerr << "angle: " << angle << std::endl;
-	if (fabs(angle) < 0.01) {
-	  Image* cropped_image =
-	  copy_crop_rotate (image,
-			    (unsigned int) p1.first, (unsigned int) p1.second,
-			    (unsigned int) line_width.length(), (unsigned int) line_height.length(),
-			    -angle, background);
-	  image.copyTransferOwnership (*cropped_image);
-	  image.copyMeta (*cropped_image);
-	} else {
-	  crop (image,
-		(unsigned int) p1.first, (unsigned int) p1.second,
-	        (unsigned int) line_width.length(), (unsigned int) line_height.length());
-	}
- #endif
+#endif
     }
   else
     std::cerr << "lines parallel!?" << std::endl;
   
-  return true;
+  return rect;
+}
+
+bool deskew (Image& image, const int raster_rows)
+{
+  deskew_rect rect = deskewParameters (image, raster_rows);
+  
+#ifndef DEBUG
+  // TODO: fill with nearest in-document color, or so ...
+  Image::iterator background = image.begin(); background.setL (255);
+  
+  if (fabs(rect.angle) > 0.01) {
+    Image* cropped_image =
+      copy_crop_rotate (image,
+			(unsigned int) rect.x, (unsigned int) rect.y,
+			(unsigned int) rect.width, (unsigned int) rect.height,
+			rect.angle, background);
+    image.copyTransferOwnership (*cropped_image);
+    image.copyMeta (*cropped_image);
+  } else {
+    crop (image,
+	  (unsigned int) rect.x, (unsigned int) rect.y,
+	  (unsigned int) rect.width, (unsigned int) rect.height);
+  }
+#endif
 }
