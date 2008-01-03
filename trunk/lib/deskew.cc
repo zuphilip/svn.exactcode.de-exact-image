@@ -1,6 +1,6 @@
 /*
  * Page boundary detection for auto-crop and de-skew.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 - 2008 René Reb, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -503,6 +503,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   
   // if there is no bottom data, default to the last scanline
   // TODO: simillar safeguards should probably added for the other borders
+  if (reg_top.size() < 10)
+    line_top = Line (0, raster_rows - 1, image.width(), raster_rows - 1);
   if (fabs(line_bottom.begin().second) < 1.0)
     line_bottom = Line (0, image.height() - 1, image.width(), image.height() - 1);
 
