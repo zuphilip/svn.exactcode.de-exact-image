@@ -398,6 +398,10 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       return sqrt (xrel*xrel + yrel*yrel);
     }
     
+    double angle () {
+      return atan ((p2.second - p1.second) / (p2.first - p1.first));
+    }
+    
 #ifdef DEBUG
     // just quick
     void draw (Path& path, Image& image, const Image::iterator& color) {
@@ -502,7 +506,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   Line line_bottom (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
   
   // if there is not much data, make sure the lines are defined on the boundary
-  const double min_points = 0.05; // %
+  // TODO: maybe check distance covered, so it is not just a 5% spot
+  const double min_points = 0.05; // in %
   
   if (reg_top.size() < min_points * image.width())
     line_top = Line (0, raster_rows - 1, image.width(), raster_rows - 1);
@@ -510,8 +515,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   if (reg_left.size() < min_points * image.height())
     line_left = Line (0, 0, 0, image.height());
   
-  if (reg_right.size() < min_points * image.height() - 1)
-    line_right = Line (image.width() - 1, 0, image.width() - 1, image.height() - 1);
+  if (reg_right.size() < min_points * image.height())
+    line_right = Line (image.width() - 1, 0, image.width() - 1, image.height());
   
   if (reg_bottom.size() < min_points * image.width())
     line_bottom = Line (0, image.height() - 1, image.width(), image.height() - 1);
@@ -540,12 +545,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       Line line_height = Line (line_top.mid(), line_bottom.mid());
 
       // average angle
-      double angle = (reg_top.getB() +
-		      reg_bottom.getB() +
-		      - reg_left.getB() +
-		      - reg_left.getB() ) / 4;
-      
-      angle = atan (angle) / M_PI * 180;
+      double angle = line_width.angle() / M_PI * 180 + (line_height.angle() + M_PI/2) / M_PI * 180;      
+      angle /= 2; // average
       
       rect.x = p1.first;
       rect.y = p1.second;
