@@ -501,11 +501,19 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   Line line_top (0, reg_top.getA (), image.width(), reg_top.estimateY (image.width()));
   Line line_bottom (0, reg_bottom.getA (), image.width(), reg_bottom.estimateY (image.width()));
   
-  // if there is no bottom data, default to the last scanline
-  // TODO: simillar safeguards should probably added for the other borders
-  if (reg_top.size() < 10)
+  // if there is not much data, make sure the lines are defined on the boundary
+  const double min_points = 0.05; // %
+  
+  if (reg_top.size() < min_points * image.width())
     line_top = Line (0, raster_rows - 1, image.width(), raster_rows - 1);
-  if (fabs(line_bottom.begin().second) < 1.0)
+  
+  if (reg_left.size() < min_points * image.height())
+    line_left = Line (0, 0, 0, image.height());
+  
+  if (reg_right.size() < min_points * image.height() - 1)
+    line_right = Line (image.width() - 1, 0, image.width() - 1, image.height() - 1);
+  
+  if (reg_bottom.size() < min_points * image.width())
     line_bottom = Line (0, image.height() - 1, image.width(), image.height() - 1);
 
 #ifdef DEBUG
