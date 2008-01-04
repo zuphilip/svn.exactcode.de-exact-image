@@ -14,13 +14,13 @@
  * 
  */
 
-#include <math.h>
-
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <list>
 #include <vector>
+
+#include <functional>
 
 #include "Image.hh"
 #include "Colorspace.hh"
@@ -37,7 +37,8 @@
 
 #include "math/LinearRegression.hh"
 
-#include <functional>
+#include "math/Line.hh"
+
 
 /* We rely on a little hardware support to do reasonble fast but still
    quality auto-crop and de-skew:
@@ -354,70 +355,6 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   reg_left.addRange (points_left.begin(), points_left.end());
   reg_right.addRange (points_right.begin(), points_right.end());
   
-  class Line {
-  public:
-    typedef std::pair <double, double> point;
-    
-    Line (point _p1, point _p2)
-      : p1 (_p1), p2 (_p2) {};
-    
-    Line (double x1, double y1, double x2, double y2)
-      : p1 (x1, y1), p2 (x2, y2) {};
-    
-    bool intersection (const Line& other, point& p)
-    {
-      const double det =
-	(other.p2.second - other.p1.second) * (p2.first - p1.first) -
-	(other.p2.first - other.p1.first) * (p2.second - p1.second);
-      
-      if (det == 0)  // parallel
-	return false;
-      
-      double Ua =
-	(other.p2.first - other.p1.first) * (p1.second - other.p1.second) -
-	(other.p2.second - other.p1.second) * (p1.first - other.p1.first);
-      
-      Ua /= det;
-      
-      p.first = p1.first + Ua * (p2.first - p1.first);
-      p.second = p1.second + Ua * (p2.second - p1.second);
-      return true;
-    }
-    
-    point& begin () { return p1; };
-    point& end () { return p2; };
-    
-    point mid () {
-      return point (p1.first + (p2.first - p1.first) / 2,
-		    p1.second + (p2.second - p1.second) / 2);
-    };
-    
-    double length () {
-      const double xrel = std::abs (p1.first - p2.first);
-      const double yrel = std::abs (p1.second - p2.second);
-      return sqrt (xrel*xrel + yrel*yrel);
-    }
-    
-    double angle () {
-      return atan ((p2.second - p1.second) / (p2.first - p1.first));
-    }
-    
-#ifdef DEBUG
-    // just quick
-    void draw (Path& path, Image& image, const Image::iterator& color) {
-      double r, g, b; color.getRGB (r, g, b);
-      path.setFillColor (r, g, b);
-      path.moveTo (p1.first, p1.second);
-      path.addLineTo (p2.first, p2.second);
-      path.draw (image);
-      path.clear ();
-    };
-#endif
-    
-  private:
-    point p1, p2;
-  };
-
 #ifdef DEBUG  
   Path path;
   // just for visualization, draw markers
@@ -542,11 +479,18 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       line_right = Line (p2, p4);
       
       Line line_width = Line (line_left.mid(), line_right.mid());
-      Line line_height = Line (line_top.mid(), line_bottom.mid());
+      Line line_height = Line (line_bottom.mid(), line_top.mid());
 
-      // average angle
-      double angle = line_width.angle() / M_PI * 180 + (line_height.angle() + M_PI/2) / M_PI * 180;      
-      angle /= 2; // average
+      // average and invert angle - note: flipped coordinate system!
+      double angle1 = fmod(line_width.angle(), 2*M_PI) / M_PI * 180;
+      double angle2 = fmod(line_height.angle() + M_PI/2, 2*M_PI) / M_PI * 180;
+      // convert to [-180,+180] for averaging
+      if (angle1 > 180)
+	angle1 = 360 - angle1;
+      if (angle2 > 180)
+	angle2 = 360 - angle2;
+      
+      const double angle = (angle1 + angle2) / 2;
       
       rect.x = p1.first;
       rect.y = p1.second;
