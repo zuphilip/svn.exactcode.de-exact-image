@@ -486,9 +486,9 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       double angle2 = fmod(line_height.angle() + M_PI/2, 2*M_PI) / M_PI * 180;
       // convert to [-180,+180] for averaging
       if (angle1 > 180)
-	angle1 = 360 - angle1;
+	angle1 = -360. + angle1;
       if (angle2 > 180)
-	angle2 = 360 - angle2;
+	angle2 = -360. + angle2;
       
       const double angle = (angle1 + angle2) / 2;
       
@@ -501,12 +501,12 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       rect.y_back = p2.second;
       
 #ifdef DEBUG
-	std::cerr << "angle: " << angle << std::endl;
-	
-	Image::iterator note_color = image.begin();
-	note_color.setRGB (1.0, 1.0, 1.0);
-	line_width.draw (path, image, note_color);
-	line_height.draw (path, image, note_color);
+      std::cerr << "angle: " << angle1 << ", " << angle2 << ": " << angle << std::endl;
+      
+      Image::iterator note_color = image.begin();
+      note_color.setRGB (1.0, 1.0, 1.0);
+      line_width.draw (path, image, note_color);
+      line_height.draw (path, image, note_color);
 #endif
     }
   else
