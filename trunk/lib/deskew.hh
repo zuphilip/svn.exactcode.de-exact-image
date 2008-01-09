@@ -1,3 +1,5 @@
+#ifndef __DESKEW_HH
+#define __DESKEW_HH
 
 struct deskew_rect {
   double x, y, width, height, angle;
@@ -6,3 +8,5 @@ struct deskew_rect {
 
 deskew_rect deskewParameters (Image& image, int background_lines);
 bool deskew (Image& image, int background_lines);
+
+#endif
