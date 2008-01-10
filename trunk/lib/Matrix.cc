@@ -204,6 +204,93 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
     }
 }
 
+
+// h_matrix contains entrys m[0]...m[xw]. It is assumed, that m[-i]=m[i]. Same for v_matrix.
+void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
+					  matrix_type src_add)
+{
+  uint8_t* data = image.getRawData();
+
+  matrix_type* tmp_data = (matrix_type*) malloc (image.w * /*image.h* */ (1+(2*yw)) * sizeof(matrix_type));
+  matrix_type* line_data = (matrix_type*) malloc (std::max(image.w, image.h)*sizeof(matrix_type));
+
+  uint8_t* src_ptr;
+  matrix_type* tmp_ptr;
+
+  // horizontal transform loop
+  for (int y=0; y <image.h; ++y) {
+    src_ptr = &data[(y * image.w)];
+    tmp_ptr = &tmp_data[(y%(1+(2*yw))) * image.w];
+
+    matrix_type val=h_matrix[0];
+    for (int x=0; x<image.w; ++x) {
+      matrix_type v=(matrix_type)src_ptr[x];
+      tmp_ptr[x]=val*v;
+      line_data[x]=v;
+    }
+
+    for (int i=1; i<=xw; ++i) {
+      int dstart=i;
+      int dend=image.w-i;
+      int end=image.w;
+      int l=i;
+      int r=0;
+      val=h_matrix[i];
+
+      // left border
+      for (int x=0; x<dstart; x++, l++)
+	tmp_ptr[x]+=val*line_data[l];
+
+      // middle
+      for (int x=dstart; x<dend; x++, l++, r++)
+	tmp_ptr[x]+=val*(line_data[l]+line_data[r]);
+
+      // right border
+      for (int x=dend; x<end; x++, r++)
+	tmp_ptr[x]+=val*line_data[r];
+    }
+
+    // now do the vertical transform of a block of lines and write back to src
+    int dsty=y-yw;
+    if (dsty>=0) {
+      src_ptr = &data[(dsty * image.w)];
+      val=(matrix_type) src_add;
+      for (int x=0; x<image.w; ++x) {
+	matrix_type v=(matrix_type)src_ptr[x];
+	line_data[x]=val*v;
+      }
+
+      for (int i=0; i<yw; i++) {
+	val=v_matrix[i];
+	if (i==0 || (dsty-i<0) || (dsty+i>=image.h) ) {
+
+	  int tmpy=(dsty-i<0) ? dsty+i : dsty-i;
+	  tmp_ptr=&tmp_data[(tmpy%(1+(2*yw))) * image.w];
+	  for (int x=0; x<image.w; ++x)
+	    line_data[x]+=val*tmp_ptr[x];
+
+	} else {
+
+	  tmp_ptr=&tmp_data[((dsty-i)%(1+(2*yw))) * image.w];
+	  matrix_type* tmp_ptr2=&tmp_data[((dsty+i)%(1+(2*yw))) * image.w];
+	  for (int x=0; x<image.w; ++x)
+	    line_data[x]+=val*(tmp_ptr[x]+tmp_ptr2[x]);
+
+	}
+      }
+      
+      for  (int x=0; x<image.w; ++x) {
+	uint8_t z = (uint8_t) (line_data[x] > 255 ? 255 : line_data[x] < 0 ? 0 : line_data[x]);
+	src_ptr[x]=z;
+      }
+    }
+
+  }
+
+
+}
+
+
 void decomposable_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
 				      matrix_type src_add)
 {
@@ -217,6 +304,8 @@ void decomposable_convolution_matrix (Image& image, const matrix_type* h_matrix,
 
   uint8_t* src_ptr = data;
   matrix_type* tmp_ptr = tmp_data;
+
+  // valentin 2007-10-01: i think horizontal and vertical are accidentally switched in those comments ???
 
   // transform the vertical convolution strip with h_matrix, leaving out the left/right borders
   for (int y = 0; y < image.h; ++y) {
