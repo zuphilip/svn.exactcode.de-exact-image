@@ -255,9 +255,14 @@ void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_mat
     if (dsty>=0) {
       src_ptr = &data[(dsty * image.w)];
       val=(matrix_type) src_add;
-      for (int x=0; x<image.w; ++x) {
-	matrix_type v=(matrix_type)src_ptr[x];
-	line_data[x]=val*v;
+      if (val!=(matrix_type)0) {
+	for (int x=0; x<image.w; ++x) {
+	  matrix_type v=(matrix_type)src_ptr[x];
+	  line_data[x]=val*v;
+	}
+      } else {
+	for (int x=0; x<image.w; ++x)
+	  line_data[x]=0.0;
       }
 
       for (int i=0; i<=yw; i++) {
