@@ -209,31 +209,43 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
 void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
 					  matrix_type src_add)
 {
+  int bps=image.bitsPerSample();
+  int spp=image.samplesPerPixel();
+  int stride=image.stride();
+  int height=image.height();
+
+  // TODO: support for 16 bit
+  if (bps != 8) {
+    std::cerr << "sorry, convolution only supports 8 bits per sample" << std::endl;
+    return;
+  }
+
   uint8_t* data = image.getRawData();
 
-  matrix_type* tmp_data = (matrix_type*) malloc (image.w * /*image.h* */ (1+(2*yw)) * sizeof(matrix_type));
-  matrix_type* line_data = (matrix_type*) malloc (std::max(image.w, image.h)*sizeof(matrix_type));
+  matrix_type* tmp_data = (matrix_type*) malloc (stride * (1+(2*yw)) * sizeof(matrix_type));
+  matrix_type* line_data = (matrix_type*) malloc (std::max(stride, height)*sizeof(matrix_type));
 
   uint8_t* src_ptr;
   matrix_type* tmp_ptr;
 
   // horizontal transform loop
-  for (int y=0; y <image.h; ++y) {
-    src_ptr = &data[(y * image.w)];
-    tmp_ptr = &tmp_data[(y%(1+(2*yw))) * image.w];
+  for (int y=0; y < height; ++y) {
+    src_ptr = &data[(y * stride)];
+    tmp_ptr = &tmp_data[(y%(1+(2*yw))) * stride];
 
     matrix_type val=h_matrix[0];
-    for (int x=0; x<image.w; ++x) {
+    for (int x=0; x<stride; ++x) {
       matrix_type v=(matrix_type)src_ptr[x];
       tmp_ptr[x]=val*v;
       line_data[x]=v;
     }
 
     for (int i=1; i<=xw; ++i) {
-      int dstart=i;
-      int dend=image.w-i;
-      int end=image.w;
-      int l=i;
+      int pi=spp*i;
+      int dstart=pi;
+      int dend=stride-pi;
+      int end=stride;
+      int l=pi;
       int r=0;
       val=h_matrix[i];
 
@@ -253,38 +265,38 @@ void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_mat
     // now do the vertical transform of a block of lines and write back to src
     int dsty=y-yw;
     if (dsty>=0) {
-      src_ptr = &data[(dsty * image.w)];
+      src_ptr = &data[(dsty * stride)];
       val=(matrix_type) src_add;
       if (val!=(matrix_type)0) {
-	for (int x=0; x<image.w; ++x) {
+	for (int x=0; x<stride; ++x) {
 	  matrix_type v=(matrix_type)src_ptr[x];
 	  line_data[x]=val*v;
 	}
       } else {
-	for (int x=0; x<image.w; ++x)
+	for (int x=0; x<stride; ++x)
 	  line_data[x]=0.0;
       }
 
       for (int i=0; i<=yw; i++) {
 	val=v_matrix[i];
-	if (i==0 || (dsty-i<0) || (dsty+i>=image.h) ) {
+	if (i==0 || (dsty-i<0) || (dsty+i>=height) ) {
 
 	  int tmpy=(dsty-i<0) ? dsty+i : dsty-i;
-	  tmp_ptr=&tmp_data[(tmpy%(1+(2*yw))) * image.w];
-	  for (int x=0; x<image.w; ++x)
+	  tmp_ptr=&tmp_data[(tmpy%(1+(2*yw))) * stride];
+	  for (int x=0; x<stride; ++x)
 	    line_data[x]+=val*tmp_ptr[x];
 
 	} else {
 
-	  tmp_ptr=&tmp_data[((dsty-i)%(1+(2*yw))) * image.w];
-	  matrix_type* tmp_ptr2=&tmp_data[((dsty+i)%(1+(2*yw))) * image.w];
-	  for (int x=0; x<image.w; ++x)
+	  tmp_ptr=&tmp_data[((dsty-i)%(1+(2*yw))) * stride];
+	  matrix_type* tmp_ptr2=&tmp_data[((dsty+i)%(1+(2*yw))) * stride];
+	  for (int x=0; x<stride; ++x)
 	    line_data[x]+=val*(tmp_ptr[x]+tmp_ptr2[x]);
 
 	}
       }
       
-      for  (int x=0; x<image.w; ++x) {
+      for  (int x=0; x<stride; ++x) {
 	uint8_t z = (uint8_t) (line_data[x] > 255 ? 255 : line_data[x] < 0 ? 0 : line_data[x]);
 	src_ptr[x]=z;
       }
