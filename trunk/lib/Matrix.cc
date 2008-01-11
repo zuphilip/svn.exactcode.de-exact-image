@@ -227,39 +227,44 @@ void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_mat
 
   uint8_t* src_ptr;
   matrix_type* tmp_ptr;
+  matrix_type val;
 
-  // horizontal transform loop
-  for (int y=0; y < height; ++y) {
-    src_ptr = &data[(y * stride)];
-    tmp_ptr = &tmp_data[(y%(1+(2*yw))) * stride];
+  // main transform loop
+  for (int y=0; y < height+yw; ++y) {
 
-    matrix_type val=h_matrix[0];
-    for (int x=0; x<stride; ++x) {
-      matrix_type v=(matrix_type)src_ptr[x];
-      tmp_ptr[x]=val*v;
-      line_data[x]=v;
-    }
+    // horizontal transform
+    if (y<height) {
+      src_ptr = &data[(y * stride)];
+      tmp_ptr = &tmp_data[(y%(1+(2*yw))) * stride];
 
-    for (int i=1; i<=xw; ++i) {
-      int pi=spp*i;
-      int dstart=pi;
-      int dend=stride-pi;
-      int end=stride;
-      int l=pi;
-      int r=0;
-      val=h_matrix[i];
+      val=h_matrix[0];
+      for (int x=0; x<stride; ++x) {
+	matrix_type v=(matrix_type)src_ptr[x];
+	tmp_ptr[x]=val*v;
+	line_data[x]=v;
+      }
+ 
+      for (int i=1; i<=xw; ++i) {
+	int pi=spp*i;
+	int dstart=pi;
+	int dend=stride-pi;
+	int end=stride;
+	int l=pi;
+	int r=0;
+	val=h_matrix[i];
 
-      // left border
-      for (int x=0; x<dstart; x++, l++)
-	tmp_ptr[x]+=val*line_data[l];
+	// left border
+	for (int x=0; x<dstart; x++, l++)
+	  tmp_ptr[x]+=val*line_data[l];
 
-      // middle
-      for (int x=dstart; x<dend; x++, l++, r++)
-	tmp_ptr[x]+=val*(line_data[l]+line_data[r]);
+	// middle
+	for (int x=dstart; x<dend; x++, l++, r++)
+	  tmp_ptr[x]+=val*(line_data[l]+line_data[r]);
 
-      // right border
-      for (int x=dend; x<end; x++, r++)
-	tmp_ptr[x]+=val*line_data[r];
+	// right border
+	for (int x=dend; x<end; x++, r++)
+	  tmp_ptr[x]+=val*line_data[r];
+      }
     }
 
     // now do the vertical transform of a block of lines and write back to src
