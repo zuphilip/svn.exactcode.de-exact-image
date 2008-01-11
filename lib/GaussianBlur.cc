@@ -22,7 +22,15 @@ void GaussianBlur(Image& image, double standard_deviation, int radius)
   double sd = standard_deviation;
   if (radius <= 0) {
     double thresh=1.0/255.0;
-    for (radius=0; (exp (-((float)radius*radius) / (2.*sd*sd)))>thresh; radius++);
+    double divisor=0.0;
+    radius=-1;
+    double factor;
+    do {
+      radius++;
+      factor=exp (-((float)radius*radius) / (2.*sd*sd));
+      divisor+=(radius==0) ? factor : 2.0*factor;
+    } while (factor/(divisor*divisor) > thresh);
+
     std::cerr << "radius: " << radius << std::endl;
   }
 
