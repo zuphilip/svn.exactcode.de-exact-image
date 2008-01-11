@@ -42,10 +42,6 @@ endif
 
 include build/top.make
 
-NOT_SRCS += gif.cc
-NOT_SRCS += openexr.cc
-
-
 BINARY = lib
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
