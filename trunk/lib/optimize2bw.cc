@@ -148,7 +148,7 @@ static void private_convolution_matrix (Image& image, matrix_type* matrix, int x
   image.setRawData (new_data);
 }
 
-#include "GaussianBlur.hh"
+
 
 void optimize2bw (Image& image, int low, int high, int threshold,
 		  int sloppy_threshold,
@@ -261,7 +261,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   //Utility::Timer timer;
   //timer.Reset();
 
-  //#define OLD_CODE
+#define OLD_CODE
 #ifdef OLD_CODE  
   // Convolution Matrix (unsharp mask a-like)
   {
@@ -309,8 +309,6 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 
   // Convolution Matrix (unsharp mask a-like)
   {
-
-    #if false
     // compute kernel (convolution matrix to move over the iamge)
 
     matrix_type divisor = 0;
@@ -335,8 +333,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     }
     
     decomposable_sym_convolution_matrix (image, matrix, matrix_2, radius, radius, 2.0);
-#endif
-    GaussianBlur(image, standard_deviation);
+
   }
 
 #endif
