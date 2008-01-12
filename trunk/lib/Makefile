@@ -11,7 +11,7 @@ else
 NOT_SRCS += bardecode.cc
 endif
 
-# we we use the built-in Agg, we depend on it, ...
+# as fallback use the built-in Agg, we depend on it, ...
 
 ifeq "$(WITHLIBAGG)" "0"
 DEPS += $(agg-2.4_BINARY)
