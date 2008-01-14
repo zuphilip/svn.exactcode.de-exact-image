@@ -60,7 +60,7 @@ void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, 
 	  matrix_type sum = 0;
 
 	  const matrix_type* matrix_ptr = matrix;
-	  for (int y2 = 0; y2 < yw; ++y2, data_ptr += (image.w - xw) * spp-1) {
+	  for (int y2 = 0; y2 < yw; ++y2, data_ptr += (image.w - xw) * spp) {
 	    int x2 = xw;
 	    
 	    while (x2 > 0) {
