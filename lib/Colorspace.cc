@@ -137,6 +137,45 @@ void colorspace_rgb8_to_gray8 (Image& image)
   image.setRawData();
 }
 
+void colorspace_gray8_threshold (Image& image, unsigned char threshold)
+{
+  uint8_t *output = image.getRawData();
+  uint8_t *input = image.getRawData();
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      for (int x = 0; x < image.w; x++)
+	{
+	  *output++ = *input++ > threshold ? 0xFF : 0x00;
+	}
+    }
+  image.setRawData();
+}
+
+void colorspace_gray8_denoise_neighbours (Image &image)
+{
+  const unsigned int stride = image.stride();
+  // just hack to skip the conditionals while drafting the code
+  uint8_t *it = image.getRawData() + stride;
+  uint8_t *end = image.getRawDataEnd() - stride;
+  
+  for (; it != end; ++it)
+    {
+      unsigned int sum = *(it-1) + *(it+1) + *(it-stride) + *(it+stride);
+      // if all direct neighbours are black or white
+      if (sum == 0)
+	{
+	  *it = 0;
+	}
+      else if (sum == 4*0xff)
+	{
+	  *it = 0xff;
+	}
+    }
+  
+  image.setRawData();
+}
+
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 {
   uint8_t *output = image.getRawData();
