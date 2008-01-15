@@ -168,12 +168,16 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 200;
   
-  colorspace_gray8_threshold (image, threshold);
-  
   if (arg_denoise.Get())
-    colorspace_gray8_denoise_neighbours (image);
-  
-  colorspace_gray8_to_gray1 (image);
+    {
+      colorspace_gray8_threshold (image, threshold);
+      colorspace_gray8_denoise_neighbours (image);
+      colorspace_gray8_to_gray1 (image);
+    }
+  else
+    {
+      colorspace_gray8_to_gray1 (image, threshold);
+    }
   
   if (!ImageCodec::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
