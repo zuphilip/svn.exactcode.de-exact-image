@@ -764,7 +764,6 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
     {
-      //it = it.at(371, 86);
       *it;
       it.getHSV (h, s, v);
       
