@@ -43,6 +43,9 @@
 
 #include "optimize2bw.hh"
 
+//#include "Timer.hh"
+//#include "Timer.cc"
+
 /* private copy of the convolution_matrix, checking for edges at the
    center of the destination pixel in order to skip the expensive
    matrix convolution and thus improve performance */
@@ -144,6 +147,7 @@ static void private_convolution_matrix (Image& image, matrix_type* matrix, int x
 
   image.setRawData (new_data);
 }
+
 
 
 void optimize2bw (Image& image, int low, int high, int threshold,
@@ -253,7 +257,11 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     image.setRawData();
   }
 
-  #define OLD_CODE
+  //std::cerr << "convolution" << std::endl;
+  //Utility::Timer timer;
+  //timer.Reset();
+
+#define OLD_CODE
 #ifdef OLD_CODE  
   // Convolution Matrix (unsharp mask a-like)
   {
@@ -302,32 +310,35 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   // Convolution Matrix (unsharp mask a-like)
   {
     // compute kernel (convolution matrix to move over the iamge)
-    
-    const int width = radius * 2 + 1;
+
     matrix_type divisor = 0;
     float sd = standard_deviation;
     
-    matrix_type matrix[width];
-    matrix_type matrix_2[width];
+    matrix_type matrix[radius+1];
+    matrix_type matrix_2[radius+1];
 
-    for (int d = -radius; d <= radius; ++d) {
+    for (int d = 0; d <= radius; ++d) {
       matrix_type v = (matrix_type) (exp (-((float)d*d) / (2. * sd * sd)) );
-      matrix[d+radius] = v;
+      matrix[d] = v;
       divisor+=v;
+      if (d>0)
+	divisor+=v;
     }
 
     // normalize (will not work with integer matrix type !)
     divisor=1.0/divisor;
-    for (int i=0; i<width; i++) {
+    for (int i=0; i<=radius; i++) {
       matrix[i]*=divisor;
       matrix_2[i]=-matrix[i];
     }
     
-    decomposable_convolution_matrix (image, matrix, matrix_2, width, width,
-				     2.0);
+    decomposable_sym_convolution_matrix (image, matrix, matrix_2, radius, radius, 2.0);
+
   }
 
 #endif
+
+  //  std::cerr << "done " << timer.Delta() << std::endl;
 
 }
 
