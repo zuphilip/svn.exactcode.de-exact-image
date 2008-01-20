@@ -38,6 +38,7 @@
 #include "riemersma.h"
 #include "floyd-steinberg.h"
 #include "vectorial.hh"
+#include "GaussianBlur.hh"
 
 /* Let's reuse some parts of the official, stable API to avoid
  * duplicating code.
@@ -171,6 +172,13 @@ bool convert_gamma (const Argument<double>& arg)
 {
   double f = arg.Get();
   brightness_contrast_gamma (image, .0, .0, f);
+  return true;
+}
+
+bool convert_blur (const Argument<double>& arg)
+{
+  double standard_deviation = arg.Get();
+  GaussianBlur(image, standard_deviation);
   return true;
 }
 
@@ -1009,6 +1017,13 @@ int main (int argc, char* argv[])
 				  0.0, 0, 1, true, true);
   arg_lightness.Bind (convert_lightness);
   arglist.Add (&arg_lightness);
+
+  Argument<double> arg_blur ("", "blur",
+				 "gaussian blur",
+				 0.0, 0, 1, true, true);
+  arg_blur.Bind (convert_blur);
+  arglist.Add (&arg_blur);
+
   
   Argument<double> arg_scale ("", "scale",
 			      "scale image data using a method suitable for specified factor",
