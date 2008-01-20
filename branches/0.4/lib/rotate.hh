@@ -8,4 +8,4 @@ void rotate (Image& image, double angle, Image::iterator background);
 
 Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
-			 double angle);
+			 double angle, Image::iterator background);
