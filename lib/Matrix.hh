@@ -34,4 +34,8 @@ void decomposable_convolution_matrix (Image& image, const matrix_type* h_matrix,
 				      matrix_type src_add);
 
 
+// h_matrix contains entrys m[0]...m[xw]. It is assumed, that m[-i]=m[i]. Same for v_matrix.
+void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
+					  matrix_type src_add);
+
 #endif
