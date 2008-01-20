@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2005-2006 René Rebe
- *           (C) 2005-2006 Archivista GmbH, CH-8042 Zuerich
+ * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH
+ *           (C) 2005, 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,14 +54,15 @@ int main (int argc, char* argv[])
   Argument<int> arg_radius ("r", "radius",
 			    "\"unsharp mask\" radius", 0, 0, 1);
 
+  Argument<bool> arg_denoise ("n", "denoise",
+			      "remove (\"denoise\") single bit pixel noise");
+
   Argument<double> arg_scale ("s", "scale", "scale output by factor", 0.0, 0, 1);
   
   Argument<int> arg_dpi ("d", "dpi", "scale to specified DPI", 0, 0, 1);
   
   Argument<double> arg_sd ("sd", "standard-deviation",
 			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
-
-  Argument<int> arg_lazy_thr ("z", "lazy", "do not unsharp mask values within threshold", 0, 0, 1);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -73,13 +74,13 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_scale);
   arglist.Add (&arg_dpi);
   arglist.Add (&arg_sd);
-  arglist.Add (&arg_lazy_thr);
+  arglist.Add (&arg_denoise);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "Color / Gray image to Bi-level optimizer"
-                <<  " - Copyright 2005, 2006 by René Rebe" << std::endl
+                <<  " - Copyright 2005 - 2008 by René Rebe" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -167,7 +168,16 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 200;
   
-  colorspace_gray8_to_gray1 (image, threshold);
+  if (arg_denoise.Get())
+    {
+      colorspace_gray8_threshold (image, threshold);
+      colorspace_gray8_denoise_neighbours (image);
+      colorspace_gray8_to_gray1 (image);
+    }
+  else
+    {
+      colorspace_gray8_to_gray1 (image, threshold);
+    }
   
   if (!ImageCodec::Write(arg_output.Get(), image)) {
     std::cerr << "Error writing output file." << std::endl;
