@@ -18,81 +18,25 @@
 #define VECTORIAL_HH
 
 #include "Image.hh"
-#include <vector>
 
-#include "agg_math_stroke.h"
-#include "agg_path_storage.h"
-
-class Path
+class drawStyle
 {
 public:
-  Path ();
-  ~Path ();
-
-  void moveTo (double x, double y);
-  void addLineTo (double x, double y);
-  void addRect (double x, double y, double x2, double y2);
+  drawStyle ()
+    : width (1.) {
+  }
   
-  void addArcTo (double rx, double ry,  double angle,
-		 double x, double y);
-
-  void addArc (double rx, double ry,  double angle,
-	       double dx, double dy);
-  
-  /* TODO:
-     - addEllipse
-  */
-    
-  void addCurveTo (double, double, double, double);
-  // or explicitly differentiate by naming this one QuadCurve ???
-  void addCurveTo (double, double, double, double, double, double);
-  
-  // TODO: sophisticated text API, including font to use,
-  // kerning, hinting, transform, etc.
-  // void addText (char* text, double height);
-  
-  void end ();
-  void close ();
-  void clear (); // path data, not the style
-  
-  void setFillColor (double r, double g, double b, double a = 1.0);
-  void setLineWidth (double width);
-  void setLineDash (double offset, const std::vector<double>& dashes);
-  void setLineDash (double offset, const double* dashes, int n);
-  
-  typedef agg::line_cap_e line_cap_t;
-  void setLineCap (line_cap_t cap);
-  
-  typedef agg::line_join_e line_join_t;
-  void setLineJoin (line_join_t join);
-  
-  /* TODO:
-     - clip
-     - control anti-aliasing
-     (- gradients)
-  */
-  
-  enum filling_rule_t
-    {
-      fill_non_zero = agg::fill_non_zero,
-      fill_even_odd = agg::fill_even_odd,
-      fill_none = 0xff
-    };
-
-  void draw (Image& image, filling_rule_t fill = fill_none);
-  // temp. simple text draw method
-  void drawText (Image& image, double x, double y,
-		 char* text, double height);
-  
-protected:
-  agg::path_storage path;
-  
-  // quick hack ("for now")
-  double r, g, b, a, line_width, dashes_start_offset;
-  std::vector <double> dashes;
-  
-  line_cap_t line_cap;
-  line_join_t line_join;
+  double width;
+  // TODO: intersections, pattern caps, etc.
 };
+
+void drawLine(Image& img, double x, double y, double x2, double y2,
+	      const Image::iterator& color, const drawStyle& style);
+
+void drawRectange(Image& img, double x, double y, double x2, double y2,
+		  const Image::iterator& color, const drawStyle& style);
+
+void drawText(Image& image, double x, double y, char* text, double height,
+	      const Image::iterator& color);
 
 #endif

@@ -146,7 +146,7 @@ bool XPMCodec::readImage (std::istream* stream, Image& image)
   
   image.bps = 8; // for now, later this could be optimized
   image.spp = 1; // for now, later this could be optimized
-  image.resize (image.w, image.h);
+  image.New (image.w, image.h);
   image.xres = image.yres = 0;
   
   skip_comments (stream);

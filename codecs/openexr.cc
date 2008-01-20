@@ -143,7 +143,7 @@ try {
   image.spp = 4;
   image.bps = 16;
   
-  image.resize (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1);
+  image.New (dw.max.x - dw.min.x + 1, dw.max.y - dw.min.y + 1);
   
   Array2D<Rgba> pixels (1, image.w); // working data
   

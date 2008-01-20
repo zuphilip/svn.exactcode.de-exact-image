@@ -82,7 +82,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
   image.xres = image.yres = 0;
   
   // allocate data, if necessary
-  image.resize (image.w, image.h);
+  image.New (image.w, image.h);
   
   // consume the left over spaces and newline 'till the data begins
   {
@@ -118,7 +118,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
     }
   else // binary data
     {
-      const int stride = image.stride ();
+      const int stride = image.Stride ();
       const int bps = image.bps;
       
       for (int y = 0; y < image.h; ++y)
@@ -211,7 +211,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   else
     {
-      const int stride = image.stride ();
+      const int stride = image.Stride ();
       const int bps = image.bps;
       
       uint8_t* ptr = (uint8_t*) malloc (stride);

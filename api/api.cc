@@ -208,16 +208,7 @@ void setBackgroundColor (double r, double g, double b)
 
 // vector elements
 
-class drawStyle
-{
-public:
-  drawStyle ()
-    : width (1) {
-  }
-  
-  double width;
-  std::vector <double> dash;
-} style;
+static drawStyle style;
 
 void setLineWidth (double width)
 {
@@ -226,42 +217,17 @@ void setLineWidth (double width)
 
 void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 {
-  Path path;
-  path.moveTo (x, y);
-  path.addLineTo (x2, y2);
-
-  path.setLineWidth (style.width);
-  path.setLineDash (0, style.dash);
-  double r, g, b;
-  foreground_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  path.draw (*image);
+  drawLine (*image, x, y, x2, y2, foreground_color, style);
 }
 
-void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
+void imageDrawRectange (Image* image, double x, double y, double x2, double y2)
 {
-  Path path;
-  path.addRect (x, y, x2, y2);
-  path.setLineWidth (style.width);
-  path.setLineDash (0, style.dash);
-  path.setLineJoin (agg::miter_join);
-  
-  double r, g, b;
-  background_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  path.draw (*image);
+  drawRectange (*image, x, y, x2, y2, foreground_color, style);
 }
 
 void imageDrawText (Image* image, double x, double y, char* text, double height)
 {
-  Path path;
-  double r, g, b;
-  foreground_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  path.drawText (*image, x, y, text, height);
+  drawText (*image, x, y, text, height, foreground_color);
 }
 
 

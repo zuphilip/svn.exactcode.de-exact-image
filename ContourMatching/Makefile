@@ -1,6 +1,6 @@
 include build/top.make
 
-# build each .cc file as executable - if this is not desired
+# build earch .cc file as executable - if this is not desired
 # in the future a list must be supplied manually ...
 BINARY = $(basename $(notdir $(wildcard $(X_MODULE)/*.cc)))
 

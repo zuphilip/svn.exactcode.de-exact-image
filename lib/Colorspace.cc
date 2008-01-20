@@ -167,7 +167,7 @@ void colorspace_gray8_denoise_neighbours (Image &image)
     const Image& image;
     const unsigned int stride;
     compare_and_set (const Image& _image)
-      : image(_image), stride (image.stride())
+      : image(_image), stride (image.Stride())
     {
     }
     
@@ -331,7 +331,7 @@ void colorspace_grayX_to_gray8 (Image& image)
   Image gray8_image;
   gray8_image.bps = 8;
   gray8_image.spp = 1;
-  gray8_image.resize (image.w, image.h);
+  gray8_image.New (image.w, image.h);
 
   Image::iterator it = image.begin();
   Image::iterator gray8_it = gray8_image.begin();
@@ -354,7 +354,7 @@ void colorspace_grayX_to_rgb8 (Image& image)
   Image rgb_image;
   rgb_image.bps = 8;
   rgb_image.spp = 3;
-  rgb_image.resize (image.w, image.h);
+  rgb_image.New (image.w, image.h);
   
   Image::iterator it = image.begin();
   Image::iterator rgb_it = rgb_image.begin();
@@ -371,10 +371,10 @@ void colorspace_grayX_to_rgb8 (Image& image)
 void colorspace_gray1_to_gray2 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 2;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -411,10 +411,10 @@ void colorspace_gray1_to_gray2 (Image& image)
 void colorspace_gray1_to_gray4 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 4;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
   
   for (int row = 0; row < image.h; ++row)
@@ -453,10 +453,10 @@ void colorspace_gray1_to_gray4 (Image& image)
 void colorspace_gray1_to_gray8 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  int old_stride = image.Stride();
   
   image.bps = 8;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
+  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.Stride()));
   uint8_t* output = image.getRawData();
  
   for (int row = 0; row < image.h; ++row)

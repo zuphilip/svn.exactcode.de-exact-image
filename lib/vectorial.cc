@@ -23,208 +23,61 @@
 #include "agg.hh"
 #include "Image.hh"
 
-#include "agg_conv_dash.h"
-#include "agg_conv_curve.h"
-#include "agg_conv_smooth_poly1.h"
-#include "agg_path_storage.h"
-
-// ---
-
-Path::Path ()
-  : line_width (1.0), dashes_start_offset (0.0),
-    line_cap (agg::butt_cap), line_join (agg::miter_join)
+void drawLine(Image& image, double x, double y, double x2, double y2,
+	      const Image::iterator& color, const drawStyle& style)
 {
-}
+#if 0
+  // asumes RGB for now
+  agg::rendering_buffer rbuf (image.getRawData(),
+			     image.w, image.h, image.Stride());
 
-Path::~Path ()
-{
-}
-
-void Path::moveTo (double x, double y)
-{
-  path.move_to (x, y);
-}
-
-void Path::addLineTo (double x, double y)
-{
-  path.line_to (x, y);
-}
-
-void Path::addRect (double x, double y, double x2, double y2)
-{
-  moveTo (x, y);
-  addLineTo (x2, y);
-  addLineTo (x2, y);
-  addLineTo (x, y);
-  close ();
-}
-
-void Path::addArcTo (double rx, double ry,  double angle,
-		     double x, double y)
-{
-  path.arc_to (rx, ry, angle,
-	       false /*large arc */, false /* sweep */,
-	       x, y);
-}
-
-void Path::addArc (double rx, double ry,  double angle,
-		     double dx, double dy)
-{
-  path.arc_to (rx, ry, angle,
-	       false /*large arc */, false /* sweep */,
-	       dx, dy);
-}
-
-void Path::addCurveTo (double c1x, double c1y,
-		       double x, double y)
-{
-  path.curve3 (c1x, c1y, x, y);
-}
-
-void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
-		       double x, double y)
-{
-  path.curve4 (c1x, c1y, c2x, c2y, x, y);
-}
-/*
-void Path::addText (char* text, double height)
-{
-  agg::gsv_text t;
-  t.flip (true);
-  t.size (height);
-  t.text (text);
-  t.start_point (x, y);
+  pixfmt pixf (rbuf);
+#endif
   
-  agg::conv_stroke<agg::gsv_text> stroke (t);
-  stroke.width (1.0);
-  ras.add_path (stroke);
+  agg::line_profile_aa profile;
+  profile.gamma (agg::gamma_power(1.2));  //optional
+  profile.min_width (0.75);               //optional
+  profile.smoother_width (3.0);           //optional
+  profile.width (style.width);                  //mandatory!
   
-  ren.color (agg::rgba8(r, g, b, a));
-  agg::render_scanlines (ras, sl, ren);
-}
-*/
-void Path::end ()
-{
-  // do not close the path, we have ::close() for that purpose
-  path.end_poly (agg::path_flags_none);
-}
-
-void Path::close ()
-{
-  path.close_polygon ();
-}
-
-void Path::clear ()
-{
-  path.remove_all ();
-}
-
-void Path::setFillColor (double _r, double _g, double _b, double _a)
-{
-  r = _r;
-  g = _g;
-  b = _b;
-  a = _a;
-}
-
-void Path::setLineWidth (double width)
-{
-  line_width = width;
-}
-
-void Path::setLineDash (double offset, const std::vector<double>& _dashes)
-{
-  dashes_start_offset = offset;
-  dashes = _dashes;
-}
-
-void Path::setLineDash (double offset, const double* _dashes, int n)
-{
-  dashes_start_offset = offset;
-  dashes.clear ();
-  for (; n; n--, _dashes++)
-    dashes.push_back (*_dashes);
-}
-
-void Path::setLineCap (line_cap_t cap)
-{
-  line_cap = cap;
-}
-
-void Path::setLineJoin (line_join_t join)
-{
-  line_join = join;
-}
-
-void Path::draw (Image& image, filling_rule_t fill)
-{
   renderer_exact_image ren_base (image);
-  
-  renderer_aa ren (ren_base);
-  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
-  
-  rasterizer_scanline ras;
-  scanline sl;
+  renderer_oaa ren (ren_base, profile);
 
-  agg::conv_curve<agg::path_storage> smooth (path);
+  uint16_t r, g, b;
+  color.getRGB (&r, &g, &b);
+  ren.color (agg::rgba8(r,g,b));          //mandatory!
+  rasterizer_oaa ras (ren);
   
-  if (fill == fill_none)
-    {
-      agg::line_profile_aa profile;
-      profile.gamma (agg::gamma_power(1.2)); // optional
-      //profile.min_width (0.75); // optional
-      //profile.smoother_width (3.0); //optional
-      
-      if (dashes.empty ())
-	{
-	  agg::conv_stroke<agg::conv_curve<agg::path_storage> > stroke (smooth);
-	  
-	  stroke.line_cap (line_cap);
-	  stroke.line_join (line_join);
-	  stroke.width (line_width);
-	  
-	  ras.add_path (stroke);
-	}
-      else
-	{
-	  typedef agg::conv_dash<agg::conv_curve<agg::path_storage> > dash_t;
-	  dash_t dash (smooth);
-	  dash.dash_start (dashes_start_offset);
-	  for (std::vector<double>::const_iterator i = dashes.begin ();
-	       i != dashes.end ();) {
-	    double a = *i++, b;
-	    if (i != dashes.end ())
-	      b = *i++;
-	    else
-	      break; // TODO: warn or exception ?
-	    dash.add_dash (a, b);
-	  }
-	  
-	  agg::conv_stroke<dash_t> stroke (dash);
-	  
-	  stroke.line_cap (line_cap);
-	  stroke.line_join (line_join);
-	  stroke.width (line_width);
-	  
-	  ras.add_path (stroke);
-	}
-    }
-  else {
-    // just cast, we use a toll-free enum bridge
-    ras.filling_rule ((agg::filling_rule_e)fill);
-    ras.add_path (smooth);
-  }
+  // ras.round_cap(true);                   //optional
+  // ras.accurate_join(true);               //optional
   
-  agg::render_scanlines (ras, sl, ren);
+  ras.move_to_d (x, y);
+  ras.line_to_d (x2, y2);
+  ras.render (false);     //false means "don't close"
 }
 
-void Path::drawText (Image& image, double x, double y,
-		     char* text, double height)
+void drawRectange(Image& image, double x, double y, double x2, double y2,
+		  const Image::iterator& color, const drawStyle& style)
+{
+  // top / bottom
+  drawLine(image, x,  y,  x2, y,  color, style);
+  drawLine(image, x,  y2, x2, y2, color, style);
+
+  // sides, avoid dubble set on corners
+  drawLine(image, x,  y+1, x,  y2-1, color, style);
+  drawLine(image, x2, y+1, x2, y2-1, color, style);
+}
+
+void drawText(Image& image, double x, double y, char* text, double height,
+		const Image::iterator& color)
 {
   renderer_exact_image ren_base (image);
 
-  renderer_aa ren (ren_base);
-  rasterizer_scanline ras;
+  uint16_t r, g, b;
+  color.getRGB (&r, &g, &b);
+  
+  renderer_aa ren_aa(ren_base);
+  rasterizer_scanline ras_aa;
   scanline sl;
   
   agg::gsv_text t;
@@ -234,9 +87,8 @@ void Path::drawText (Image& image, double x, double y,
   t.start_point (x, y);
   agg::conv_stroke<agg::gsv_text> stroke (t);
   stroke.width (1.0);
+  ras_aa.add_path (stroke);
   
-  ras.add_path (stroke);
-  
-  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
-  agg::render_scanlines (ras, sl, ren);
+  ren_aa.color (agg::rgba8(0,0,0));
+  agg::render_scanlines (ras_aa, sl, ren_aa);
 }

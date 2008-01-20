@@ -1,3 +1,4 @@
+
 include build/top.make
 
 BINARY = lib
@@ -11,7 +12,7 @@ else
 NOT_SRCS += bardecode.cc
 endif
 
-# as fallback use the built-in Agg, we depend on it, ...
+# we we use the built-in Agg, we depend on it, ...
 
 ifeq "$(WITHLIBAGG)" "0"
 DEPS += $(agg-2.4_BINARY)
@@ -21,6 +22,7 @@ LDFLAGS += $(LIBAGGLIBS)
 endif
 
 
-CPPFLAGS += -I lib
+CPPFLAGS += -I lib/
 
 include build/bottom.make
+

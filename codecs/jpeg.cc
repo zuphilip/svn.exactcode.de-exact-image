@@ -371,7 +371,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
     buffer[0] = (JSAMPLE*) image.getRawData() +
-      cinfo.next_scanline*image.stride();
+      cinfo.next_scanline*image.Stride();
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 
@@ -444,7 +444,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   /* JSAMPLEs per row in output buffer */
   int row_stride = cinfo->output_width * cinfo->output_components;
 
-  image->resize (image->w, image->h);
+  image->New (image->w, image->h);
   
   /* Step 6: jpeg_read_scanlines(...); */
   

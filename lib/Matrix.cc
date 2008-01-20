@@ -23,7 +23,7 @@ void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, 
 			       matrix_type divisor)
 {
   const unsigned int spp = image.spp;
-  const unsigned int stride = image.stride();
+  const unsigned int stride = image.Stride();
   uint8_t* data = image.getRawData();
   uint8_t* new_data = (uint8_t*) malloc (image.h * stride);
   
@@ -94,7 +94,7 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
   
   Image orig_image;
   orig_image.copyTransferOwnership (image);
-  image.resize (image.w, image.h);
+  image.New (image.w, image.h);
 
   Image::iterator dst_it = image.begin();
   Image::iterator src_it = orig_image.begin();
@@ -202,10 +202,10 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
 void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
 					  matrix_type src_add)
 {
-  int bps=image.bitsPerSample();
-  int spp=image.samplesPerPixel();
-  int stride=image.stride();
-  int height=image.height();
+  int bps=image.bps;
+  int spp=image.spp;
+  int stride=image.Stride();
+  int height=image.h;
 
   // TODO: support for 16 bit
   if (bps != 8) {

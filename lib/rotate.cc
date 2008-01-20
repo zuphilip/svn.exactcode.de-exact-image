@@ -35,7 +35,7 @@ void flipX (Image& image)
     if (image.getCodec()->flipX(image))
       return;
   
-  const int stride = image.stride();
+  const int stride = image.Stride();
   uint8_t* data = image.getRawData();
   switch (image.spp * image.bps)
     {
@@ -133,7 +133,7 @@ void flipY (Image& image)
     if (image.getCodec()->flipY(image))
       return;
   
-  int bytes = image.stride();
+  int bytes = image.Stride();
   uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
     {
@@ -287,7 +287,7 @@ void rot90 (Image& image, int angle)
 }
 
 
-void rotate (Image& image, double angle, const Image::iterator& background)
+void rotate (Image& image, double angle, Image::iterator background)
 {
   angle = fmod (angle, 360);
   if (angle < 0)
@@ -326,7 +326,7 @@ void rotate (Image& image, double angle, const Image::iterator& background)
   
   Image orig_image = image;
   
-  image.setRawData ((uint8_t*) malloc (image.stride()*image.h));
+  image.setRawData ((uint8_t*) malloc (image.Stride()*image.h));
   Image::iterator it = image.begin();
   Image::iterator orig_it = orig_image.begin();
   
@@ -372,7 +372,7 @@ void rotate (Image& image, double angle, const Image::iterator& background)
 
 Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
-			 double angle, const Image::iterator& background)
+			 double angle, Image::iterator background)
 {
   angle = fmod (angle, 360);
   if (angle < 0)
@@ -384,7 +384,7 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   
   Image* new_image = new Image;
   new_image->copyMeta (image);
-  new_image->resize (w, h);
+  new_image->New (w, h);
   
   Image::iterator it = new_image->begin();
   Image::iterator orig_it = image.begin();

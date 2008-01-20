@@ -92,18 +92,18 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
   else
     image.yres = 0;
   
-  int stride = image.stride();
+  int stride = image.Stride();
 
   // printf ("w: %d h: %d\n", _w, _h);
   // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
 
-  image.resize (image.w, image.h);
+  image.New (image.w, image.h);
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
   if (photometric == PHOTOMETRIC_PALETTE)
     {
       if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
-	std::cerr << "TIFCodec: Error reading colormap." << std::endl;
+	std::cerr << "Error reading colormap." << std::endl;
     }
 
   uint8_t* data2 = image.getRawData();
@@ -148,22 +148,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
 bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  TIFF* out;
-  
-  out = TIFFStreamOpen ("", stream);
-  if (out == NULL)
-    return false;
-  
-  writeImageImpl (out, image, compress, 0);
-
-  TIFFClose (out);
-  
-  return true;
-}
-
-bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress,
-			       int page)
-{
+  TIFF *out;
   uint32 rowsperstrip = (uint32) - 1;
   
   uint16 compression = COMPRESSION_NONE;
@@ -188,15 +173,14 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     else if (c == "none")
       compression = COMPRESSION_NONE;
     else
-      std::cerr << "TIFCodec: Unrecognized compression option '" << compress << "'" << std::endl;
+      std::cerr << "Unrecognized compression option '" << compress << "'" << std::endl;
   }
   
-  if (page) {
-    TIFFSetField (out, TIFFTAG_SUBFILETYPE, FILETYPE_PAGE);
-    TIFFSetField (out, TIFFTAG_PAGENUMBER, page, 0); // total number unknown
-    // TIFFSetField (out, TIFFTAG_PAGENAME, page_name);
-  }
-  
+
+  out = TIFFStreamOpen ("", stream);
+  if (out == NULL)
+    return false;
+   
   TIFFSetField (out, TIFFTAG_IMAGEWIDTH, image.w);
   TIFFSetField (out, TIFFTAG_IMAGELENGTH, image.h);
   TIFFSetField (out, TIFFTAG_BITSPERSAMPLE, image.bps);
@@ -212,7 +196,8 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
   else if (false) { /* just saved for reference */
     uint16 rmap[256], gmap[256], bmap[256];
-    for (int i = 0;i < 256; ++i) {
+    int i;
+    for (i=0;i<256;++i) {
       rmap[i] = gmap[i] = bmap[i] = i * 0xffff / 255;
     }
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_PALETTE);
@@ -236,7 +221,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
 		TIFFDefaultStripSize (out, rowsperstrip));
 
-  const int stride = image.stride();
+  const int stride = image.Stride();
   /* Note: we on-the-fly invert 1-bit data to please some historic apps */
   
   uint8_t* src = image.getRawData();
@@ -261,7 +246,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   }
   if (scanline) free (scanline);  
   
-  TIFFWriteDirectory (out);
+  TIFFClose (out);
   
   return true;
 }

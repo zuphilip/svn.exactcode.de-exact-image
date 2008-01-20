@@ -2,7 +2,7 @@
 #include <math.h>
 #include <iostream>
 
-const unsigned int logo_trans_before_rot=10000; // TODO: calculate useful value !!
+const unsigned int logo_trans_before_rot=10000; // TODO: calculate usefull value !!
 
 class LengthSorter
 {

@@ -43,7 +43,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   if (orig_bps < 8)
     colorspace_grayX_to_gray8 (image);
   
-  int stride = image.stride();
+  int stride = image.Stride();
   int cut_stride = stride * w / image.w;
   
   uint8_t* dst = image.getRawData ();
@@ -82,7 +82,7 @@ void fastAutoCrop (Image& image)
   // which value to compare against, get RGB of first pixel of the last line
   // iterator is a generic way to get RGB regardless of the bit-depth
   u_int16_t r = 0, g = 0, b = 0;
-  Image::const_iterator it = image.begin();
+  Image::iterator it = image.begin();
   it = it.at (0, image.h - 1);
   r = 0; g = 0; b = 0;
   (*it).getRGB (&r, &g, &b);
@@ -93,7 +93,7 @@ void fastAutoCrop (Image& image)
   if (r != 0 && r != 255)
     return; // not min nor max
   
-  const int stride = image.stride();
+  const int stride = image.Stride();
   
   // first determine the color to crop, for now we only accept full black or white
   int h = image.h-1;
