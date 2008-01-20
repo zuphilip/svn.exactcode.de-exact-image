@@ -22,8 +22,10 @@
 void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, int yw,
 			       matrix_type divisor)
 {
+  const unsigned int spp = image.spp;
+  const unsigned int stride = image.stride();
   uint8_t* data = image.getRawData();
-  uint8_t* new_data = (uint8_t*) malloc (image.w * image.h);
+  uint8_t* new_data = (uint8_t*) malloc (image.h * stride);
   
   const int xr = xw / 2;
   const int yr = yw / 2;
@@ -34,60 +36,51 @@ void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, 
   uint8_t* src_ptr = data;
   uint8_t* dst_ptr = new_data;
 
-  const int kernel_offset = yr * image.w + xr;
+  const int kernel_offset = yr * stride + xr * spp;
 
   // top-border
-  for (int i = 0; i < _y1 * image.w; ++i)
+  for (int i = 0; i < _y1 * stride; ++i)
     *dst_ptr++ = *src_ptr++;
   
   divisor = 1 / divisor; // to multiple in the loop
   
   for (int y = _y1; y < _y2; ++y)
   {
-    src_ptr = &data[y * image.w];
-    dst_ptr = &new_data[y * image.w];
+    src_ptr = &data[y * stride];
+    dst_ptr = &new_data[y * stride];
 
     // left-side border
-    for (int x = 0; x < xr; ++x)
+    for (int x = 0; x < xr * spp; ++x)
         *dst_ptr++ = *src_ptr++;
 
     // convolution area
-    for (int x = xr; x < image.w-xr; ++x)
+    for (int x = 0; x < (image.w-xr-xr)*spp; ++x)
       {
-	  uint8_t* data_row = src_ptr++ - kernel_offset;
-	  matrix_type sum1 = 0, sum2 = 0, sum3 = 0, sum4 = 0;
+	  uint8_t* data_ptr = src_ptr++ - kernel_offset;
+	  matrix_type sum = 0;
 
-	  const matrix_type* matrix_row = matrix;
-	  // in former times this was more readable and got overoptimized
-	  // for speed ,-)
-	  for (int y2 = 0; y2 < yw; ++y2, data_row += image.w - xw) {
+	  const matrix_type* matrix_ptr = matrix;
+	  for (int y2 = 0; y2 < yw; ++y2, data_ptr += (image.w - xw) * spp) {
 	    int x2 = xw;
-	    while (x2 >= 4) {
-	      sum1 += matrix_row[0] * data_row[0];
-	      sum2 += matrix_row[1] * data_row[1];
-	      sum3 += matrix_row[2] * data_row[2];
-	      sum4 += matrix_row[3] * data_row[3];
-	      data_row += 4;
-	      matrix_row += 4;
-	      x2 -= 4;
-	    }
+	    
 	    while (x2 > 0) {
- 	      sum1 += *matrix_row++ * *data_row++;
+ 	      sum += *data_ptr * *matrix_ptr;
+	      ++matrix_ptr;
+	      data_ptr += spp;
 	      --x2;
 	    }
 	  }
 	  
-	  matrix_type sum = (sum1+sum2+sum3+sum4) * divisor;
-	  uint8_t z = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
-	  *dst_ptr++ = z;
+	  sum *= divisor;
+	  *dst_ptr++ = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
       }
     // right-side border
-    for (int x = image.w-xr; x < image.w; ++x)
+    for (int x = 0; x < xr * spp; ++x)
         *dst_ptr++ = *src_ptr++;
   }
 
   // bottom-border
-  for (int i = 0; i < image.w * (image.h-_y2); ++i)
+  for (int i = 0; i < (image.h-_y2) * stride; ++i)
     *dst_ptr++ = *src_ptr++;
 
   image.setRawData (new_data);
@@ -96,7 +89,7 @@ void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, 
 void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw,
 			 matrix_type divisor)
 {
-  if (image.bps == 8 && image.spp == 1)
+  if (image.bps == 8)
     return convolution_matrix_gray8 (image, matrix, xw, yw, divisor);
   
   Image orig_image;
