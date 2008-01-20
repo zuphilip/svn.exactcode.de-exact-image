@@ -39,12 +39,6 @@ Image* copyImage (Image* other)
   return image;
 }
 
-Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
-			   unsigned int w, unsigned int h, double angle)
-{
-  return copy_crop_rotate (*image, x, y, w, h, angle);
-}
-
 bool decodeImage (Image* image, char* data, int n)
 {
   const std::string str (data, n); 
@@ -152,6 +146,12 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace)
 void imageRotate (Image* image, double angle)
 {
   rotate (*image, angle, background_color);
+}
+
+Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
+			   unsigned int w, unsigned int h, double angle)
+{
+  return copy_crop_rotate (*image, x, y, w, h, angle, background_color);
 }
 
 void imageFlipX (Image* image)
