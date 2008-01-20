@@ -712,22 +712,42 @@ public:
     // return HSV
     inline void getHSV(double& h, double& s, double& v) const
     {
-      double r, g, b;
-      getRGB (r, g, b);
-      
-      const double min = std::min (std::min (r, g), b);
-      const double max = std::max (std::max (r, g), b);
-      const double delta = max - min;
-      
-      v = max;
-      s = max == .0 ? 0 : 1. - min / max;
-      
-      if (max == r) // yellow - magenta
-	h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
-      else if (max == g) // cyan - yellow
-	h = 60. * (b - r) / delta + 120.;
-      else // magenta - cyan
-	h = 60. * (r - g) / delta + 240.;
+      switch (type) {
+      case GRAY1:
+      case GRAY2:
+      case GRAY4:
+      case GRAY8:
+	h = 0;
+	s = 0;
+	v = (double)value.gray / 0xff; break;
+	break;
+	
+      case GRAY16:
+	h = 0;
+	s = 0;
+	v = (double)value.gray / 0xffff; break;
+	break;
+	
+      default:
+	{
+	  double r, g, b;
+	  getRGB (r, g, b);
+	  
+	  const double min = std::min (std::min (r, g), b);
+	  const double max = std::max (std::max (r, g), b);
+	  const double delta = max - min;
+	  
+	  v = max;
+	  s = max == .0 ? 0 : 1. - min / max;
+	  
+	  if (max == r) // yellow - magenta
+	    h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
+	  else if (max == g) // cyan - yellow
+	    h = 60. * (b - r) / delta + 120.;
+	  else // magenta - cyan
+	    h = 60. * (r - g) / delta + 240.;
+	}
+      }
     }
     
     // set Luminance
