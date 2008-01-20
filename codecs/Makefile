@@ -1,3 +1,4 @@
+include build/top.make
 
 ifeq "$(WITHLIBJPEG)" "1"
 LDFLAGS += -ljpeg
@@ -40,8 +41,6 @@ ifeq "$(WITHLCMS)" "1"
 LDFLAGS += $(LCMSLIBS)
 endif
 
-include build/top.make
-
 BINARY = lib
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
@@ -49,4 +48,3 @@ DEPS =
 CPPFLAGS += -I codecs/
 
 include build/bottom.make
-
