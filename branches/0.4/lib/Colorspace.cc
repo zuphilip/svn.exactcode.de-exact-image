@@ -137,6 +137,83 @@ void colorspace_rgb8_to_gray8 (Image& image)
   image.setRawData();
 }
 
+void colorspace_gray8_threshold (Image& image, unsigned char threshold)
+{
+  uint8_t *output = image.getRawData();
+  uint8_t *input = image.getRawData();
+  
+  for (int row = 0; row < image.h; row++)
+    {
+      for (int x = 0; x < image.w; x++)
+	{
+	  *output++ = *input++ > threshold ? 0xFF : 0x00;
+	}
+    }
+  image.setRawData();
+}
+
+void colorspace_gray8_denoise_neighbours (Image &image)
+{
+  // we need some pixels to compare, also avoids conditionals
+  // below
+  if (image.w < 3 ||
+      image.h < 3)
+    return;
+  
+  uint8_t* it = image.getRawData();
+  
+  struct compare_and_set
+  {
+    const Image& image;
+    const unsigned int stride;
+    compare_and_set (const Image& _image)
+      : image(_image), stride (image.stride())
+    {
+    }
+    
+    // without the inner(area) compiler guidance the conditionals are
+    // not optimized away well enough
+    void operator() (const int x, const int y, uint8_t* it,
+		     const bool inner = false)
+    {
+      int n = 0;
+      unsigned int sum = 0;
+      
+      if (inner || x > 0)
+	sum += *(it-1), ++n;
+      if (inner || y > 0)
+	sum += *(it-stride), ++n;
+      if (inner || x < image.w-1)
+	sum += *(it+1), ++n;
+      if (inner || y < image.h-1)
+	sum += *(it+stride), ++n;
+      
+      // if all direct neighbours are black or white, fill it
+      if (sum == 0)
+	*it = 0;
+      else if (sum == n * 0xff)
+	*it = 0xff;
+    }
+  } compare_and_set (image);
+  
+  for (int y = 0; y < image.h; ++y)
+    {
+      // optimize conditionals away for the inner area
+      if (y > 0 && y < image.h-1)
+	{
+	  compare_and_set (1, y, it++);
+	  for (int x = 1; x < image.w-1; ++x, ++it)
+	    compare_and_set (x, y, it, true);
+	  compare_and_set (image.w-1, y, it++);
+	}
+      else // quite some out of bounds conditions to check
+	for (int x = 0; x < image.w; ++x, ++it) 
+	  compare_and_set (x, y, it);
+    }
+    
+  image.setRawData();
+}
+
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 {
   uint8_t *output = image.getRawData();
