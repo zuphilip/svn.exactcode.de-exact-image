@@ -54,8 +54,8 @@ void Path::addRect (double x, double y, double x2, double y2)
 {
   moveTo (x, y);
   addLineTo (x2, y);
-  addLineTo (x2, y);
-  addLineTo (x, y);
+  addLineTo (x2, y2);
+  addLineTo (x, y2);
   close ();
 }
 
