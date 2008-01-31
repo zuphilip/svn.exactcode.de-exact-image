@@ -2,8 +2,7 @@
  * Copyright (c) 2008 Valentin Ziegler <valentin@exactcode.de>
  * Copyright (c) 2008 Susanne Klaus <susanne@exactcode.de>
  *
-*/
-
+ */
 
 #include "Codecs.hh"
 

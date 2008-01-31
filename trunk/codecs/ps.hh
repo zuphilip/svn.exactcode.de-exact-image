@@ -4,7 +4,6 @@
  *
 */
 
-
 #include "Codecs.hh"
 
 class PSCodec : public ImageCodec {
@@ -19,4 +18,6 @@ public:
   virtual bool readImage (std::istream* stream, Image& image);
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress);
+
+  static void encodeImage (std::ostream* stream, Image& image, double scale);
 };
