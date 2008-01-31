@@ -4,10 +4,6 @@
  *
  */
 
-#include <iostream>
-#include <string>
-#include <sstream>
-
 #include "ps.hh"
 
 bool PSCodec::readImage (std::istream* stream, Image& image)
@@ -23,13 +19,6 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	double dpi = image.xres ? image.xres : 72; // TODO: yres might be different
 	double scale = 72 / dpi; //postscript native resolution is 72dpi.
 
-	const char* decodeName = "Decode [0 1 0 1 0 1]";
-	const char* deviceName = "DeviceRGB";
- 	if (image.spp == 1) {
-		deviceName = "DeviceGray";
-		decodeName = "Decode [0 1]";
-	}
-
 	const char* creatorName = "ExactImage";
 
 	*stream <<
@@ -43,6 +32,28 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"0 dict begin\n"
 		"%%EndProlog\n"
 		"%%BeginPage\n"
+	<< std::endl;	
+
+	encodeImage (stream, image, scale);
+
+	*stream << "%%EndPage\nshowpage\nend" << std::endl;
+
+ 	return true;
+}
+
+void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale)
+{
+	const int w = image.w;
+	const int h = image.h;
+
+	const char* decodeName = "Decode [0 1 0 1 0 1]";
+	const char* deviceName = "DeviceRGB";
+ 	if (image.spp == 1) {
+		deviceName = "DeviceGray";
+		decodeName = "Decode [0 1]";
+	}
+
+	*stream << 
 		"/" << deviceName << " setcolorspace\n"
 		"<<\n"
 		"   /ImageType 1\n"
@@ -55,7 +66,7 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"       0.0 " << h << "\n"
 		"   ]\n"
 		"   /DataSource currentfile /ASCIIHexDecode filter\n"
-		">> image\n"
+		">> image"
 		<< std::endl;
 
 	const int bytes = image.stride() * h;
@@ -68,10 +79,6 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		if (i % 40 == 39 || i == bytes - 1)
 			stream->put('\n');
 	}
-
-	*stream << "%%EndPage\nshowpage\nend" << std::endl;
-
- 	return true;
 }
 
 PSCodec ps_loader;
