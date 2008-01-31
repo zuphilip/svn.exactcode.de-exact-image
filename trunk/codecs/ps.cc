@@ -5,6 +5,7 @@
  */
 
 #include "ps.hh"
+#include "Encodings.hh"
 
 bool PSCodec::readImage (std::istream* stream, Image& image)
 {
@@ -48,10 +49,15 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale)
 
 	const char* decodeName = "Decode [0 1 0 1 0 1]";
 	const char* deviceName = "DeviceRGB";
+	const char* encoding = "ASCII85Decode";
+
  	if (image.spp == 1) {
 		deviceName = "DeviceGray";
 		decodeName = "Decode [0 1]";
 	}
+
+	if (false /* TODO: evaluate some command line option here */)
+	  encoding = "ASCIIHexDecode";
 
 	*stream << 
 		"/" << deviceName << " setcolorspace\n"
@@ -65,20 +71,15 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale)
 		"       0.0 " << -1.0 / scale << "\n"
 		"       0.0 " << h << "\n"
 		"   ]\n"
-		"   /DataSource currentfile /ASCIIHexDecode filter\n"
+	  "   /DataSource currentfile /" << encoding << " filter\n"
 		">> image"
 		<< std::endl;
 
 	const int bytes = image.stride() * h;
 	uint8_t* data = image.getRawData();
-	for (int i = 0; i < bytes; ++i) {
-		static const char nibble[] = "0123456789abcdef";
-                stream->put(nibble[data[i] >> 4]);
-                stream->put(nibble[data[i] & 0x0f]);
-		
-		if (i % 40 == 39 || i == bytes - 1)
-			stream->put('\n');
-	}
+	EncodeASCII85(*stream, data, bytes);
+	//EncodeHex(*stream, data, bytes);
+	stream->put('\n');
 }
 
 PSCodec ps_loader;
