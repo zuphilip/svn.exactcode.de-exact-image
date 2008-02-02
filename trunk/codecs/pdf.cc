@@ -7,6 +7,7 @@
 #include <string>
 
 #include "pdf.hh"
+#include "Encodings.hh"
 
 bool PDFCodec::readImage (std::istream* stream, Image& image)
 {
@@ -21,6 +22,7 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
 	const char* deviceName = "DeviceRGB";
 	const char* imageColor = "ImageC";
+	const char* encoding = "ASCII85Decode";
  	if (image.spp == 1) {
 		deviceName = "DeviceGray";
 		imageColor = "ImageB";
@@ -75,29 +77,22 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"	/ColorSpace /" << deviceName << "\n"
 		"	/BitsPerComponent " << image.bps << "\n"
 		"	/Length " << objs_offset.size() + 1 << " 0 R\n"
-		"	/Filter /ASCIIHexDecode\n"
+		"	/Filter /" << encoding << "\n"
 		">>\n"
 		"stream\n";
 
-	std::string imageData;
+	long beginData = stream->tellp();
 	const int bytes = image.stride() * h;
 	uint8_t* data = image.getRawData();
-	for (int i = 0; i < bytes; ++i) {
-		static const char nibble[] = "0123456789abcdef";
-		imageData += nibble[data[i] >> 4];
-		imageData += nibble[data[i] & 0x0f];
-
-		if (i % 40 == 39 || i == bytes - 1)
-			imageData += '\n';
-	}
-	*stream << imageData;
+	EncodeASCII85(*stream, data, bytes);
+	long endData = stream->tellp();
 
 	*stream << "endstream\n"
 		"endobj\n";
 
 	objs_offset.push_back(stream->tellp());
 	*stream << "" << objs_offset.size() << " 0 obj\n"
-		"" << imageData.length() << "\n"
+		"" << endData - beginData << "\n"
 		"endobj\n";
 
 	// Contents
@@ -108,16 +103,16 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		">>\n"
 		"stream\n";
 
-	std::string imageData2;
-	imageData2 += "q\n512 0 0 512 0 0 cm\n/Im1 Do\nQ\n";
-	*stream << imageData2;
+	beginData = stream->tellp();
+	*stream << "q\n" << w << " 0 0 " << h << " 0 0 cm\n/Im1 Do\nQ\n";
+	endData = stream->tellp();
 
 	*stream << "endstream\n"
 		"endobj\n";
 
 	objs_offset.push_back(stream->tellp());
 	*stream << "" << objs_offset.size() << " 0 obj\n"
-		"" << imageData2.length() << "\n"
+		"" << endData - beginData << "\n"
 		"endobj\n";
 
 	long last_cross_reference = stream->tellp();
