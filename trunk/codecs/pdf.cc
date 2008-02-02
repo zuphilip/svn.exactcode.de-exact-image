@@ -20,9 +20,24 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	const int w = image.w;
 	const int h = image.h;
 
+	std::string encoding = "ASCII85Decode";
+
+	if (!compress.empty())
+	{
+		std::string c (compress);
+		std::transform (c.begin(), c.end(), c.begin(), tolower);
+
+		if (c == "encodeascii85")
+			encoding = "ASCII85Decode";
+		else if (c == "encodehex")
+			encoding = "ASCIIHexDecode";
+		else
+			std::cerr << "PDFCodec: Unrecognized encoding option '" << compress << "'" << std::endl;
+	}
+
 	const char* deviceName = "DeviceRGB";
 	const char* imageColor = "ImageC";
-	const char* encoding = "ASCII85Decode";
+
  	if (image.spp == 1) {
 		deviceName = "DeviceGray";
 		imageColor = "ImageB";
@@ -84,7 +99,10 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	long beginData = stream->tellp();
 	const int bytes = image.stride() * h;
 	uint8_t* data = image.getRawData();
-	EncodeASCII85(*stream, data, bytes);
+	if (encoding == "ASCII85Decode")
+		EncodeASCII85(*stream, data, bytes);
+	else
+		EncodeHex(*stream, data, bytes);
 	long endData = stream->tellp();
 
 	*stream << "endstream\n"

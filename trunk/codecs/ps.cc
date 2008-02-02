@@ -35,29 +35,40 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"%%BeginPage\n"
 	<< std::endl;	
 
-	encodeImage (stream, image, scale);
+	encodeImage (stream, image, scale, compress);
 
 	*stream << "%%EndPage\nshowpage\nend" << std::endl;
 
  	return true;
 }
 
-void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale)
+void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale, const std::string& compress)
 {
 	const int w = image.w;
 	const int h = image.h;
 
+	std::string encoding = "ASCII85Decode";
+
+	if (!compress.empty())
+	{
+		std::string c (compress);
+		std::transform (c.begin(), c.end(), c.begin(), tolower);
+
+		if (c == "encodeascii85")
+			encoding = "ASCII85Decode";
+		else if (c == "encodehex")
+			encoding = "ASCIIHexDecode";
+		else
+			std::cerr << "PDFCodec: Unrecognized encoding option '" << compress << "'" << std::endl;
+	}
+
 	const char* decodeName = "Decode [0 1 0 1 0 1]";
 	const char* deviceName = "DeviceRGB";
-	const char* encoding = "ASCII85Decode";
 
  	if (image.spp == 1) {
 		deviceName = "DeviceGray";
 		decodeName = "Decode [0 1]";
 	}
-
-	if (false /* TODO: evaluate some command line option here */)
-	  encoding = "ASCIIHexDecode";
 
 	*stream << 
 		"/" << deviceName << " setcolorspace\n"
@@ -77,8 +88,10 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale)
 
 	const int bytes = image.stride() * h;
 	uint8_t* data = image.getRawData();
-	EncodeASCII85(*stream, data, bytes);
-	//EncodeHex(*stream, data, bytes);
+	if (encoding == "ASCII85Decode")
+		EncodeASCII85(*stream, data, bytes);
+	else
+		EncodeHex(*stream, data, bytes);
 	stream->put('\n');
 }
 
