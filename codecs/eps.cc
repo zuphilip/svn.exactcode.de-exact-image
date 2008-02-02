@@ -24,7 +24,7 @@ bool EPSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"0 dict begin"
 	<< std::endl;
 	
-	PSCodec::encodeImage (stream, image, scale);
+	PSCodec::encodeImage (stream, image, scale, compress);
 
 	*stream << "showpage\nend" << std::endl;
 
