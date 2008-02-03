@@ -8,6 +8,7 @@
 
 #include "pdf.hh"
 #include "Encodings.hh"
+#include "jpeg.hh"
 
 bool PDFCodec::readImage (std::istream* stream, Image& image)
 {
@@ -31,6 +32,8 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			encoding = "ASCII85Decode";
 		else if (c == "encodehex")
 			encoding = "ASCIIHexDecode";
+		else if (c == "encodejpeg")
+			encoding = "DCTDecode";
 		else
 			std::cerr << "PDFCodec: Unrecognized encoding option '" << compress << "'" << std::endl;
 	}
@@ -96,16 +99,21 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		">>\n"
 		"stream\n";
 
+
 	long beginData = stream->tellp();
 	const int bytes = image.stride() * h;
 	uint8_t* data = image.getRawData();
 	if (encoding == "ASCII85Decode")
 		EncodeASCII85(*stream, data, bytes);
-	else
+	else if (encoding == "ASCIIHexDecode")
 		EncodeHex(*stream, data, bytes);
+	else {
+		JPEGCodec codec;
+		codec.writeImage (stream, image, quality, compress);
+	}
 	long endData = stream->tellp();
 
-	*stream << "endstream\n"
+	*stream << "\nendstream\n"
 		"endobj\n";
 
 	objs_offset.push_back(stream->tellp());

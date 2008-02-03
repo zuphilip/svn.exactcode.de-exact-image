@@ -19,5 +19,6 @@ public:
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress);
 
-  static void encodeImage (std::ostream* stream, Image& image, double scale, const std::string& compress);
+  static void encodeImage (std::ostream* stream, Image& image, double scale,
+			   int quality, const std::string& compress);
 };
