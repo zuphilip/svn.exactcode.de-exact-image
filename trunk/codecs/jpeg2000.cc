@@ -35,7 +35,7 @@ static void add_color_prof(jas_image_t* image)
     if (!(image->cmprof_ =
       jas_cmprof_createfromclrspc(jas_image_clrspc(image))))
       {
-        std::cout << "error: cannot create the colorspace" << std::endl;
+        std::cerr << "error: cannot create the colorspace" << std::endl;
         return;
       }
   }
@@ -133,7 +133,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   jas_stream_t* in;
   
   if (!(in = jas_stream_create ())) {
-    fprintf(stderr, "error: cannot create stream\n");
+    std::cerr << "error: cannot create stream" << std::endl;
     return false;
   }
   
@@ -145,7 +145,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   jas_stream_initbuf (in);
   
   if (!(image = jp2_decode(in, 0))) {
-    fprintf(stderr, "error: cannot load image data\n");
+    std::cerr << "error: cannot load image data" << std::endl;
     return false;
   }
   
@@ -169,7 +169,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
     PRINT(JAS_CLRSPC_GENRGB, "GENRGB")
     PRINT(JAS_CLRSPC_GENYCBCR, "GENYCBCR")
     default:
-      std::cout << "Yet unknown colorspace ..." << std::endl;
+      std::cerr << "Yet unknown colorspace ..." << std::endl;
   }
 
   // convert colorspace
@@ -184,21 +184,21 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
         jas_image_t *newimage;
         jas_cmprof_t *outprof;
 
-        std::cout << "forcing conversion to sRGB" << std::endl;
+        std::cerr << "forcing conversion to sRGB" << std::endl;
         if (!(outprof = jas_cmprof_createfromclrspc(JAS_CLRSPC_SRGB))) {
-          std::cout << "cannot create sRGB profile" << std::endl;
+          std::cerr << "cannot create sRGB profile" << std::endl;
           return 0;
         }
-        std::cout << "in space: " << jas_image_cmprof(image) << std::endl;
+        std::cerr << "in space: " << jas_image_cmprof(image) << std::endl;
         if (!(newimage = jas_image_chclrspc(image, outprof, JAS_CMXFORM_INTENT_PER))) {
-          std::cout << "cannot convert to sRGB" << std::endl;
+          std::cerr << "cannot convert to sRGB" << std::endl;
           return 0;
         }
 
         jas_image_destroy(image);
         jas_cmprof_destroy(outprof);
         image = newimage;
-	std::cout << "converted to sRGB" << std::endl;
+	std::cerr << "converted to sRGB" << std::endl;
      }
   }
 
@@ -207,7 +207,7 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   if (im.bps != 1 && im.bps != 8) // we do not support the others, yet
 	im.bps = 8;
 
-  std::cout << "Components: " << jas_image_numcmpts(image)
+  std::cerr << "Components: " << jas_image_numcmpts(image)
             << ", precision: " << jas_image_cmptprec(image, 0) << std::endl;
 
   im.resize (im.w, im.h);
@@ -217,12 +217,12 @@ bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
   jas_matrix_t *jasdata[3];
   for (int k = 0; k < im.spp; ++k) {
     if (!(jasdata[k] = jas_matrix_create(im.h, im.w))) {
-      fprintf(stderr, "internal error\n");
+      std::cerr << "internal error" << std::endl;;
       return 0;
     }
 
     if (jas_image_readcmpt(image, k, 0, 0, im.w, im.h, jasdata[k])) {
-      fprintf(stderr, "cannot read component data %d\n", k);
+      std::cerr << "cannot read component data " << k << std::endl;
       return 0;
     }
   }
@@ -257,7 +257,7 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
   jas_stream_t* out;
   
   if (!(out = jas_stream_create ())) {
-    fprintf(stderr, "error: cannot create stream\n");
+    std::cerr << "error: cannot create stream" << std::endl;
     return false;
   }
   
@@ -283,13 +283,13 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
   
   if (!(image = jas_image_create(im.spp, compparms,
                                  im.spp==3?JAS_CLRSPC_SRGB:JAS_CLRSPC_SGRAY))) {
-    std::cout << "error creating jasper image" << std::endl;
+    std::cerr << "error creating jasper image" << std::endl;
   }
 
   jas_matrix_t *jasdata[3];
   for (int i = 0; i < im.spp; ++i) {
     if (!(jasdata[i] = jas_matrix_create(im.h, im.w))) {
-      fprintf(stderr, "internal error\n");
+      std::cerr << "internal error" << std::endl;
       return false;
     }
   }
@@ -312,7 +312,7 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
     }
     jas_image_setcmpttype (image, i, ct );
     if (jas_image_writecmpt(image, i, 0, 0, im.w, im.h, jasdata[i])) {
-      std::cout << "error writing converted data into jasper" << std::endl;
+      std::cerr << "error writing converted data into jasper" << std::endl;
       return false;
     }
   }
