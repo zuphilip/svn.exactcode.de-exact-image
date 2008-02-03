@@ -9,6 +9,7 @@
 #include "pdf.hh"
 #include "Encodings.hh"
 #include "jpeg.hh"
+#include "jpeg2000.hh"
 
 bool PDFCodec::readImage (std::istream* stream, Image& image)
 {
@@ -34,6 +35,8 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			encoding = "ASCIIHexDecode";
 		else if (c == "encodejpeg")
 			encoding = "DCTDecode";
+		else if (c == "encodejpeg2000")
+			encoding = "JPXDecode";
 		else
 			std::cerr << "PDFCodec: Unrecognized encoding option '" << compress << "'" << std::endl;
 	}
@@ -107,8 +110,12 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		EncodeASCII85(*stream, data, bytes);
 	else if (encoding == "ASCIIHexDecode")
 		EncodeHex(*stream, data, bytes);
-	else {
+	else if (encoding == "DCTDecode") {
 		JPEGCodec codec;
+		codec.writeImage (stream, image, quality, compress);
+	}
+	else if (encoding == "JPXDecode") {
+		JPEG2000Codec codec;
 		codec.writeImage (stream, image, quality, compress);
 	}
 	long endData = stream->tellp();
