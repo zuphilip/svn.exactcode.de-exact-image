@@ -6,6 +6,7 @@
 
 #include "ps.hh"
 #include "Encodings.hh"
+#include "jpeg.hh"
 
 bool PSCodec::readImage (std::istream* stream, Image& image)
 {
@@ -33,16 +34,17 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"0 dict begin\n"
 		"%%EndProlog\n"
 		"%%BeginPage\n"
-	<< std::endl;	
+	<< std::endl;
 
-	encodeImage (stream, image, scale, compress);
+	encodeImage (stream, image, scale, quality, compress);
 
 	*stream << "%%EndPage\nshowpage\nend" << std::endl;
 
  	return true;
 }
 
-void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale, const std::string& compress)
+void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale,
+			   int quality, const std::string& compress)
 {
 	const int w = image.w;
 	const int h = image.h;
@@ -58,6 +60,8 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale, con
 			encoding = "ASCII85Decode";
 		else if (c == "encodehex")
 			encoding = "ASCIIHexDecode";
+		else if (c == "encodejpeg")
+			encoding = "DCTDecode";
 		else
 			std::cerr << "PDFCodec: Unrecognized encoding option '" << compress << "'" << std::endl;
 	}
@@ -82,7 +86,7 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale, con
 		"       0.0 " << -1.0 / scale << "\n"
 		"       0.0 " << h << "\n"
 		"   ]\n"
-	  "   /DataSource currentfile /" << encoding << " filter\n"
+		"   /DataSource currentfile /" << encoding << " filter\n"
 		">> image"
 		<< std::endl;
 
@@ -90,8 +94,12 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale, con
 	uint8_t* data = image.getRawData();
 	if (encoding == "ASCII85Decode")
 		EncodeASCII85(*stream, data, bytes);
-	else
+	else if (encoding == "ASCIIHexDecode")
 		EncodeHex(*stream, data, bytes);
+	else {
+		JPEGCodec codec;
+		codec.writeImage (stream, image, quality, compress);
+	}
 	stream->put('\n');
 }
 
