@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include <iostream>
+#include <sstream>
 
 #include <jasper/jasper.h>
 #include <jasper/jas_image.h>
@@ -317,7 +318,9 @@ bool JPEG2000Codec::writeImage (std::ostream* stream, Image& im, int quality,
     }
   }
 
-  jp2_encode(image, out, 0);
+  std::stringstream opts;
+  opts << "rate=" << (double)quality / 100;
+  jp2_encode(image, out, (char*)opts.str().c_str());
   jas_image_destroy (image);
   jas_stream_close (out);
   
