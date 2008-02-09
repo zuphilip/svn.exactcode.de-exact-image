@@ -1,5 +1,6 @@
 /*
  * The ExactImage stable external API for use with SWIG.
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 René Rebe, Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -28,6 +29,8 @@
  *  [which however is not set in stone {at least not yet}].)
  */
 
+#include <string>
+
 #include "config.h"
 
 class Image; // just forward, never ever care about the internal layout
@@ -44,7 +47,7 @@ Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
 			   unsigned int w, unsigned int h, double angle);
 
 // decode image from memory data of size n
-#ifdef SWIG
+#if defined(SWIG) && !defined(SWIG_CSTRING_UNIMPL)
 %apply (char *STRING, int LENGTH) { (char *data, int n) };
 #endif
 bool decodeImage (Image* image, char* data, int n);
@@ -56,12 +59,18 @@ bool decodeImageFile (Image* image, const char* filename);
 // encode image to memory, the data is newly allocated and returned
 // return 0 i the image could not be decoded
 
-#ifdef SWIG
-%cstring_output_allocate_size( char ** s, int *slen, free(*$1))
+#if defined(SWIG) && !defined(SWIG_CSTRING_UNIMPL)
+%cstring_output_allocate_size(char ** s, int *slen, free(*$1))
 #endif
+#if !defined(SWIG) || (defined(SWIG) && !defined(SWIG_CSTRING_UNIMPL))
 void encodeImage (char **s, int *slen,
 		  Image* image, const char* codec, int quality = 75,
 		  const char* compression = "");
+#endif
+#if !defined(SWIG) || (defined(SWIG) && defined(SWIG_CSTRING_UNIMPL))
+const std::string encodeImage (Image* image, const char* codec, int quality = 75,
+                               const char* compression = "");
+#endif
 
 // encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,

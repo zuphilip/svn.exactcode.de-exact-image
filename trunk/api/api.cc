@@ -1,3 +1,20 @@
+/*
+ * The ExactImage stable external API for use with SWIG.
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 René Rebe, Archivista
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ * 
+ */
+
 #include <math.h>
 
 #include <string>
@@ -69,6 +86,16 @@ void encodeImage (char **s, int *slen,
   *slen = stream.str().size();
 }
 
+const std::string encodeImage (Image* image, const char* codec, int quality,
+                         const char* compression)
+{
+  std::ostringstream stream (""); // empty string to start with
+
+  ImageCodec::Write (&stream, *image, codec, "", quality, compression);
+  stream.flush();
+
+  return stream.str();
+}
 
 bool encodeImageFile (Image* image, const char* filename,
 		      int quality, const char* compression)
