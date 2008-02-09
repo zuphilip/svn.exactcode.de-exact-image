@@ -56,14 +56,12 @@ bool decodeImageFile (Image* image, const char* filename);
 // encode image to memory, the data is newly allocated and returned
 // return 0 i the image could not be decoded
 
-#if 0
 #ifdef SWIG
 %cstring_output_allocate_size( char ** s, int *slen, free(*$1))
 #endif
 void encodeImage (char **s, int *slen,
 		  Image* image, const char* codec, int quality = 75,
 		  const char* compression = "");
-#endif
 
 // encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,
