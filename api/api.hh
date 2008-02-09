@@ -65,7 +65,7 @@ void encodeImage (char **s, int *slen,
 
 // encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,
-		      int quality = 100, const char* compression = "");
+		      int quality = 75, const char* compression = "");
 
 
 // image properties
