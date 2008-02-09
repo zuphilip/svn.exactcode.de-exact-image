@@ -56,38 +56,14 @@ bool decodeImageFile (Image* image, const char* filename);
 // encode image to memory, the data is newly allocated and returned
 // return 0 i the image could not be decoded
 
-#ifdef SWIG
 #if 0
+#ifdef SWIG
 %cstring_output_allocate_size( char ** s, int *slen, free(*$1))
-#else
- // THIS WORKS AROUND WHAT I BELIVE IS A SWIG BUG !!!
- // %typemap(perl5,argout) (char **s, len *slen)  {
- // if (*$1) {
- //   $result = sv_newmortal();
- //   sv_setpvn ($result, (*$1)->data, (*$1)->len);
- // }
- // else
- //   $result = &PL_sv_undef;
- // argvi++;
-%typemap(in, numinputs=0) (char** s, int* slen) (char* a, int b) {
-  $1 = &a;
-  $2 = &b;
-}
-%typemap(argout) (char** s, int* slen) {
-  $result = sv_newmortal();
-  if (*$1 && *$2) {
-    sv_setpvn ($result, *$1, *$2);
-  } else {
-    sv_setsv($result, &PL_sv_undef);
-  }
-  argvi++;
-  XSRETURN(argvi);
-};
 #endif
+void encodeImage (char **s, int *slen,
+		  Image* image, const char* codec, int quality = 75,
+		  const char* compression = "");
 #endif
-  void encodeImage (char **s, int *slen,
-		    Image* image, const char* codec, int quality = 75,
-		    const char* compression = "");
 
 // encode image into specified filename
 bool encodeImageFile (Image* image, const char* filename,
