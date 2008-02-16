@@ -71,8 +71,8 @@ if pkgcheck bardecode shell BARDECODE \
 else
 	cat <<-EOT
 
-		For barcode recognition, please place the commercial library
-		from http://www.bardecode.com/ into the external/ directory.
+		For proprietary barcode recognition, place the commercial, binary-only blob
+		library (from http://www.bardecode.com/) into the 'external/' directory.
 
 EOT
 fi
