@@ -114,10 +114,12 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		JPEGCodec codec;
 		codec.writeImage (stream, image, quality, compress);
 	}
+#if WITHJASPER == 1
 	else if (encoding == "JPXDecode") {
 		JPEG2000Codec codec;
 		codec.writeImage (stream, image, quality, compress);
 	}
+#endif
 	long endData = stream->tellp();
 
 	*stream << "\nendstream\n"
