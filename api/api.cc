@@ -551,16 +551,22 @@ char** imageDecodeBarcodes (Image* image, const char* codestr,
   for (std::map<scanner_result_t,int>::const_iterator it = retcodes.begin();
        it != retcodes.end();
        ++it) {
-    if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
+    if (it->first.type || it->second > 1)
       {
+	const std::string cont = filter_non_printable(it->first.code);
+	if (min_length && cont.size() < min_length)
+	  continue;
+	if (max_length && cont.size() > max_length)
+	  continue;
+	
+	ret.push_back (cont);
+	
 	std::stringstream s; s << it->first.type;
-	ret.push_back (filter_non_printable(it->first.code));
 	ret.push_back (s.str());
       }
   }
 
   char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
-  
   int i = 0;
   for (std::vector<std::string>::iterator it = ret.begin();
        it != ret.end(); ++it)
