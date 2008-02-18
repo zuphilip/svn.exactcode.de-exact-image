@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -294,7 +294,7 @@ bool convert_convolve (const Argument<double>& arg)
 {
   double divisor = 0;
   const std::vector<double>& v = arg.Values ();
-  int n = sqrt(v.size());
+  int n = (int)sqrt(v.size());
   
   for (unsigned int i = 0; i < v.size(); ++i)
     divisor += v[i];
@@ -697,7 +697,7 @@ int main (int argc, char* argv[])
     {
       std::cerr << "Exact image converter including a variety of fast algorithms (econvert)."
 		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2005, 2006 by René Rebe and Archivista" << std::endl
+                <<  " - Copyright (C) 2005 - 2008 by René Rebe and Archivista" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
