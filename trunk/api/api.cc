@@ -139,7 +139,7 @@ int imageYres (Image* image)
   return image->yres;
 }
 
-char* imageColorspace (Image* image)
+const char* imageColorspace (Image* image)
 {
   switch (image->spp * image->bps)
     {
