@@ -21,6 +21,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <sstream>
 
 #include <Image.hh>
 #include <Codecs.hh>
@@ -34,6 +35,9 @@
 #include <optimize2bw.hh>
 #include <empty-page.hh>
 #include <ContourMatching.hh>
+
+#include "Tokenizer.hh"	// barcode decoding
+#include "Scanner.hh"
 
 #include <vectorial.hh>
 
@@ -324,33 +328,6 @@ bool imageIsEmpty (Image* image, double percent, int margin)
   return detect_empty_page (*image, percent, margin);
 }
 
-#if WITHBARDECODE == 1
-
-#include "bardecode.hh"
-
-char** imageDecodeBarcodes (Image* image, const char* c,
-			    int min_length = 0, int max_length = 0)
-{
-  std::string codes = c;
-  std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
-
-  std::vector<std::string> ret = 
-    decodeBarcodes (*image, codes, min_length, max_length);
-  
-  char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
-  
-  int i = 0;
-  for (std::vector<std::string>::iterator it = ret.begin();
-       it != ret.end(); ++it)
-    cret[i++] = strdup (it->c_str());
-  cret[i] = 0;
-  
-  return (char**)cret;
-}
-
-#endif
-
-
 Contours* newContours(Image* image, int low, int high,
 		      int threshold,
 		      int radius, double standard_deviation)
@@ -448,4 +425,157 @@ void imageBrightnessContrastGamma (Image* image, double brightness, double contr
 void imageHueSaturationLightness (Image* image, double hue, double saturation, double lightness)
 {
   hue_saturation_lightness (*image, hue, saturation, lightness);
+}
+
+// barcode recognition
+
+#if WITHBARDECODE == 1
+
+#include "bardecode.hh"
+
+char** imageDecodeBarcodesExt (Image* image, const char* c,
+			    int min_length, int max_length, int multiple)
+{
+  std::string codes = c;
+  std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
+
+  std::vector<std::string> ret = 
+    decodeBarcodes (*image, codes, min_length, max_length, multiple);
+  
+  char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
+  
+  int i = 0;
+  for (std::vector<std::string>::iterator it = ret.begin();
+       it != ret.end(); ++it)
+    cret[i++] = strdup (it->c_str());
+  cret[i] = 0;
+  
+  return (char**)cret;
+}
+
+#endif
+
+using namespace BarDecode;
+
+namespace {
+
+    struct comp {
+        bool operator() (const scanner_result_t& a, const scanner_result_t& b) const
+        {
+            if (a.type < b.type) return true;
+            else if (a.type > b.type) return false;
+            else return (a.code < b.code);
+        }
+    };
+
+    std::string filter_non_printable(const std::string& s)
+    {
+        std::string result;
+        for (size_t i = 0; i < s.size(); ++i) {
+            if ( std::isprint(s[i]) ) result.push_back(s[i]);
+        }
+        return result;
+    }
+
+}
+
+char** imageDecodeBarcodes (Image* image, const char* c,
+			    int min_length, int max_length, int multiple)
+{
+  std::string codes = c;
+  std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
+
+  // parse the code list
+#if 0
+  std::string c (codes);
+  std::string::size_type it = 0;
+  std::string::size_type it2;
+  i = 1;
+  do
+    {
+      it2 = c.find ('|', it);
+      std::string code;
+      if (it2 !=std::string::npos) {
+	code = c.substr (it, it2-it);
+	it = it2 + 1;
+      }
+      else
+	code = c.substr (it);
+      
+      if (!code.empty())
+	{
+	  if (code == "code39")
+	    STSetParameter(hBarcode, ST_READ_CODE39, &i);
+	  else if (code == "code128")
+	    STSetParameter(hBarcode, ST_READ_CODE128, &i);
+	  else if (code == "code25")
+	    STSetParameter(hBarcode, ST_READ_CODE25, &i);
+	  else if (code == "ean13")
+	    STSetParameter(hBarcode, ST_READ_EAN13, &i);
+	  else if (code == "ean8")
+	    STSetParameter(hBarcode, ST_READ_EAN8, &i);
+	  else if (code == "upca")
+	    STSetParameter(hBarcode, ST_READ_UPCA, &i);
+	  else if (code == "upce")
+	    STSetParameter(hBarcode, ST_READ_UPCE, &i);
+          else if (code == "any") {
+	      STSetParameter (hBarcode, ST_READ_CODE39, &i);
+	      STSetParameter (hBarcode, ST_READ_CODE128, &i);
+	      STSetParameter (hBarcode, ST_READ_CODE25, &i);
+	      STSetParameter (hBarcode, ST_READ_EAN13, &i);
+	      STSetParameter (hBarcode, ST_READ_EAN8, &i);
+	      STSetParameter (hBarcode, ST_READ_UPCA, &i);
+	      STSetParameter (hBarcode, ST_READ_UPCE, &i);
+	  }
+	  else
+	    std::cerr << "Unrecognized barcode type: " << code << std::endl;
+	}
+    }
+  while (it2 != std::string::npos);
+#endif
+
+  const int threshold = 150;
+  const directions_t directions = (directions_t) 15; /* all */
+  const int concurrent_lines = 4;
+  const int line_skip = 8;
+
+  std::map<scanner_result_t,int,comp> retcodes;
+  if ( directions&(left_right|right_left) ) {
+    BarDecode::BarcodeIterator<> it(image,threshold,ean|code128|gs1_128|code39|code25i,directions,concurrent_lines,line_skip);
+    while (! it.end() ) {
+      ++retcodes[*it];
+      ++it;
+      }
+  }
+
+  if ( directions&(top_down|down_top) ) {
+       directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
+       BarDecode::BarcodeIterator<true> it(image,threshold,ean|code128|gs1_128|code39|code25i,dir,concurrent_lines,line_skip);
+       while (! it.end() ) {
+         ++retcodes[*it];
+         ++it;
+       }
+  }
+  
+	std::vector<std::string> ret;
+  for (std::map<scanner_result_t,int>::const_iterator it = retcodes.begin();
+	   it != retcodes.end();
+	   ++it) {
+    if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
+	  {
+		  std::stringstream s; s << it->first.type;
+      ret.push_back (filter_non_printable(it->first.code));
+			ret.push_back (s.str());
+	  }
+  }
+
+  char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
+  
+  int i = 0;
+  for (std::vector<std::string>::iterator it = ret.begin();
+       it != ret.end(); ++it)
+    cret[i++] = strdup (it->c_str());
+  cret[i] = 0;
+  
+  return (char**)cret;
 }
