@@ -479,18 +479,15 @@ namespace {
 
 }
 
-char** imageDecodeBarcodes (Image* image, const char* c,
+char** imageDecodeBarcodes (Image* image, const char* codestr,
 			    int min_length, int max_length, int multiple)
 {
-  std::string codes = c;
-  std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
-
+  codes_t codes;
   // parse the code list
-#if 0
-  std::string c (codes);
+  std::string c (codestr);
+  std::transform (c.begin(), c.end(), c.begin(), tolower);
   std::string::size_type it = 0;
   std::string::size_type it2;
-  i = 1;
   do
     {
       it2 = c.find ('|', it);
@@ -505,34 +502,27 @@ char** imageDecodeBarcodes (Image* image, const char* c,
       if (!code.empty())
 	{
 	  if (code == "code39")
-	    STSetParameter(hBarcode, ST_READ_CODE39, &i);
+	    codes |= code39;
 	  else if (code == "code128")
-	    STSetParameter(hBarcode, ST_READ_CODE128, &i);
+	    codes |= code128 | gs1_128;
 	  else if (code == "code25")
-	    STSetParameter(hBarcode, ST_READ_CODE25, &i);
+	    codes |= code25i;
 	  else if (code == "ean13")
-	    STSetParameter(hBarcode, ST_READ_EAN13, &i);
+	    codes |= ean13;
 	  else if (code == "ean8")
-	    STSetParameter(hBarcode, ST_READ_EAN8, &i);
+	    codes |= ean8;
 	  else if (code == "upca")
-	    STSetParameter(hBarcode, ST_READ_UPCA, &i);
+	    codes |= upca;
 	  else if (code == "upce")
-	    STSetParameter(hBarcode, ST_READ_UPCE, &i);
+	    codes |= upce;
           else if (code == "any") {
-	      STSetParameter (hBarcode, ST_READ_CODE39, &i);
-	      STSetParameter (hBarcode, ST_READ_CODE128, &i);
-	      STSetParameter (hBarcode, ST_READ_CODE25, &i);
-	      STSetParameter (hBarcode, ST_READ_EAN13, &i);
-	      STSetParameter (hBarcode, ST_READ_EAN8, &i);
-	      STSetParameter (hBarcode, ST_READ_UPCA, &i);
-	      STSetParameter (hBarcode, ST_READ_UPCE, &i);
+	    codes |= ean|code128|gs1_128|code39|code25i;
 	  }
 	  else
 	    std::cerr << "Unrecognized barcode type: " << code << std::endl;
 	}
     }
   while (it2 != std::string::npos);
-#endif
 
   const int threshold = 150;
   const directions_t directions = (directions_t) 15; /* all */
@@ -541,7 +531,7 @@ char** imageDecodeBarcodes (Image* image, const char* c,
 
   std::map<scanner_result_t,int,comp> retcodes;
   if ( directions&(left_right|right_left) ) {
-    BarDecode::BarcodeIterator<> it(image,threshold,ean|code128|gs1_128|code39|code25i,directions,concurrent_lines,line_skip);
+    BarDecode::BarcodeIterator<> it(image, threshold, codes, directions, concurrent_lines, line_skip);
     while (! it.end() ) {
       ++retcodes[*it];
       ++it;
@@ -550,7 +540,7 @@ char** imageDecodeBarcodes (Image* image, const char* c,
 
   if ( directions&(top_down|down_top) ) {
        directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
-       BarDecode::BarcodeIterator<true> it(image,threshold,ean|code128|gs1_128|code39|code25i,dir,concurrent_lines,line_skip);
+       BarDecode::BarcodeIterator<true> it(image, threshold, codes, dir, concurrent_lines, line_skip);
        while (! it.end() ) {
          ++retcodes[*it];
          ++it;
