@@ -1,6 +1,6 @@
 /*
  * Bardecode frontend with ExactImage image i/o backend."
- * Copyright (C) 2006 René Rebe for Archivista
+ * Copyright (C) 2006 - 2008 René Rebe for Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -57,7 +57,7 @@ using namespace Utility;
 const bool debug = false;
 
 std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
-					 int min_length, int max_length)
+					 int min_length, int max_length, int multiple)
 {
   uint16_t i;
   
@@ -204,17 +204,19 @@ std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
       i = 15; // all directions
       STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
       
-      i = 1;
-      STSetParameter(hBarcode, ST_MULTIPLE_READ, &i);
-      
       i = 20;
       STSetParameter(hBarcode, ST_NOISEREDUCTION, &i);
+
       i = 1;
       STSetParameter(hBarcode, ST_DESPECKLE, &i);
       
       i = 166;
       STSetParameter(hBarcode, ST_CONTRAST, &i);
     }
+
+  i = multiple;
+  STSetParameter(hBarcode, ST_MULTIPLE_READ, &i);
+
   
   BITMAP bbitmap;
   bbitmap.bmType = 1; // bitmap type version, fixed v1

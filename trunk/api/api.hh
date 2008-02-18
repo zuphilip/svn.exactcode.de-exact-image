@@ -175,9 +175,35 @@ bool imageIsEmpty (Image* image, double percent, int margin);
   argvi++;
 }
 #endif
-char** imageDecodeBarcodes (Image* image, const char* codes,
-			    int min_length, int max_length);
+char** imageDecodeBarcodesExt (Image* image, const char* codes,
+			    int min_length = 0, int max_length = 0, int multiple = 0);
 #endif
+
+#ifdef SWIG
+// Creates a new Perl array and places a NULL-terminated char ** into it
+%typemap(out) char** {
+  AV *myav;
+  SV **svs;
+  int i = 0,len = 0;
+  /* Figure out how many elements we have */
+  while ($1[len])
+    len++;
+  svs = (SV **) malloc(len*sizeof(SV *));
+  for (i = 0; i < len ; i++) {
+    svs[i] = sv_newmortal();
+    sv_setpv((SV*)svs[i],$1[i]);
+    free ($1[i]);
+  };
+  myav =  av_make(len,svs);
+  free(svs);
+  free($1);
+  $result = newRV((SV*)myav);
+  sv_2mortal($result);
+  argvi++;
+}
+#endif
+char** imageDecodeBarcodes (Image* image, const char* codes,
+			    int min_length = 0, int max_length = 0, int multiple = 0);
 
 /* contour matching functions
  * attention:
