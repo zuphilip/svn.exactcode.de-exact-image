@@ -535,28 +535,28 @@ char** imageDecodeBarcodes (Image* image, const char* codestr,
     while (! it.end() ) {
       ++retcodes[*it];
       ++it;
-      }
+    }
   }
 
   if ( directions&(top_down|down_top) ) {
-       directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
-       BarDecode::BarcodeIterator<true> it(image, threshold, codes, dir, concurrent_lines, line_skip);
-       while (! it.end() ) {
-         ++retcodes[*it];
-         ++it;
-       }
+    directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
+    BarDecode::BarcodeIterator<true> it(image, threshold, codes, dir, concurrent_lines, line_skip);
+    while (! it.end() ) {
+      ++retcodes[*it];
+      ++it;
+    }
   }
   
-	std::vector<std::string> ret;
+  std::vector<std::string> ret;
   for (std::map<scanner_result_t,int>::const_iterator it = retcodes.begin();
-	   it != retcodes.end();
-	   ++it) {
+       it != retcodes.end();
+       ++it) {
     if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
-	  {
-		  std::stringstream s; s << it->first.type;
-      ret.push_back (filter_non_printable(it->first.code));
-			ret.push_back (s.str());
-	  }
+      {
+	std::stringstream s; s << it->first.type;
+	ret.push_back (filter_non_printable(it->first.code));
+	ret.push_back (s.str());
+      }
   }
 
   char** cret = (char**)malloc (sizeof(char*) * (ret.size()+1));
