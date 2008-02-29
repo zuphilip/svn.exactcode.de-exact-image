@@ -42,7 +42,7 @@ namespace BarDecode
             valid_cache(false)
         {
             // FIXME insert an optimized code path for img->h <= it_size
-            for (uint i = 0; i < it_size; ++i) {
+            for (int i = 0; i < it_size; ++i) {
                 img_it[i] = img->begin().at(0,std::min((int)i,img->h-1));
                 *img_it[i];
             }
@@ -55,7 +55,7 @@ namespace BarDecode
             valid_cache = false;
             if ( x < img->w-1 ) {
                 ++x;
-                for (uint i = 0; i < it_size; ++i) {
+                for (int i = 0; i < it_size; ++i) {
                     ++img_it[i];
                     *img_it[i];
                 }
@@ -64,7 +64,7 @@ namespace BarDecode
                 int todo = (img->h-1) - y;
                 if ( todo > line_skip + (it_size-1) ) {
                     y += line_skip;
-                    for (uint i = 0; i < it_size; ++i) {
+                    for (int i = 0; i < it_size; ++i) {
                         img_it[i] = img_it[i].at(x,y+(int)i);
                         *img_it[i];
                     }
@@ -74,7 +74,7 @@ namespace BarDecode
                     img_it[it_size-1] = img->end();
                 } else {
                     y += line_skip;
-                    for (uint i = 0; i < it_size; ++i) {
+                    for (int i = 0; i < it_size; ++i) {
                         img_it[i] = img_it[i].at(x,std::min(y+(int)i,img->h-1));
                         *img_it[i];
                     }
@@ -90,7 +90,7 @@ namespace BarDecode
             double tmp=0;
             //uint16_t min = 255;
             //uint16_t max = 0;
-            for (uint i = 0; i < it_size; ++i) {
+            for (int i = 0; i < it_size; ++i) {
                 //min = std::min(min,img_it[i].getL());
                 //max = std::max(max,img_it[i].getL());
                 tmp += img_it[i].getL();
@@ -109,7 +109,7 @@ namespace BarDecode
         {
             // FIXME insert an optimized code path for img->h >= y+it_size
             self_t tmp = *this;
-            for (uint i = 0; i < it_size; ++i) {
+            for (int i = 0; i < it_size; ++i) {
                 tmp.img_it[i] = tmp.img_it[i].at(x,std::min(y+(int)i,img->h));
             }
             tmp.valid_cache = false;
@@ -212,7 +212,7 @@ namespace BarDecode
                     img_it[it_size-1] = img->end();
                 } else {
                     x += line_skip;
-                    for (uint i = 0; i < it_size; ++i) {
+                    for (int i = 0; i < it_size; ++i) {
                         img_it[i] = img_it[i].at(std::min(x+(int)i,img->w-1),y);
                         *img_it[i];
                     }
