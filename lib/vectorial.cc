@@ -1,5 +1,6 @@
 /*
- * Image Line 
+ * Agg vector rasterization interface
+ * Copyright (C) 2007 - 2008 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  *
  * based on GSMP/plugins-gtk/GUI-gtk/Pixmap.cc:
@@ -70,9 +71,9 @@ void Path::addArcTo (double rx, double ry,  double angle,
 void Path::addArc (double rx, double ry,  double angle,
 		     double dx, double dy)
 {
-  path.arc_to (rx, ry, angle,
-	       false /*large arc */, false /* sweep */,
-	       dx, dy);
+  path.arc_rel (rx, ry, angle,
+	        false /*large arc */, false /* sweep */,
+	        dx, dy);
 }
 
 void Path::addCurveTo (double c1x, double c1y,
