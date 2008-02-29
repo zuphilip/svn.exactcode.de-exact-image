@@ -58,8 +58,7 @@ DistanceMatrix::DistanceMatrix(Image& image, unsigned int fg_threshold)
 {
   Queue queue;
   Init(queue);
-  unsigned int line=0;
-  unsigned int row=0;
+  int line=0, row=0;
   Image::iterator i=image.begin();
   Image::iterator end=image.end();
   for (; i!=end ; ++i) {

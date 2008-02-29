@@ -34,8 +34,8 @@ void nearest_scale (Image& new_image, double scalex, double scaley)
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.resize ((int)(scalex * (double) image.w),
+		    (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
 
@@ -59,8 +59,8 @@ void bilinear_scale (Image& new_image, double scalex, double scaley)
   Image image;
   image.copyTransferOwnership (new_image);
 
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.resize ((int)(scalex * (double) image.w),
+		    (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
   
@@ -219,8 +219,8 @@ void box_scale (Image& new_image, double scalex, double scaley)
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.resize ((int)(scalex * (double) image.w),
+		    (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
   
@@ -327,8 +327,8 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.resize ((int)(scalex * (double) image.w),
+		    (int)(scaley * (double) image.h));
   new_image.xres = (int) (scalex * image.xres);
   new_image.yres = (int) (scaley * image.yres);
 
@@ -387,8 +387,8 @@ void ddt_scale (Image& new_image, double scalex, double scaley)
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.New ((int)(scalex * (double) image.w),
-		 (int)(scaley * (double) image.h));
+  new_image.resize ((int)(scalex * (double) image.w),
+		    (int)(scaley * (double) image.h));
   new_image.xres = (int)(scalex * image.xres);
   new_image.yres = (int)(scaley * image.yres);
   
