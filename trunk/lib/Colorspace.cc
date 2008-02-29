@@ -72,7 +72,7 @@ void normalize (Image& image, uint8_t l, uint8_t h)
 
   Image::iterator it = image.begin();
   
-  double r, g, b;
+  double r = 0, g = 0, b = 0;
   for (; it != image.end(); ++it) {
     *it;
     it.getRGB(r, g, b);
@@ -739,7 +739,7 @@ static inline double convert (double val,
 
 void brightness_contrast_gamma (Image& image, double brightness, double contrast, double gamma)
 {
-  double r, g, b;
+  double r = 0, g = 0, b = 0;
   
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
@@ -803,7 +803,7 @@ void invert (Image& image)
       return;
   }
   
-  double r, g, b;
+  double r=0, g=0, b=0;
   
   Image::iterator end = image.end();
   for (Image::iterator it = image.begin(); it != end; ++it)
