@@ -27,10 +27,10 @@ typedef struct Transition {
 };
 
 const Transition transitions[4][3]={
-  { {-1, -1, 3}, {0, -1, 0}, {0, 0, 1} },
-  { {1, -1, 0}, {1, 0, 1}, {0, 0, 2} },
-  { {1, 1, 1}, {0, 1, 2}, {0, 0, 3} },
-  { {-1, 1, 2}, {-1, 0, 3}, {0, 0, 0} }
+  { {-1, -1, 3}, { 0, -1, 0}, {0, 0, 1} },
+  { { 1, -1, 0}, { 1,  0, 1}, {0, 0, 2} },
+  { { 1,  1, 1}, { 0,  1, 2}, {0, 0, 3} },
+  { {-1,  1, 2}, {-1,  0, 3}, {0, 0, 0} }
 };
 
 
@@ -38,10 +38,10 @@ inline bool Step(Contours::VisitMap& map, int& x, int& y, int& border)
 {
   for (unsigned int i=0; i<3; i++) {
     const Transition& t=transitions[border][i];
-    int xx=x+t.dx;
-    int yy=y+t.dy;
+    const int xx=x+t.dx;
+    const int yy=y+t.dy;
     // do we have a foreground pixel ?
-    if (xx >= 0 && xx < map.w && yy >= 0 && yy < map.h && map(xx,yy) > 0) {
+    if (xx >= 0 && xx < (signed int)map.w && yy >= 0 && yy < (signed int)map.h && map(xx,yy) > 0) {
       if ((map(xx,yy) & pixelborder[t.border]) == 0) { // go there
 	x=xx;
 	y=yy;
@@ -61,10 +61,10 @@ inline bool Start(Contours::VisitMap& map, int x, int y, int border)
 {
   if ((map(x,y) & pixelborder[border]) == 0 ) {
     const StartCheck& c=startchecks[border];
-    int xx=x+c.dx;
-    int yy=y+c.dy;
+    const int xx=x+c.dx;
+    const int yy=y+c.dy;
     // do we have a background pixel ?
-    if (xx < 0 || xx >= map.w || yy < 0 || yy >= map.h || ((map(xx,yy) & 1) == 0)) {
+    if (xx < 0 || xx >= (signed int)map.w || yy < 0 || yy >= (signed int)map.h || ((map(xx,yy) & 1) == 0)) {
       map(x,y)|=pixelborder[border];
       return true;
     }

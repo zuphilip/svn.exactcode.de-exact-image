@@ -18,7 +18,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   h = std::min (h, (unsigned)image.h-y);
 
   // something to do?
-  if (x == 0 && y == 0 && w == image.w && h == image.h)
+  if (x == 0 && y == 0 && w == (unsigned int)image.w && h == (unsigned int)image.h)
     return;
   
   if (!image.isModified() && image.getCodec())
@@ -32,7 +32,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
 
   // truncate the height, this is optimized for the "just height" case
   // (of e.g. fastAutoCrop)
-  if (x == 0 && y == 0 && w == image.w) {
+  if (x == 0 && y == 0 && w == (unsigned int)image.w) {
     image.setRawData (); // invalidate
     image.h = h;
     return;
@@ -49,7 +49,7 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   uint8_t* dst = image.getRawData ();
   uint8_t* src = dst + stride * y + (stride * x / image.w);
   
-  for (int i = 0; i < h; ++i) {
+  for (unsigned int i = 0; i < h; ++i) {
     memmove (dst, src, cut_stride);
     dst += cut_stride;
     src += stride;
