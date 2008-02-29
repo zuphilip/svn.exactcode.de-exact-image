@@ -392,8 +392,8 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   const double cached_sin = sin (angle);
   const double cached_cos = cos (angle);
 
-  for (int y = 0; y < h; ++y)
-      for (int x = 0; x < w; ++x)
+  for (unsigned int y = 0; y < h; ++y)
+      for (unsigned int x = 0; x < w; ++x)
 	{
 	  const double ox = ((double) x * cached_cos + y * cached_sin) + x_start;
 	  const double oy = ((double)-x * cached_sin + y * cached_cos) + y_start;
