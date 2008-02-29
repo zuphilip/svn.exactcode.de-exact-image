@@ -57,7 +57,8 @@ using namespace Utility;
 const bool debug = false;
 
 std::vector<std::string> decodeBarcodes (Image& im, const std::string& codes,
-					 int min_length, int max_length, int multiple)
+					 unsigned int min_length,
+                                         unsigned int max_length, int multiple)
 {
   uint16_t i;
   

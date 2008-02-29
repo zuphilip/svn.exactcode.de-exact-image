@@ -204,7 +204,8 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
 }
 #endif
 char** imageDecodeBarcodes (Image* image, const char* codes,
-			    int min_length = 0, int max_length = 0, int multiple = 0);
+			    unsigned int min_length = 0,
+                            unsigned int max_length = 0, int multiple = 0);
 
 /* contour matching functions
  * attention:

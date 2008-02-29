@@ -434,7 +434,8 @@ void imageHueSaturationLightness (Image* image, double hue, double saturation, d
 #include "bardecode.hh"
 
 char** imageDecodeBarcodesExt (Image* image, const char* c,
-			    int min_length, int max_length, int multiple)
+			       unsigned int min_length,
+                               unsigned int max_length, int multiple)
 {
   std::string codes = c;
   std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
