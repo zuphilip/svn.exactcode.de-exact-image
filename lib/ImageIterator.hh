@@ -51,6 +51,8 @@
       case GRAY16:
 	value.gray = 0;
 	break;
+      case RGB8A:
+	value.rgba.a=0;
       case RGB8:
       case RGB16:
 	value.rgb.r = value.rgb.g = value.rgb.b = 0;
@@ -93,6 +95,9 @@
       case YUV8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 3);
 	break;
+      case RGB8A:
+	tmp.ptr = (value_t*) (image->data + stride * y + x * 4);
+	break;
       case RGB16:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 6);
 	break;
@@ -125,6 +130,11 @@
 	value.rgb.g = ptr->rgb.g;
 	value.rgb.b = ptr->rgb.b;
 	break;
+      case RGB8A:
+	value.rgba.r = ptr->rgba.r;
+	value.rgba.g = ptr->rgba.g;
+	value.rgba.b = ptr->rgba.b;
+	value.rgba.a = ptr->rgba.a;
       case RGB16:
 	value.rgb.r = ptr->rgb16.r;
 	value.rgb.g = ptr->rgb16.g;
@@ -159,6 +169,12 @@
 	value.rgb.r += other.value.rgb.r;
 	value.rgb.g += other.value.rgb.g;
 	value.rgb.b += other.value.rgb.b;
+	break;
+      case RGB8A:
+	value.rgba.r += other.value.rgba.r;
+	value.rgba.g += other.value.rgba.g;
+	value.rgba.b += other.value.rgba.b;
+	value.rgba.a += other.value.rgba.a;
 	break;
       case CMYK8:
 	value.cmyk.c += other.value.cmyk.c;
@@ -196,6 +212,12 @@
 	tmp.value.rgb.g += v;
 	tmp.value.rgb.b += v;
 	break;
+      case RGB8A:
+	tmp.value.rgba.r += v;
+	tmp.value.rgba.g += v;
+	tmp.value.rgba.b += v;
+	tmp.value.rgba.a += v;
+	break;
       case CMYK8:
 	tmp.value.cmyk.c += v;
 	tmp.value.cmyk.m += v;
@@ -225,6 +247,12 @@
 	value.rgb.r -= other.value.rgb.r;
 	value.rgb.g -= other.value.rgb.g;
 	value.rgb.b -= other.value.rgb.b;
+	break;
+      case RGB8A:
+	value.rgba.r -= other.value.rgba.r;
+	value.rgba.g -= other.value.rgba.g;
+	value.rgba.b -= other.value.rgba.b;
+	value.rgba.a -= other.value.rgba.a;
 	break;
       case CMYK8:
 	value.cmyk.c -= other.value.cmyk.c;
@@ -261,6 +289,12 @@
 	value.rgb.g *= v;
 	value.rgb.b *= v;
 	break;
+      case RGB8A:
+	value.rgba.r *= v;
+	value.rgba.g *= v;
+	value.rgba.b *= v;
+	value.rgba.a *= v;
+	break;
       case CMYK8:
 	value.cmyk.c *= v;
 	value.cmyk.m *= v;
@@ -295,6 +329,12 @@
 	value.rgb.r /= v;
 	value.rgb.g /= v;
 	value.rgb.b /= v;
+	break;
+      case RGB8A:
+	value.rgba.r /= v;
+	value.rgba.g /= v;
+	value.rgba.b /= v;
+	value.rgba.a /= v;
 	break;
       case CMYK8:
 	value.cmyk.c /= v;
@@ -333,6 +373,16 @@
 	  value.rgb.g = 0xff;
 	if (value.rgb.b > 0xff)
 	  value.rgb.b = 0xff;
+	break;
+      case RGB8A:
+	if (value.rgba.r > 0xff)
+	  value.rgba.r = 0xff;
+	if (value.rgba.g > 0xff)
+	  value.rgb.g = 0xff;
+	if (value.rgba.b > 0xff)
+	  value.rgba.b = 0xff;
+	if (value.rgba.a > 0xff)
+	  value.rgba.a = 0xff;
 	break;
       case RGB16:
 	if (value.rgb.r > 0xffff)
@@ -384,6 +434,8 @@
       case RGB8:
       case YUV8:
 	ptr = (value_t*) ((uint8_t*) ptr + 3); break;
+     case RGB8A:
+	ptr = (value_t*) ((uint8_t*) ptr + 4); break;
       case RGB16:
 	ptr = (value_t*) ((uint8_t*) ptr + 6); break;
       case CMYK8:
@@ -461,6 +513,14 @@
             ptr = (value_t*) ((uint8_t*) ptr + stride);
         }
 	break;
+      case RGB8A:
+        if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
+            if ( (uint8_t*) ptr + 4 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
+            else ptr = (value_t*) ( (uint8_t*) image->data + (stride - ((uint8_t*) end_ptr() - (uint8_t*) ptr)) + 4);
+        } else {
+            ptr = (value_t*) ((uint8_t*) ptr + stride);
+        }
+	break;
       case RGB16:
         if ( (uint8_t*) ptr + stride >= (uint8_t*) end_ptr() ) {
             if ( (uint8_t*) ptr + 6 >= (uint8_t*) end_ptr() ) ptr = end_ptr();
@@ -511,6 +571,8 @@
       case RGB8:
       case YUV8:
 	ptr = (value_t*) ((uint8_t*) ptr - 3); break;
+      case RGB8A:
+	ptr = (value_t*) ((uint8_t*) ptr - 4); break;
       case RGB16:
 	ptr = (value_t*) ((uint8_t*) ptr - 6); break;
       case CMYK8:
@@ -530,6 +592,7 @@
       case GRAY16:
 	return value.gray;
 	break;
+      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	return (uint16_t) (.21267 * value.rgb.r +
@@ -557,6 +620,7 @@
 	*r = *g = *b = value.gray;
 	return;
 	break;
+      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	*r = value.rgb.r;
@@ -584,6 +648,7 @@
 	r = g = b = (double)value.gray / 0xff; return; break;
       case GRAY16:
 	r = g = b = (double)value.gray / 0xffff; return; break;
+      case RGB8A: // Todo: check that
       case RGB8:
 	r = (double)value.rgb.r / 0xff;
 	g = (double)value.rgb.g / 0xff;
@@ -657,6 +722,7 @@
       case GRAY16:
 	value.gray = L;
 	break;
+      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	value.rgb.r = value.rgb.g = value.rgb.b = L;
@@ -685,6 +751,7 @@
 	value.gray = (int) (.21267 * r + .71516 * g + .07217 * b);
 	return;
 	break;
+      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	value.rgb.r = r;
@@ -716,6 +783,7 @@
 	value.gray = (int) ((.21267 * r + .71516 * g + .07217 * b) * 0xffff);
 	return;
 	break;
+      case RGB8A: // Todo: check that
       case RGB8:
 	value.rgb.r = (int) (r * 0xff);
 	value.rgb.g = (int) (g * 0xff);
@@ -807,6 +875,12 @@
 	ptr->rgb.g = other.value.rgb.g;
 	ptr->rgb.b = other.value.rgb.b;
 	break;
+      case RGB8A:
+	ptr->rgba.r = other.value.rgba.r;
+	ptr->rgba.g = other.value.rgba.g;
+	ptr->rgba.b = other.value.rgba.b;
+	ptr->rgba.a = other.value.rgba.a;
+	break;
       case RGB16:
 	ptr->rgb16.r = other.value.rgb.r;
 	ptr->rgb16.g = other.value.rgb.g;
@@ -835,6 +909,7 @@
 	return ptr != other.ptr && _x != other._x;
       case GRAY8:
       case GRAY16:
+      case RGB8A:
       case RGB8:
       case RGB16:
       case CMYK8:
