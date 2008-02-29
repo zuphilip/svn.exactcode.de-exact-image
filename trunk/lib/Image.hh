@@ -122,7 +122,7 @@ public:
     GRAY16,
     //    GRAY16A,
     RGB8,
-    //    RGB8A,
+    RGB8A,
     RGB16,
     //    RGB16A,
     CMYK8,
@@ -139,6 +139,12 @@ public:
       uint8_t g;
       uint8_t b;
     } rgb;
+    struct {
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint8_t a;
+    } rgba;
     struct {
       uint16_t r;
       uint16_t g;
@@ -164,6 +170,12 @@ public:
       int32_t g;
       int32_t b;
     } rgb;
+    struct {
+      int32_t r;
+      int32_t g;
+      int32_t b;
+      int32_t a;
+    } rgba;
     struct {
       int32_t c;
       int32_t m;
@@ -225,6 +237,7 @@ public:
     case 8:  return GRAY8;
     case 16: return GRAY16;
     case 24: return RGB8;
+    case 32: return RGB8A;
     case 48: return RGB16;
     default:
       //std::cerr << "Unknown type" << std::endl;
@@ -258,6 +271,7 @@ protected:
 };
 
 typedef struct { uint8_t r, g, b; } rgb;
+typedef struct { uint8_t r, g, b, a;} rgba;
 typedef struct { uint16_t r, g, b; } rgb16;
 
 #undef DEPRECATED
