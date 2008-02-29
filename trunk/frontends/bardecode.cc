@@ -100,6 +100,7 @@ int main (int argc, char* argv[])
       if (!ImageCodec::Read (*file, image)) {
 	std::cerr << "Error reading " << *file << std::endl;
 	++errors;
+	continue;
       }
       
       int threshold = arg_threshold.Get();
