@@ -176,8 +176,7 @@ void colorspace_gray8_denoise_neighbours (Image &image)
     void operator() (const int x, const int y, uint8_t* it,
 		     const bool inner = false)
     {
-      int n = 0;
-      unsigned int sum = 0;
+      unsigned int n = 0, sum = 0;
       
       if (inner || x > 0)
 	sum += *(it-1), ++n;
