@@ -420,7 +420,7 @@ int Viewer::Run (bool opengl)
 		  int y = Window2ImageY (ev.xmotion.y);
 		  
 		  if (x <= image->w && y <= image->h) {
-		    uint16_t r, g, b;
+		    uint16_t r = 0, g = 0, b = 0;
 		    
 		    Image::iterator it = image->begin();
 		    it = it.at (x, y);
