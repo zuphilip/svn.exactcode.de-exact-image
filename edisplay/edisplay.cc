@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -627,9 +627,11 @@ bool Viewer::Load ()
   
   if (!ImageCodec::Read(*it, *image)) {
     // TODO: fix to gracefully handle this
-    cerr << "Could not read the file " << *it << endl;
+    cerr << "Error loading file: " << *it << endl;
     return false;
   }
+
+  if (false)
   cerr << "Loaded: '" << *it
        << "', " << image->w << "x" << image->h
        << " @ " << image->xres << "x" << image->yres
@@ -758,7 +760,7 @@ int main (int argc, char** argv)
     {
       cerr << "Exact image viewer (edisplay)."
 	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 - 2007 by René Rebe" << std::endl
+	   <<  " - Copyright (C) 2006 - 2008 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
