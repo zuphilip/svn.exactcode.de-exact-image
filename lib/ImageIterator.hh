@@ -593,6 +593,10 @@
 	return value.gray;
 	break;
       case RGB8A: // Todo: check that
+	return (uint16_t) (.21267 * value.rgba.r +
+			    .71516 * value.rgba.g +
+			    .07217 * value.rgba.b);
+	break;
       case RGB8:
       case RGB16:
 	return (uint16_t) (.21267 * value.rgb.r +
@@ -620,12 +624,17 @@
 	*r = *g = *b = value.gray;
 	return;
 	break;
-      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	*r = value.rgb.r;
 	*g = value.rgb.g;
 	*b = value.rgb.b;
+	return;
+	break;
+      case RGB8A:
+	*r = value.rgba.r;
+	*g = value.rgba.g;
+	*b = value.rgba.b;
 	return;
 	break;
       case CMYK8:
@@ -648,11 +657,16 @@
 	r = g = b = (double)value.gray / 0xff; return; break;
       case GRAY16:
 	r = g = b = (double)value.gray / 0xffff; return; break;
-      case RGB8A: // Todo: check that
       case RGB8:
 	r = (double)value.rgb.r / 0xff;
 	g = (double)value.rgb.g / 0xff;
 	b = (double)value.rgb.b / 0xff;
+	return;
+	break;
+      case RGB8A:
+	r = (double)value.rgba.r / 0xff;
+	g = (double)value.rgba.g / 0xff;
+	b = (double)value.rgba.b / 0xff;
 	return;
 	break;
       case RGB16:
@@ -722,10 +736,12 @@
       case GRAY16:
 	value.gray = L;
 	break;
-      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	value.rgb.r = value.rgb.g = value.rgb.b = L;
+	break;
+      case RGB8A: // Todo: check that
+	value.rgba.r = value.rgba.g = value.rgba.b = L;
 	break;
       case CMYK8:
 	// TODO:
@@ -751,12 +767,17 @@
 	value.gray = (int) (.21267 * r + .71516 * g + .07217 * b);
 	return;
 	break;
-      case RGB8A: // Todo: check that
       case RGB8:
       case RGB16:
 	value.rgb.r = r;
 	value.rgb.g = g;
 	value.rgb.b = b;
+	return;
+	break;
+      case RGB8A: // Todo: check that
+	value.rgba.r = r;
+	value.rgba.g = g;
+	value.rgba.b = b;
 	return;
 	break;
       case CMYK8:
@@ -783,11 +804,16 @@
 	value.gray = (int) ((.21267 * r + .71516 * g + .07217 * b) * 0xffff);
 	return;
 	break;
-      case RGB8A: // Todo: check that
       case RGB8:
 	value.rgb.r = (int) (r * 0xff);
 	value.rgb.g = (int) (g * 0xff);
 	value.rgb.b = (int) (b * 0xff);
+	return;
+	break;
+      case RGB8A: // Todo: check that
+	value.rgba.r = (int) (r * 0xff);
+	value.rgba.g = (int) (g * 0xff);
+	value.rgba.b = (int) (b * 0xff);
 	return;
 	break;
       case RGB16:
