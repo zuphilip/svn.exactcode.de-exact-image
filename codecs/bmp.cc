@@ -207,7 +207,7 @@ rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
     break;
     
   case 24:
-    for (int i = 0; i < width; i++, buf += 3) {
+    for (uint32_t i = 0; i < width; i++, buf += 3) {
       tmp = *buf;
       *buf = *(buf + 2);
       *(buf + 2) = tmp;
@@ -217,7 +217,7 @@ rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
   case 32:
     {
       uint8_t* buf1 = buf;
-      for (int i = 0; i < width; i++, buf += 4) {
+      for (uint32_t i = 0; i < width; i++, buf += 4) {
 	tmp = *buf;
 	*buf1++ = *(buf + 2);
 	*buf1++ = *(buf + 1);
@@ -426,7 +426,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
       const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
       
-      for (row = 0; row < image.h; ++row) {
+      for (row = 0; row < (uint32_t)image.h; ++row) {
 	std::istream::pos_type offset;
 	
 	if (info_hdr.iHeight > 0)
@@ -504,7 +504,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       }
       uncomprbuf = (uint8_t *) malloc( uncompr_size );
       if (!uncomprbuf) {
-	std::cerr, "Can't allocate space for uncompressed scanline buffer\n";
+	std::cerr << "Can't allocate space for uncompressed scanline buffer\n";
 	goto bad1;
       }
       
@@ -516,7 +516,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 	if ( comprbuf[i] ) {
 	  runlength = comprbuf[i++];
 	  for ( k = 0;
-		runlength > 0 && j < uncompr_size && i < compr_size && x < image.w;
+		runlength > 0 && j < uncompr_size && i < compr_size && x < (uint32_t)image.w;
 		++k, ++x) {
 	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
@@ -575,7 +575,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       }
       
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
-      for (row = 0; row < image.h; ++row) {
+      for (row = 0; row < (uint32_t)image.h; ++row) {
 	memcpy (data + row * image.w, uncomprbuf + (image.h - 1 - row) * image.w, image.w);
 	rearrangePixels(data + row * image.w, image.w, info_hdr.iBitCount);
       }

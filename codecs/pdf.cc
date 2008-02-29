@@ -155,7 +155,7 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		"0 " << objs_offset.size()+1 << "\n"
 		"0000000000 65535 f\r\n";
 
-	for (int i = 0; i < objs_offset.size(); ++i) {
+	for (unsigned int i = 0; i < objs_offset.size(); ++i) {
 		stream->fill('0');
 		stream->width(10);
 		*stream << std::right << objs_offset[i] << " 00000 n\r\n";

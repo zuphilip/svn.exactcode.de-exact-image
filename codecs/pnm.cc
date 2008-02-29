@@ -136,8 +136,8 @@ bool PNMCodec::readImage (std::istream* stream, Image& image)
 	  
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)dest;
-	    for (int x = 0; x < stride/2; ++x)
-	      *swap_ptr++ = ByteSwap<NativeEndianTraits,BigEndianTraits, uint16_t>::Swap (*swap_ptr);
+	    for (int x = 0; x < stride/2; ++x, ++swap_ptr)
+	      *swap_ptr = ByteSwap<NativeEndianTraits,BigEndianTraits, uint16_t>::Swap (*swap_ptr);
 	  }
 	}
     }
@@ -200,7 +200,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		*stream << it.getL() / (255 / maxval);
 	      }
 	      else {
-		uint16_t r, g, b;
+		uint16_t r = 0, g = 0, b = 0;
 		it.getRGB (&r, &g, &b);
 		*stream << (int)r << " " << (int)g << " " << (int)b;
 	      }
@@ -229,8 +229,8 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	  
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)ptr;
-	    for (int x = 0; x < stride/2; ++x)
-	      *swap_ptr++ = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
+	    for (int x = 0; x < stride/2; ++x, ++swap_ptr)
+	      *swap_ptr = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
 	  }
 	  
 	  stream->write ((char*)ptr, stride);
