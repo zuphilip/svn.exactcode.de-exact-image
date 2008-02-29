@@ -63,6 +63,8 @@
       case YUV8:
 	value.yuv.y = value.yuv.u = value.yuv.v = 0;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
     
@@ -104,6 +106,8 @@
       case CMYK8:
 	tmp.ptr = (value_t*) (image->data + stride * y + x * 4);
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return tmp;
     }
@@ -152,6 +156,8 @@
 	value.yuv.u = ptr->yuv.u;
 	value.yuv.v = ptr->yuv.v;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -187,7 +193,9 @@
 	value.yuv.y += other.value.yuv.y;
 	value.yuv.u += other.value.yuv.u;
 	value.yuv.v += other.value.yuv.v;
-	break;     
+	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -229,7 +237,9 @@
 	tmp.value.yuv.y += v;
 	tmp.value.yuv.u += v;
 	tmp.value.yuv.v += v;
-	break;     
+	break;
+      default:
+	WARN_UNHANDLED;
       }
       return tmp;
     }
@@ -266,6 +276,8 @@
 	value.yuv.u -= other.value.yuv.u;
 	value.yuv.v -= other.value.yuv.v;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -307,6 +319,8 @@
 	value.yuv.u *= v;
 	value.yuv.v *= v;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -348,6 +362,8 @@
 	value.yuv.u /= v;
 	value.yuv.v /= v;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -393,6 +409,8 @@
 	if (value.rgb.b > 0xffff)
 	  value.rgb.b = 0xffff;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -441,6 +459,8 @@
 	ptr = (value_t*) ((uint8_t*) ptr + 6); break;
       case CMYK8:
 	ptr = (value_t*) ((uint8_t*) ptr + 4); break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -538,6 +558,8 @@
             ptr = (value_t*) ((uint8_t*) ptr + stride);
         }
 	break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -578,6 +600,8 @@
 	ptr = (value_t*) ((uint8_t*) ptr - 6); break;
       case CMYK8:
 	ptr = (value_t*) ((uint8_t*) ptr - 4); break;
+      default:
+	WARN_UNHANDLED;
       }
       return *this;
     }
@@ -610,6 +634,9 @@
       case YUV8:
 	return value.yuv.y;
 	break;
+      default:
+	WARN_UNHANDLED;
+	return 0;
       }
     }
     
@@ -623,14 +650,12 @@
       case GRAY8:
       case GRAY16:
 	*r = *g = *b = value.gray;
-	return;
 	break;
       case RGB8:
       case RGB16:
 	*r = value.rgb.r;
 	*g = value.rgb.g;
 	*b = value.rgb.b;
-	return;
 	break;
       case RGB8A:
 	*r = value.rgba.r;
@@ -644,6 +669,8 @@
       case YUV8:
 	// TODO
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
 
@@ -682,6 +709,8 @@
       case YUV8:
 	// TODO
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
     
@@ -787,6 +816,8 @@
       case YUV8:
 	// TODO
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
 
@@ -828,6 +859,8 @@
       case YUV8:
 	// TODO
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
     
@@ -924,6 +957,8 @@
 	ptr->yuv.u = other.value.yuv.u;
 	ptr->yuv.v = other.value.yuv.v;
 	break;
+      default:
+	WARN_UNHANDLED;
       }
     }
     
@@ -934,13 +969,7 @@
       case GRAY2:
       case GRAY4:
 	return ptr != other.ptr && _x != other._x;
-      case GRAY8:
-      case GRAY16:
-      case RGB8A:
-      case RGB8:
-      case RGB16:
-      case CMYK8:
-      case YUV8:
+      default:
 	return ptr != other.ptr;
       }
 
