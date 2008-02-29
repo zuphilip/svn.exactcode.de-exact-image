@@ -112,7 +112,7 @@ void DistanceMatrix::RunBFS(Queue& queue)
       queue.push_back(QueueElement(queue[pos],direction));
       QueueElement& last=queue.back();
       unsigned int value=last.Value();
-      if (last.x < 0 || last.x >= w || last.y < 0 || last.y >= h || value >= data[last.x][last.y])
+      if (last.x < 0 || last.x >= (int)w || last.y < 0 || last.y >= (int)h || value >= data[last.x][last.y])
 	queue.pop_back();
       else
 	data[last.x][last.y]=value;

@@ -22,8 +22,8 @@
 void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, int yw,
 			       matrix_type divisor)
 {
-  const unsigned int spp = image.spp;
-  const unsigned int stride = image.stride();
+  const int spp = image.spp;
+  const int stride = image.stride();
   uint8_t* data = image.getRawData();
   uint8_t* new_data = (uint8_t*) malloc (image.h * stride);
   
@@ -133,7 +133,7 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
 	      src_it = src_it.at (image_x, image_y);
 	      
 	      *src_it;
-	      double _r, _g, _b;
+	      double _r = 0, _g = 0, _b = 0;
 	      src_it.getRGB (_r, _g, _b);
 	      r += _r * *_matrix;
 	      g += _g * *_matrix;
@@ -173,7 +173,7 @@ void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw
 	    src_it = src_it.at (x-xr, y-yr+ym);
 	    for (int xm = 0; xm < xw; ++xm) {
 	      *src_it;
-	      double _r, _g, _b;
+	      double _r = 0, _g = 0, _b = 0;
 	      src_it.getRGB (_r, _g, _b);
 	      r += _r * *_matrix;
 	      g += _g * *_matrix;

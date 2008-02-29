@@ -130,7 +130,7 @@ double L1Dist(const Contours::Contour& a,
 
       //if (forward) {
 	pos++;
-	if (pos >= b.size())
+	if (pos >= (int)b.size())
 	  pos-=b.size();
 	//} else {
 	//	pos--;

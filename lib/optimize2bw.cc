@@ -197,8 +197,8 @@ void differential_optimize2bw (Image& image,
   uint8_t* it = src_image.getRawData ();
   uint8_t* dst = image.getRawData ();
 
-  for (unsigned int y = 0; y < image.h; ++y)
-    for (unsigned int x = 0; x < image.w; ++x, ++it, ++dst)
+  for (int y = 0; y < image.h; ++y)
+    for (int x = 0; x < image.w; ++x, ++it, ++dst)
       {
 	if (x > 0 && y > 0 &&
 	    x < image.w-1 && y < image.h-1)
