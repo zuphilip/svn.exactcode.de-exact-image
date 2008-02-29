@@ -713,7 +713,33 @@
 	WARN_UNHANDLED;
       }
     }
-    
+ 
+
+   // return RGBA
+    inline void getRGBA(uint16_t* r, uint16_t* g, uint16_t* b, uint16_t* a) const
+    {
+      getRGB(r,g,b);
+      switch (type) {
+      case GRAY16:
+      case RGB16:
+	*a=0xffff;
+	break;
+      case RGB8A:
+	*a=value.rgba.a;
+	break;
+      default:
+	*a=0xff;
+      }
+    }
+
+    // return RGB
+    inline void getRGBA(double& r, double& g, double& b, double& a) const
+    {
+      getRGB(r,g,b);
+      a=(type==RGB8A)? ((double)value.rgba.a / 0xff): 1.0;
+    }
+ 
+   
     // return HSV
     inline void getHSV(double& h, double& s, double& v) const
     {
@@ -863,6 +889,23 @@
 	WARN_UNHANDLED;
       }
     }
+
+    // set RGBA
+    inline void setRGBA(uint16_t r, uint16_t g, uint16_t b, uint16_t a)
+    {
+      setRGB(r,g,b);
+      if (type==RGB8A)
+	value.rgba.a=a;
+    }
+
+    // set RGBA
+    inline void setRGBA(double r, double g, double b, double a)
+    {
+      setRGB(r,g,b);
+      if (type==RGB8A)
+	value.rgba.a=(int) (a * 0xff);
+    }
+
     
     // set HSV
     inline void setHSV(double h, double s, double v)
