@@ -59,14 +59,15 @@ public:
 				 unsigned alpha, 
 				 unsigned cover=0)
     {
-      u_int16_t r, g, b; // TODO: a
-      *it; it.getRGB (&r, &g, &b);
+      u_int16_t r, g, b, a;
+      *it; it.getRGBA (&r, &g, &b, &a);
       
       r = (value_type)(((cr - r) * alpha + (r << base_shift)) >> base_shift);
       g = (value_type)(((cg - g) * alpha + (g << base_shift)) >> base_shift);
       b = (value_type)(((cb - b) * alpha + (b << base_shift)) >> base_shift);
+      a = (value_type)((alpha + a) - ((alpha * a + base_mask) >> base_shift));
       
-      it.setRGB (r, g, b);
+      it.setRGBA (r, g, b, a);
       it.set (it);
       //p[Order::A] = (value_type)((alpha + a) - ((alpha * a + base_mask) >> base_shift));
     }
@@ -174,9 +175,8 @@ public:
 	calc_type alpha = (calc_type(c.a) * (cover + 1)) >> 8;
 	if(alpha == color_type::base_mask)
 	  {
-	    *it;
 	    // ((value_type*)&v)[order_type::A] = c.a;
-	    it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
+	    it.setRGBA ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b, (uint16_t)c.a);
 	    do
 	      {
 		it.set(it);
@@ -252,9 +252,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
-		*it;
-		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
-		//p[order_type::A] = base_mask;
+		it.setRGBA ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b, color_type::base_mask);
 		it.set(it);
 	      }
 	    else
@@ -302,9 +300,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
-		*it;
-		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
-		//p[order_type::A] = base_mask;
+		it.setRGBA ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b, color_type::base_mask);
 		it.set(it);
 	      }
 	    else
