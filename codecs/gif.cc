@@ -177,7 +177,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
     *bptr = BlueBuffer;
  
   for (Image::iterator it = image.begin(); it != image.end(); ++it) {
-    uint16_t r, g, b;
+    uint16_t r = 0, g = 0, b = 0;
     *it;
     it.getRGB (&r, &g, &b);
     *rptr++ = r;
