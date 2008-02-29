@@ -176,7 +176,8 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 }
 #endif
 char** imageDecodeBarcodesExt (Image* image, const char* codes,
-			    int min_length = 0, int max_length = 0, int multiple = 0);
+			       unsigned int min_length = 0,
+                               unsigned int max_length = 0, int multiple = 0);
 #endif
 
 #ifdef SWIG
