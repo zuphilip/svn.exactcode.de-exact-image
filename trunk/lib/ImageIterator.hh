@@ -135,6 +135,7 @@
 	value.rgba.g = ptr->rgba.g;
 	value.rgba.b = ptr->rgba.b;
 	value.rgba.a = ptr->rgba.a;
+	break;
       case RGB16:
 	value.rgb.r = ptr->rgb16.r;
 	value.rgb.g = ptr->rgb16.g;
