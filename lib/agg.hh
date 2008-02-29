@@ -174,6 +174,7 @@ public:
 	calc_type alpha = (calc_type(c.a) * (cover + 1)) >> 8;
 	if(alpha == color_type::base_mask)
 	  {
+	    *it;
 	    // ((value_type*)&v)[order_type::A] = c.a;
 	    it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 	    do
@@ -251,6 +252,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
+		*it;
 		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 		//p[order_type::A] = base_mask;
 		it.set(it);
@@ -300,6 +302,7 @@ public:
 	    calc_type alpha = (calc_type(c.a) * (calc_type(*covers) + 1)) >> 8;
 	    if(alpha == color_type::base_mask)
 	      {
+		*it;
 		it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
 		//p[order_type::A] = base_mask;
 		it.set(it);
