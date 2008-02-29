@@ -1,5 +1,5 @@
 /* The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2007 René Rebe
+ * Copyright (C) 2005 - 2008 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,6 +85,9 @@ class ImageCodec;
 #define DEPRECATED __attribute__ ((deprecated))
 #endif
 
+#define WARN_UNHANDLED std::cerr << "unhandled spp/bps in " << __FILE__ << ":" << __LINE__ << std::endl
+
+
 class Image
 {
 protected:
@@ -114,7 +117,7 @@ public:
   bool isModified ();
   
   typedef enum {
-    GRAY1,
+    GRAY1 = 1,
     GRAY2,
     GRAY4,
     GRAY8,
@@ -240,8 +243,8 @@ public:
     case 32: return RGB8A;
     case 48: return RGB16;
     default:
-      //std::cerr << "Unknown type" << std::endl;
-      ;
+      WARN_UNHANDLED;
+      return (Image::type_t)0;
     }
   }
 
@@ -274,5 +277,6 @@ typedef struct { uint8_t r, g, b; } rgb;
 typedef struct { uint8_t r, g, b, a;} rgba;
 typedef struct { uint16_t r, g, b; } rgb16;
 
+#undef WARN_UNHANDLED
 #undef DEPRECATED
 #endif
