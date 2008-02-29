@@ -87,11 +87,13 @@ static long cpp_jas_seek (jas_stream_obj_t* obj, long offset, int origin)
   stream->read (buf, cnt);
   return cnt;
   */
+  return 0;
 }
 
 static int cpp_jas_close (jas_stream_obj_t* obj)
 {
   // NOP, nothing to do
+  return 0;
 }
 
 static jas_stream_ops_t cpp_jas_stream_ops = {
