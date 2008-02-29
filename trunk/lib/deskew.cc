@@ -521,6 +521,7 @@ bool deskew (Image& image, const int raster_rows)
   
 #ifndef DEBUG
   // TODO: fill with nearest in-document color, or so ...
+  // TODO: only crop if something to crop was actually found
   Image::iterator background = image.begin(); background.setL (255);
   
   if (fabs(rect.angle) > 0.01) {
@@ -537,4 +538,5 @@ bool deskew (Image& image, const int raster_rows)
 	  (unsigned int) rect.width, (unsigned int) rect.height);
   }
 #endif
+  return true;
 }
