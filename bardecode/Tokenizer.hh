@@ -54,7 +54,7 @@ namespace BarDecode
             double sum = 0;
 #endif
 
-            for (size_t i = 0; i < it.get_line_length(); ++i,++it,++count) {
+            for (long i = 0; i < it.get_line_length(); ++i,++it,++count) {
 
                 lum = it.get_lum();
 #ifdef DYNAMIC_THRESHOLD
