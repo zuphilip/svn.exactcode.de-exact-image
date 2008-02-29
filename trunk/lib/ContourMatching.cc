@@ -288,7 +288,7 @@ double LogoRepresentation::N_M_Match(unsigned int set, unsigned int& pivot)
   unsigned int tmpbest[logo_set_count];
 
   for (unsigned int base=0; base < logo_set_count; base++)
-    for (unsigned int m=0; m < mdepth; m++) {
+    for (int m=0; m < mdepth; m++) {
       
       double sum=data[base].matches[m]->score;
       double tx=data[base].matches[m]->transx;
@@ -299,7 +299,7 @@ double LogoRepresentation::N_M_Match(unsigned int set, unsigned int& pivot)
 	if (counter != base) {
 	  double best=.0;
 	  tmpbest[counter]=0;
-	  for (unsigned int n=0; n < ndepth; n++){
+	  for (int n=0; n < ndepth; n++){
 	    double current=data[counter].matches[n]->TransScore(tx, ty);
 	    if (current > best) {
 	      best=current;
