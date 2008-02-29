@@ -263,7 +263,7 @@ void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 
   path.setLineWidth (style.width);
   path.setLineDash (0, style.dash);
-  double r, g, b;
+  double r = 0, g = 0, b = 0;
   foreground_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
   
@@ -278,7 +278,7 @@ void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
   path.setLineDash (0, style.dash);
   path.setLineJoin (agg::miter_join);
   
-  double r, g, b;
+  double r = 0, g = 0, b = 0;
   background_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
   
@@ -288,7 +288,7 @@ void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
 void imageDrawText (Image* image, double x, double y, char* text, double height)
 {
   Path path;
-  double r, g, b;
+  double r = 0, g = 0, b = 0;
   foreground_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
   
@@ -480,9 +480,9 @@ namespace {
 }
 
 char** imageDecodeBarcodes (Image* image, const char* codestr,
-			    int min_length, int max_length, int multiple)
+			    unsigned int min_length, unsigned int max_length, int multiple)
 {
-  codes_t codes;
+  codes_t codes = 0;
   // parse the code list
   std::string c (codestr);
   std::transform (c.begin(), c.end(), c.begin(), tolower);
