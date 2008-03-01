@@ -18,8 +18,11 @@ DEPS += $(agg-2.4_BINARY)
 else
 CPPFLAGS += $(LIBAGGINCS)
 LDFLAGS += $(LIBAGGLIBS)
+ifeq "$(WITHFREETYPE)" "1"
+CPPFLAGS += $(FREETYPEINCS)
+LDFLAGS += $(FREETYPELIBS) -laggfontfreetype
 endif
-
+endif
 
 CPPFLAGS += -I lib
 
