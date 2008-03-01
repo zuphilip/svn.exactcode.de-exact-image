@@ -33,11 +33,11 @@ public:
   void addLineTo (double x, double y);
   void addRect (double x, double y, double x2, double y2);
   
-  void addArcTo (double rx, double ry,  double angle,
-		 double x, double y);
-
+  // the first is relative, the second to an an absolute 2nd point
   void addArc (double rx, double ry,  double angle,
 	       double dx, double dy);
+  void addArcTo (double rx, double ry,  double angle,
+		 double x2, double y2);
   
   /* TODO:
      - addEllipse
@@ -46,10 +46,6 @@ public:
   void addCurveTo (double, double, double, double);
   // or explicitly differentiate by naming this one QuadCurve ???
   void addCurveTo (double, double, double, double, double, double);
-  
-  // TODO: sophisticated text API, including font to use,
-  // kerning, hinting, transform, etc.
-  // void addText (char* text, double height);
   
   void end ();
   void close ();
@@ -80,9 +76,14 @@ public:
     };
 
   void draw (Image& image, filling_rule_t fill = fill_none);
+  
+  // TODO: sophisticated text API, including font to use,
+  // kerning, hinting, transform, etc.
+  // void addText (char* text, double height);
+  
   // temp. simple text draw method
-  void drawText (Image& image, double x, double y,
-		 char* text, double height);
+  void drawText (Image& image, char* text, double height);
+  void drawTextOnPath (Image& image, char* text, double height);
   
 protected:
   agg::path_storage path;

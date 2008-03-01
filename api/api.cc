@@ -291,8 +291,8 @@ void imageDrawText (Image* image, double x, double y, char* text, double height)
   double r = 0, g = 0, b = 0;
   foreground_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
-  
-  path.drawText (*image, x, y, text, height);
+  path.moveTo (x, y);
+  path.drawText (*image, text, height);
 }
 
 

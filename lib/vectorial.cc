@@ -26,8 +26,14 @@
 
 #include "agg_conv_dash.h"
 #include "agg_conv_curve.h"
+#include "agg_conv_contour.h"
+#include "agg_conv_segmentator.h"
 #include "agg_conv_smooth_poly1.h"
 #include "agg_path_storage.h"
+#include "agg_trans_single_path.h"
+
+#include "agg_font_freetype.h"
+#include "platform/agg_platform_support.h"
 
 // ---
 
@@ -161,6 +167,7 @@ void Path::draw (Image& image, filling_rule_t fill)
 {
   renderer_exact_image ren_base (image);
   
+  /* the rederer_bin type would "avoid" anti-aliasing */
   renderer_aa ren (ren_base);
   ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
   
@@ -219,25 +226,217 @@ void Path::draw (Image& image, filling_rule_t fill)
   agg::render_scanlines (ras, sl, ren);
 }
 
-void Path::drawText (Image& image, double x, double y,
-		     char* text, double height)
+static const bool hinting = true;
+static const bool kerning = true;
+
+const char* font = "/usr/X11/share/fonts/TTF/DejaVuSans-Bold.ttf"
+//"/usr/X11/share/fonts/TTF/DejaVuSans.ttf"
+//"/home/rene/.fonts/pala.ttf"
+;
+
+// Attention! Right now the horizontal and on path
+// produce different strokes if non-zero. Review and
+// fix if changed or exported to the outside.
+static const double weight = 0;
+
+void Path::drawText (Image& image, char* text, double height)
 {
   renderer_exact_image ren_base (image);
+  
+  rasterizer_scanline ras;
+  scanline sl;
+  
+  renderer_aa ren_solid (ren_base);
+  renderer_bin ren_bin (ren_base);
+  
+  typedef agg::font_engine_freetype_int32 font_engine_type;
+  typedef agg::font_cache_manager<font_engine_type> font_manager_type;
+  
+  font_engine_type m_feng;
+  font_manager_type m_fman (m_feng);
+  
+  // Pipeline to process the vectors glyph paths (curves + contour)
+  agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
+  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
+  agg::glyph_rendering gren = agg::glyph_ren_outline;
+  
+  if (!m_feng.load_font (font, 0, gren))
+    {
+      std::cerr << "failed to load ttf font" << std::endl;
+      return;
+    }
+  
+  m_feng.hinting (hinting);
+  m_feng.height (height);
+  m_feng.width (height);
+  m_feng.flip_y (true);
+  
+  m_contour.width (-weight * height * 0.05);
 
+  //double y0 = height() - m_height.value() - 10.0;
+  unsigned num_glyphs = 0;
+  const char* p = text;
+  
+  double x = path.last_x(), y = path.last_y();
+  
+  while (*p)
+    {
+      const agg::glyph_cache* glyph = m_fman.glyph (*p);
+      if (glyph)
+	{
+	  if (kerning) {
+	    m_fman.add_kerning(&x, &y);
+	  }
+	  
+#if 0
+	  if (x >= width() - m_height.value())
+	    {
+	      x = 10.0;
+	      y0 -= m_height.value();
+	      if (y0 <= 120) break;
+	      y = y0;
+	    }
+#endif
+	  
+	  m_fman.init_embedded_adaptors (glyph, x, y);
+
+	  switch (glyph->data_type)
+	    {
+	    case agg::glyph_data_mono:
+	      ren_bin.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+	      agg::render_scanlines (m_fman.mono_adaptor(), 
+				     m_fman.mono_scanline(), 
+				     ren_bin);
+	      break;
+
+	    case agg::glyph_data_gray8:
+	      ren_solid.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+	      agg::render_scanlines (m_fman.gray8_adaptor(), 
+				     m_fman.gray8_scanline(), 
+				     ren_solid);
+	      break;
+
+	    case agg::glyph_data_outline:
+	      ras.reset ();
+	      if (fabs (weight <= 0.01)) {
+		// Skip the contour converter for weight about zero.
+		ras.add_path (m_curves);
+	      }
+	      else {
+		ras.add_path (m_contour);
+	      }
+	      
+	      ren_solid.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+	      agg::render_scanlines (ras, sl, ren_solid);
+	      break;
+	      
+	    default: break;
+	    }
+
+	  // increment pen position
+	  x += glyph->advance_x;
+	  y += glyph->advance_y;
+	  ++num_glyphs;
+	}
+      ++p;
+    }
+  
+  path.move_to (x, y);
+}
+
+void Path::drawTextOnPath (Image& image, char* text, double height)
+{
+  renderer_exact_image ren_base (image);
+  
   renderer_aa ren (ren_base);
   rasterizer_scanline ras;
   scanline sl;
   
-  agg::gsv_text t;
-  t.flip (true);
-  t.size (height);
-  t.text (text);
-  t.start_point (x, y);
-  agg::conv_stroke<agg::gsv_text> stroke (t);
-  stroke.width (1.0);
+  //
   
-  ras.add_path (stroke);
+  agg::conv_curve<agg::path_storage> smooth (path);
+  agg::trans_single_path tcurve;
+  tcurve.add_path (smooth);
+  // tcurve.preserve_x_scale(m_preserve_x_scale.status());
   
-  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
-  agg::render_scanlines (ras, sl, ren);
+  typedef agg::font_engine_freetype_int32 font_engine_type;
+  typedef agg::font_cache_manager<font_engine_type> font_manager_type;
+  
+  font_engine_type m_feng;
+  font_manager_type m_fman (m_feng);
+  
+  // Pipeline to process the vectors glyph paths (curves + contour)
+  agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
+  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
+  agg::glyph_rendering gren = agg::glyph_ren_outline;
+  
+  if (!m_feng.load_font (font, 0, gren))
+    {
+      std::cerr << "failed to load ttf font" << std::endl;
+      return;
+    }
+  
+  // Transform pipeline
+  typedef agg::conv_curve<font_manager_type::path_adaptor_type> conv_font_curve_type;
+  typedef agg::conv_segmentator<conv_font_curve_type> conv_font_segm_type;
+  typedef agg::conv_transform<conv_font_segm_type, agg::trans_single_path> conv_font_trans_type;
+  conv_font_curve_type fcurves (m_fman.path_adaptor());
+  
+  conv_font_segm_type  fsegm (fcurves);
+  conv_font_trans_type ftrans (fsegm, tcurve);
+  fsegm.approximation_scale (3.0);
+  fcurves.approximation_scale (2.0);
+  //
+  
+  m_feng.hinting (hinting);
+  m_feng.height (height);
+  m_feng.width (height);
+  m_feng.flip_y (true);
+  
+  m_contour.width (-weight * height * 0.05);
+  
+  //double y0 = height() - m_height.value() - 10.0;
+  unsigned num_glyphs = 0;
+  const char* p = text;
+  
+  double x = 0, y = 3;
+  
+  while (*p)
+    {
+      const agg::glyph_cache* glyph = m_fman.glyph (*p);
+      if (glyph)
+	{
+	  if (kerning) {
+	    m_fman.add_kerning(&x, &y);
+	  }
+	  
+#if 0
+	  if (x >= width() - m_height.value())
+	    {
+	      x = 10.0;
+	      y0 -= m_height.value();
+	      if (y0 <= 120) break;
+	      y = y0;
+	    }
+#endif
+	  
+	  m_fman.init_embedded_adaptors (glyph, x, y);
+	  
+	  if (glyph->data_type == agg::glyph_data_outline)
+	    {
+	      ras.reset ();
+	      ras.add_path (ftrans);
+	      ren.color (agg::rgba8(0, 0, 0));
+	      agg::render_scanlines(ras, sl, ren);
+	    }
+	  
+	  // increment pen position
+	  x += glyph->advance_x;
+	  y += glyph->advance_y;
+	  ++num_glyphs;
+	}
+      ++p;
+    }
+  
+    path.move_to (x, y);
 }
