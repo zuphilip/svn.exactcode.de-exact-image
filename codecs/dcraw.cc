@@ -30,8 +30,19 @@
 #define fseek(stream,pos,kind) stream->seekg (pos, kind)
 #define ftell(stream) (int) stream->tellg ()
 
-#define fread(mem,n,m,stream) stream->read ((char*)mem,n*m) ? n*m : 0
-#define fwrite(mem,n,m,stream) stream->write ((char*)mem,n*m) . good() ? n*m : 0
+static inline int wrapped_fread (std::iostream* stream, char* mem, int n)
+{
+	return stream->read (mem, n) ? n : 0;
+}
+
+static inline int wrapped_fwrite (std::iostream* stream, char* mem, int n)
+{
+	stream->write (mem,n);
+	return stream->good() ? n : 0;
+}
+
+#define fread(mem,n,m,stream) wrapped_fread (stream, (char*)mem,n*m)
+#define fwrite(mem,n,m,stream) wrapped_fwrite (stream, (char*)mem,n*m)
 
 #define fgetc(stream) stream->get ()
 #define fgets(mem,n,stream) stream->get ((char*)mem, n);
