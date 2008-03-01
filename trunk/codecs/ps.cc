@@ -6,7 +6,10 @@
 
 #include "ps.hh"
 #include "Encodings.hh"
+
+#if WITHLIBJPEG == 1
 #include "jpeg.hh"
+#endif
 
 bool PSCodec::readImage (std::istream* stream, Image& image)
 {
@@ -96,10 +99,12 @@ void PSCodec::encodeImage (std::ostream* stream, Image& image, double scale,
 		EncodeASCII85(*stream, data, bytes);
 	else if (encoding == "ASCIIHexDecode")
 		EncodeHex(*stream, data, bytes);
+#if WITHLIBJPEG == 1
 	else {
 		JPEGCodec codec;
 		codec.writeImage (stream, image, quality, compress);
 	}
+#endif
 	stream->put('\n');
 }
 
