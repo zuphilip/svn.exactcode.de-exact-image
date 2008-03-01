@@ -59,7 +59,7 @@ public:
 				 unsigned alpha, 
 				 unsigned cover=0)
     {
-      u_int16_t r, g, b, a;
+      u_int16_t r = 0, g = 0, b = 0, a = 0;
       *it; it.getRGBA (&r, &g, &b, &a);
       
       r = (value_type)(((cr - r) * alpha + (r << base_shift)) >> base_shift);
