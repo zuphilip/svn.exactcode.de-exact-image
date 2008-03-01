@@ -52,13 +52,13 @@ public:
   bool haveData() const { return n > 2; }
   long size () const { return n; }
 
-  virtual double getA () const { return a; }
-  virtual double getB () const { return b; }
+  double getA () const { return a; }
+  double getB () const { return b; }
 
   double getCoefDeterm () const { return coefD; }
   double getCoefCorrel () const { return coefC; }
   double getStdErrorEst () const { return stdError; }
-  virtual double estimateY (const T& x) const { return (a + b * x); }
+  double estimateY (const T& x) const { return (a + b * x); }
 
 protected:
   long n;
