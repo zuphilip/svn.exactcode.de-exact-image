@@ -72,6 +72,8 @@ protected:
 
   void calculate ()
   {
+    a = b = coefD = coefC = stdError = 0;
+
     if (!haveData())
       return;
     
@@ -88,10 +90,6 @@ protected:
 	coefD = sx / sy2;
 	coefC = sqrt (coefD);
 	stdError = sqrt (sy / (-2. + n));
-      }
-    else
-      {
-	a = b = coefD = coefC = stdError = 0;
       }
   }
 };
