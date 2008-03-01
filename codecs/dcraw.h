@@ -209,7 +209,7 @@ char *my_memmem (char *haystack, size_t haystacklen,
 #define memmem my_memmem
 #endif
 
-void CLASS merror (void *ptr, char *where)
+void CLASS merror (void *ptr, const char *where)
 {
   if (ptr) return;
   fprintf (stderr, "%s: Out of memory in %s\n", ifname, where);
@@ -4881,7 +4881,7 @@ void CLASS parse_foveon()
 /*
    Thanks to Adobe for providing these excellent CAM -> XYZ matrices!
  */
-void CLASS adobe_coeff (char *make, char *model)
+void CLASS adobe_coeff (const char *make, const char *model)
 {
   static const struct {
     const char *prefix;
