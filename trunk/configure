@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 libagg evas libjpeg libtiff libpng libungif jasper openexr lcms bardecode swig perl"
+with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr lcms bardecode swig perl"
 feature_options="evasgl"
 
 PACKAGE="exact-image"
