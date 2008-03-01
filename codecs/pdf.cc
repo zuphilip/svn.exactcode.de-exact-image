@@ -8,8 +8,15 @@
 
 #include "pdf.hh"
 #include "Encodings.hh"
+
+
+#if WITHLIBJPEG == 1
 #include "jpeg.hh"
+#endif
+
+#if WITHJASPER == 1
 #include "jpeg2000.hh"
+#endif
 
 bool PDFCodec::readImage (std::istream* stream, Image& image)
 {
@@ -110,10 +117,12 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		EncodeASCII85(*stream, data, bytes);
 	else if (encoding == "ASCIIHexDecode")
 		EncodeHex(*stream, data, bytes);
+#if WITHLIBJPEG == 1
 	else if (encoding == "DCTDecode") {
 		JPEGCodec codec;
 		codec.writeImage (stream, image, quality, compress);
 	}
+#endif
 #if WITHJASPER == 1
 	else if (encoding == "JPXDecode") {
 		JPEG2000Codec codec;
