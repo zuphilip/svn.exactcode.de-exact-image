@@ -285,7 +285,7 @@ int Viewer::Run (bool opengl)
   evas->FontPathPrepend ("/usr/X11/lib/X11/fonts/TrueType/");
   evas->FontPathPrepend ("/opt/e17/share/evas/data/");
   evas->FontPathPrepend ("/usr/X11/share/fonts/TTF/");
-  
+ 
   if (true) {
     evas->ImageCache (1024 * 1024);
     evas->FontCache (256 * 1024);
@@ -575,13 +575,14 @@ int Viewer::Run (bool opengl)
     }
   
   if (evas_image) {
-    free (evas_image->Data());
     delete evas_image;
     evas_image = 0;
   }
   
-  delete evas_bgr_image;
-  evas_bgr_image = 0;
+  delete evas_osd_text1; evas_osd_text1 = 0;
+  delete evas_osd_text2; evas_osd_text2 = 0;
+  delete evas_osd_rect;  evas_osd_rect = 0;
+  delete evas_bgr_image; evas_bgr_image = 0;
   
   delete evas;
   evas = 0;

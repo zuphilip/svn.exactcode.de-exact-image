@@ -8,6 +8,9 @@ public:
     image = new Image;
   }
   ~Viewer() {
+    if (evas_data) {
+      delete (evas_data); evas_data = 0;
+    }
     delete (image); image = 0;
   }
   
