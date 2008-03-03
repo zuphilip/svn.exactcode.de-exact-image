@@ -239,7 +239,7 @@ const char* font = "/usr/X11/share/fonts/TTF/DejaVuSans-Bold.ttf"
 // fix if changed or exported to the outside.
 static const double weight = 0;
 
-void Path::drawText (Image& image, char* text, double height)
+void Path::drawText (Image& image, const char* text, double height)
 {
   renderer_exact_image ren_base (image);
   
@@ -344,7 +344,7 @@ void Path::drawText (Image& image, char* text, double height)
   path.move_to (x, y);
 }
 
-void Path::drawTextOnPath (Image& image, char* text, double height)
+void Path::drawTextOnPath (Image& image, const char* text, double height)
 {
   renderer_exact_image ren_base (image);
   
