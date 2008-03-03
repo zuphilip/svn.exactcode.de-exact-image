@@ -137,6 +137,23 @@ void colorspace_rgb8_to_gray8 (Image& image)
   image.setRawData();
 }
 
+void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
+{
+  uint8_t* data = (uint8_t*) malloc (image.w*image.h*4);
+  for (uint8_t* it = image.getRawData();
+       it < image.getRawDataEnd();)
+    {
+      *data++ = *it++;
+      *data++ = *it++;
+      *data++ = *it++;
+      *data++ = alpha;
+    }
+  
+  image.setSamplesPerPixel(4);
+  image.setRawData ((uint8_t*)data);
+}
+
+
 void colorspace_gray8_threshold (Image& image, unsigned char threshold)
 {
   uint8_t *output = image.getRawData();
