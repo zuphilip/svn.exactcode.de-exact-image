@@ -82,8 +82,8 @@ public:
   // void addText (char* text, double height);
   
   // temp. simple text draw method
-  void drawText (Image& image, char* text, double height);
-  void drawTextOnPath (Image& image, char* text, double height);
+  void drawText (Image& image, const char* text, double height);
+  void drawTextOnPath (Image& image, const char* text, double height);
   
 protected:
   agg::path_storage path;
