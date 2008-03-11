@@ -195,24 +195,24 @@ void imageFlipY (Image* image)
   flipY (*image);
 }
 
-void imageScale (Image* image, double factor)
+void imageScale (Image* image, double factor, double yfactor)
 {
-  scale (*image, factor, factor);
+  scale (*image, factor, yfactor != .0 ? yfactor : factor);
 }
 
-void imageBoxScale (Image* image, double factor)
+void imageBoxScale (Image* image, double factor, double yfactor)
 {
-  box_scale (*image, factor, factor);
+  box_scale (*image, factor, yfactor != .0 ? yfactor : factor);
 }
 
-void imageNearestScale (Image* image, double factor)
+void imageNearestScale (Image* image, double factor, double yfactor)
 {
-  nearest_scale (*image, factor, factor);
+  nearest_scale (*image, factor, yfactor != .0 ? yfactor : factor);
 }
 
-void imageBilinearScale (Image* image, double factor)
+void imageBilinearScale (Image* image, double factor, double yfactor)
 {
-  bilinear_scale (*image, factor, factor);
+  bilinear_scale (*image, factor, yfactor != .0 ? yfactor : factor);
 }
 
 void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)

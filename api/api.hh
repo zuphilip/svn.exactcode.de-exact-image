@@ -107,10 +107,11 @@ void imageFlipX (Image* image);
 void imageFlipY (Image* image);
 
 // best scale (or thru the codec (e.g. JPEG)) or explicit algorithm
-void imageScale (Image* image, double factor);
-void imageNearestScale (Image* image, double factor);
-void imageBoxScale (Image* image, double factor);
-void imageBilinearScale (Image* image, double factor);
+// if yfactor is not specified, the same factor is used for both directions
+void imageScale (Image* image, double factor, double yfactor = .0);
+void imageNearestScale (Image* image, double factor, double yfactor = .0);
+void imageBoxScale (Image* image, double factor, double yfactor = .0);
+void imageBilinearScale (Image* image, double factor, double yfactor = .0);
 
 void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 
