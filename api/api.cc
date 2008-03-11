@@ -481,7 +481,8 @@ namespace {
 }
 
 char** imageDecodeBarcodes (Image* image, const char* codestr,
-			    unsigned int min_length, unsigned int max_length, int multiple)
+			    unsigned int min_length, unsigned int max_length,
+                            int multiple, unsigned int line_skip)
 {
   codes_t codes = 0;
   // parse the code list
@@ -528,7 +529,6 @@ char** imageDecodeBarcodes (Image* image, const char* codestr,
   const int threshold = 150;
   const directions_t directions = (directions_t) 15; /* all */
   const int concurrent_lines = 4;
-  const int line_skip = 8;
 
   std::map<scanner_result_t,int,comp> retcodes;
   if ( directions&(left_right|right_left) ) {
