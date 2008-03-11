@@ -41,7 +41,8 @@ if ! pkgcheck libagg pkg-config LIBAGG atleast 2.4; then
 EOT
 fi
 
-if ! pkgcheck freetype2 pkg-config FREETYPE atleast 9.0.0; then
+# latest tested, even older ones /might/ work -ReneR
+if ! pkgcheck freetype2 pkg-config FREETYPE atleast 9.5.0; then
 	cat <<-EOT
 
 		Freetype2 was not found - font rendering is disabled.
