@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -395,8 +395,8 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   for (unsigned int y = 0; y < h; ++y)
       for (unsigned int x = 0; x < w; ++x)
 	{
-	  const double ox = ((double) x * cached_cos + y * cached_sin) + x_start;
-	  const double oy = ((double)-x * cached_sin + y * cached_cos) + y_start;
+	  const double ox = ( (double)x * cached_cos + (double)y * cached_sin) + x_start;
+	  const double oy = (-(double)x * cached_sin + (double)y * cached_cos) + y_start;
 	  
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h) {
