@@ -32,7 +32,10 @@
 #include "agg_path_storage.h"
 #include "agg_trans_single_path.h"
 
+#if WITHFREETYPE == 1
 #include "agg_font_freetype.h"
+#endif
+
 #include "platform/agg_platform_support.h"
 
 // ---
@@ -225,6 +228,8 @@ void Path::draw (Image& image, filling_rule_t fill)
   
   agg::render_scanlines (ras, sl, ren);
 }
+
+#if WITHFREETYPE == 1
 
 static const bool hinting = true;
 static const bool kerning = true;
@@ -440,3 +445,5 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   
     path.move_to (x, y);
 }
+
+#endif

@@ -80,10 +80,12 @@ public:
   // TODO: sophisticated text API, including font to use,
   // kerning, hinting, transform, etc.
   // void addText (char* text, double height);
-  
+ 
+#if WITHFREETYPE == 1
   // temp. simple text draw method
   void drawText (Image& image, const char* text, double height);
   void drawTextOnPath (Image& image, const char* text, double height);
+#endif
   
 protected:
   agg::path_storage path;

@@ -285,6 +285,7 @@ void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
   path.draw (*image);
 }
 
+#if WITHFREETYPE == 1
 void imageDrawText (Image* image, double x, double y, char* text, double height)
 {
   Path path;
@@ -294,7 +295,7 @@ void imageDrawText (Image* image, double x, double y, char* text, double height)
   path.moveTo (x, y);
   path.drawText (*image, text, height);
 }
-
+#endif
 
 void imageOptimize2BW (Image* image, int low, int high,
 		       int threshold,
