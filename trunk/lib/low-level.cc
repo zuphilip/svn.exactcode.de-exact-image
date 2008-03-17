@@ -1,4 +1,7 @@
 
+#include <stdlib.h>
+#include <string.h> // memcpy
+
 #include "low-level.hh"
 
 void deinterlace (Image& image)

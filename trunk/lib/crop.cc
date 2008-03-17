@@ -1,3 +1,5 @@
+
+#include <string.h> // memmove
 #include <iostream>
 #include <algorithm>
 

@@ -9,6 +9,8 @@
  *
  */
 
+#include <string.h> // memcpy
+
 #include <iostream>
 #include <string>
 #include <sstream>

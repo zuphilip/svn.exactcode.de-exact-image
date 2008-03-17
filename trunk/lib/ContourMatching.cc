@@ -1,6 +1,8 @@
-#include "ContourMatching.hh"
-#include <math.h>
+#include <cmath>
+#include <algorithm>
 #include <iostream>
+
+#include "ContourMatching.hh"
 
 const unsigned int logo_trans_before_rot=10000; // TODO: calculate useful value !!
 
