@@ -740,7 +740,7 @@
 	
       default:
 	{
-	  double r, g, b;
+	  double r = 0, g = 0, b = 0;
 	  getRGB (r, g, b);
 	  
 	  const double min = std::min (std::min (r, g), b);

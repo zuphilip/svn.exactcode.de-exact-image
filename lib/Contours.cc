@@ -11,7 +11,7 @@
 // bitmask for pixel traversal - first bit is there to indicate foreground pixel
 const unsigned int pixelborder[4]={2,4,8,16};
 
-typedef struct StartCheck {
+struct StartCheck {
   int dx;
   int dy;
 };
@@ -20,7 +20,7 @@ const StartCheck startchecks[4]={
   {-1,0}, {0,-1}, {1,0}, {0,1}
 };
 
-typedef struct Transition {
+struct Transition {
   int dx;
   int dy;
   unsigned int border;
