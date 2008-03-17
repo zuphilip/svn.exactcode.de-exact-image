@@ -28,15 +28,15 @@ uint8_t parse_hex (std::istream* stream)
 
   char c = tolower (stream->get());
   if (c >= '0' && c <= '9')
-    x = x << 4 | c - '0';
+    x = (x << 4) | (c - '0');
   else
-    x = x << 4 | c - 'a' + 10;
+    x = (x << 4) | (c - 'a' + 10);
   
   c = tolower (stream->get());
   if (c >= '0' && c <= '9')
-    x = x << 4 | c - '0';
+    x = (x << 4) | (c - '0');
   else
-    x = x << 4 | c - 'a' + 10;
+    x = (x << 4) | (c - 'a' + 10);
 
   return x;
 }

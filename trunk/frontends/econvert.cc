@@ -452,7 +452,7 @@ bool convert_line (const Argument<std::string>& arg)
       path.moveTo (x1, y1);
       path.addLineTo (x2, y2);
       
-      double r, g, b;
+      double r = 0, g = 0, b = 0;
       foreground_color.getRGB (r, g, b);
       path.setFillColor (r, g, b);
       path.draw (image);

@@ -52,7 +52,7 @@ void flipX (Image& image)
 	for (int i = 0; i < 256; ++i) {
 	  uint8_t rev = 0, v = i;
 	  for (int j = 0; j < 8/bps; ++j) {
-	    rev = rev << bps | v & mask;
+	    rev = (rev << bps) | (v & mask);
 	    v >>= bps;
 	  }
 	  reversed_bits[i] = rev;
