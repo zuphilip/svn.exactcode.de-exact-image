@@ -12,6 +12,7 @@
  * Public License for more details.
  */
 
+#include <string.h> // memcpy
 #include <iostream>
 
 #define DEPRECATED

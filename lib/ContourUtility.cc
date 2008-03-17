@@ -1,5 +1,6 @@
 #include "ContourUtility.hh"
-#include <math.h>
+#include <cmath>
+#include <cstdlib>
 //#include <iostream>
 #include <assert.h>
 #include <stdio.h>

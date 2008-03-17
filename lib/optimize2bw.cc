@@ -31,7 +31,8 @@
  *   to keep dithering of image areas.
  */
 
-#include <math.h>
+#include <cstdlib>
+#include <cmath>
 
 #include <iostream>
 #include <iomanip>

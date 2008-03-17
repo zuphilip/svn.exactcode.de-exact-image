@@ -1,5 +1,7 @@
-#include <math.h>
 
+#include <string.h> // memset
+
+#include <cmath>
 #include <iostream>
 #include <algorithm>
 
