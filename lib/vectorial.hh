@@ -20,6 +20,8 @@
 #include "Image.hh"
 #include <vector>
 
+#include "config.h"
+
 #include "agg_math_stroke.h"
 #include "agg_path_storage.h"
 
