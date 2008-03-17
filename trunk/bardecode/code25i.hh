@@ -29,7 +29,7 @@ namespace BarDecode
         std::pair<module_word_t,module_word_t> reverse_get_keys(const bar_vector_t& b) const;
         std::pair<module_word_t,module_word_t> get_keys(const bar_vector_t& b) const;
 
-        DECLARE_TABLE(table,0x18);
+        DECLARE_TABLE(table,0x19);
     };
 
     inline code25i_t::code25i_t()
