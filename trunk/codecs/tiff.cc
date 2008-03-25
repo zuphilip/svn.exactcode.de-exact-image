@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2007 René Reb, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH, Berlin
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -231,11 +231,13 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     TIFFSetField (out, TIFFTAG_YRESOLUTION, _yres);
   }
   
-  TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "none");
-  TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
+  if (page <= 1) {
+    TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
+  }
+  TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "");
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
-		TIFFDefaultStripSize (out, rowsperstrip));
-
+                TIFFDefaultStripSize (out, rowsperstrip));
+  
   const int stride = image.stride();
   /* Note: we on-the-fly invert 1-bit data to please some historic apps */
   
