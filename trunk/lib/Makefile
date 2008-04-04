@@ -24,6 +24,6 @@ LDFLAGS += $(FREETYPELIBS) -laggfontfreetype
 endif
 endif
 
-CPPFLAGS += -I lib
+CPPFLAGS += -I lib -I utility
 
 include build/bottom.make
