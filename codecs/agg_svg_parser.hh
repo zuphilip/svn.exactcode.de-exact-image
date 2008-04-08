@@ -17,8 +17,15 @@
 //
 //----------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2008 Rene Rebe <reneexactcode.de>
+ * Adapted for std::istream, and int precision warning.y
+ */
+
 #ifndef AGG_SVG_PARSER_INCLUDED
 #define AGG_SVG_PARSER_INCLUDED
+
+#include <istream>
 
 #include "agg_svg_path_tokenizer.hh"
 #include "agg_svg_path_renderer.hh"
@@ -36,7 +43,7 @@ namespace svg
         ~parser();
         parser(path_renderer& path);
 
-        void parse(const char* fname);
+      void parse(std::istream& stream);
         const char* title() const { return m_title; }
 
     private:
