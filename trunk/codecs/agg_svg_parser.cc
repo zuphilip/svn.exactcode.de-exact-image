@@ -17,6 +17,11 @@
 //
 //----------------------------------------------------------------------------
 
+/*
+ * Copyright (c) 2008 Rene Rebe <reneexactcode.de>
+ * Adapted for std::istream, and int precision warning.y
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -213,7 +218,7 @@ namespace svg
     }
 
     //------------------------------------------------------------------------
-    void parser::parse(const char* fname)
+    void parser::parse(std::istream& stream)
     {
         char msg[1024];
 	    XML_Parser p = XML_ParserCreate(NULL);
@@ -223,32 +228,26 @@ namespace svg
 	    }
 
         XML_SetUserData(p, this);
-	    XML_SetElementHandler(p, start_element, end_element);
-	    XML_SetCharacterDataHandler(p, content);
+	XML_SetElementHandler(p, start_element, end_element);
+	XML_SetCharacterDataHandler(p, content);
 
-        FILE* fd = fopen(fname, "r");
-        if(fd == 0)
-        {
-            sprintf(msg, "Couldn't open file %s", fname);
-		    throw exception(msg);
-        }
-
-        bool done = false;
+	bool done = false;
         do
         {
-            size_t len = fread(m_buf, 1, buf_size, fd);
-            done = len < buf_size;
+            size_t len = stream.readsome (m_buf, buf_size);
+	    // trigger eof
+	    stream.peek();
+            done = stream.eof();
             if(!XML_Parse(p, m_buf, len, done))
             {
                 sprintf(msg,
-                    "%s at line %d\n",
+                    "%s at line %ld\n",
                     XML_ErrorString(XML_GetErrorCode(p)),
-                    XML_GetCurrentLineNumber(p));
+		    (long)XML_GetCurrentLineNumber(p));
                 throw exception(msg);
             }
         }
         while(!done);
-        fclose(fd);
         XML_ParserFree(p);
 
         char* ts = m_title;
