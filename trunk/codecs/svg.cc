@@ -53,7 +53,7 @@ bool SVGCodec::readImage (std::istream* stream, Image& image)
   typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
   renderer_solid ren (rb);
   
-  //rb.clear (agg::rgba(1,1,1));
+  rb.clear (agg::rgba(1,1,1));
   
   agg::rasterizer_scanline_aa<> ras;
   agg::scanline_p8 sl;
