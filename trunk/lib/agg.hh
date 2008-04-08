@@ -1,6 +1,6 @@
 /*
  * Agg to ExactImage bridge.
- * Copyright (C) 2007 René Rebe
+ * Copyright (C) 2007 - 2008  René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -126,7 +126,14 @@ public:
   int           bounding_ymax();
 
   //--------------------------------------------------------------------
-  void clear(const color_type& c);
+  void clear(const color_type& c)
+  {
+    for (Image::iterator it = m_img->begin(), it_end = m_img->end();
+	 it != it_end; ++it) {
+      it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
+      it.set(it);
+    }
+  }
   
   //--------------------------------------------------------------------
   void copy_pixel(int x, int y, const color_type& c);
