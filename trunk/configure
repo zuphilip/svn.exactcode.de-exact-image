@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr lcms bardecode swig perl"
+with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode swig perl"
 feature_options="evasgl"
 
 PACKAGE="exact-image"
@@ -70,6 +70,7 @@ pkgcheck libtiff header LIBTIFF c++ tiff.h
 pkgcheck libpng pkg-config LIBPNG atleast 1.2
 pkgcheck libungif header LIBUNGIF c++ gif_lib.h
 pkgcheck jasper header JASPER c++ jasper/jasper.h
+pkgcheck expat header EXPAT c++ expat.h # just for the SVG parser
 pkgcheck OpenEXR pkg-config OPENEXR atleast 1.2.0
 #pkgcheck libopenraw-1.0 pkg-config LIBOPENRAW atleast 0.0.5
 pkgcheck lcms pkg-config LCMS atleast 1.10
