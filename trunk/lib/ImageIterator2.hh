@@ -169,26 +169,7 @@ public:
     
 };
 
-/* template arguments to create an specialized instance for
-   each bit-pattern */
-
-class bitdepth1
-{
-public:
-  const static unsigned int bitdepth = 1;
-};
-class bitdepth2
-{
-public:
-  const static unsigned int bitdepth = 2;
-};
-class bitdepth4
-{
-public:
-  const static unsigned int bitdepth = 4;
-};
-  
-template <typename T>
+template <unsigned int bitdepth>
 class bit_iterator
 {
 public:
@@ -198,7 +179,6 @@ public:
   const Image& image;
   const int width, stride;
   int bitpos;
-  const static unsigned int bitdepth = T::bitdepth;
   const int mask;
 
   typedef gray_iterator::accu accu; // reuse
