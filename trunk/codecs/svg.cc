@@ -23,6 +23,9 @@ bool SVGCodec::readImage (std::istream* stream, Image& image)
   agg::svg::path_renderer m_path;
   agg::svg::parser p (m_path);
   
+  if (stream->peek () != '<')
+    return false;
+
   try
     {
       p.parse(*stream);
