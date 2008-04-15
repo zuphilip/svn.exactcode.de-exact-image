@@ -224,7 +224,7 @@ public:
 };
 
 template <template <typename T> class ALGO, class T1, class T2, class T3>
-void codegen (T1 a1, T2 a2, T3 a3)
+void codegen (T1& a1, T2& a2, T3& a3)
 {
   if (a1.spp == 3) {
     ALGO <rgb_iterator> a;
@@ -246,4 +246,66 @@ void codegen (T1 a1, T2 a2, T3 a3)
     ALGO <bit_iterator<1> > a;
     a (a1, a2, a3);
   }
+}
+
+template <template <typename T> class ALGO,
+	  class T1, class T2, class T3, class T4,
+	  class T5, class T6, class T7>
+void codegen (T1& a1, T2& a2, T3& a3, T4& a4,
+	      T5& a5, T6& a6, T7& a7)	   
+{
+  if (a1.spp == 3) {
+    ALGO <rgb_iterator> a;
+    a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    a (a1, a2, a3, a4, a5, a6, a7);
+  }
+}
+
+// with return
+
+template <class T0, template <typename T> class ALGO,
+	  class T1, class T2, class T3, class T4,
+	  class T5, class T6, class T7>
+T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
+		   T5& a5, T6& a6, T7& a7)	   
+{
+  if (a1.spp == 3) {
+    ALGO <rgb_iterator> a;
+    return a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    return a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    return a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    return a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    return a (a1, a2, a3, a4, a5, a6, a7);
+  }
+  
+  // warn unhandled
+  T0 t(0);
+  return t;
 }
