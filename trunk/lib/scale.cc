@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany.
+ *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
 
 #include <string.h> // memset
 
@@ -6,6 +23,7 @@
 #include <algorithm>
 
 #include "Image.hh"
+#include "ImageIterator2.hh"
 #include "Codecs.hh"
 
 #include "Colorspace.hh"
@@ -28,189 +46,91 @@ void scale (Image& image, double scalex, double scaley)
     bilinear_scale (image, scalex, scaley);
 }
 
-void nearest_scale (Image& new_image, double scalex, double scaley)
+template <typename T>
+struct nearest_scale_template
 {
-  if (scalex == 1.0 && scaley == 1.0)
-    return;
-
-  Image image;
-  image.copyTransferOwnership (new_image);
-  
-  new_image.resize ((int)(scalex * (double) image.w),
-		    (int)(scaley * (double) image.h));
-  new_image.xres = (int) (scalex * image.xres);
-  new_image.yres = (int) (scaley * image.yres);
-
-  Image::iterator dst = new_image.begin();
-  Image::iterator src = image.begin();
-  for (int y=0; y < new_image.h; ++y)
-    for (int x=0; x < new_image.w; ++x) {
-      const int bx = (int) (((double) x) / scalex);
-      const int by = (int) (((double) y) / scaley);
-      
-      dst.set (*src.at (bx, by) );
-      ++dst;
-    }
-}
-
-void bilinear_scale (Image& new_image, double scalex, double scaley)
-{
-  if (scalex == 1.0 && scaley == 1.0)
-    return;
-
-  Image image;
-  image.copyTransferOwnership (new_image);
-
-  new_image.resize ((int)(scalex * (double) image.w),
-		    (int)(scaley * (double) image.h));
-  new_image.xres = (int) (scalex * image.xres);
-  new_image.yres = (int) (scaley * image.yres);
-  
-  uint8_t* data = image.getRawData();
-  
-  /* handcrafted due popular request */
-  if (new_image.spp == 1 && new_image.bps < 8)
-    {
-      const int bps = image.bps;
-      const int spb = 8 / bps; // Samples Per Byte
-      const int mask = (1 << bps) - 1;
-      const int stride = image.stride ();
-      const int bshift = 8 - bps;
-      const int bscale = 255 / mask;
-      
-      //std::cerr << "bps: " << bps << ", spb: " << spb
-      // 	  << ", mask: " << mask << ", stride: " << stride << std::endl;
-      
-      uint8_t* dst = new_image.getRawData();
-      uint8_t v = 0;
-      
-      for (int y = 0; y < new_image.h; ++y) {
-	double by = (-1.0+image.h) * y / new_image.h;
-	const int sy = (int)floor(by);
-	const int ydist = (int) ((by - sy) * 256);
-	const int syy = sy+1;
-	
-	int x;
-	for (x = 0; x < new_image.w;) {
-	  const double bx = (-1.0+image.w) * x / new_image.w;
-	  const int sx = (int)floor(bx);
-	  const int xdist = (int) ((bx - sx) * 256);
-	  const int sxx = sx+1;
-	  
-	  v <<= bps;
-	  
-	  v |=
-	    (( (data[sx/spb  + sy*stride]  >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * (256-ydist) +
-	     ( (data[sxx/spb + sy*stride]  >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * (256-ydist) +
-	     ( (data[sx/spb  + syy*stride] >> (bshift - (sx%spb)*bps) ) & mask) * bscale * (256-xdist) * ydist +
-	     ( (data[sxx/spb + syy*stride] >> (bshift - (sxx%spb)*bps)) & mask) * bscale * xdist       * ydist)
-	    >> (16 + bshift);
-	  
-	  ++x;
-	  if (x % spb == 0)
-	    *dst++ = v;
-	}
-	int remainder = spb - x % spb;
-	if (remainder != spb) {
-	  v <<= bps * remainder;
-	  *dst++ = v;
-	}
-      }
+  void operator() (Image& new_image, double scalex, double scaley)
+  {
+    if (scalex == 1.0 && scaley == 1.0)
       return;
-    }
-  
-  /* handcrafted due popular request */
-  if (new_image.spp == 1 && new_image.bps == 8)
-    {
-      const int stride = image.stride ();
-      uint8_t* dst = new_image.getRawData();
-      
-      for (int y = 0; y < new_image.h; ++y) {
-	const double by = (-1.0+image.h) * y / new_image.h;
-	const int sy = (int)floor(by);
-	const int ydist = (int) ((by - sy) * 256);
-	const int syy = sy+1;
+    
+    Image image;
+    image.copyTransferOwnership (new_image);
+    
+    new_image.resize ((int)(scalex * (double) image.w),
+		      (int)(scaley * (double) image.h));
+    new_image.xres = (int) (scalex * image.xres);
+    new_image.yres = (int) (scaley * image.yres);
+    
+    T dst (new_image);
+    T src (image);
+    
+    for (int y = 0; y < new_image.h; ++y) {
+      for (int x = 0; x < new_image.w; ++x) {
+	const int bx = (int) (((double) x) / scalex);
+	const int by = (int) (((double) y) / scaley);
 	
-	for (int x = 0; x < new_image.w; ++x) {
-	  const double bx = (-1.0+image.w) * x / new_image.w;
-	  const int sx = (int)floor(bx);
-	  const int xdist = (int) ((bx - sx) * 256);
-	  const int sxx = sx+1;
-	  
-	  *dst = (data [sx  + sy*stride]  * (256-xdist) * (256-ydist) +
-		  data [sxx + sy*stride]  * xdist       * (256-ydist) +
-		  data [sx  + syy*stride] * (256-xdist) * ydist +
-		  data [sxx + syy*stride] * xdist       * ydist)
-	    >> 16;
-	  ++dst;
-	}
+	typename T::accu a;
+	a  = *src.at (bx, by);
+	dst.set (a);
+	++dst;
       }
-      return;
-    }
-  
-   /* handcrafted due popular request */
-  if (new_image.spp == 3 && new_image.bps == 8)
-    {
-      const int stride = image.stride ();
-      uint8_t* dst = new_image.getRawData();
-      
-      for (int y = 0; y < new_image.h; ++y) {
-	const double by = (-1.0+image.h) * y / new_image.h;
-	const int sy = (int)floor(by);
-	const int ydist = (int) ((by - sy) * 256);
-	const int syy = sy+1;
-	
-	for (int x = 0; x < new_image.w; ++x) {
-	  const double bx = (-1.0+image.w) * x / new_image.w;
-	  const int sx = 3*(int)floor(bx);
-	  const int xdist = (int) ((bx - sx/3) * 256);
-	  const int sxx = sx+3;
-	  *dst++ = (data [sx  +0+ sy*stride]  * (256-xdist) * (256-ydist) +
-		    data [sxx +0+ sy*stride]  * xdist       * (256-ydist) +
-		    data [sx  +0+ syy*stride] * (256-xdist) * ydist +
-		    data [sxx +0+ syy*stride] * xdist       * ydist) >> 16;
-	  *dst++ = (data [sx  +1+ sy*stride]  * (256-xdist) * (256-ydist) +
-		    data [sxx +1+ sy*stride]  * xdist       * (256-ydist) +
-		    data [sx  +1+ syy*stride] * (256-xdist) * ydist +
-		    data [sxx +1+ syy*stride] * xdist       * ydist) >> 16;
-	  *dst++ = (data [sx  +2+ sy*stride]  * (256-xdist) * (256-ydist) +
-		    data [sxx +2+ sy*stride]  * xdist       * (256-ydist) +
-		    data [sx  +2+ syy*stride] * (256-xdist) * ydist +
-		    data [sxx +2+ syy*stride] * xdist       * ydist) >> 16;
-	}
-      }
-      return;
-    }
-  
-  Image::iterator dst = new_image.begin();
-  Image::iterator src = image.begin();
-      
-  for (int y = 0; y < new_image.h; ++y) {
-    const double by = (-1.0+image.h) * y / new_image.h;
-    const int sy = (int)floor(by);
-    const int ydist = (int) ((by - sy) * 256);
-    const int syy = sy+1;
-
-    for (int x = 0; x < new_image.w; ++x) {
-      const double bx = (-1.0+image.w) * x / new_image.w;
-      const int sx = (int)floor(bx);
-      const int xdist = (int) ((bx - sx) * 256);
-      const int sxx = sx+1;
-
-      if (false && x < 8 && y < 8) {
-	std::cout << "sx: " << sx << ", sy: " << sy
-		  << ", sxx: " << sxx << ", syy: " << syy << std::endl;
-	std::cout << "xdist: " << xdist << ", ydist: " << ydist << std::endl;
-      }
-
-      dst.set ( (*src.at (sx,  sy ) * (256-xdist) * (256-ydist) +
-		 *src.at (sxx, sy ) * xdist       * (256-ydist) +
-		 *src.at (sx,  syy) * (256-xdist) * ydist +
-		 *src.at (sxx, syy) * xdist       * ydist) /
-		(256 * 256) );
-      ++dst;
     }
   }
+};
+
+void nearest_scale (Image& image, double scalex, double scaley)
+{
+  codegen<nearest_scale_template> (image, scalex, scaley);
+}
+
+template <typename T>
+struct bilinear_scale_template
+{
+  void operator() (Image& new_image, double scalex, double scaley)
+  {
+    if (scalex == 1.0 && scaley == 1.0)
+      return;
+
+    Image image;
+    image.copyTransferOwnership (new_image);
+
+    new_image.resize ((int)(scalex * (double) image.w),
+		      (int)(scaley * (double) image.h));
+    new_image.xres = (int) (scalex * image.xres);
+    new_image.yres = (int) (scaley * image.yres);
+  
+    T dst (new_image);
+    T src (image);
+    
+    for (int y = 0; y < new_image.h; ++y) {
+      const double by = (-1.0+image.h) * y / new_image.h;
+      const int sy = (int)floor(by);
+      const int ydist = (int) ((by - sy) * 256);
+      const int syy = sy+1;
+
+      for (int x = 0; x < new_image.w; ++x) {
+	const double bx = (-1.0+image.w) * x / new_image.w;
+	const int sx = (int)floor(bx);
+	const int xdist = (int) ((bx - sx) * 256);
+	const int sxx = sx+1;
+
+	typename T::accu a;
+	a  = (*src.at (sx,  sy )) * ((256-xdist) * (256-ydist));
+	a += (*src.at (sxx, sy )) * (xdist       * (256-ydist));
+	a += (*src.at (sx,  syy)) * ((256-xdist) * ydist);
+	a += (*src.at (sxx, syy)) * (xdist       * ydist);
+	a /= (256 * 256);
+	dst.set (a);
+	++dst;
+      }
+    }
+  }
+};
+
+void bilinear_scale (Image& image, double scalex, double scaley)
+{
+  codegen<bilinear_scale_template> (image, scalex, scaley);
 }
 
 void box_scale (Image& new_image, double scalex, double scaley)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -11,7 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -22,6 +24,7 @@
 #include "ArgumentList.hh"
 
 #include "Image.hh"
+#include "ImageIterator2.hh"
 #include "Codecs.hh"
 
 #include "rotate.hh"
@@ -286,118 +289,113 @@ void rot90 (Image& image, int angle)
   image.setRawData (rot_data);
 }
 
-
-void rotate (Image& image, double angle, const Image::iterator& background)
+template <typename T>
+struct rotate_template
 {
-  angle = fmod (angle, 360);
-  if (angle < 0)
-    angle += 360;
+  void operator() (Image& image, double angle, const Image::iterator& background)
+  {
+    angle = fmod (angle, 360);
+    if (angle < 0)
+      angle += 360;
   
-  if (angle == 0.0)
-    return;
-  
-  // thru the codec?
-  if (!image.isModified() && image.getCodec())
-    if (image.getCodec()->rotate(image, angle))
+    if (angle == 0.0)
       return;
   
-  if (angle == 180.0) {
-    flipX (image);
-    flipY (image);
-    return;
-  }
+    // trivial code just for testing, to be optimized
+  
+    angle = angle / 180 * M_PI;
+  
+    const int xcent = image.w / 2;
+    const int ycent = image.h / 2;
+  
+    Image orig_image; orig_image.copyTransferOwnership(image);
+    image.resize (image.w, image.h);
 
-  if (angle == 90.0) {
-    rot90 (image, 90);
-    return;
-  }
- 
-  if (angle == 270.0) {
-    rot90 (image, 270);
-    return;
-  }
-
-  // trivial code just for testing, to be optimized
+    const double cached_sin = sin (angle);
+    const double cached_cos = cos (angle);
   
-  angle = angle / 180 * M_PI;
+    std::cerr << "angle: " << angle << std::endl;
+    
+    T it (image);
+    T orig_it (orig_image);
   
-  const int xcent = image.w/2;
-  const int ycent = image.h/2;
-  
-  Image orig_image = image;
-  
-  image.setRawData ((uint8_t*) malloc (image.stride()*image.h));
-  Image::iterator it = image.begin();
-  Image::iterator orig_it = orig_image.begin();
-  
-  const double cached_sin = sin (angle);
-  const double cached_cos = cos (angle);
-
-  for(int y = 0; y < image.h; ++y)
-      for(int x = 0; x < image.w; ++x)
+    for (int y = 0; y < image.h; ++y)
+      for (int x = 0; x < image.w; ++x)
 	{
-	  double ox =   (x-xcent) * cached_cos + (y-ycent) * cached_sin;
-	  double oy = - (x-xcent) * cached_sin + (y-ycent) * cached_cos;
+	  double ox =   (x - xcent) * cached_cos + (y - ycent) * cached_sin;
+	  double oy = - (x - xcent) * cached_sin + (y - ycent) * cached_cos;
 	  
 	  ox += xcent;
 	  oy += ycent;
 	  
-	  if (ox >= 0 && oy >= 0 &&
-	      ox < image.w && oy < image.h) {
-	    
-	    int oxx = (int)floor(ox);
-	    int oyy = (int)floor(oy);
-	    
-	    int oxx2 = std::min (oxx+1, image.w-1);
-	    int oyy2 = std::min (oyy+1, image.h-1);
-	    
-	    int xdist = (int) ((ox - oxx) * 256);
-	    int ydist = (int) ((oy - oyy) * 256);
-	    
-	    it.set ( (
-		      *orig_it.at (oxx,  oyy ) * (256-xdist) * (256-ydist) +
-		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist) +
-		      *orig_it.at (oxx,  oyy2) * (256-xdist) * ydist +
-		      *orig_it.at (oxx2, oyy2) * xdist       * ydist
-		      ) /
-		     (256 * 256) );
-	  }
-	  else
-	    it.set (background);
+	  typename T::accu a;
 	  
+	  if (ox >= 0 && oy >= 0 &&
+	      ox < image.w && oy < image.h)
+	    {
+	      int oxx = (int)floor(ox);
+	      int oyy = (int)floor(oy);
+	      
+	      int oxx2 = std::min (oxx + 1, image.w - 1);
+	      int oyy2 = std::min (oyy + 1, image.h - 1);
+	      
+	      int xdist = (int) ((ox - oxx) * 256);
+	      int ydist = (int) ((oy - oyy) * 256);
+	      
+	      a  = (*orig_it.at(oxx,  oyy))  * ((256 - xdist) * (256 - ydist));
+	      a += (*orig_it.at(oxx2, oyy))  * (xdist         * (256 - ydist));
+	      a += (*orig_it.at(oxx,  oyy2)) * ((256 - xdist) * ydist);
+	      a += (*orig_it.at(oxx2, oyy2)) * (xdist         * ydist);
+	      a /= (256 * 256);
+	    }
+	  else
+	    a = (background);
+	  
+	  it.set (a);
 	  ++it;
 	}
-  image.setRawData ();
+    image.setRawData ();
+  }
+};
+
+void rotate (Image& image, double angle, const Image::iterator& background)
+{
+  codegen<rotate_template> (image, angle, background);
 }
 
-Image* copy_crop_rotate (Image& image, int x_start, int y_start,
-			 unsigned int w, unsigned int h,
-			 double angle, const Image::iterator& background)
+template <typename T>
+struct copy_crop_rotate_template
 {
-  angle = fmod (angle, 360);
-  if (angle < 0)
-    angle += 360;
-  
-  // trivial code just for testing, to be optimized
-  
-  angle = angle / 180 * M_PI;
-  
-  Image* new_image = new Image;
-  new_image->copyMeta (image);
-  new_image->resize (w, h);
-  
-  Image::iterator it = new_image->begin();
-  Image::iterator orig_it = image.begin();
-  
-  const double cached_sin = sin (angle);
-  const double cached_cos = cos (angle);
-
-  for (unsigned int y = 0; y < h; ++y)
+  Image* operator() (Image& image, int x_start, int y_start,
+		     unsigned int w, unsigned int h,
+		     double angle, const Image::iterator& background)
+  {
+    angle = fmod (angle, 360);
+    if (angle < 0)
+      angle += 360;
+    
+    // trivial code just for testing, to be optimized
+    
+    angle = angle / 180 * M_PI;
+    
+    Image* new_image = new Image;
+    new_image->copyMeta (image);
+    new_image->resize (w, h);
+    
+    T it (*new_image);
+    T orig_it (image);
+    
+    const double cached_sin = sin (angle);
+    const double cached_cos = cos (angle);
+    
+    for (unsigned int y = 0; y < h; ++y)
       for (unsigned int x = 0; x < w; ++x)
 	{
 	  const double ox = ( (double)x * cached_cos + (double)y * cached_sin) + x_start;
 	  const double oy = (-(double)x * cached_sin + (double)y * cached_cos) + y_start;
 	  
+	  typename T::accu a;
+	  
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h) {
 	    
@@ -410,19 +408,26 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 	    int xdist = (int) ((ox - oxx) * 256);
 	    int ydist = (int) ((oy - oyy) * 256);
 	    
-	    it.set ( (
-		      *orig_it.at (oxx,  oyy ) * (256-xdist) * (256-ydist) +
-		      *orig_it.at (oxx2, oyy ) * xdist       * (256-ydist) +
-		      *orig_it.at (oxx,  oyy2) * (256-xdist) * ydist +
-		      *orig_it.at (oxx2, oyy2) * xdist       * ydist
-		      ) /
-		     (256 * 256) );
+	    a  = (*orig_it.at(oxx,  oyy))  * ((256 - xdist) * (256 - ydist));
+	    a += (*orig_it.at(oxx2, oyy))  * (xdist         * (256 - ydist));
+	    a += (*orig_it.at(oxx,  oyy2)) * ((256 - xdist) * ydist);
+	    a += (*orig_it.at(oxx2, oyy2)) * (xdist         * ydist);
+	    a /= (256 * 256);
 	  }
 	  else
-	    it.set (background);
+	    a = (background);
 	  
+	  it.set (a);
 	  ++it;
 	}
-  
-  return new_image;
+    return new_image;
+  }
+};
+
+Image* copy_crop_rotate (Image& image, int x_start, int y_start,
+			 unsigned int w, unsigned int h,
+			 double angle, const Image::iterator& background)
+{
+  return codegen_return<Image*, copy_crop_rotate_template> (image, x_start, y_start,
+							    w, h, angle, background);
 }
