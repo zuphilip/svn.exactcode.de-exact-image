@@ -222,3 +222,28 @@ public:
     return *this;
   }
 };
+
+template <template <typename T> class ALGO, class T1, class T2, class T3>
+void codegen (T1 a1, T2 a2, T3 a3)
+{
+  if (a1.spp == 3) {
+    ALGO <rgb_iterator> a;
+    a (a1, a2, a3);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    a(a1, a2, a3);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    a (a1, a2, a3);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    a (a1, a2, a3);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    a (a1, a2, a3);
+  }
+}
