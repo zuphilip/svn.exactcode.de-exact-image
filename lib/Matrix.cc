@@ -1,8 +1,8 @@
 /*
  * Convolution Matrix.
- * Copyright (C) 2006, 2007 René Rebe, ExactCODE
- * Copyright (C) 2007 Valentin Ziegler, ExactCODE
- * Copyright (C) 2007 Susanne Klaus, ExactCODE
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH Germany
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -14,189 +14,108 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include "Matrix.hh"
 #include "Codecs.hh"
 
-void convolution_matrix_gray8 (Image& image, const matrix_type* matrix, int xw, int yw,
-			       matrix_type divisor)
+#include "ImageIterator2.hh"
+
+template <typename T>
+struct convolution_matrix_template
 {
-  const int spp = image.spp;
-  const int stride = image.stride();
-  uint8_t* data = image.getRawData();
-  uint8_t* new_data = (uint8_t*) malloc (image.h * stride);
-  
-  const int xr = xw / 2;
-  const int yr = yw / 2;
-
-  const int _y1 = std::min (image.h, yr);
-  const int _y2 = std::max (image.h-yr, yr);
-
-  uint8_t* src_ptr = data;
-  uint8_t* dst_ptr = new_data;
-
-  const int kernel_offset = yr * stride + xr * spp;
-
-  // top-border
-  for (int i = 0; i < _y1 * stride; ++i)
-    *dst_ptr++ = *src_ptr++;
-  
-  divisor = 1 / divisor; // to multiple in the loop
-  
-  for (int y = _y1; y < _y2; ++y)
+  void operator() (Image& image, const matrix_type* matrix, int xw, int yw,
+		   matrix_type divisor)
   {
-    src_ptr = &data[y * stride];
-    dst_ptr = &new_data[y * stride];
-
-    // left-side border
-    for (int x = 0; x < xr * spp; ++x)
-        *dst_ptr++ = *src_ptr++;
-
-    // convolution area
-    for (int x = 0; x < (image.w-xr-xr)*spp; ++x)
+    Image orig_image;
+    orig_image.copyTransferOwnership (image);
+    image.resize (image.w, image.h);
+    
+    T dst_it (image);
+    T src_it (orig_image);
+    
+    const int xr = xw / 2;
+    const int yr = yw / 2;
+    
+    // top & bottom
+    for (int y = 0; y < image.h; ++y)
       {
-	  uint8_t* data_ptr = src_ptr++ - kernel_offset;
-	  matrix_type sum = 0;
-
-	  const matrix_type* matrix_ptr = matrix;
-	  for (int y2 = 0; y2 < yw; ++y2, data_ptr += (image.w - xw) * spp) {
-	    int x2 = xw;
-	    
-	    while (x2 > 0) {
- 	      sum += *data_ptr * *matrix_ptr;
-	      ++matrix_ptr;
-	      data_ptr += spp;
-	      --x2;
-	    }
-	  }
+	for (int x = 0; x < image.w;)
+	  {
+	    dst_it.at (x, y);
 	  
-	  sum *= divisor;
-	  *dst_ptr++ = (uint8_t) (sum > 255 ? 255 : sum < 0 ? 0 : sum);
+	    typename T::accu a;
+	  
+	    const matrix_type* _matrix = matrix;
+	  
+	    for (int ym = 0; ym < yw; ++ym) {
+	    
+	      int image_y = y-yr+ym;
+	      if (image_y < 0)
+		image_y = 0 - image_y;
+	      else if (image_y >= image.h)
+		image_y = image.h - (image_y - image.h) - 1;
+	    
+	      for (int xm = 0; xm < xw; ++xm) {
+	      
+		int image_x = x-xr+xm;
+		if (image_x < 0)
+		  image_x = 0 - image_x;
+		else if (image_x >= image.w)
+		  image_x = image.w - (image_x - image.w) - 1;
+	      
+		a += *(src_it.at(image_x, image_y)) * *_matrix;
+		++src_it;
+		++_matrix;
+	      }
+	    }
+	    a /= divisor;
+	    a.saturate ();
+	  
+	    dst_it.set (a);
+	    ++dst_it;
+	  
+	    ++x;
+	    if (x == xr && y >= yr && y < image.h - yr)
+	      x = image.w - xr;
+	  }
       }
-    // right-side border
-    for (int x = 0; x < xr * spp; ++x)
-        *dst_ptr++ = *src_ptr++;
+    
+    //image area without border
+    for (int y = yr; y < image.h - yr; ++y)
+      {
+	dst_it.at (xr, y);
+	for (int x = xr; x < image.w - xr; ++x)
+	  {
+	    typename T::accu a;
+	    const matrix_type* _matrix = matrix;
+	    
+	    for (int ym = 0; ym < yw; ++ym) {
+	      src_it.at (x - xr, y - yr + ym);
+	      for (int xm = 0; xm < xw; ++xm) {
+		a += *src_it * *_matrix;
+		++src_it;
+		++_matrix;
+	      }
+	    }
+	    a /= divisor;
+	    a.saturate();
+	    
+	    dst_it.set (a);
+	    ++dst_it;
+	  }
+      }
   }
+};
 
-  // bottom-border
-  for (int i = 0; i < (image.h-_y2) * stride; ++i)
-    *dst_ptr++ = *src_ptr++;
-
-  image.setRawData (new_data);
-}
-
-void convolution_matrix (Image& image, const matrix_type* matrix, int xw, int yw,
+void convolution_matrix (Image& image, const matrix_type* m, int xw, int yw,
 			 matrix_type divisor)
 {
-  if (image.bps == 8)
-    return convolution_matrix_gray8 (image, matrix, xw, yw, divisor);
-  
-  Image orig_image;
-  orig_image.copyTransferOwnership (image);
-  image.resize (image.w, image.h);
-
-  Image::iterator dst_it = image.begin();
-  Image::iterator src_it = orig_image.begin();
-
-  const int xr = xw / 2;
-  const int yr = yw / 2;
- 
-  divisor = 1 / divisor;
-  
-  // top & bottom
-  for (int y = 0; y < image.h; ++y)
-    {
-      for (int x = 0; x < image.w;)
-	{
-	  dst_it = dst_it.at (x, y);
-	  
-	  double r = 0.0, g = 0.0, b = 0.0;
-	  const matrix_type* _matrix = matrix;
-	  
-	  for (int ym = 0; ym < yw; ++ym) {
-	    
-	    int image_y = y-yr+ym;
-	    if (image_y < 0)
-	      image_y = 0 - image_y;
-	    else if (image_y >= image.h)
-	      image_y = image.h - (image_y - image.h) - 1;
-	    
-	    for (int xm = 0; xm < xw; ++xm) {
-	      
-	      int image_x = x-xr+xm;
-	      if (image_x < 0)
-		image_x = 0 - image_x;
-	      else if (image_x >= image.w)
-		image_x = image.w - (image_x - image.w) - 1;
-	      
-	      src_it = src_it.at (image_x, image_y);
-	      
-	      *src_it;
-	      double _r = 0, _g = 0, _b = 0;
-	      src_it.getRGB (_r, _g, _b);
-	      r += _r * *_matrix;
-	      g += _g * *_matrix;
-	      b += _b * *_matrix;
-	      ++src_it;
-	      ++_matrix;
-	    }
-	  }
-	  r *= divisor;
-	  g *= divisor;
-	  b *= divisor;
-	  
-	  r = std::min (std::max (r, 0.0), 1.0);
-	  g = std::min (std::max (g, 0.0), 1.0);
-	  b = std::min (std::max (b, 0.0), 1.0);
-	  
-	  dst_it.setRGB (r, g, b);
-	  dst_it.set (dst_it);
-	  ++dst_it;
-	  
-	  ++x;
-	  if (x == xr && y >= yr && y < image.h - yr)
-	    x = image.w - xr;
-	}
-    }
-
-  //image area without border
-  for (int y = yr; y < image.h - yr; ++y)
-    {
-      dst_it = dst_it.at (xr, y);
-      for (int x = xr; x < image.w - xr; ++x)
-	{
-	  double r = 0.0, g = 0.0, b = 0.0;
-	  const matrix_type* _matrix = matrix;
-	  
-	  for (int ym = 0; ym < yw; ++ym) {
-	    src_it = src_it.at (x-xr, y-yr+ym);
-	    for (int xm = 0; xm < xw; ++xm) {
-	      *src_it;
-	      double _r = 0, _g = 0, _b = 0;
-	      src_it.getRGB (_r, _g, _b);
-	      r += _r * *_matrix;
-	      g += _g * *_matrix;
-	      b += _b * *_matrix;
-	      ++src_it;
-	      ++_matrix;
-	    }
-	  }
-	  r *= divisor;
-	  g *= divisor;
-	  b *= divisor;
-	  
-	  r = std::min (std::max (r, 0.0), 1.0);
-	  g = std::min (std::max (g, 0.0), 1.0);
-	  b = std::min (std::max (b, 0.0), 1.0);
-	  
-	  dst_it.setRGB (r, g, b);
-	  dst_it.set (dst_it);
-	  ++dst_it;
-	}
-    }
+  codegen<convolution_matrix_template> (image, m, xw, yw, divisor);
 }
-
 
 // h_matrix contains entrys m[0]...m[xw]. It is assumed, that m[-i]=m[i]. Same for v_matrix.
 void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_matrix, const matrix_type* v_matrix, int xw, int yw,
