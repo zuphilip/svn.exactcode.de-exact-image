@@ -124,7 +124,7 @@ void colorspace_rgba8_to_rgb8 (Image& image)
 void colorspace_rgb8_to_gray8 (Image& image)
 {
   uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h;)
     {
       // R G B order and associated weighting
       int c = (int)*it++ * 28;
@@ -132,6 +132,23 @@ void colorspace_rgb8_to_gray8 (Image& image)
       c += (int)*it++ * 11;
       
       *output++ = (uint8_t)(c / 100);
+    }
+  image.spp = 1; // converted data right now
+  image.setRawData();
+}
+
+void colorspace_rgb16_to_gray16 (Image& image)
+{
+  uint16_t* output = (uint16_t*)image.getRawData();
+  for (uint16_t* it = output;
+       it < (uint16_t*)(image.getRawData() + image.stride() * image.h);)
+    {
+      // R G B order and associated weighting
+      int c = (int)*it++ * 28;
+      c += (int)*it++ * 59;
+      c += (int)*it++ * 11;
+      
+      *output++ = (uint16_t)(c / 100);
     }
   image.spp = 1; // converted data right now
   image.setRawData();
@@ -152,7 +169,6 @@ void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
   image.setSamplesPerPixel(4);
   image.setRawData ((uint8_t*)data);
 }
-
 
 void colorspace_gray8_threshold (Image& image, unsigned char threshold)
 {
@@ -496,31 +512,34 @@ void colorspace_gray1_to_gray8 (Image& image)
 void colorspace_16_to_8 (Image& image)
 {
   uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData();
-       it < image.getRawDataEnd();)
+  for (uint8_t* it = output; it < image.getRawDataEnd(); it += 2)
     {
       if (Exact::NativeEndianTraits::IsBigendian)
 	*output++ = it[0];
       else
 	*output++ = it[1];
-      it += 2;
     }
   image.bps = 8; // converted 8bit data
-  image.setRawData ();
+
+  // reallocate, to free half of the memory
+  image.setRawDataWithoutDelete	((uint8_t*)realloc(image.getRawData(),
+		    		  image.stride() * image.h));
 }
 
 void colorspace_8_to_16 (Image& image)
 {
-  uint16_t* data = (uint16_t*) malloc (image.w*image.h*image.spp*2);
-  uint16_t* out_it = data;
-  for (uint8_t* it = image.getRawData();
-       it < image.getRawDataEnd();)
+  image.setRawDataWithoutDelete	((uint8_t*)realloc(image.getRawData(),
+		    		 image.stride() * 2 * image.h));
+	
+  uint8_t* data = image.getRawData();
+  uint16_t* data16 = (uint16_t*) data;
+  
+  for (signed int i = image.stride() * image.h - 1; i >= 0; --i)
     {
-      *out_it++ = *it++ * 0xffff / 255;
+      data16[i] = data[i] * 0xffff / 255;
     }
   
   image.bps = 16; // converted 16bit data
-  image.setRawData ((uint8_t*)data);
 }
 
 void colorspace_de_palette (Image& image, int table_entries,
@@ -664,7 +683,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
     image.bps = bps;
     return true;
   }
-
+  
   // up
   if (image.bps == 1 && bps == 2)
     colorspace_gray1_to_gray2 (image);
@@ -672,7 +691,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
     colorspace_gray1_to_gray4 (image);
   else if (image.bps < 8 && bps >= 8)
     colorspace_grayX_to_gray8 (image);
-
+  
   // upscale to 8 bit even for sub byte gray since we have no inter sub conv., yet
   if (image.bps < 8 && image.bps > bps)
     colorspace_grayX_to_gray8 (image);
@@ -686,13 +705,17 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
   // down
   if (image.bps == 16 && bps < 16)
     colorspace_16_to_8 (image);
-
-  if (image.spp == 4 && spp < 4)
+  
+  if (image.spp == 4 && spp < 4 && image.bps == 8) // TODO: might be RGB16
     colorspace_rgba8_to_rgb8 (image);
  
-  if (image.spp == 3 && spp == 1) 
-    colorspace_rgb8_to_gray8 (image);
-
+  if (image.spp == 3 && spp == 1) {
+    if (image.bps == 8) 
+      colorspace_rgb8_to_gray8 (image);
+    else if (image.bps == 16)
+      colorspace_rgb16_to_gray16 (image);
+  }
+  
   if (spp == 1 && image.bps > bps) {
     if (image.bps == 8 && bps == 1)
       colorspace_gray8_to_gray1 (image);
@@ -701,7 +724,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
     else if (image.bps == 8 && bps == 4)
       colorspace_gray8_to_gray4 (image);
   }
-
+  
   if (image.spp != spp || image.bps != bps) {
     std::cerr << "Incomplete colorspace conversion. Requested: spp: "
               << spp << ", bps: " << bps
