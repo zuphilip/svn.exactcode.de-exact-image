@@ -28,23 +28,24 @@ public:
   class accu
   {
   public:
-    signed int v1, v2, v3;
+    typedef unsigned int vtype;
+    vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
     
-    accu one () {
+    static accu one () {
       accu a;
       a.v1 = a.v2 = a.v3 = 0xff;
       return a;
     }
     
     void saturate () {
-      v1 = std::min (std::max (v1, 0), 0xff);
-      v2 = std::min (std::max (v2, 0), 0xff);
-      v3 = std::min (std::max (v3, 0), 0xff);
+      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
+      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xff);
+      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xff);
     }
     
-    accu& operator*= (int f) {
+    accu& operator*= (vtype f) {
       v1 *= f;
       v2 *= f;
       v3 *= f;
@@ -86,6 +87,15 @@ public:
       v3 = b * 0xff;
       return *this;
     }
+    
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = v1; g = v2; b = v3;
+    }
+
+    void setRGB (vtype r, vtype g, vtype b) {
+      v1 = r; v2 = g; v3 = b;
+    }
+    
   };
     
   rgb_iterator (Image& _image)
@@ -132,23 +142,24 @@ public:
   class accu
   {
   public:
-    signed int v1, v2, v3;
+    typedef unsigned int vtype;
+    vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
     
-    accu one () {
+    static accu one () {
       accu a;
       a.v1 = a.v2 = a.v3 = 0xffff;
       return a;
     }
     
     void saturate () {
-      v1 = std::min (std::max (v1, 0), 0xffff);
-      v2 = std::min (std::max (v2, 0), 0xffff);
-      v3 = std::min (std::max (v3, 0), 0xffff);
+      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
+      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xffff);
+      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xffff);
     }
     
-    accu& operator*= (int f) {
+    accu& operator*= (vtype f) {
       v1 *= f;
       v2 *= f;
       v3 *= f;
@@ -181,8 +192,7 @@ public:
       return *this;
     }
     
-    accu& operator= (const Image::iterator& background)
-    {
+    accu& operator= (const Image::iterator& background) {
       double r = 0, g = 0, b = 0;
       background.getRGB(r, g, b);
       v1 = r * 0xffff;
@@ -190,6 +200,15 @@ public:
       v3 = b * 0xffff;
       return *this;
     }
+
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = v1; g = v2; b = v3;
+    }
+
+    void setRGB (vtype r, vtype g, vtype b) {
+       v1 = r;  v2 = g;  v3 = b;
+    }
+
   };
   
   rgb16_iterator (Image& _image)
@@ -235,18 +254,19 @@ public:
   class accu
   {
   public:
-    signed int v1;
+    typedef unsigned int vtype;
+    vtype v1;
     
     accu () { v1 = 0; }
     
-    accu one () {
+    static accu one () {
       accu a;
       a.v1 = 0xff;
       return a;
     }
 
     void saturate () {
-      v1 = std::min (std::max (v1, 0), 0xff);
+      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
     }
 
     accu& operator*= (int f) {
@@ -274,12 +294,19 @@ public:
       return *this;
     }
       
-    accu& operator= (const Image::iterator& background)
-    {
+    accu& operator= (const Image::iterator& background) {
       v1 = background.getL();
       return *this;
     }
-      
+    
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = g =  b = v1;
+    }
+
+    void setRGB (vtype& r, vtype& g, vtype& b) {
+      v1 = (21 * r + 71 * g + 8 * b) / 100;
+    }
+    
   };
     
   gray_iterator (Image& _image)
@@ -321,18 +348,19 @@ public:
   class accu
   {
   public:
-    signed int v1;
+    typedef signed int vtype;
+    vtype v1;
     
     accu () { v1 = 0; }
     
-    accu one () {
+    static accu one () {
       accu a;
       a.v1 = 0xffff;
       return a;
     }
     
     void saturate () {
-      v1 = std::min (std::max (v1, 0), 0xffff);
+      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
     }
 
     accu& operator*= (int f) {
@@ -360,12 +388,19 @@ public:
       return *this;
     }
     
-    accu& operator= (const Image::iterator& background)
-    {
+    accu& operator= (const Image::iterator& background) {
       v1 = background.getL();
       return *this;
     }
-      
+    
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = g = b = v1;
+    }
+    
+    void setRGB (vtype& r, vtype& g, vtype& b) {
+      v1 = (21 * r + 71 * g + 8 * b) / 100;
+    }
+    
   };
     
   gray16_iterator (Image& _image)
@@ -486,6 +521,40 @@ void codegen (T1& a1)
   }
 }
 
+template <template <typename T> class ALGO, class T1, class T2>
+void codegen (T1& a1, T2& a2)
+{
+  if (a1.spp == 3) {
+    if (a1.bps == 8) {
+      ALGO <rgb_iterator> a;
+      a (a1, a2);
+    } else {
+      ALGO <rgb16_iterator> a;
+      a (a1, a2);
+    }
+  }
+  else if (a1.bps == 16) {
+    ALGO <gray16_iterator> a;
+    a(a1, a2);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    a(a1, a2);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    a (a1, a2);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    a (a1, a2);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    a (a1, a2);
+  }
+}
+
 template <template <typename T> class ALGO, class T1, class T2, class T3>
 void codegen (T1& a1, T2& a2, T3& a3)
 {
@@ -517,6 +586,40 @@ void codegen (T1& a1, T2& a2, T3& a3)
   else if (a1.bps == 1) {
     ALGO <bit_iterator<1> > a;
     a (a1, a2, a3);
+  }
+}
+
+template <template <typename T> class ALGO, class T1, class T2, class T3, class T4>
+void codegen (T1& a1, T2& a2, T3& a3, T4& a4)
+{
+  if (a1.spp == 3) {
+    if (a1.bps == 8) {
+      ALGO <rgb_iterator> a;
+      a (a1, a2, a3, a4);
+    } else {
+      ALGO <rgb16_iterator> a;
+      a (a1, a2, a3, a4);
+    }
+  }
+  else if (a1.bps == 16) {
+    ALGO <gray16_iterator> a;
+    a(a1, a2, a3, a4);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    a(a1, a2, a3, a4);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    a (a1, a2, a3, a4);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    a (a1, a2, a3, a4);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    a (a1, a2, a3, a4);
   }
 }
 
