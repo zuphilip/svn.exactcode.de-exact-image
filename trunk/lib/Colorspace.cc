@@ -800,35 +800,123 @@ void brightness_contrast_gamma (Image& image, double brightness, double contrast
   image.setRawData();
 }
 
+template <typename T>
+struct hue_saturation_lightness_template {
+  void operator() (Image& image, double hue, double saturation, double lightness)
+  {
+    T it (image);
+    
+    hue = fmod (hue, 360);
+    if (hue < 0)
+      hue += 360;
+    
+    //saturation = std::max (std::min (saturation, 2.), -2.);
+    //lightness = std::max (std::min (lightness, 2.), -2.);
+    
+    for (int i = 0; i < image.h * image.w; ++i)
+      {
+	// H in degree, S, L [-1, 1]
+	typename T::accu a = *it;
+	
+	typename T::accu::vtype _r, _g, _b;
+	a.getRGB (_r, _g, _b);
+	double r = _r, g = _g, b = _b;
+	r /= T::accu::one().v1;
+	g /= T::accu::one().v1;
+	b /= T::accu::one().v1;
+	
+	double h, s, v;
+	// RGB to HSV
+	{
+	  const double min = std::min (std::min (r, g), b);
+	  const double max = std::max (std::max (r, g), b);
+	  const double delta = max - min;
+	  
+	  v = max;
+	  s = max == 0 ? 0 : 1. - min / max;
+	  
+	  if (max == r) // yellow - magenta
+	    h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
+	  else if (max == g) // cyan - yellow
+	    h = 60. * (b - r) / delta + 120;
+	  else // magenta - cyan
+	    h = 60. * (r - g) / delta + 240;
+	} // end
+	
+	
+	h += hue;
+	
+	if (h < 0)
+	  h += 360;
+	else if (h >= 360)
+	  h -= 360;
+	
+	// TODO: this might not be accurate, double check, ...
+	s = s + s * saturation;
+	s = std::max (std::min (s, 1.), 0.);
+	
+	v = v + v * lightness;
+	v = std::max (std::min (v, 1.), 0.);
+	
+	
+	// HSV to RGB
+	{
+	  h /= 60.;
+	  const int i = (int) (floor(h)) % 6;
+	  
+	  const double f = h - i;
+	  const double p = v * (1 - s);
+	  const double q = v * (1 - f * s);
+	  const double t = v * (1 - (1. - f) * s);
+	  
+	  switch (i) {
+	  case 0:
+	    r = v;
+	    g = t;
+	    b = p;
+	    break;
+	  case 1:
+	    r = q;
+	    g = v;
+	    b = p;
+	    break;
+	  case 2:
+	    r = p;
+	    g = v;
+	    b = t;
+	    break;
+	  case 3:
+	    r = p;
+	    g = q;
+	    b = v;
+	    break;
+	  case 4:
+	    r = t;
+	    g = p;
+	    b = v;
+	    break;
+	  default: // case 5:
+	    r = v;
+	    g = p;
+	    b = q;
+	    break;
+	  }
+	
+	} // end
+	_r = (typename T::accu::vtype)(r * T::accu::one().v1);
+	_g = (typename T::accu::vtype)(g * T::accu::one().v1);
+	_b = (typename T::accu::vtype)(b * T::accu::one().v1);
+	a.setRGB (_r, _g, _b);
+	it.set(a);
+	++it;
+      }
+    image.setRawData();
+  }
+};
+
 void hue_saturation_lightness (Image& image, double hue, double saturation, double lightness)
 {
-  double h, s, v;
-  
-  Image::iterator end = image.end();
-  for (Image::iterator it = image.begin(); it != end; ++it)
-    {
-      *it;
-      it.getHSV (h, s, v);
-      
-      h += hue;
-      
-      if (h < 0.)
-	h += 360.;
-      else if (h >= 360.)
-	h -= 360.;
-      
-      // TODO: this might not be accurate, double check, ...
-      s = s + s * saturation;
-      s = std::max (std::min (s, 1.), 0.);
-       
-      v = v + v * lightness;
-      v = std::max (std::min (v, 1.), 0.);
-      
-      it.setHSV (h, s, v);
-      it.set(it);
-      //return;
-    }
-  image.setRawData();
+  codegen<hue_saturation_lightness_template> (image, hue, saturation, lightness);
 }
 
 template <typename T>
@@ -842,7 +930,7 @@ struct invert_template
       for (int x = 0; x < new_image.w; ++x) {
 	
 	typename T::accu a = *it;
-	a = a.one() -= a;
+	a = T::accu::one() -= a;
 	it.set (a);
 	++it;
       }
