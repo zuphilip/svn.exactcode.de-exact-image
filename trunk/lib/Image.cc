@@ -1,4 +1,5 @@
-/* tHE pLain Old Data encapsulation of pixel, raster data.
+/*
+ * The Plain Old Data encapsulation of pixel, raster data.
  * Copyright (C) 2005 - 2008 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -10,8 +11,11 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
-
+ 
 #include <string.h> // memcpy
 #include <iostream>
 
