@@ -28,7 +28,7 @@ public:
   class accu
   {
   public:
-    typedef unsigned int vtype;
+    typedef signed int vtype;
     vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
@@ -142,7 +142,7 @@ public:
   class accu
   {
   public:
-    typedef unsigned int vtype;
+    typedef signed int vtype;
     vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
@@ -254,7 +254,7 @@ public:
   class accu
   {
   public:
-    typedef unsigned int vtype;
+    typedef signed int vtype;
     vtype v1;
     
     accu () { v1 = 0; }
