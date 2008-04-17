@@ -812,20 +812,22 @@ struct hue_saturation_lightness_template {
     
     //saturation = std::max (std::min (saturation, 2.), -2.);
     //lightness = std::max (std::min (lightness, 2.), -2.);
+
+    typename T::accu a;
+    typename T::accu::vtype _r, _g, _b;
+    double r, g, b, h, s, v;
     
     for (int i = 0; i < image.h * image.w; ++i)
       {
 	// H in degree, S, L [-1, 1]
-	typename T::accu a = *it;
+	a = *it;
 	
-	typename T::accu::vtype _r, _g, _b;
 	a.getRGB (_r, _g, _b);
-	double r = _r, g = _g, b = _b;
+	r = _r, g = _g, b = _b;
 	r /= T::accu::one().v1;
 	g /= T::accu::one().v1;
 	b /= T::accu::one().v1;
 	
-	double h, s, v;
 	// RGB to HSV
 	{
 	  const double min = std::min (std::min (r, g), b);
@@ -833,19 +835,23 @@ struct hue_saturation_lightness_template {
 	  const double delta = max - min;
 	  
 	  v = max;
-	  s = max == 0 ? 0 : 1. - min / max;
-	  
-	  if (max == r) // yellow - magenta
-	    h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
-	  else if (max == g) // cyan - yellow
-	    h = 60. * (b - r) / delta + 120;
-	  else // magenta - cyan
-	    h = 60. * (r - g) / delta + 240;
+	  if (delta == 0) {
+	    h = 0;
+	    s = 0;
+	  }
+	  else {
+	    s = max == 0 ? 0 : 1. - min / max;
+	    
+	    if (max == r) // yellow - magenta
+	      h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
+	    else if (max == g) // cyan - yellow
+	      h = 60. * (b - r) / delta + 120;
+	    else // magenta - cyan
+	      h = 60. * (r - g) / delta + 240;
+	  }
 	} // end
 	
-	
 	h += hue;
-	
 	if (h < 0)
 	  h += 360;
 	else if (h >= 360)
