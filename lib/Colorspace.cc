@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions..
- * Copyright (C) 2006, 2007 René Rebe, ExactCODE
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -12,12 +12,16 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <iostream>
 
 #include "Image.hh"
+#include "ImageIterator2.hh"
+
 #include "Codecs.hh"
 #include "Colorspace.hh"
 
@@ -827,36 +831,26 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
   image.setRawData();
 }
 
+template <typename T>
+struct invert_template
+{
+  void operator() (Image& new_image)
+  {
+    T it (new_image);
+    
+    for (int y = 0; y < new_image.h; ++y) {
+      for (int x = 0; x < new_image.w; ++x) {
+	
+	typename T::accu a = *it;
+	a = a.one() -= a;
+	it.set (a);
+	++it;
+      }
+    }
+  }
+};
+
 void invert (Image& image)
 {
-  if (image.spp == 1 && image.bps == 1) {
-      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-        *it = *it ^ 0xFF;
-      image.setRawData();
-      return;
-  }
-  if (image.bps == 8) {
-      for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-        *it = 0xFF - *it;
-      image.setRawData();
-      return;
-  }
-  
-  double r=0, g=0, b=0;
-  
-  Image::iterator end = image.end();
-  for (Image::iterator it = image.begin(); it != end; ++it)
-    {
-      *it;
-      it.getRGB (r, g, b);
-
-      /*inverts color*/
-      r = 1.0 - r;
-      g = 1.0 - g;
-      b = 1.0 - b;
-
-      it.setRGB (r, g, b);
-      it.set(it);
-    }
-  image.setRawData();
+  codegen<invert_template> (image);
 }

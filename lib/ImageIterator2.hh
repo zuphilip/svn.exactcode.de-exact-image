@@ -24,13 +24,19 @@ public:
   uint8_t* ptr_begin;
   const Image& image;
   const int stride;
-    
+  
   class accu
   {
   public:
     signed int v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
+    
+    accu one () {
+      accu a;
+      a.v1 = a.v2 = a.v3 = 0xff;
+      return a;
+    }
     
     void saturate () {
       v1 = std::min (std::max (v1, 0), 0xff);
@@ -56,11 +62,18 @@ public:
       v3 /= f;
       return *this;
     }
-      
+    
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       v2 += other.v2;
       v3 += other.v3;
+      return *this;
+    }
+
+    accu& operator-= (const accu& other) {
+      v1 -= other.v1;
+      v2 -= other.v2;
+      v3 -= other.v3;
       return *this;
     }
     
@@ -123,6 +136,12 @@ public:
     
     accu () { v1 = v2 = v3 = 0; }
     
+    accu one () {
+      accu a;
+      a.v1 = a.v2 = a.v3 = 0xffff;
+      return a;
+    }
+    
     void saturate () {
       v1 = std::min (std::max (v1, 0), 0xffff);
       v2 = std::min (std::max (v2, 0), 0xffff);
@@ -152,6 +171,13 @@ public:
       v1 += other.v1;
       v2 += other.v2;
       v3 += other.v3;
+      return *this;
+    }
+
+    accu& operator-= (const accu& other) {
+      v1 -= other.v1;
+      v2 -= other.v2;
+      v3 -= other.v3;
       return *this;
     }
     
@@ -210,9 +236,15 @@ public:
   {
   public:
     signed int v1;
-
+    
     accu () { v1 = 0; }
-      
+    
+    accu one () {
+      accu a;
+      a.v1 = 0xff;
+      return a;
+    }
+
     void saturate () {
       v1 = std::min (std::max (v1, 0), 0xff);
     }
@@ -234,6 +266,11 @@ public:
       
     accu& operator+= (const accu& other) {
       v1 += other.v1;
+      return *this;
+    }
+
+    accu& operator-= (const accu& other) {
+      v1 -= other.v1;
       return *this;
     }
       
@@ -285,9 +322,15 @@ public:
   {
   public:
     signed int v1;
-
+    
     accu () { v1 = 0; }
-      
+    
+    accu one () {
+      accu a;
+      a.v1 = 0xffff;
+      return a;
+    }
+    
     void saturate () {
       v1 = std::min (std::max (v1, 0), 0xffff);
     }
@@ -311,7 +354,12 @@ public:
       v1 += other.v1;
       return *this;
     }
-      
+    
+    accu& operator-= (const accu& other) {
+      v1 -= other.v1;
+      return *this;
+    }
+    
     accu& operator= (const Image::iterator& background)
     {
       v1 = background.getL();
@@ -402,6 +450,41 @@ public:
     return *this;
   }
 };
+
+
+template <template <typename T> class ALGO, class T1>
+void codegen (T1& a1)
+{
+  if (a1.spp == 3) {
+    if (a1.bps == 8) {
+      ALGO <rgb_iterator> a;
+      a (a1);
+    } else {
+      ALGO <rgb16_iterator> a;
+      a (a1);
+    }
+  }
+  else if (a1.bps == 16) {
+    ALGO <gray16_iterator> a;
+    a(a1);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    a(a1);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    a (a1);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    a (a1);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    a (a1);
+  }
+}
 
 template <template <typename T> class ALGO, class T1, class T2, class T3>
 void codegen (T1& a1, T2& a2, T3& a3)
