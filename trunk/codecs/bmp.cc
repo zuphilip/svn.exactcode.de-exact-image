@@ -1,8 +1,21 @@
 /*
  * C++ BMP library.
- * Copyright (c) 2006 - 2007 Rene Rebe <rene@exactcode.de>
+ * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
  *
- * loosely based on (in the past more so, but more and more parts got
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ *
+ * Lossy based on (in the past more so, but more and more parts got
  * rewritten):
  *
  * Project:  libtiff tools
@@ -175,10 +188,10 @@ typedef struct
 /*
  * Info header size in bytes:
  */
-const unsigned int  BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
-const unsigned int  BIH_WIN5SIZE = 57; /* for BMPT_WIN5 */
-const unsigned int  BIH_OS21SIZE = 12; /* for BMPT_OS21 */
-const unsigned int  BIH_OS22SIZE = 64; /* for BMPT_OS22 */
+static const unsigned int BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
+static const unsigned int BIH_WIN5SIZE = 57; /* for BMPT_WIN5 */
+static const unsigned int BIH_OS21SIZE = 12; /* for BMPT_OS21 */
+static const unsigned int BIH_OS22SIZE = 64; /* for BMPT_OS22 */
 
 /*
  * We will use plain byte array instead of this structure, but declaration
@@ -244,7 +257,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   uint8_t* data = 0;
   
   stream->read ((char*)&file_hdr.bType, 2);
-  if(file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
+  if (file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
     stream->seekg (0);
     return false;
   }
@@ -323,8 +336,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   if (info_hdr.iBitCount != 1  && info_hdr.iBitCount != 4  &&
       info_hdr.iBitCount != 8  && info_hdr.iBitCount != 16 &&
       info_hdr.iBitCount != 24 && info_hdr.iBitCount != 32) {
-    std::cerr << "Cannot process BMP file with bit count " << info_hdr.iBitCount << "\n";
-    return 0;
+    std::cerr << "BMPCodec:: Cannot read file with bit count " << info_hdr.iBitCount << "\n";
+    return false;
   }
   
   image.w = info_hdr.iWidth;
@@ -347,7 +360,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
       clr_tbl = (uint8_t *)
 	malloc (n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
-	std::cerr << "Can't allocate space for color table\n" << std::endl;
+	std::cerr << "BMPCodec:: Can't allocate space for color table" << std::endl;
 	goto bad;
       }
       
@@ -486,8 +499,8 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   case BMPC_RLE4:
   case BMPC_RLE8:
     {
-      uint32_t		i, j, k, runlength, x;
-      uint32_t		compr_size, uncompr_size;
+      uint32_t	i, j, k, runlength, x;
+      uint32_t	compr_size, uncompr_size;
       uint8_t   *comprbuf;
       uint8_t   *uncomprbuf;
       
@@ -630,10 +643,13 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  if (image.bps != 8 || image.spp != 3) {
-    std::cerr << "only writing 24bit BMP is supported right now" << std::endl;
+  if (image.bps > 8 || image.spp > 3) {
+    std::cerr << "BMPCodec: " << image.bps << " bits and "
+	      << image.spp << " samples not supported." << std::endl;
     return false;
   }
+  
+  const int n_clr_elems = 4; // we write "modern" formats, not the first OS2 flavours
   
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
@@ -659,22 +675,37 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   info_hdr.iSizeImage  = image.stride()*image.h; // TODO: compressed size
   info_hdr.iXPelsPerMeter = (int32_t) (image.xres * 100 / 2.54);
   info_hdr.iYPelsPerMeter = (int32_t) (image.yres * 100 / 2.54);
-  info_hdr.iClrUsed = 0; // TODO
-  info_hdr.iClrImportant = 0; // TODO
+  info_hdr.iClrUsed = image.spp == 1 ? 1 << image.bps : 0;
+  info_hdr.iClrImportant = 0;
   info_hdr.iRedMask = 0;
-  info_hdr.iGreenMask = 0; // TODO
-  info_hdr.iBlueMask = 0; // TODO
-  info_hdr.iAlphaMask = 0; // TODO
-
-  // BMP image payload needs to be 4 byte alligned :-(
+  info_hdr.iGreenMask = 0;
+  info_hdr.iBlueMask = 0;
+  info_hdr.iAlphaMask = 0;
+  
+  // BMP image payload needs to be 4 byte aligned :-(
   int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
   
-  file_hdr.iOffBits = BFH_SIZE + BIH_WIN5SIZE;
+  file_hdr.iOffBits = BFH_SIZE + BIH_WIN5SIZE + info_hdr.iClrUsed * n_clr_elems;
   file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
   
   // write header meta info
   stream->write ((char*)&file_hdr, BFH_SIZE);
   stream->write ((char*)&info_hdr, BIH_WIN5SIZE);
+  
+  // write color table
+  if (info_hdr.iClrUsed) {
+    int n = info_hdr.iClrUsed;
+    
+    uint8_t clrtbl [n_clr_elems*n];
+    
+    for (int i = 0; i < n; ++i) {
+      clrtbl[n_clr_elems*i+0] = clrtbl[n_clr_elems*i+1] = clrtbl[n_clr_elems*i+2] = i * 0xff / (n - 1);
+      
+      for (int j = 3; j < n_clr_elems; ++j)
+	clrtbl[n_clr_elems*i+j] = 0;
+    }
+    stream->write ((char*)clrtbl, n_clr_elems*n);
+  }
   
   // write image data
   switch (info_hdr.iCompression) {
