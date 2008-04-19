@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006, 2008 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -12,6 +12,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <stdio.h>
@@ -22,11 +24,7 @@
 #include <iostream>
 #include <fstream>
 
-/*
- * <setjmp.h> is used for the optional error recovery mechanism
- */
-
-#include <setjmp.h>
+#include <setjmp.h> // optional error recovery
 
 #include "jpeg.hh"
 
@@ -316,8 +314,11 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image)
 bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			    const std::string& compress)
 {
+  std::string c (compress);
+  std::transform (c.begin(), c.end(), c.begin(), tolower);
+
   // if the instance is freestanding it can only be called by the mux if the cache is valid
-  if (_image) {
+  if (_image && c != "recompress") {
     // since potentially meta data might have changed we have to re-create
     // the stream here
     doTransform (JXFORM_NONE, image, stream);
@@ -627,7 +628,8 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
 
 bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
 			     std::ostream* s, bool to_gray, bool crop,
-			     unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+			     unsigned int x, unsigned int y,
+			     unsigned int w, unsigned int h)
 {
   jpeg_transform_info transformoption; /* image transformation options */
   
