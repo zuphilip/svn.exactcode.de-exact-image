@@ -50,7 +50,7 @@ bool SVGCodec::readImage (std::istream* stream, Image& image)
   m_path.bounding_rect (&m_min_x, &m_min_y, &m_max_x, &m_max_y);
   
   image.bps = 8; image.spp = 3;
-  image.resize (m_max_x - m_min_x, m_max_y - m_min_y);
+  image.resize ((int)(m_max_x - m_min_x), (int)(m_max_y - m_min_y));
   
   renderer_exact_image rb (image);
   typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
