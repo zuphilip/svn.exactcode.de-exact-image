@@ -333,10 +333,18 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
     n_clr_elems = 3;
   }
   
-  if (info_hdr.iBitCount != 1  && info_hdr.iBitCount != 4  &&
-      info_hdr.iBitCount != 8  && info_hdr.iBitCount != 16 &&
-      info_hdr.iBitCount != 24 && info_hdr.iBitCount != 32) {
-    std::cerr << "BMPCodec:: Cannot read file with bit count " << info_hdr.iBitCount << "\n";
+  switch (info_hdr.iBitCount) {
+  case 1:
+    //  case 2:
+  case 4:
+  case 8:
+  case 16:
+  case 24:
+  case 32:
+    break;
+  default:
+    std::cerr << "BMPCodec:: Cannot read " << info_hdr.iBitCount
+	      << " bit files." << std::endl;
     return false;
   }
   
@@ -346,6 +354,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
   switch (info_hdr.iBitCount)
     {
     case 1:
+    case 2:
     case 4:
     case 8:
       image.spp = 1;
@@ -643,7 +652,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image)
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  if (image.bps > 8 || image.spp > 3) {
+  if (image.bps > 8 || image.bps == 2 || image.spp > 3) {
     std::cerr << "BMPCodec: " << image.bps << " bits and "
 	      << image.spp << " samples not supported." << std::endl;
     return false;
