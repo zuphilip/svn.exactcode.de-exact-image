@@ -314,8 +314,6 @@ struct rotate_template
     const double cached_sin = sin (angle);
     const double cached_cos = cos (angle);
   
-    std::cerr << "angle: " << angle << std::endl;
-    
     T it (image);
     T orig_it (orig_image);
   
