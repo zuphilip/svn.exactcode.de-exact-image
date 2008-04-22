@@ -737,6 +737,10 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     // We re-read the header because we do not want to re-hardcode the
     // trimming required for some operations.
     readMeta (&private_copy, image);
+
+    // if the data is accessed again, it must be re-encoded
+    image.setRawData(0);
+    image.setCodec(this);
   }
   
   return true;
