@@ -294,15 +294,6 @@ struct rotate_template
 {
   void operator() (Image& image, double angle, const Image::iterator& background)
   {
-    angle = fmod (angle, 360);
-    if (angle < 0)
-      angle += 360;
-  
-    if (angle == 0.0)
-      return;
-  
-    // trivial code just for testing, to be optimized
-  
     angle = angle / 180 * M_PI;
   
     const int xcent = image.w / 2;
@@ -358,6 +349,34 @@ struct rotate_template
 
 void rotate (Image& image, double angle, const Image::iterator& background)
 {
+  angle = fmod (angle, 360);
+  if (angle < 0)
+    angle += 360;
+      
+  if (angle == 0.0)
+    return;
+
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->rotate(image, angle))
+       return;
+   
+  if (angle == 180.0) {
+    flipX (image);
+    flipY (image);
+    return;
+  }
+
+  if (angle == 90.0) {
+    rot90 (image, 90);
+    return;
+  }
+ 
+  if (angle == 270.0) {
+    rot90 (image, 270);
+    return;
+  }
+
   codegen<rotate_template> (image, angle, background);
 }
 
