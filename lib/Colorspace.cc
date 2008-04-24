@@ -779,25 +779,44 @@ static inline double convert (double val,
     return val;
 }
 
+template<typename T>
+struct brightness_contrast_gamma_template
+{
+  void operator() (Image& image, double brightness, double contrast, double gamma)
+  {
+    T it (image);
+    typename T::accu a;
+    typename T::accu::vtype _r, _g, _b;
+    double r, g, b;
+    
+    for (int i = 0; i < image.h * image.w; ++i)
+      {
+	a = *it;
+	
+	a.getRGB (_r, _g, _b);
+	r = _r, g = _g, b = _b;
+	r /= T::accu::one().v1;
+	g /= T::accu::one().v1;
+	b /= T::accu::one().v1;
+	
+	r = convert (r, brightness, contrast, gamma);
+	g = convert (g, brightness, contrast, gamma);
+	b = convert (b, brightness, contrast, gamma);
+	
+	_r = (typename T::accu::vtype)(r * T::accu::one().v1);
+	_g = (typename T::accu::vtype)(g * T::accu::one().v1);
+	_b = (typename T::accu::vtype)(b * T::accu::one().v1);
+	a.setRGB (_r, _g, _b);
+	it.set(a);
+	++it;
+      }
+    image.setRawData();
+  }
+};
 
 void brightness_contrast_gamma (Image& image, double brightness, double contrast, double gamma)
 {
-  double r = 0, g = 0, b = 0;
-  
-  Image::iterator end = image.end();
-  for (Image::iterator it = image.begin(); it != end; ++it)
-    {
-      *it;
-      it.getRGB (r, g, b);
-      
-      r = convert (r, brightness, contrast, gamma);
-      g = convert (g, brightness, contrast, gamma);
-      b = convert (b, brightness, contrast, gamma);
-      
-      it.setRGB (r, g, b);
-      it.set(it);
-    }
-  image.setRawData();
+  codegen<brightness_contrast_gamma_template> (image, brightness, contrast, gamma);
 }
 
 template <typename T>
@@ -928,12 +947,12 @@ void hue_saturation_lightness (Image& image, double hue, double saturation, doub
 template <typename T>
 struct invert_template
 {
-  void operator() (Image& new_image)
+  void operator() (Image& image)
   {
-    T it (new_image);
+    T it (image);
     
-    for (int y = 0; y < new_image.h; ++y) {
-      for (int x = 0; x < new_image.w; ++x) {
+    for (int y = 0; y < image.h; ++y) {
+      for (int x = 0; x < image.w; ++x) {
 	
 	typename T::accu a = *it;
 	a = T::accu::one() -= a;
@@ -941,6 +960,7 @@ struct invert_template
 	++it;
       }
     }
+    image.setRawData();
   }
 };
 
