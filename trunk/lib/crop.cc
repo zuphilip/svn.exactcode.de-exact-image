@@ -140,9 +140,10 @@ void fastAutoCrop (Image& image)
   if (h == 0) // do not crop if the image is totally empty
     return;
   
-  // We could just tweak the image height here, but later we might not
-  // only also crop the other borders, but also benefit from lossless
-  // jpeg cropping, ...  We do not explicitly check if we crop, the
-  // crop function will optimize a NOP crop away for all callers.
-  crop (image, 0, 0, image.w, h);
+  // We could just tweak the image height here, but using the generic
+  // code we benefit from possible optimization, such as lossless
+  // jpeg cropping.
+  // We do not explicitly check if we crop, the crop function will optimize
+  // a NOP crop away for all callers.
+  return crop (image, 0, 0, image.w, h);
 }
