@@ -2,7 +2,7 @@ include build/top.make
 
 BINARY = ExactImage
 BINARY_EXT = $(X_DYNEXT)
-DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $($(X_MODULE)_OUTPUT)/api-python-wrap.cc
+DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $(api_BINARY) $($(X_MODULE)_OUTPUT)/api-python-wrap.cc
 
 objdir/api/python/CXXFLAGS := -I api $(PYTHONINCS)
 
