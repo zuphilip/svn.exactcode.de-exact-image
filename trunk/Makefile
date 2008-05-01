@@ -68,6 +68,20 @@ endif
 
 ifeq "$(WITHSWIG)" "1"
 include api/Makefile
+
+ifeq "$(WITHLUA)" "1"
+#include api/lua/Makefile
+endif
+ifeq "$(WITHPERL)" "1"
+include api/perl/Makefile
+endif
+ifeq "$(WITHPHP)" "1"
+include api/php/Makefile
+endif
+ifeq "$(WITHPYTHON)" "1"
+#include api/python/Makefile
+endif
+
 endif
 
 check: $(X_OUTARCH)/econvert/econvert$(X_EXEEXT) $(X_OUTARCH)/edentify/edentify$(X_EXEEXT)
