@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode swig perl"
+with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode swig perl python php lua"
 feature_options="evasgl"
 
 PACKAGE="exact-image"
@@ -97,7 +97,15 @@ pkgcheck swig shell SWIG 'swig -version 2>/dev/null | sed -n "s/SWIG Version \(.
 
 # supported swig target languages so far
 
+pkgcheck lua pkg-config LUA atleast 5.1
+
 pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl, v\(.*\) built.*/\1/p"' atleast 5.8.0 &&
-	PERLINCS=`perl -MExtUtils::Embed -e ccopts`
+	PERLINCS="`perl -MExtUtils::Embed -e ccopts`"
+
+pkgcheck php -config PHP atleast 5.2.0 &&
+	PHPINCS="`php-config --includes`"
+
+pkgcheck python shell PYTHON 'python --version 2>&1 | sed "s/Python //"' atleast 2.5.0 &&
+	PYTHONINCS="`python-config --includes`"
 
 save
