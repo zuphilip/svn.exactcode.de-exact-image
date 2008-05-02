@@ -13,6 +13,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 /*
@@ -50,7 +52,13 @@ Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
 #if defined(SWIG) && !defined(SWIG_CSTRING_UNIMPL)
 %apply (char *STRING, int LENGTH) { (char *data, int n) };
 #endif
+#if !defined(SWIG) || (defined(SWIG) && !defined(SWIG_CSTRING_UNIMPL))
 bool decodeImage (Image* image, char* data, int n);
+#endif
+
+#if !defined(SWIG) || (defined(SWIG) && defined(SWIG_CSTRING_UNIMPL))
+bool decodeImage (Image* image, const std::string& data);
+#endif
 
 // decode image from given filename
 bool decodeImageFile (Image* image, const char* filename);

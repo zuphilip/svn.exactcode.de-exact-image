@@ -13,6 +13,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -60,12 +62,18 @@ Image* copyImage (Image* other)
   return image;
 }
 
+bool decodeImage (Image* image, const std::string& data)
+{
+  std::istringstream stream (data);
+
+  return ImageCodec::Read (&stream, *image);
+}
+
 bool decodeImage (Image* image, char* data, int n)
 {
   const std::string str (data, n); 
-  std::istringstream stream (str);
   
-  return ImageCodec::Read (&stream, *image);
+  return decodeImage (image, str);
 }
 
 bool decodeImageFile (Image* image, const char* filename)
@@ -91,7 +99,7 @@ void encodeImage (char **s, int *slen,
 }
 
 const std::string encodeImage (Image* image, const char* codec, int quality,
-                         const char* compression)
+			       const char* compression)
 {
   std::ostringstream stream (""); // empty string to start with
 
