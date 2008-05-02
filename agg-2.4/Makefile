@@ -15,10 +15,10 @@ BINARY_EXT = $(X_LIBEXT)
 
 $($(X_MODULE)_OUTPUT)/%.o: $(X_MODULE)/src/%.cpp
 	@echo '  C++       $@'
-	$(Q)$(COMPILE.cc) $($(X_MODULE)_CFLAGS) -MMD -MP -o '$@' '$<'
+	$(Q)$(COMPILE.cc) $($(dir $@)CXXFLAGS) -MMD -MP -o '$@' '$<'
 
 $($(X_MODULE)_OUTPUT)/%.o: $(X_MODULE)/font_freetype/%.cpp
 	@echo '  C++       $@'
-	$(Q)$(COMPILE.cc) $($(X_MODULE)_CFLAGS) -MMD -MP -o '$@' '$<'
+	$(Q)$(COMPILE.cc) $($(dir $@)CXXFLAGS) -MMD -MP -o '$@' '$<'
 
 include build/bottom.make
