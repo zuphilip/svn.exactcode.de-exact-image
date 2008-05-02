@@ -70,7 +70,7 @@ ifeq "$(WITHSWIG)" "1"
 include api/Makefile
 
 ifeq "$(WITHLUA)" "1"
-#include api/lua/Makefile
+include api/lua/Makefile
 endif
 ifeq "$(WITHPERL)" "1"
 include api/perl/Makefile
@@ -79,7 +79,7 @@ ifeq "$(WITHPHP)" "1"
 include api/php/Makefile
 endif
 ifeq "$(WITHPYTHON)" "1"
-#include api/python/Makefile
+include api/python/Makefile
 endif
 
 endif
