@@ -217,6 +217,24 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
   argvi++;
 }
 #endif
+#ifdef SWIGLUA
+// Creates a new Lua table and places a NULL-terminated char ** into it
+%typemap(out) char** {
+  lua_newtable(L);
+  int i = 0,len = 0;
+  /* Figure out how many elements we have */
+  while ($1[len])
+    len++;
+  for (i = 0; i < len ; i++) {
+    lua_pushnumber(L, 1.+i);
+    lua_pushstring(L, $1[i]);
+    lua_settable(L, -3);
+    free ($1[i]);
+  };
+  free($1);
+}
+#endif
+
 #endif
 char** imageDecodeBarcodes (Image* image, const char* codes,
 			    unsigned int min_length = 0,
