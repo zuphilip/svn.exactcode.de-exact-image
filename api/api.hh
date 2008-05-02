@@ -232,6 +232,7 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
     free ($1[i]);
   };
   free($1);
+  return 1;
 }
 #endif
 
