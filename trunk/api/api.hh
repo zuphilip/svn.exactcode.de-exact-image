@@ -164,6 +164,7 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 // returned is an alternating array of codes and types, like
 // "1234", "EAN", "5678", "CODE128", ...
 #ifdef SWIG
+#ifdef SWIGPERL5
 // Creates a new Perl array and places a NULL-terminated char ** into it
 %typemap(out) char** {
   AV *myav;
@@ -185,6 +186,7 @@ bool imageIsEmpty (Image* image, double percent, int margin);
   sv_2mortal($result);
   argvi++;
 }
+#endif
 #endif
 char** imageDecodeBarcodesExt (Image* image, const char* codes,
 			       unsigned int min_length = 0,
@@ -192,6 +194,7 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
 #endif
 
 #ifdef SWIG
+#ifdef SWIGPERL5
 // Creates a new Perl array and places a NULL-terminated char ** into it
 %typemap(out) char** {
   AV *myav;
@@ -213,6 +216,7 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
   sv_2mortal($result);
   argvi++;
 }
+#endif
 #endif
 char** imageDecodeBarcodes (Image* image, const char* codes,
 			    unsigned int min_length = 0,
