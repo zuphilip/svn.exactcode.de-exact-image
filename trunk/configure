@@ -108,7 +108,7 @@ pkgcheck php -config PHP atleast 5.2.0 &&
 pkgcheck python shell PYTHON 'python --version 2>&1 | sed -n "s/Python //p"' atleast 2.5.0 &&
 	PYTHONINCS="`python-config --includes`"
 
-pkgcheck ruby shell RUBY 'ruby --version 2>/dev/null | sed "s/ruby \([^ ]\+\) .*/\1/"' atleast 1.8.0
-# TODO: RUBYINC
+pkgcheck ruby shell RUBY 'ruby --version 2>/dev/null | sed "s/ruby \([^ ]\+\) .*/\1/"' atleast 1.8.0 &&
+	RUBYINCS="-I/usr/lib64/ruby/1.8/x86_64-linux" # FIXME
 
 save

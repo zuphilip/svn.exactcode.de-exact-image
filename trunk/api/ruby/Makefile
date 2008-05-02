@@ -2,11 +2,11 @@ include build/top.make
 
 BINARY = ExactImage
 BINARY_EXT = $(X_DYNEXT)
-DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $(api_BINARY) $($(X_MODULE)_OUTPUT)/api-perl-wrap.cc
+DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $(api_BINARY) $($(X_MODULE)_OUTPUT)/api-ruby-wrap.cc
 
-objdir/api/perl/CXXFLAGS := -I api $(RUBYINCS)
+objdir/api/ruby/CXXFLAGS := -I api $(RUBYINCS)
 
-$($(X_MODULE)_OUTPUT)/api-perl-wrap.cc: $(X_MODULE)/../api.hh $(X_MODULE)/../api-swig.hh
+$($(X_MODULE)_OUTPUT)/api-ruby-wrap.cc: $(X_MODULE)/../api.hh $(X_MODULE)/../api-swig.hh
 	$(Q)echo "  SWIG      $(dir $@)"
 	$(Q)swig -ruby -c++ -outdir $(dir $@) -o '$@' $(X_MODULE)/../api-swig.hh
 
