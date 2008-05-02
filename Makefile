@@ -81,6 +81,9 @@ endif
 ifeq "$(WITHPYTHON)" "1"
 include api/python/Makefile
 endif
+ifeq "$(WITHRUBY)" "1"
+include api/ruby/Makefile
+endif
 
 endif
 

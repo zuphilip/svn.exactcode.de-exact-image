@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode swig perl python php lua"
+with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode lua swig perl python php ruby"
 feature_options="evasgl"
 
 PACKAGE="exact-image"
@@ -105,7 +105,10 @@ pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl, v\
 pkgcheck php -config PHP atleast 5.2.0 &&
 	PHPINCS="`php-config --includes`"
 
-pkgcheck python shell PYTHON 'python --version 2>&1 | sed "s/Python //"' atleast 2.5.0 &&
+pkgcheck python shell PYTHON 'python --version 2>&1 | sed -n "s/Python //p"' atleast 2.5.0 &&
 	PYTHONINCS="`python-config --includes`"
+
+pkgcheck ruby shell RUBY 'ruby --version 2>/dev/null | sed "s/ruby \([^ ]\+\) .*/\1/"' atleast 1.8.0
+# TODO: RUBYINC
 
 save
