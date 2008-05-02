@@ -1,6 +1,6 @@
 include build/top.make
 
-BINARY = ExactImage
+BINARY = api
 BINARY_EXT = $(X_LIBEXT)
 DEPS = 
 
