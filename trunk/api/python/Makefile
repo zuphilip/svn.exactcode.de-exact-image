@@ -7,8 +7,8 @@ DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $(api_BINARY) $($(X_MO
 objdir/api/python/CXXFLAGS := -I api $(PYTHONINCS)
 
 $($(X_MODULE)_OUTPUT)/api-python-wrap.cc: $(X_MODULE)/../api.hh $(X_MODULE)/../api-swig.hh
-	$(Q)echo "  SWIG      $($(X_MODULE)_OUTPUT)"
-	$(Q)swig -python -c++ -outdir $($(X_MODULE)_OUTPUT) -o '$@' $(X_MODULE)/../api-swig.hh
+	$(Q)echo "  SWIG      $(dir $@)"
+	$(Q)swig -python -c++ -outdir $(dir $@) -o '$@' $(X_MODULE)/../api-swig.hh
 
 # we have an own install
 _X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)

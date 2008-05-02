@@ -7,8 +7,8 @@ DEPS = $(lib_BINARY) $(bardecode_BINARY) $(codecs_BINARY) $(api_BINARY) $($(X_MO
 objdir/api/php/CXXFLAGS := -I api $(PHPINCS) -fno-strict-aliasing
 
 $($(X_MODULE)_OUTPUT)/api-php-wrap.cc: $(X_MODULE)/../api.hh $(X_MODULE)/../api-swig.hh
-	$(Q)echo "  SWIG      $($(X_MODULE)_OUTPUT)"
-	$(Q)swig -php5 -c++ -outdir $($(X_MODULE)_OUTPUT) -o '$@' $(X_MODULE)/../api-swig.hh
+	$(Q)echo "  SWIG      $(dir $@)"
+	$(Q)swig -php5 -c++ -outdir $(dir $@) -o '$@' $(X_MODULE)/../api-swig.hh
 
 # we have an own install
 _X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
