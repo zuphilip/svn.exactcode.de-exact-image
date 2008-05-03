@@ -16,9 +16,11 @@ X_BUILD_IMPLICIT := 0
 include build/bottom.make
 X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
 
+api/lua/libdir := $(shell pkg-config lua --variable INSTALL_CMOD)
+
 # install
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
-	$(Q)echo "INSTALL LUA module $($(X_MODULE)_OUTPUT)/..."
-	$(Q)mkdir -p $(libdir)/lua/...
-	$(Q)install $($(X_MODULE)_OUTPUT)/ExactImage.pm $($(X_MODULE)_BINARY) $(libdir)/lua/...
+	$(Q)echo "INSTALL LUA module $^"
+	$(Q)mkdir -p $(api/lua/libdir)
+	$(Q)install $^ $(api/lua/libdir)
