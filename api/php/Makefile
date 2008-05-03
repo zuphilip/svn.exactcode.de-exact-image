@@ -19,6 +19,5 @@ X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
 # install
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
-	$(Q)echo "INSTALL PHP module $($(X_MODULE)_OUTPUT)/..."
-	$(Q)mkdir -p $(libdir)/php/...
-	$(Q)install $($(X_MODULE)_OUTPUT)/ExactImage.pm $($(X_MODULE)_BINARY) $(libdir)/php/...
+	$(Q)echo "INSTALL PHP module $^"
+	$(Q)install $^ $(dir $^)/ExactImage.php $(libdir)/php/

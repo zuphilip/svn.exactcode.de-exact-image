@@ -19,6 +19,5 @@ X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
 # install
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
-	$(Q)echo "INSTALL PYTHON module $($(X_MODULE)_OUTPUT)/..."
-	$(Q)mkdir -p $(libdir)/python/...
-	$(Q)install $($(X_MODULE)_OUTPUT)/ExactImage.pm $($(X_MODULE)_BINARY) $(libdir)/python/...
+	$(Q)echo "INSTALL PYTHON module $^"
+	$(Q)install $(dir $^)/ExactImage.py $^ $(libdir)/python2.5/site-packages/
