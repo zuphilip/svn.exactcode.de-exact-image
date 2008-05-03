@@ -40,7 +40,7 @@ void scale (Image& image, double scalex, double scaley)
     if (image.getCodec()->scale(image, scalex, scaley))
       return;
   
-  if (scalex < 0.5)
+  if (scalex <= 0.5)
     box_scale (image, scalex, scaley);
   else
     bilinear_scale (image, scalex, scaley);
