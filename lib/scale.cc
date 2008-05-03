@@ -133,93 +133,68 @@ void bilinear_scale (Image& image, double scalex, double scaley)
   codegen<bilinear_scale_template> (image, scalex, scaley);
 }
 
-void box_scale (Image& new_image, double scalex, double scaley)
+template <typename T>
+struct box_scale_template
 {
-  if (scalex == 1.0 && scaley == 1.0)
-    return;
-
-  Image image;
-  image.copyTransferOwnership (new_image);
+  void operator() (Image& new_image, double scalex, double scaley)
+  {
+    if (scalex == 1.0 && scaley == 1.0)
+      return;
+    
+    Image image;
+    image.copyTransferOwnership (new_image);
+    
+    new_image.resize ((int)(scalex * (double) image.w),
+		      (int)(scaley * (double) image.h));
+    new_image.xres = (int) (scalex * image.xres);
+    new_image.yres = (int) (scaley * image.yres);
+    
+    T src (image);
+    T dst (new_image);
   
-  new_image.resize ((int)(scalex * (double) image.w),
-		    (int)(scaley * (double) image.h));
-  new_image.xres = (int) (scalex * image.xres);
-  new_image.yres = (int) (scaley * image.yres);
-  
-  /* handcrafted due popular request */
-  if (new_image.spp == 1 && new_image.bps == 8)
-    {
-      uint8_t* src = image.getRawData();
-      uint8_t* dst = new_image.getRawData();
-      
-      uint32_t boxes[new_image.w];
-      uint32_t count[new_image.w];
-
-      int dy = 0;
-      for (int sy = 0; dy < new_image.h && sy < image.h; ++dy) {
+    // prepare boxes
+    typename T::accu boxes [new_image.w];
+    int count [new_image.w];
+    
+    int dy = 0;
+    for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
+      {
 	
 	// clear for accumulation
-	memset (boxes, 0, sizeof (boxes));
-	memset (count, 0, sizeof (count));
+	for (int x = 0; x < new_image.w; ++x) {
+	  boxes[x] = typename T::accu();
+	  count[x] = 0;
+	}
 	
-	for (; sy < image.h && sy * scaley < dy + 1; ++sy) {
+	for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
+	  //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
 	  for (int sx = 0; sx < image.w; ++sx) {
-	    int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	    const int dx = std::min ((int)(scalex*sx), new_image.w-1);
+	    //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
 	    boxes[dx] += *src; ++src;
 	    ++count[dx];
 	  }
 	}
 	
+	// set box
+	//    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
 	for (int dx = 0; dx < new_image.w; ++dx) {
-	  *dst = (boxes[dx] / count[dx]);
+	  //      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
+	  //       		<< ", count: " << count[dx] << std::endl;      
+	  boxes[dx] /= count[dx];
+	  dst.set (boxes[dx]);
+	  /* Test pattern:
+	     dst.setL (dx*dy);
+	     dst.set (dst); */
 	  ++dst;
 	}
       }
-      
-      return;
-    }
-  
-  Image::iterator src = image.begin();
-  Image::iterator dst = new_image.begin();
-  
-  // prepare boxes
-  Image::iterator boxes  [new_image.w];
-  int count [new_image.w];
-  for (int x = 0; x < new_image.w; ++x)
-    boxes[x] = new_image.begin();
-  
-  int dy = 0;
-  for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
-    {
-    
-      // clear for accumulation
-      for (int x = 0; x < new_image.w; ++x) {
-	boxes[x].clear();
-	count[x] = 0;
-      }
-    
-      for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
-	//      std::cout << "sy: " << sy << " from " << image.h << std::endl;
-	for (int sx = 0; sx < image.w; ++sx) {
-	  const int dx = std::min ((int)(scalex*sx), new_image.w-1);
-	  //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
-	  boxes[dx] += *src; ++src;
-	  ++count[dx];
-	}
-      }
-    
-      // set box
-      //    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
-      for (int dx = 0; dx < new_image.w; ++dx) {
-	//      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
-	//       		<< ", count: " << count[dx] << std::endl;      
-	dst.set (boxes[dx] / count[dx]);
-	/* Test pattern:
-	   dst.setL (dx*dy);
-	   dst.set (dst); */
-	++dst;
-      }
-    }
+  }
+};
+
+void box_scale (Image& image, double scalex, double scaley)
+{
+  codegen<box_scale_template> (image, scalex, scaley);
 }
 
 inline Image::iterator CubicConvolution (int distance,
