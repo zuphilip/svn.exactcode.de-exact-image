@@ -10,7 +10,7 @@
 #include "optimize2bw.hh"
 #include "Contours.hh"
 
-void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned int B)
+void PutPixel(Image& img, int x, int y, uint16_t  R, uint16_t G, uint16_t B)
 {
   Image::iterator color=img.begin();
   color.setRGB(R, G, B);
@@ -20,7 +20,7 @@ void PutPixel(Image& img, int x, int y, unsigned int R, unsigned int G, unsigned
   p.set(color);
 }
 
-void DrawContour(Image& img, const Contours::Contour& c, unsigned int r, unsigned int g, unsigned int b)
+void DrawContour(Image& img, const Contours::Contour& c, uint16_t r, uint16_t g, uint16_t b)
 {
   for (unsigned int i=0; i<c.size(); i++)
     PutPixel(img, c[i].first, c[i].second, r, g, b);
