@@ -105,10 +105,10 @@ pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl, v\
 pkgcheck php -config PHP atleast 5.2.0 &&
 	PHPINCS="`php-config --includes`"
 
-pkgcheck python shell PYTHON 'python --version 2>&1 | sed -n "s/Python //p"' atleast 2.5.0 &&
+pkgcheck python shell PYTHON 'python -V 2>&1 | sed -n "s/Python //p"' atleast 2.5.0 &&
 	PYTHONINCS="`python-config --includes`"
 
-pkgcheck ruby shell RUBY 'ruby --version 2>/dev/null | sed -n "s/ruby \([^ ]*\) .*/\1/p"' atleast 1.8.0 &&
+pkgcheck ruby shell RUBY 'ruby --version 2>/dev/null | sed -n "s/ruby \([^ ]*\) .*/\1/p"' atleast 1.8.5 &&
 	RUBYINCS="-I/usr/lib64/ruby/1.8/x86_64-linux" # FIXME
 
 save
