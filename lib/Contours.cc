@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany.
+ *               2008 Rene Rebe, ExactCODE GmbH Germany.
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
+
 #include "Contours.hh"
 
 /*
@@ -99,4 +117,53 @@ Contours::~Contours()
 {
   for (unsigned int i=0; i<contours.size(); i++)
     delete contours[i];
+}
+
+
+
+MidContours::MidContours(const FGMatrix& image)
+{
+  Contour* current = new Contour();
+  contours.push_back (current);
+  
+  // thru the whole "image" in x-direction
+  for (unsigned int y = 0; y < image.h; y++)
+    for (unsigned int x = 0; x < image.w; x++)
+      {
+	// something?
+	if (image(x,y))
+	  {
+	      // search end of region of scanline
+	    const unsigned int x1 = x++;
+	    while (x < image.w && image(x,y))
+	      x++;
+	    
+	    // region [x1,x], midpoint mx:
+	    const unsigned int mx = (x1 + x) / 2;
+	    
+	    current->push_back(std::pair<unsigned int, unsigned int>(mx, y));
+	  }
+      }
+  
+  // thru the whole "image" in x-direction
+  for (unsigned int x = 0; x < image.w; x++)
+    for (unsigned int y = 0; y < image.h; y++)
+      {
+	// something?
+	if (image(x,y))
+	  {
+	    // search end of region of scanline
+	    const unsigned int y1 = y++;
+	    while (y < image.h && image(x,y))
+	      y++;
+	    
+	    // region [y1,y], midpoint mx:
+	    const unsigned int my = (y1 + y) / 2;
+	      
+	    current->push_back(std::pair<unsigned int, unsigned int>(x, my));
+	  }
+      }
+  
+  // TODO: filter duplicates and/or clean spots without neighbour
+  // TODO: sub-pixel accuracy would help
 }
