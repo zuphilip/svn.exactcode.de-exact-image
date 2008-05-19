@@ -167,3 +167,87 @@ MidContours::MidContours(const FGMatrix& image)
   // TODO: filter duplicates and/or clean spots without neighbour
   // TODO: sub-pixel accuracy would help
 }
+
+
+
+InnerContours::InnerContours(const FGMatrix& image)
+{
+  VisitMap map(image.w, image.h);
+  for (unsigned int x=0; x<map.w; x++)
+    for (unsigned int y=0; y<map.h; y++)
+      map(x,y) = 0;
+  
+  // distance to border
+  for (unsigned int x=0; x<map.w; x++)
+    for (unsigned int y=0; y<map.h; y++)
+      if (image(x,y))
+	{
+	  int accu = 1;
+	  
+	  for (int r = 1; ; ++r)
+	    {
+	      int add =
+		RecursiveDist(image, x, y, LEFT, r) +
+		RecursiveDist(image, x, y, RIGHT, r) +
+		RecursiveDist(image, x, y, UP, r) +
+		RecursiveDist(image, x, y, DOWN, r);
+	      accu += add;
+	      if (add < 4)
+		break;
+	    }
+	  map(x,y) = accu;
+	}
+  
+  Contour* current = new Contour();
+  contours.push_back(current);
+  
+  // only add local maxima
+  for (unsigned int x = 0; x < map.w; x++)
+    for (unsigned int y = 0; y < map.h; y++)
+      {
+	int d = map(x,y);
+	if (d == 0) continue;
+	
+	if (x > 0 && d < map(x-1, y))
+	  continue;
+	if (y > 0 && d < map(x, y-1))
+	  continue;
+	
+	if (x+1 < map.w && d < map(x+1, y))
+	  continue;
+	if (y+1 < map.h && d < map(x, y+1))
+	  continue;
+	
+	current->push_back(std::pair<unsigned int, unsigned int>(x, y));
+      }
+}
+
+unsigned int InnerContours::RecursiveDist(const FGMatrix& image,
+					  int x, int y,
+					  dir d, unsigned int r)
+{
+  switch (d) {
+  case LEFT:
+    x -= r;
+    if (x < 0)
+      return 0;
+    break;
+  case UP:
+    y -= r;
+    if (y < 0)
+      return 0;
+    break;
+  case RIGHT:
+    x += r;
+    if (x >= image.w)
+      return 0;
+    break;
+  case DOWN:
+    y += r;
+    if (y >= image.h)
+      return 0;
+    break;
+  }
+  
+  return image(x,y) ? 1 : 0;
+}
