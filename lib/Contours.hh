@@ -35,8 +35,22 @@ public:
 };
 
 
-// "mindpoint scanline inner storke /tracer/"
+// "mindpoint of scanlines" inner storke /tracer/"
 class MidContours : public Contours
 {
+public:
   MidContours(const FGMatrix& image);
+};
+
+// "local maxima of neighbor distance to border"
+class InnerContours : public Contours
+{
+  typedef enum {LEFT, RIGHT, UP, DOWN} dir;
+  
+  unsigned int RecursiveDist(const FGMatrix& image,
+			     int x, int y,
+			     dir d, unsigned int r);
+  
+public:
+  InnerContours(const FGMatrix& image);
 };
