@@ -50,6 +50,8 @@ class InnerContours : public Contours
   unsigned int RecursiveDist(const FGMatrix& image,
 			     int x, int y,
 			     dir d, unsigned int r);
+  bool RecursiveTrace(VisitMap& newmap, Contour* current,
+		      unsigned int x, unsigned int y);
   
 public:
   InnerContours(const FGMatrix& image);

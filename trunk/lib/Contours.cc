@@ -198,13 +198,12 @@ InnerContours::InnerContours(const FGMatrix& image)
 	  map(x,y) = accu;
 	}
   
-  Contour* current = new Contour();
-  contours.push_back(current);
-  
-  // only add local maxima
+  // only use local maxima
+  VisitMap newmap(image.w, image.h);
   for (unsigned int x = 0; x < map.w; x++)
     for (unsigned int y = 0; y < map.h; y++)
       {
+	newmap(x,y) = 0;
 	int d = map(x,y);
 	if (d == 0) continue;
 	
@@ -218,8 +217,56 @@ InnerContours::InnerContours(const FGMatrix& image)
 	if (y+1 < map.h && d < map(x, y+1))
 	  continue;
 	
-	current->push_back(std::pair<unsigned int, unsigned int>(x, y));
+	newmap(x,y) = 1;
       }
+  
+  for (unsigned int x = 0; x < map.w; x++)
+    for (unsigned int y = 0; y < map.h; y++)
+      {
+	if (newmap (x,y)) {
+	  Contour* current = new Contour();
+	  contours.push_back(current);
+	  RecursiveTrace (newmap, current, x, y);
+	}
+      }
+}
+
+bool InnerContours::RecursiveTrace(VisitMap& newmap, Contour* current,
+				   unsigned int x, unsigned int y)
+{
+  if (newmap(x,y)) {
+    newmap(x,y) = 0;
+    current->push_back(std::pair<unsigned int, unsigned int>(x, y));
+    
+    int
+      x1 = x > 0 ? x-1 : 0,
+      y1 = y > 0 ? y-1 : 0,
+      x2 = x+1 < newmap.w ? x+1 : x,
+      y2 = y+1 < newmap.h ? y+1 : y;
+    
+    if (RecursiveTrace (newmap, current, x, y2))
+      return true;
+    if (RecursiveTrace (newmap, current, x1, y2))
+      return true;
+    if (RecursiveTrace (newmap, current, x2, y2))
+      return true;
+    
+    if (RecursiveTrace (newmap, current, x2, y))
+      return true;
+    if (RecursiveTrace (newmap, current, x2, y1))
+      return true;
+    if (RecursiveTrace (newmap, current, x, y1))
+      return true;
+
+    if (RecursiveTrace (newmap, current, x1, y1))
+      return true;
+    if (RecursiveTrace (newmap, current, x1, y))
+      return true;
+    
+    
+    return true;
+  }
+  return false;
 }
 
 unsigned int InnerContours::RecursiveDist(const FGMatrix& image,
