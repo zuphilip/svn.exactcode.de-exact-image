@@ -1,6 +1,5 @@
 /*
- * Image Segmentation
- * Copyright (C) 2007 Valentin Ziegler and René Rebe
+ * Copyright (C) 2007 - 2008 Valentin Ziegler, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,7 +10,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -153,7 +154,8 @@ int main (int argc, char* argv[])
 
   FGMatrix foreground(image, threshold);
   Segment* segment=segment_image(foreground, tolerance, width, height);
-  //  Draw(segment, o_image);
+  segment = segment;
+  Draw(segment, o_image);
 
 
   if (!ImageCodec::Write(arg_output.Get(), o_image)) {
