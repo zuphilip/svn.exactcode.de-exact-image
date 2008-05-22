@@ -1,6 +1,5 @@
 /*
- * Image Segmentation
- * Copyright (C) 2007 Valentin Ziegler and René Rebe
+ * Copyright (C) 2007 - 2008 Valentin Ziegler, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,7 +10,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -136,10 +137,11 @@ int main (int argc, char* argv[])
   Image::iterator color=o_image.begin();
   for (; i!=end ; ++i) {
     int value=255-(int)dm(row,line);
-    color.setRGB(value < 0 ? 0 : value, value==255 ? 255 : 0, 0);
+    uint16_t r = value < 0 ? 0 : value, g = value==255 ? 255 : 0, b = 0;
+    color.setRGB(r, g, b);
     i.set(color);
    
-    if (++row == image.w) {
+    if (++row == (unsigned int)image.w) {
       line++;
       row=0;
     }
