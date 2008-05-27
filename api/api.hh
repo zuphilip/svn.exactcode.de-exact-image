@@ -188,9 +188,14 @@ bool imageIsEmpty (Image* image, double percent, int margin);
 }
 #endif
 #endif
+/* directions bitfield of directions to be scanned:
+   1: left-to-right, 0 degree to image data
+   2: top-down, 90 degree to image data
+   4: right-to-left, 180 degree to image data
+   8: down-to-top, 270 degree to image data */
 char** imageDecodeBarcodesExt (Image* image, const char* codes,
 			       unsigned int min_length = 0,
-                               unsigned int max_length = 0, int multiple = 0);
+                               unsigned int max_length = 0, int multiple = 0, int directions = 0xf);
 #endif
 
 #ifdef SWIG
@@ -237,10 +242,15 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
 #endif
 
 #endif
+/* directions bitfield of directions to be scanned:
+   1: left-to-right, 0 degree to image data
+   2: top-down, 90 degree to image data
+   4: right-to-left, 180 degree to image data
+   8: down-to-top, 270 degree to image data */
 char** imageDecodeBarcodes (Image* image, const char* codes,
 			    unsigned int min_length = 0,
                             unsigned int max_length = 0,
-                            int multiple = 0, unsigned int line_skip = 8);
+                            int multiple = 0, unsigned int line_skip = 8, int directions = 0xf);
 
 /* contour matching functions
  * attention:
