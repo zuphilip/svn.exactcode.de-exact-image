@@ -462,7 +462,7 @@ extern "C" { // missing in the library header ...
 
 char** imageDecodeBarcodesExt (Image* im, const char* c,
 			       unsigned int min_length,
-                               unsigned int max_length, int multiple)
+                               unsigned int max_length, int multiple, int dirs)
 {
   std::string codes = c;
   std::transform (codes.begin(), codes.end(), codes.begin(), tolower);
@@ -613,7 +613,7 @@ char** imageDecodeBarcodesExt (Image* im, const char* c,
   
   if (false) // the library has defaults?
     {
-      i = 15; // all directions
+      i = dirs;
       STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
       
       i = 20;
@@ -710,7 +710,7 @@ namespace {
 
 char** imageDecodeBarcodes (Image* image, const char* codestr,
 			    unsigned int min_length, unsigned int max_length,
-                            int multiple, unsigned int line_skip)
+                            int multiple, unsigned int line_skip, int dirs)
 {
   codes_t codes = 0;
   // parse the code list
@@ -755,7 +755,7 @@ char** imageDecodeBarcodes (Image* image, const char* codestr,
   while (it2 != std::string::npos);
 
   const int threshold = 150;
-  const directions_t directions = (directions_t) 15; /* all */
+  const directions_t directions = (directions_t)dirs;
   const int concurrent_lines = 4;
 
   std::map<scanner_result_t,int,comp> retcodes;
