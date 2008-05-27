@@ -610,12 +610,13 @@ char** imageDecodeBarcodesExt (Image* im, const char* c,
     i = max_length;
     STSetParameter (hBarcode, ST_MAX_LEN, &i);
   }
+
+  // 90 degree angles differ from public API SPEC and EI built-ins
+  i = (dirs & 1) | (dirs & 2) << 2 | (dirs & 4) | (dirs & 8) >> 2;
+  STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
   
   if (false) // the library has defaults?
     {
-      i = dirs;
-      STSetParameter(hBarcode, ST_ORIENTATION_MASK, &i);
-      
       i = 20;
       STSetParameter(hBarcode, ST_NOISEREDUCTION, &i);
 

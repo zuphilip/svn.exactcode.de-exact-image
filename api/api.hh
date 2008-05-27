@@ -192,7 +192,7 @@ bool imageIsEmpty (Image* image, double percent, int margin);
    1: left-to-right, 0 degree to image data
    2: top-down, 90 degree to image data
    4: right-to-left, 180 degree to image data
-   8: down-to-top, 270 degree to image data */
+   8: down-to-top, -90 degree to image data */
 char** imageDecodeBarcodesExt (Image* image, const char* codes,
 			       unsigned int min_length = 0,
                                unsigned int max_length = 0, int multiple = 0, int directions = 0xf);
@@ -246,7 +246,7 @@ char** imageDecodeBarcodesExt (Image* image, const char* codes,
    1: left-to-right, 0 degree to image data
    2: top-down, 90 degree to image data
    4: right-to-left, 180 degree to image data
-   8: down-to-top, 270 degree to image data */
+   8: down-to-top, -90 degree to image data */
 char** imageDecodeBarcodes (Image* image, const char* codes,
 			    unsigned int min_length = 0,
                             unsigned int max_length = 0,
