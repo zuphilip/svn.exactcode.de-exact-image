@@ -16,6 +16,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include "vectorial.hh"
@@ -234,7 +236,7 @@ void Path::draw (Image& image, filling_rule_t fill)
 static const bool hinting = true;
 static const bool kerning = true;
 
-const char* font = "/usr/X11/share/fonts/TTF/DejaVuSans-Bold.ttf"
+const char* font = "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf"
 //"/usr/X11/share/fonts/TTF/DejaVuSans.ttf"
 //"/home/rene/.fonts/pala.ttf"
 ;
@@ -292,16 +294,6 @@ void Path::drawText (Image& image, const char* text, double height)
 	  if (kerning) {
 	    m_fman.add_kerning(&x, &y);
 	  }
-	  
-#if 0
-	  if (x >= width() - m_height.value())
-	    {
-	      x = 10.0;
-	      y0 -= m_height.value();
-	      if (y0 <= 120) break;
-	      y = y0;
-	    }
-#endif
 	  
 	  m_fman.init_embedded_adaptors (glyph, x, y);
 
