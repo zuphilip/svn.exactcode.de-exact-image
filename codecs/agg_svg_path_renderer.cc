@@ -17,7 +17,11 @@
 //
 //----------------------------------------------------------------------------
 
-#include <stdio.h>
+/*
+ * Copyright (c) 2008 Rene Rebe <rene@exactcode.de>
+ * Added support for parsing arc's.
+ */
+
 #include "agg_svg_path_renderer.hh"
 
 namespace agg
@@ -378,4 +382,3 @@ namespace svg
 
 }
 }
-
