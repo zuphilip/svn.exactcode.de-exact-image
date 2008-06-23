@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006, 2008 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -11,7 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
  */
