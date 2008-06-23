@@ -18,7 +18,7 @@
 //----------------------------------------------------------------------------
 
 /*
- * Copyright (c) 2008 Rene Rebe <reneexactcode.de>
+ * Copyright (c) 2008 Rene Rebe <rene@exactcode.de>
  * Adapted for std::istream, and int precision warning.y
  */
 
@@ -55,6 +55,8 @@ namespace svg
         void parse_attr(const char** attr);
         void parse_path(const char** attr);
         void parse_poly(const char** attr, bool close_flag);
+        void parse_circle(const char** attr);
+        void parse_ellipse(const char** attr);
         void parse_rect(const char** attr);
         void parse_line(const char** attr);
         void parse_style(const char* str);

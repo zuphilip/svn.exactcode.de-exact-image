@@ -18,11 +18,11 @@
 //----------------------------------------------------------------------------
 
 /*
- * Copyright (c) 2008 Rene Rebe <reneexactcode.de>
- * Adapted for std::istream, and int precision warning.y
+ * Copyright (c) 2008 Rene Rebe <rene@exactcode.de>
+ * Adapted for std::istream, and int precision warning,
+ * added ellipse and circle.
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include "agg_svg_parser.hh"
@@ -306,11 +306,21 @@ namespace svg
         {
             self.parse_poly(attr, true);
         }
-        //else
+        else
+	if(strcmp(el, "circle") == 0) 
+        {
+            self.parse_circle(attr);
+        }
+        else
+	if(strcmp(el, "ellipse") == 0) 
+        {
+            self.parse_ellipse(attr);
+        }
+	// TODO: text, tspan, ...
+	//else
         //if(strcmp(el, "<OTHER_ELEMENTS>") == 0) 
         //{
         //}
-        // . . .
     } 
 
 
@@ -729,6 +739,58 @@ namespace svg
         m_path.end_path();
     }
 
+
+    //-------------------------------------------------------------
+    void parser::parse_circle(const char** attr)
+    {
+        int i;
+        double cx = 0.0;
+        double cy = 0.0;
+        double r = 0.0;
+	
+        m_path.begin_path();
+        for(i = 0; attr[i]; i += 2)
+        {
+            if(!parse_attr(attr[i], attr[i + 1]))
+            {
+                if(strcmp(attr[i], "cx") == 0) cx = parse_double(attr[i + 1]);
+                if(strcmp(attr[i], "cy") == 0) cy = parse_double(attr[i + 1]);
+                if(strcmp(attr[i], "r") == 0) r = parse_double(attr[i + 1]);
+            }
+        }
+	
+        m_path.move_to(cx-r, cy);
+	m_path.arc(r, r, 360, true, true, 0, .0001, true);
+        m_path.end_path();
+    }
+
+
+    void parser::parse_ellipse(const char** attr)
+    {
+        int i;
+        double cx = 0.0;
+        double cy = 0.0;
+        double rx = 0.0;
+        double ry = 0.0;
+	
+        m_path.begin_path();
+        for(i = 0; attr[i]; i += 2)
+        {
+            if(!parse_attr(attr[i], attr[i + 1]))
+            {
+                if(strcmp(attr[i], "cx") == 0) cx = parse_double(attr[i + 1]);
+                if(strcmp(attr[i], "cy") == 0) cy = parse_double(attr[i + 1]);
+                if(strcmp(attr[i], "rx") == 0) rx = parse_double(attr[i + 1]);
+                if(strcmp(attr[i], "ry") == 0) ry = parse_double(attr[i + 1]);
+            }
+        }
+
+        m_path.move_to(cx-rx, cy);
+	m_path.arc(rx, ry, 360, true, true, 0, .0001, true);
+        m_path.end_path();
+    }
+
+
     //-------------------------------------------------------------
     void parser::parse_transform(const char* str)
     {
@@ -881,5 +943,3 @@ namespace svg
 
 }
 }
-
-
