@@ -182,6 +182,16 @@ bool imageConvertColorspace (Image* image, const char* target_colorspace)
   return colorspace_by_name (*image, target_colorspace);
 }
 
+void imageResize (Image* image, int x, int y)
+{
+  if (x < 0)
+    x = 0;
+  if (y < 0)
+    y = 0;
+
+  image->resize (x, y);
+}
+
 void imageRotate (Image* image, double angle)
 {
   rotate (*image, angle, background_color);
@@ -237,12 +247,14 @@ void imageFastAutoCrop (Image* image)
 
 void setForegroundColor (double r, double g, double b)
 {
-  foreground_color.setRGB ((uint16_t)(r*0xff), (uint16_t)(g*0xff), (uint16_t)(b*0xff));
+  foreground_color.type = Image::RGB8;
+  foreground_color.setRGB (r, g, b);
 }
 
 void setBackgroundColor (double r, double g, double b)
 {
-  background_color.setRGB ((uint16_t)(r*0xff), (uint16_t)(g*0xff), (uint16_t)(b*0xff));
+  foreground_color.type = Image::RGB8;
+  background_color.setRGB (r, g, b);
 }
 
 // vector elements
