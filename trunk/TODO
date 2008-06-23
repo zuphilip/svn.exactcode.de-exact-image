@@ -1,17 +1,18 @@
 
+ - SVG text tag, styles
  - black / white- point
 
 Array subscription, ala:
 image[][]
 
-type inside the image: RGB, YUV, CMYK
+type inside the image: RGB, YUV, CMYK, palette (direct, without expansion on load)
 
 cheap copies
 copy on write
 sub-images
 
 Loaders:
- - (optimized) palette saving
+ - palette saving
  - gzip / bzip2 / ... compressed streams
  - http:// et al (libcurl or so?)
  - 2 and 4 bit TIFF "imperfect"
