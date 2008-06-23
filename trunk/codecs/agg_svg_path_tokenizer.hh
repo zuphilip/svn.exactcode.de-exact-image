@@ -110,5 +110,4 @@ namespace svg
 } //namespace svg
 } //namespace agg
 
-
 #endif

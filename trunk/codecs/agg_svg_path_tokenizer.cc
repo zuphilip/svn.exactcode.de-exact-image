@@ -16,12 +16,16 @@
 // SVG path tokenizer.
 //
 //----------------------------------------------------------------------------
+
+/*
+ * Copyright (c) 2008 Rene Rebe <rene@exactcode.de>
+ * 
+ */
+
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include "agg_svg_exception.hh"
 #include "agg_svg_path_tokenizer.hh"
-
 
 namespace agg 
 { 
@@ -120,13 +124,13 @@ namespace svg
         char* buf_ptr = buf;
 
         // Copy all sign characters
-        while(buf_ptr < buf+255 && *m_path == '-' || *m_path == '+')
+        while(buf_ptr < buf+255 && (*m_path == '-' || *m_path == '+'))
         {
             *buf_ptr++ = *m_path++;
         }
 
         // Copy all numeric characters
-        while(buf_ptr < buf+255 && is_numeric(*m_path))
+        while(buf_ptr < buf+255 && (is_numeric(*m_path)))
         {
             *buf_ptr++ = *m_path++;
         }
@@ -135,10 +139,5 @@ namespace svg
         return true;
     }
 
-
 } //namespace svg
 } //namespace agg
-
-
-
-
