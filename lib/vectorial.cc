@@ -38,8 +38,6 @@
 #include "agg_font_freetype.h"
 #endif
 
-#include "platform/agg_platform_support.h"
-
 // ---
 
 Path::Path ()
@@ -236,7 +234,7 @@ void Path::draw (Image& image, filling_rule_t fill)
 static const bool hinting = true;
 static const bool kerning = true;
 
-const char* font = "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf"
+static const char* font = "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf"
 //"/usr/X11/share/fonts/TTF/DejaVuSans.ttf"
 //"/home/rene/.fonts/pala.ttf"
 ;
@@ -283,7 +281,6 @@ void Path::drawText (Image& image, const char* text, double height)
   
   m_contour.width (-weight * height * 0.05);
 
-  unsigned num_glyphs = 0;
   const char* p = text;
   
   double x = path.last_x(), y = path.last_y();  
@@ -327,7 +324,6 @@ void Path::drawText (Image& image, const char* text, double height)
 	  // increment pen position
 	  x += glyph->advance_x;
 	  y += glyph->advance_y;
-	  ++num_glyphs;
 	}
       ++p;
     }
@@ -387,7 +383,6 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   
   m_contour.width (-weight * height * 0.05);
   
-  unsigned num_glyphs = 0;
   const char* p = text;
   
   ras.reset ();
@@ -414,7 +409,6 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
 	  // increment pen position
 	  x += glyph->advance_x;
 	  y += glyph->advance_y;
-	  ++num_glyphs;
 	}
       ++p;
     }
