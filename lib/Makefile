@@ -12,9 +12,13 @@ else
 CPPFLAGS += $(LIBAGGINCS)
 LDFLAGS += $(LIBAGGLIBS)
 ifeq "$(WITHFREETYPE)" "1"
-CPPFLAGS += $(FREETYPEINCS)
-LDFLAGS += $(FREETYPELIBS) -laggfontfreetype
+LDFLAGS += -laggfontfreetype
 endif
+endif
+
+ifeq "$(WITHFREETYPE)" "1"
+CPPFLAGS += $(FREETYPEINCS)
+LDFLAGS += $(FREETYPELIBS) 
 endif
 
 CPPFLAGS += -I lib -I utility
