@@ -526,6 +526,12 @@ int Viewer::Run (bool opengl)
 		  SetOSDZoom ();
 		  break;
 
+		case XK_i:
+		  invert (*image);
+		  ImageToEvas ();
+		  AlphaOSD (0);
+		  break;
+
 		case XK_greater:
 		  rotate (*image, 90, image->begin());
 		  ImageToEvas ();
