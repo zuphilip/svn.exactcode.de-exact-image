@@ -160,33 +160,26 @@ void colorspace_rgb16_to_gray16 (Image& image)
 
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
 {
-  uint8_t* data = (uint8_t*) malloc (image.w*image.h*4);
-  uint8_t* newdata = data;
-  for (uint8_t* it = image.getRawData();
-       it < image.getRawDataEnd();)
-    {
-      *data++ = *it++;
-      *data++ = *it++;
-      *data++ = *it++;
-      *data++ = alpha;
-    }
-  
+  image.setRawDataWithoutDelete	((uint8_t*)realloc(image.getRawData(),
+						   image.w * 4 * image.h));
   image.setSamplesPerPixel(4);
-  image.setRawData ((uint8_t*)newdata);
+  
+  // reverse copy with alpha fill inside the buffer
+  uint8_t* it_src = image.getRawData() + image.w * 3 * image.h - 1;
+  for (uint8_t* it_dst = image.getRawDataEnd() - 1; it_dst > image.getRawData();)
+    {
+      *it_dst-- = alpha;
+      *it_dst-- = *it_src--;
+      *it_dst-- = *it_src--;
+      *it_dst-- = *it_src--;
+    }
 }
 
 void colorspace_gray8_threshold (Image& image, unsigned char threshold)
 {
-  uint8_t *output = image.getRawData();
-  uint8_t *input = image.getRawData();
+  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
+    *it = *it > threshold ? 0xFF : 0x00;
   
-  for (int row = 0; row < image.h; row++)
-    {
-      for (int x = 0; x < image.w; x++)
-	{
-	  *output++ = *input++ > threshold ? 0xFF : 0x00;
-	}
-    }
   image.setRawData();
 }
 
