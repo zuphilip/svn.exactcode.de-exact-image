@@ -172,7 +172,7 @@ void Path::draw (Image& image, filling_rule_t fill)
   
   /* the rederer_bin type would "avoid" anti-aliasing */
   renderer_aa ren (ren_base);
-  ren.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+  ren.color (agg::rgba (r, g, b, a));
   
   rasterizer_scanline ras;
   scanline sl;
@@ -252,10 +252,10 @@ void Path::drawText (Image& image, const char* text, double height)
   scanline sl;
   
   renderer_aa ren_solid (ren_base);
-  ren_solid.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+  ren_solid.color (agg::rgba (r, g, b, a));
 
   renderer_bin ren_bin (ren_base);
-  ren_bin.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+  ren_bin.color (agg::rgba (r, g, b, a));
   
   typedef agg::font_engine_freetype_int32 font_engine_type;
   typedef agg::font_cache_manager<font_engine_type> font_manager_type;
@@ -304,7 +304,7 @@ void Path::drawText (Image& image, const char* text, double height)
 	      break;
 
 	    case agg::glyph_data_gray8:
-	      ren_solid.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+	      ren_solid.color (agg::rgba (r, g, b, a));
 	      agg::render_scanlines (m_fman.gray8_adaptor(), 
 				     m_fman.gray8_scanline(), 
 				     ren_solid);
@@ -338,7 +338,7 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   renderer_exact_image ren_base (image);
   
   renderer_aa ren_solid (ren_base);
-  ren_solid.color (agg::rgba8 (255*r, 255*g, 255*b, 255*a));
+  ren_solid.color (agg::rgba (r, g, b, a));
 
   rasterizer_scanline ras;
   scanline sl;
