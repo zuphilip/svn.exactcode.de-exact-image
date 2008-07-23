@@ -1,4 +1,19 @@
-#include <stdlib.h>
+/*
+ * Copyright (C) 2006 - 2008 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
 
 #include <gif_lib.h>
 
@@ -8,15 +23,18 @@
 #include <iostream>
 
 /* The way Interlaced image should. */
-static int InterlacedOffset[] = { 0, 4, 2, 1 };
+static const int InterlacedOffset[] = { 0, 4, 2, 1 };
 
 /* be read - offsets and jumps... */
-static int InterlacedJumps[] = { 8, 8, 4, 2 };
+static const int InterlacedJumps[] = { 8, 8, 4, 2 };
 
 static int GIFInputFunc (GifFileType* t, GifByteType* mem, int len)
 {
   std::istream* stream = (std::istream*)t->UserData;
-  return stream->readsome ((char*)mem, len);
+  size_t nbytes = stream->tellg();
+  stream->read((char*)mem, len);
+  nbytes = (size_t)stream->tellg() - nbytes;
+  return nbytes;
 }
 
 static int GIFOutputFunc (GifFileType* t, const GifByteType* mem, int len)
