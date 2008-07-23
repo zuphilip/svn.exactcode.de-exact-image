@@ -14,8 +14,6 @@
  *
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
- * Alternatively, commercial licensing options are available from the
- * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <stdio.h>
