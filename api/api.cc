@@ -31,6 +31,7 @@
 #include <rotate.hh>
 #include <scale.hh>
 #include <crop.hh>
+#include <deskew.hh>
 
 #include <Colorspace.hh>
 
@@ -243,7 +244,12 @@ void imageFastAutoCrop (Image* image)
   fastAutoCrop (*image);
 }
 
-// color controlls
+bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines)
+{
+  return deskew (*image, top_overscan_lines);
+}
+
+// color controls
 
 void setForegroundColor (double r, double g, double b)
 {
