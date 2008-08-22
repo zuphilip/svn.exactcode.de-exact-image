@@ -178,6 +178,19 @@ void imageSetYres (Image* image, int yres)
 static Image::iterator background_color;
 static Image::iterator foreground_color;
 
+// initializer
+
+struct it_color_init
+{
+  it_color_init (Image::iterator& it, double r, double g, double b)
+  {
+     it.type = Image::RGB8;
+     it.setRGB (r, g, b);
+  }
+};
+static it_color_init bg_color_init (background_color, 0, 0, 0);
+static it_color_init fg_color_init (foreground_color, 1, 1, 1);
+
 bool imageConvertColorspace (Image* image, const char* target_colorspace)
 {
   return colorspace_by_name (*image, target_colorspace);
@@ -253,13 +266,11 @@ bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines)
 
 void setForegroundColor (double r, double g, double b)
 {
-  foreground_color.type = Image::RGB8;
   foreground_color.setRGB (r, g, b);
 }
 
 void setBackgroundColor (double r, double g, double b)
 {
-  foreground_color.type = Image::RGB8;
   background_color.setRGB (r, g, b);
 }
 
