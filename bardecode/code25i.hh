@@ -28,7 +28,7 @@ namespace BarDecode
 
         static const int START_SEQUENCE = 0xA;
         static const int END_SEQUENCE = 0xD;
-        static const char no_entry = 255;
+        static const char no_entry = 0;
 
         static const usize_t min_quiet_usize = 5;
         //static const usize_t min_quiet_usize = 10;
@@ -67,32 +67,43 @@ namespace BarDecode
 
     inline std::pair<module_word_t,module_word_t> code25i_t::get_keys(const bar_vector_t& b) const
     {
+        assert(b.size() == 10);
+
 #ifdef STRICT
         u_t n_l = ((double) b.psize / 18.0); // (((b.size/2) / (3*1+2*3)) * 1
         u_t n_h = ((double) b.psize / 14.0); // (((b.size/2) / (3*1+2*2)) * 1
         u_t w_l = ((double) b.psize / 7.0);  // (((b.size/2) / (3*1+2*2)) * 2
         u_t w_h = ((double) b.psize / 6.0);   // (((b.size/2) / (3*1+2*3)) * 3
 #else
-        u_t n_l = ((double) b.psize / 36.0);
-        u_t n_h = ((double) b.psize / 11.0);
-        u_t w_l = ((double) b.psize / 10.0);
-        u_t w_h = ((double) b.psize / 1.0);
+        size_t bpsize = b[0].second + b[2].second + b[4].second + b[6].second + b[8].second;
+        size_t wpsize = b[1].second + b[3].second + b[5].second + b[7].second + b[9].second;
+
+        if (bpsize > 3 * wpsize || bpsize < 0.7 * wpsize) return std::make_pair(0,0);
+
+        u_t bn_l = ((double) bpsize / 13.5);
+        u_t bn_h = ((double) bpsize / 5.4);
+        u_t bw_l = ((double) bpsize / 5.1);
+        u_t bw_h = ((double) bpsize / 1.5);
+        
+        u_t wn_l = ((double) wpsize / 13.5);
+        u_t wn_h = ((double) wpsize / 5.4);
+        u_t ww_l = ((double) wpsize / 5.1);
+        u_t ww_h = ((double) wpsize / 1.5);
 
 #endif
-        assert(b.size() == 10);
         module_word_t r1 = 0;
         module_word_t r2 = 0;
         for (uint i = 0; i < 10; ++i) {
             r1 <<= 1;
-            if (w_l <= b[i].second && b[i].second <= w_h) r1 += 1;
-            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+            if (bw_l <= b[i].second && b[i].second <= bw_h) r1 += 1;
+            else if (! (bn_l <= b[i].second && b[i].second <= bn_h)) {
                 return std::make_pair(0,0);
             }
 
             ++i;
             r2 <<= 1;
-            if (w_l <= b[i].second && b[i].second <= w_h) r2 += 1;
-            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+            if (ww_l <= b[i].second && b[i].second <= ww_h) r2 += 1;
+            else if (! (wn_l <= b[i].second && b[i].second <= wn_h)) {
                 return std::make_pair(0,0);
             }
         }
@@ -101,32 +112,43 @@ namespace BarDecode
 
     inline std::pair<module_word_t,module_word_t> code25i_t::reverse_get_keys(const bar_vector_t& b) const
     {
+        assert(b.size() == 10);
+
 #ifdef STRICT
         u_t n_l = ((double) b.psize / 18.0); // (((b.size/2) / (3*1+2*3)) * 1
         u_t n_h = ((double) b.psize / 14.0); // (((b.size/2) / (3*1+2*2)) * 1
         u_t w_l = ((double) b.psize / 7.0);  // (((b.size/2) / (3*1+2*2)) * 2
         u_t w_h = ((double) b.psize / 6.0);   // (((b.size/2) / (3*1+2*3)) * 3
 #else
-        u_t n_l = ((double) b.psize / 36.0);
-        u_t n_h = ((double) b.psize / 11.0);
-        u_t w_l = ((double) b.psize / 10.0);
-        u_t w_h = ((double) b.psize / 1.0);
+        size_t bpsize = b[0].second + b[2].second + b[4].second + b[6].second + b[8].second;
+        size_t wpsize = b[1].second + b[3].second + b[5].second + b[7].second + b[9].second;
+
+        if (bpsize > 3 * wpsize || bpsize < 0.7 * wpsize) return std::make_pair(0,0);
+
+        u_t bn_l = ((double) bpsize / 13.5);
+        u_t bn_h = ((double) bpsize / 5.4);
+        u_t bw_l = ((double) bpsize / 5.1);
+        u_t bw_h = ((double) bpsize / 1.5);
+        
+        u_t wn_l = ((double) wpsize / 13.5);
+        u_t wn_h = ((double) wpsize / 5.4);
+        u_t ww_l = ((double) wpsize / 5.1);
+        u_t ww_h = ((double) wpsize / 1.5);
 
 #endif
-        assert(b.size() == 10);
         module_word_t r1 = 0;
         module_word_t r2 = 0;
         for (int i = 9; i >= 0; --i) {
             r1 <<= 1;
-            if (w_l <= b[i].second && b[i].second <= w_h) r1 += 1;
-            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+            if (ww_l <= b[i].second && b[i].second <= ww_h) r1 += 1;
+            else if (! (wn_l <= b[i].second && b[i].second <= wn_h)) {
                 return std::make_pair(0,0);
             }
 
             --i;
             r2 <<= 1;
-            if (w_l <= b[i].second && b[i].second <= w_h) r2 += 1;
-            else if (! (n_l <= b[i].second && b[i].second <= n_h)) {
+            if (bw_l <= b[i].second && b[i].second <= bw_h) r2 += 1;
+            else if (! (bn_l <= b[i].second && b[i].second <= bn_h)) {
                 return std::make_pair(0,0);
             }
         }
@@ -147,7 +169,7 @@ namespace BarDecode
             return false;
         }
         if ( ! b[0].first || b[9].first ) {
-                return false;
+                return false; // can this happen?
         }
         return true;
 #endif
@@ -182,24 +204,20 @@ namespace BarDecode
         // do relatively cheap though rough test on the first two bars only.
         bar_vector_t b(4);
         if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
-        if (b[0].second < 0.7 * b[1].second || b[0].second > 1.5 * b[1].second) return scanner_result_t();
-
-        //std::cerr << "%%%%%%%%%% code25i 0" << std::endl;
+        // lax-check (assymetric: we assume that black bars might be wider)
+        if (b[0].second < 0.7 * b[1].second || b[0].second > 3 * b[1].second) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
-        if (quiet_psize < (double) b[0].second * 10 * 0.7) return scanner_result_t(); // 10 x quiet zone
-
-        //std::cerr << "%%%%%%%%%% code25i 1" << std::endl;
+        if (quiet_psize < (double) b[0].second + b[1].second * 5 * 0.5) return scanner_result_t(); // 10 x quiet zone
 
         if ( add_bars(start,end,b,2) != 2 ) return scanner_result_t();
+        // strict-check
         if (b[0].second < 0.7 * b[2].second || b[0].second > 1.5 * b[2].second) return scanner_result_t();
-        if (b[0].second < 0.7 * b[3].second || b[0].second > 1.5 * b[3].second) return scanner_result_t();
+        if (b[1].second < 0.7 * b[3].second || b[1].second > 1.5 * b[3].second) return scanner_result_t();
 
-        //std::cerr << "%%%%%%%%%% code25i 2" << std::endl;
+        //u_t disprop = (b[0].second + b[2].second) / (b[1].second + b[3].second);
 
-        //u_t u = b.psize / 4.0;
-
-        std::string code = "";
+        std::string code;
         psize_t old_psize = 0;
         bool at_end = false;
         while (! at_end) {
@@ -207,46 +225,44 @@ namespace BarDecode
             // get new symbols
             if ( get_bars(start,end,b,3) != 3) return scanner_result_t();
 
-            //std::cerr << "%%%%%%%%%% code25i 3" << std::endl;
-
             // check END sequence and expect quiet zone
-            if ( (b.psize / (double) b[0].second) > 2 * 0.7 &&
-                 (b.psize / (double) b[0].second) < 2 * 1.6 &&
-                 (b.psize / (double) b[1].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[1].second) < 4 * 1.6 &&
-                 (b.psize / (double) b[2].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[2].second) < 4 * 1.6) {
+            // TODO compare b[1] with value from start sequence? or better use disprop factor.
+            if ( 
+                 b[0].second < b[2].second * 2 * 1.5 &&
+                 b[0].second > b[2].second * 2 * 0.7 &&
+                 b[1].second < b.psize * 0.25 * 1.3 &&
+                 b[1].second > b.psize * 0.25 * 0.33) {
+                 // (bpsize / (double) b[0].second) > 2 * 0.7 &&
+                 // (bpsize / (double) b[0].second) < 2 * 1.3 &&
+                 //(wpsize / (double) b[1].second) > 4 * 0.7 &&
+                 //(wpsize / (double) b[1].second) < 4 * 1.3 &&
+                 //(bpsize / (double) b[2].second) > 4 * 0.7 &&
+                 //(bpsize / (double) b[2].second) < 4 * 1.3) {
                 // FIXME make this in a more performant way
                 if ((start+1)->second > b.psize * 1) {
                     break;
                 }
             }
 
-            //std::cerr << "%%%%%%%%%% code25i 4" << std::endl;
-
             if ( add_bars(start,end,b,7) != 7) return scanner_result_t();
             if (! check_bar_vector(b,old_psize) ) return scanner_result_t();
             old_psize = b.psize;
 
-            //std::cerr << "%%%%%%%%%% code25i 5" << std::endl;
-
             std::pair<module_word_t,module_word_t> keys = get_keys(b);
             if (! keys.first || ! keys.second ) return scanner_result_t();
-
-            //std::cerr << "%%%%%%%%%% code25i 6" << std::endl;
 
             const char c1 = table[keys.first];
             if (c1 == no_entry) return scanner_result_t();
             code.push_back(c1);
-
-            //std::cerr << "%%%%%%%%%% code25i 7" << std::endl;
 
             const char c2 = table[keys.second];
             if (c2 == no_entry) return scanner_result_t();
             code.push_back(c2);
         }
         if ( code.empty() ) return scanner_result_t();
-        else return scanner_result_t(code25i,code,x,y);
+        else {
+            return scanner_result_t(code25i,code,x,y);
+        }
     }
 
     template<class TIT>
@@ -257,15 +273,15 @@ namespace BarDecode
         // try to match end marker: 1 1 2
         bar_vector_t b(3);
         if ( get_bars(start,end,b,2) != 2 ) return scanner_result_t();
-        if ( b[0].second < 0.7 * b[1].second || b[0].second > 1.5 * b[1].second ) return scanner_result_t();
+        // lax-check (assymetric)
+        if (b[0].second < 0.7 * b[1].second || b[0].second > 3 * b[1].second) return scanner_result_t();
 
         // check quiet_zone with respect to length of the first symbol
-        if (quiet_psize < (double) b[0].second * 10 * 0.7) return scanner_result_t(); // 10 x quiet zone
+        if (quiet_psize < (double) b[0].second + b[1].second * 5 * 0.5) return scanner_result_t(); // 10 x quiet zone
 
         if ( add_bars(start,end,b,1) != 1 ) return scanner_result_t();
+        // strict-check (TODO)
         if ( b[0].second < 0.5 * 0.7 * b[2].second || b[0].second > 0.5 * 1.5 * b[2].second ) return scanner_result_t();
-
-        //u_t u = b.psize / 4.0;
 
         std::string code = "";
         psize_t old_psize = 0;
@@ -276,14 +292,17 @@ namespace BarDecode
             if ( get_bars(start,end,b,4) != 4) return scanner_result_t();
 
             // check START sequence and expect quiet zone
-            if ( (b.psize / (double) b[0].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[0].second) < 4 * 1.6 &&
-                 (b.psize / (double) b[1].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[1].second) < 4 * 1.6 &&
-                 (b.psize / (double) b[2].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[2].second) < 4 * 1.6 &&
-                 (b.psize / (double) b[3].second) > 4 * 0.7 &&
-                 (b.psize / (double) b[3].second) < 4 * 1.6) {
+            size_t bpsize = b[0].second + b[2].second;
+            size_t wpsize = b[1].second + b[3].second;
+            if ( bpsize < 3*wpsize && bpsize > 0.7*wpsize &&
+                 (bpsize / (double) b[0].second) > 2 * 0.7 &&
+                 (bpsize / (double) b[0].second) < 2 * 1.5 &&
+                 (wpsize / (double) b[1].second) > 2 * 0.7 &&
+                 (wpsize / (double) b[1].second) < 2 * 1.5 &&
+                 (bpsize / (double) b[2].second) > 2 * 0.7 &&
+                 (bpsize / (double) b[2].second) < 2 * 1.5 &&
+                 (wpsize / (double) b[3].second) > 2 * 0.7 &&
+                 (wpsize / (double) b[3].second) < 2 * 1.5) {
                 // FIXME make this in a more performant way
                 if ((start+1)->second > b.psize * 1) {
                     break;
@@ -306,7 +325,9 @@ namespace BarDecode
             code.push_back(c2);
         }
         if ( code.empty() ) return scanner_result_t();
-        else return scanner_result_t(code25i,std::string(code.rbegin(),code.rend()),x,y);
+        else {
+            return scanner_result_t(code25i,std::string(code.rbegin(),code.rend()),x,y);
+        }
     }
 
 }; // namespace BarDecode
