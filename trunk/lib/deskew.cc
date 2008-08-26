@@ -77,7 +77,7 @@
    TODO: The deviation could be changed to be more sensitive for
    lighter colors than dark colors, as most scannes produce shadows on
    the borders of the paper that right now decrease accurancy. If we
-   want to be fany, we could detect the paper color to decide whether
+   want to be fancy, we could detect the paper color to decide whether
    to be sensitive or lighter or darker changes.
 */
 
@@ -167,6 +167,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     void operator() (Image::iterator& it, int x, int y, Image::iterator& color, double alpha) {
       it = it.at (x, y);
       double r1, r2, g1, g2, b1, b2;
+      r1 = r2 = g1 = g2 = b1 = b2 = 0; // make gcc happy
       *it;
       it.getRGB (r1, g1, b1);
       color.getRGB (r2, g2, b2);
@@ -197,7 +198,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (x > border_margin - 1)
+	      if (x >= border_margin)
 		points_left.push_back (std::pair<int,int> (y, x)); // flipped
 	      break;
 	    }
@@ -210,12 +211,12 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       it = it.at (image.width() - 1, y);
       it_ref = it_ref.at (image.width() - 1, 0);
       
-      for (int x = image.width(); x > image.width() / 2; --x, --it, --it_ref)
+      for (int x = image.width() - 1; x >= image.width() / 2; --x, --it, --it_ref)
 	{
-	  if (comparator(it_ref, it, threshold[x - 1]))
+	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (x < image.width() - border_margin)
-		points_right.push_back (std::pair<int,int> (y, x - 1)); // flipped
+	      if (x <= image.width() - border_margin)
+		points_right.push_back (std::pair<int,int> (y, x)); // flipped
 	      break;
 	    }
 	}
@@ -232,7 +233,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 	  it = it.at (x, y);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (y > y_offset + border_margin - 1)
+	      if (y >= y_offset + border_margin)
 		points_top.push_back (std::pair<int,int> (x, y));
 	      break;
 	    }
@@ -243,13 +244,13 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
-      for (int y = image.height(); y > image.height() / 2; --y)
+      for (int y = image.height() - 1; y >= image.height() / 2; --y)
 	{
-	  it = it.at (x, y - 1);
+	  it = it.at (x, y);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (y < image.height() - border_margin)
-		points_bottom.push_back (std::pair<int,int> (x, y - 1));
+	      if (y <= image.height() - border_margin)
+		points_bottom.push_back (std::pair<int,int> (x, y));
 	      break;
 	    }
 	}	  
@@ -526,6 +527,11 @@ bool deskew (Image& image, const int raster_rows)
 #ifndef DEBUG
   // TODO: fill with nearest in-document color, or so ...
   // TODO: only crop if something to crop was actually found
+  
+  std::cerr << "deskew: angle: " << rect.angle
+	    << ", x: " << rect.x << ", y: " << rect.y
+	    << ", w: " << rect.width << ", h: " << rect.height << std::endl;
+  
   Image::iterator background = image.begin(); background.setL (255);
   
   if (fabs(rect.angle) > 0.01) {
