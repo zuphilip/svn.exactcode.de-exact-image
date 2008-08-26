@@ -298,12 +298,8 @@ namespace BarDecode
         bar_vector_t b(6);
         if (get_bars(start,end,b,2) != 2 ) return scanner_result_t();
 
-        // std::cerr << "\n%%%%%%%%%%%%%%%%%%% code128 %%%%%%%%%%%%%" << std::endl;
-
         if (b[0].second > 3 * b[1].second || b[0].second < 1.2 * b[1].second) return scanner_result_t();
         if ( add_bars(start,end,b,4) != 4) return scanner_result_t();
-
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 0" << std::endl;
 
         // get a first guess for u
         u_t u = (double) b.psize / 11; // 11 is the number of modules of the start sequence
@@ -311,15 +307,9 @@ namespace BarDecode
         // check if u is within max_u imposed by quiet_zone
         if ( u > max_u<code128_t>(quiet_psize) ) return scanner_result_t();
 
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 1" << std::endl;
-
         // expect start sequence
         code_set_t cur_code_set;
         module_word_t key = get_key(get_module_word_adjust_u(b,u,11));
-
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 b: "; debug::print_bar_vector(b);
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 mw: " << get_module_word(b,u,11) << std::endl;
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << std::endl;
 
         std::string result = decode128(code_set_a,key);
 
@@ -330,96 +320,24 @@ namespace BarDecode
         default: return scanner_result_t();
         }
 
-        //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 2 result: " << result << std::endl;
+        std::list<module_word_t> key_list;
+        key_list.push_back(key);
 
-        // initialize checksum:
-        long checksum = table[key]; 
-        // we add it to checksum here already because in the first run pre_symbol will be multiplied by 0
-        long pre_symbol = table[key];
-
-        std::string code = "";
-        code_t type = code128;
-        bool at_end = false;
-        bool shift = false;
-        long pos = 0;
-        while (! at_end) { 
+        while (! is_end_key(key) ) { 
             // get symbol
             if ( get_bars(start,end,b,6) != 6 ) return scanner_result_t();
             key = get_key(get_module_word_adjust_u(b,u,11));
-
-            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 b: "; debug::print_bar_vector(b);
-            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 mw: " << get_module_word_adjust_u(b,u,11) << std::endl;
-            if ( ! key ) return scanner_result_t();
-
-            //std::cerr << "%%%%%%%%%%%%%%%%%%% code128 3" << std::endl;
-
-            result = decode128( (shift ? shift_code_set(cur_code_set) : cur_code_set), key);
-
-            // std::cerr << "%%%%%%%%%%%%%%%%%%% code128 key: " << key << ", result: " << result << std::endl;
-
-            shift = false;
-            switch (result.size()) {
-            case 0: return scanner_result_t();
-            case 2: code += result; break;
-            case 1: 
-                    switch (result[0]) {
-                    case END: at_end = true; break;
-                    case SHIFT: shift = true; break;
-                    case CODEA: cur_code_set = code_set_a; break;
-                    case CODEB: cur_code_set = code_set_b; break;
-                    case CODEC: cur_code_set = code_set_c; break;
-                    case FNC1: 
-                                if (pos == 1) {
-                                    type = gs1_128;
-                                } else {
-                                  code.push_back(29);
-                                }
-                                break;
-                    case FNC2:
-                    case FNC3:
-                    case FNC4: std::cerr << "WARNING: Function charaters for code128 are not supported for now." << std::endl;
-                                break;
-                    default: code += result;
-                    }
-                    break;
-            default: return scanner_result_t();
-            }
-
-            // update checksum
-            if ( ! at_end ) {
-                checksum += pos * pre_symbol;
-                pre_symbol = table[key];
-            }
-
-            // increment pos
-            ++pos;
-
-#ifdef SCANNER_DEBUG
-            std::cerr << "cur code: '" << code << "'" << std::endl;
-#endif
-        } 
-
-        // expect a black bar of 2 modules to complete end
-        if ( get_bars(start,end,b,1) != 1) return scanner_result_t();
-        module_word_t mw = get_module_word_adjust_u(b,u,2);
-        if ( mw != 3) return scanner_result_t();
-
-        if (code.size() <= 1) return scanner_result_t();
-
-        // Checksum and return result
-        if (  (checksum % 103) != pre_symbol ) {
-            std::cerr << "WARNING: checksum test for code128 failed on \""<< code << "\"." << std::endl;
-            std::cerr << "         checksum: " << checksum << " % 103 = " << checksum % 103 << " != " << pre_symbol << std::endl;
-            return scanner_result_t();
-        } else {
-            // remove checksum char from end of code
-            if (cur_code_set == code_set_c) {
-                code.resize(code.size()-2);
-            } else {
-                code.resize(code.size()-1);
-            }
-            return scanner_result_t(type,code,x,y);
+            if ( ! key || is_no_entry(key) ) return scanner_result_t();
+            else key_list.push_back(key);
         }
+
+        // remove end_key
+        key_list.pop_back();
+
+        if (key_list.size() <= 1) return scanner_result_t();
+
+        // decode key_list (including check-summing)
+        return decode_key_list(key_list,x,y);
     }
 
     // Backward algorithm:
