@@ -256,8 +256,10 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     }
   
   // just for visualization
-  if (debug)
+  if (debug) {
+    colorspace_by_name (image, "rgb");
     brightness_contrast_gamma (image, -.75, .0, 1.0);
+  }
   
   Image::iterator top_color = image.begin (), bottom_color = image.begin (),
     left_color = image.begin (), right_color = image.begin ();
@@ -357,7 +359,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   reg_left.addRange (points_left.begin(), points_left.end());
   reg_right.addRange (points_right.begin(), points_right.end());
   
-#ifdef DEBUG  
+#ifdef DEBUG
   Path path;
   // just for visualization, draw markers
   {
