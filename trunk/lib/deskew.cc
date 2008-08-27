@@ -69,10 +69,16 @@
    likewise, as they usually are not part of a boundary line and
    decrease accurancy.
    
-   Improvement: We assume the page is centered and only search each
-   side / direction half way thru and the side's are are also not
-   tracked all the way down thru as the probability of cropping
-   increases significantly down to the bottom.
+   Attention: At some time I assumed the page is centered and only
+   searched each side / direction half way thru, however later I
+   scanned a airport luggage latch non centered myself
+   (testsuite/34.tif) and thus we search until the first hit. As this
+   should be rare, we seldom hit such excessive tracking, though,
+   however:
+   
+   Improvement: The side's are are not tracked all the way down, as
+   the probability of cropping increases significantly down to the
+   bottom and thus quite contributes innaccurancy.
    
    TODO: The deviation could be changed to be more sensitive for
    lighter colors than dark colors, as most scannes produce shadows on
@@ -124,16 +130,18 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 	it = it.at (x, y);
 	*it;
 	it.getRGB (r, g, b);
-	threshold [x] += (fabs(r_avg-r) + fabs(g_avg-g) + fabs(b_avg-b)) / 3;
+	double th = (fabs(r_avg-r) + fabs(g_avg-g) + fabs(b_avg-b)) / 3;
+	if (th > threshold[x])
+	  threshold[x] = th;
       }
       
-      // allow a slightly higher threshold than deviation of pixel data
-      threshold[x] = 48 * threshold[x] / raster_rows;
-
-      if (threshold[x] < 2./255)
-	threshold[x] = 2./255;
-      else if (threshold[x] > 32./255)
-	threshold[x] = 32./255;
+      // allow a times higher threshold than deviation of pixel data
+      threshold[x] *= 8;
+      
+      if (threshold[x] < 6./255)
+	threshold[x] = 6./255;
+      else if (threshold[x] > 48./255)
+	threshold[x] = 48./255;
       
       // std::cerr << "[" << x << "]: " << threshold[x] << std::endl;;
       
@@ -194,7 +202,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       it = it.at (0,y);
       it_ref = reference_image.begin ();
       
-      for (int x = 0; x < image.width() / 2; ++x, ++it, ++it_ref)
+      for (int x = 0; x < image.width(); ++x, ++it, ++it_ref)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
@@ -211,7 +219,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       it = it.at (image.width() - 1, y);
       it_ref = it_ref.at (image.width() - 1, 0);
       
-      for (int x = image.width() - 1; x >= image.width() / 2; --x, --it, --it_ref)
+      for (int x = image.width() - 1; x >= 0; --x, --it, --it_ref)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
@@ -222,7 +230,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 	}
     }
   
-  // top
+  // top, only 1/4 of the area is searched thru
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
@@ -240,7 +248,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 	}
     }
   
-  // bottom
+  // bottom, only 1/2 of the area is searched thru
   for (int x = 0; x < image.width(); ++x)
     {
       it_ref = it_ref.at (x, 0);
@@ -364,6 +372,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   Path path;
   // just for visualization, draw markers
   {
+    Image::iterator it = image.begin();
+      
     for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
          p != points_top.end(); ++p)
       marker (it, p->first, p->second, top_color, .5);
@@ -419,6 +429,8 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 #ifdef DEBUG
   // just for visualization, draw markers
   {
+    Image::iterator it = image.begin();
+    
     for (std::list<std::pair<int,int> >::iterator p = points_top.begin();
 	 p != points_top.end(); ++p)
       marker (it, p->first, p->second, top_color);
