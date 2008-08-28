@@ -66,8 +66,12 @@ namespace BarDecode
     {
         bar_vector_t(int s) :
             std::vector<token_t>(s),
+            bpsize(0),
+            wpsize(0),
             psize(0)
         {}
+        psize_t bpsize;
+        psize_t wpsize;
         psize_t psize;
     };
 

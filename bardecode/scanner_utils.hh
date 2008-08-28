@@ -76,12 +76,15 @@ namespace BarDecode
             for (uint i = 0; i < c; ++i) {
                 if (start == end) {
                     v.resize(old_size + i);
+                    v.psize = v.bpsize + v.wpsize;
                     return i;
                 } else {
                     v[old_size + i] = *++start;
-                    v.psize += v[old_size+i].second;
+                    if (v[old_size+i].first) v.bpsize += v[old_size+i].second;
+                    else v.wpsize += v[old_size+i].second;
                 }
             }
+            v.psize = v.bpsize + v.wpsize;
             return c;
         }
 
@@ -89,16 +92,20 @@ namespace BarDecode
         uint get_bars(TIT& start, TIT end, bar_vector_t& v,uint c, psize_t bound = 0)
         {
             v.resize(c);
-            v.psize = 0;
+            v.bpsize = 0;
+            v.wpsize = 0;
             for (uint i = 0; i < c; ++i) {
                 if (start == end) {
                     v.resize(i);
+                    v.psize = v.bpsize + v.wpsize;
                     return i;
                 } else {
                     v[i] = *++start;
-                    v.psize += v[i].second;
+                    if (v[i].first) v.bpsize += v[i].second;
+                    else v.wpsize += v[i].second;
                 }
             }
+            v.psize = v.bpsize + v.wpsize;
             return c;
         }
 
