@@ -472,7 +472,7 @@ int main (int argc, char* argv[])
   foreground_color.setL (127);
   
   // setup the argument list
-  Argument<bool> arg_help ("", "help",
+  Argument<bool> arg_help ("h", "help",
 			   "display this help text and exit");
   arglist.Add (&arg_help);
   

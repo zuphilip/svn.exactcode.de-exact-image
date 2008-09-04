@@ -53,7 +53,7 @@ int main (int argc, char* argv[])
   ArgumentList arglist (true); // enable residual gathering
   
   // setup the argument list
-  Argument<bool> arg_help ("", "help",
+  Argument<bool> arg_help ("h", "help",
 			   "display this help text and exit");
   Argument<int> arg_threshold ("t", "threshold",
 			       "bi-level threshold value", 150, 0, 1);
