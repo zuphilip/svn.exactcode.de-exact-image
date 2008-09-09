@@ -378,7 +378,7 @@ int main(int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "hOCR to search-able PDF convertert" << std::endl
+      std::cerr << "hOCR to search-able PDF converter" << std::endl
                 <<  "    - Copyright 2008 by René Rebe, ExactCODE" << std::endl
                 << "Usage:" << std::endl;
       
