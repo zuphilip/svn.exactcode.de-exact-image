@@ -190,7 +190,7 @@ struct Textline {
 	std::string text = htmlDecode(it->text);
 	BBox bbox = it->bbox;
 	
-	// one might imprecicely place text sloppyly in favour of "sometimes"
+	// one might imprecicely place text sloppily in favour of "sometimes"
 	// improved cut'n paste-able text in not so advanced PDF Viewers
 	if (sloppy) {
 	  span_iterator it2 = it;
@@ -371,7 +371,7 @@ int main(int argc, char* argv[])
   arglist.Add(&arg_no_image);
 
   Argument<bool> arg_sloppy_text("s", "sloppy-text",
-				 "sloppyly place text, combine words, do not draw single glyphs",
+				 "sloppily place text, group words, do not draw single glyphs",
 				 0, 0, true, true);
   arglist.Add(&arg_sloppy_text);
   
