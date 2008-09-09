@@ -30,7 +30,7 @@
 
 using namespace Utility;
 
-double res = 300;
+int res = 300;
 bool sloppy = false;
 PDFCodec* pdfContext = 0;
 
@@ -159,7 +159,7 @@ struct Textline {
   
   void draw()
   {
-    double y1, y2, yavg;
+    double y1 = 0, y2 = 0, yavg = 0;
     int n = 0;
     for (span_iterator it = spans.begin(); it != spans.end(); ++it, ++n)
       {
@@ -177,7 +177,7 @@ struct Textline {
     if (n > 0)
       yavg /= n;
     
-    int height = round(std::abs(y2 - y1) * 72. / res);
+    int height = (int)round(std::abs(y2 - y1) * 72. / res);
     if (height < 8)
       height = 8;
     
