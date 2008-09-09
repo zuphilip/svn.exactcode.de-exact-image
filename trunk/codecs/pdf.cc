@@ -111,6 +111,9 @@ struct PDFObject
     id = xref.objects.size(); // after adding, 1-based
   }
 
+  virtual ~PDFObject()
+  {}
+
   void write(std::ostream& s)
   {
     // save position in stream for further reference
