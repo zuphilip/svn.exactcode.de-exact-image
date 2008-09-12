@@ -68,10 +68,13 @@ public:
      Helvetica, Helvetica-Bold, Helvetica-Oblique, Helvetica-BoldOblique,
      Courier, Courier-Bold, Courier-Oblique, Courier-BoldOblique,
      Symbol, ZapfDingbats */
+  void beginText();
+  void textTo(double x, double y);
   void showText(const std::string& font, const std::string& text,
 		double height);
   void showImage(Image& image, double x, double y,
 		 double width, double height);
+  void endText();
   
 private:
   PDFContext* context;

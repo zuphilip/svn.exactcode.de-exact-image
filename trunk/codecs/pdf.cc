@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 Susanne Klaus <susanne@exactcode.de>
+ * Copyright (c) 2007 - 2008 Susanne Klaus <susanne@exactcode.de>
  * Copyright (c) 2008 René Rebe <rene@exactcode.de>
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -505,7 +505,10 @@ struct PDFContentStream : public PDFStream
       break;
     }
   }
-
+  
+  void beginText();
+  void endText();
+  void textTo(double x, double y);
   void showText(const PDFFont& f, const std::string& text, double height);
   void showImage(const PDFXObject& i, double x, double y, double w, double h);
   
@@ -513,6 +516,8 @@ struct PDFContentStream : public PDFStream
   std::string encoding;
   std::stringstream c; // content / commands
   double last_x, last_y;
+  double last_text_x, last_text_y, last_text_height;
+  std::string last_text_res;
 };
 
 struct PDFPage : public PDFObject
@@ -607,12 +612,38 @@ struct PDFTrailer
 };
 
 
+void PDFContentStream::beginText()
+{
+  last_text_x = last_text_y = last_text_height = 0;
+  last_text_res.clear();
+  c << "BT\n";
+}
+
+// TODO: automatic tracking and assertion / auto-correction
+void PDFContentStream::endText()
+{
+  c << "ET\n";
+}
+
+void PDFContentStream::textTo(double x, double y)
+{
+  translateY(y);
+  c << x - last_text_x << " " << y - last_text_y << " Td\n";
+  last_text_x = x;
+  last_text_y = y;
+}
+
 void PDFContentStream::showText(const PDFFont& f, const std::string& text, double height)
 {
   parent.addResource(&f);
-  c << "BT " << f.resourceName() << " " << height << " Tf\n"
-    << last_x << " " << last_y << " Td\n"
-    "(";
+  std::string fRes = f.resourceName();
+  if (fRes != last_text_res || height != last_text_height) {
+    c << f.resourceName() << " " << height << " Tf\n";
+    last_text_height = height;
+    last_text_res = fRes;
+  }
+  
+  c <<  "(";
   
   // parse string and use proper escape
   // TODO: UTF-8 input parsing
@@ -645,8 +676,7 @@ void PDFContentStream::showText(const PDFFont& f, const std::string& text, doubl
 	}
     }
   
-  c << ") Tj\n"
-    "ET\n";
+  c << ") Tj\n";
 }
 
 void PDFContentStream::translateY(double& y)
@@ -867,6 +897,21 @@ void PDFCodec::setLineDash(double offset, const double* dashes, int n)
 void PDFCodec::showPath(filling_rule_t fill)
 {
   context->currentPage->content.showPath(fill);
+}
+
+void PDFCodec::beginText()
+{
+  context->currentPage->content.beginText();
+}
+
+void PDFCodec::endText()
+{
+  context->currentPage->content.endText();
+}
+
+void PDFCodec::textTo(double x, double y)
+{
+  context->currentPage->content.textTo(x, y);
 }
 
 void PDFCodec::showText(const std::string& font, const std::string& text,
