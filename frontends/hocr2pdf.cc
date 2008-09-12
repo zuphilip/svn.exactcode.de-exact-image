@@ -1,6 +1,7 @@
 /*
  * The ExactImage library's hOCR to PDF
- * Copyright (C) 2008 René Rebe
+ * Copyright (C) 2008 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,6 +12,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <string.h>
@@ -24,8 +28,10 @@
 #include <vector>
 
 #include "ArgumentList.hh"
-#include "Codecs.hh"
 
+#include "config.h"
+
+#include "Codecs.hh"
 #include "pdf.hh"
 
 using namespace Utility;
@@ -226,7 +232,7 @@ struct Textline {
 	}
 	
 	//std::cerr << "(" << text << ") ";
-	pdfContext->moveTo(72. * bbox.x1 / res, 72. * yavg / res);
+	pdfContext->textTo(72. * bbox.x1 / res, 72. * yavg / res);
 	pdfContext->showText(font, text, height);
       }
     //std::cerr << std::endl;
@@ -378,9 +384,10 @@ int main(int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "hOCR to search-able PDF converter" << std::endl
-                <<  "    - Copyright 2008 by René Rebe, ExactCODE" << std::endl
-                << "Usage:" << std::endl;
+      std::cerr << "hOCR to PDF converter, version " VERSION << std::endl
+		<< "Copyright (C) 2008 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2008 Archivista" << std::endl
+		<< "Usage:" << std::endl;
       
       arglist.Usage(std::cerr);
       return 1;
@@ -414,6 +421,8 @@ int main(int argc, char* argv[])
   // TODO: soft hyphens
   // TODO: better text placement, using one TJ with spacings
   // TODO: more iamge compressions, jbig2, Fax
+  
+  pdfContext->beginText();
   
   // minimal, cuneiform HTML ouptut parser
   char c;
@@ -500,6 +509,8 @@ int main(int argc, char* argv[])
   }
   
   textline.flush();
+  
+  pdfContext->endText();
   
   if (!arg_no_image.Get())
     pdfContext->showImage(image, 0, 0, 72. * image.w / res, 72. * image.h / res);
