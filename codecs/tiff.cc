@@ -166,18 +166,15 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
 {
   uint32 rowsperstrip = (uint32) - 1;
   
-  uint16 compression = COMPRESSION_NONE;
-  if (compress.empty()) {
-    if (image.bps == 1)
-      compression = COMPRESSION_CCITTFAX4;
-    else
-      compression = COMPRESSION_DEFLATE;
-  }
-  else {
+  uint16 compression = image.bps == 1 ? COMPRESSION_CCITTFAX4 :
+                                        COMPRESSION_DEFLATE;
+
+  if (!compress.empty())
+  {
     std::string c (compress);
     std::transform (c.begin(), c.end(), c.begin(), tolower);
     
-    if (c == "g3" || c == "fax")
+    if (c == "g3" || c == "fax" || c == "group3")
       compression = COMPRESSION_CCITTFAX3;
     else if (c == "g4" || c == "group4")
       compression = COMPRESSION_CCITTFAX4;
