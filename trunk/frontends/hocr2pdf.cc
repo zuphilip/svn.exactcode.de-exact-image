@@ -41,6 +41,23 @@ bool sloppy = false;
 PDFCodec* pdfContext = 0;
 std::ofstream* txtStream = 0;
 
+// for now hypenation compensator state-machine for text writeout
+struct putText {
+  void operator() (const std::string& text)
+  {
+    if (txtStream) {
+      for (std::string::const_iterator it = text.begin();
+	   it != text.end(); ++it)
+	putChar(*it);
+    }
+  }
+  
+  void putChar(char ch)
+  {
+    *txtStream << ch;
+  }
+} putText;
+
 std::string lowercaseStr(const std::string& _s)
 {
   std::string s(_s);
@@ -187,10 +204,24 @@ struct Textline {
       yavg /= n;
     
     int height = (int)round(std::abs(y2 - y1) * 72. / res);
-    if (height < 8)
+    if (height < 8) // TODO: allow configuration?
       height = 8;
     
     //std::cerr << "drawing with height: " << height << std::endl;
+    
+    // remove trailing whitespace
+    for (span_iterator it = spans.end(); it != spans.begin(); --it)
+      {
+	span_iterator it2 = it; --it2;
+	for (int i = it2->text.size() - 1; i >= 0; --i) {
+	  if (isMyBlank(it2->text[i]))
+	    it2->text.erase(i);
+	  else
+	    goto whitespace_cleaned;
+	}
+      }
+  
+  whitespace_cleaned:
     
     for (span_iterator it = spans.begin(); it != spans.end(); ++it, ++n)
       {
@@ -238,11 +269,9 @@ struct Textline {
 	pdfContext->textTo(72. * bbox.x1 / res, 72. * yavg / res);
 	pdfContext->showText(font, text, height);
 	
-	if (txtStream)
-	  *txtStream << text;
+	putText(text);
       }
-    if (txtStream)
-      *txtStream << "\n";
+    putText("\n");
     //std::cerr << std::endl;
   }
   
@@ -269,7 +298,8 @@ struct Textline {
     if (!spans.empty() && s.bbox.x1 < spans.back().bbox.x1)
       flush();
     
-    // unify inserted spans with same properties
+    // unify inserted spans with same properties, for now to
+    // not draw them at the same position, but one text operator
     if (!spans.empty() &&
 	(spans.back().bbox == s.bbox) &&
 	(spans.back().style == s.style))
