@@ -1,7 +1,7 @@
 /*
  * The ExactImage library's hOCR to PDF
  * Copyright (C) 2008 René Rebe, ExactCODE GmbH Germany
- * Copyright (C) 2006 Archivista
+ * Copyright (C) 2008 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ using namespace Utility;
 int res = 300;
 bool sloppy = false;
 PDFCodec* pdfContext = 0;
-
+std::ofstream* txtStream = 0;
 
 std::string lowercaseStr(const std::string& _s)
 {
@@ -95,6 +95,9 @@ std::string htmlDecode(const std::string& _s)
   
   while ((i = s.find("&gt;")) != std::string::npos)
     s.replace(i, 4, ">");
+
+  while ((i = s.find("&quot;")) != std::string::npos)
+    s.replace(i, 6, "\"");
   
   // TODO: '&8212;' and more - when implemented, best locked on
   // each '&' and matched to the next ';'
@@ -234,7 +237,12 @@ struct Textline {
 	//std::cerr << "(" << text << ") ";
 	pdfContext->textTo(72. * bbox.x1 / res, 72. * yavg / res);
 	pdfContext->showText(font, text, height);
+	
+	if (txtStream)
+	  *txtStream << text;
       }
+    if (txtStream)
+      *txtStream << "\n";
     //std::cerr << std::endl;
   }
   
@@ -313,6 +321,7 @@ void elementStart(const std::string& _name, const std::string& _attr = "")
 
 void elementText(const std::string& text)
 {
+  //std::cerr << "elementText: \"" << text << "\"" << std::endl;
   Span s;
   s.bbox = lastBBox;
   s.style = lastStyle;
@@ -380,6 +389,11 @@ int main(int argc, char* argv[])
 				 "sloppily place text, group words, do not draw single glyphs",
 				 0, 0, true, true);
   arglist.Add(&arg_sloppy_text);
+
+  Argument<std::string> arg_text("t", "text",
+				 "extract text, including trying to remove hyphens",
+				 0, 1, true, true);
+  arglist.Add(&arg_text);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
@@ -412,6 +426,10 @@ int main(int argc, char* argv[])
   }
   res = image.xres;
   sloppy = arg_sloppy_text.Get();
+  
+  if (arg_text.Size()) {
+    txtStream = new std::ofstream(arg_text.Get().c_str());
+  }
   
   std::ofstream s(arg_output.Get().c_str());
   pdfContext = new PDFCodec(&s);
@@ -516,5 +534,9 @@ int main(int argc, char* argv[])
     pdfContext->showImage(image, 0, 0, 72. * image.w / res, 72. * image.h / res);
   
   delete pdfContext;
+  if (txtStream) {
+    txtStream->close();
+    delete txtStream;
+  }
   return 0;
 }
