@@ -40,23 +40,7 @@ int res = 300;
 bool sloppy = false;
 PDFCodec* pdfContext = 0;
 std::ofstream* txtStream = 0;
-
-// for now hypenation compensator state-machine for text writeout
-struct putText {
-  void operator() (const std::string& text)
-  {
-    if (txtStream) {
-      for (std::string::const_iterator it = text.begin();
-	   it != text.end(); ++it)
-	putChar(*it);
-    }
-  }
-  
-  void putChar(char ch)
-  {
-    *txtStream << ch;
-  }
-} putText;
+std::string txtString;
 
 std::string lowercaseStr(const std::string& _s)
 {
@@ -269,9 +253,11 @@ struct Textline {
 	pdfContext->textTo(72. * bbox.x1 / res, 72. * yavg / res);
 	pdfContext->showText(font, text, height);
 	
-	putText(text);
+	if (txtStream)
+	  txtString += text;
       }
-    putText("\n");
+    if (txtStream)
+      txtString += "\n";
     //std::cerr << std::endl;
   }
   
@@ -565,6 +551,35 @@ int main(int argc, char* argv[])
   
   delete pdfContext;
   if (txtStream) {
+    // for now hypenation compensator, later to be inserted to the
+    // generic code-flow to detect and write out soft-hypens on-the-go
+    
+    // regex: ([a-z])-\n([a-z]) -> \1\2
+    // + insert \n at next space of next line
+    for (std::string::iterator it = txtString.begin();
+	 it != txtString.end();)
+      {
+	if ((*it == '\n') && // lock on newlines
+	    (it != txtString.begin() && it[-1] == '-') && // hyphen in front
+	    (it != txtString.end() - 1 && islower(it[+1])) // and the next is lower case
+	    )
+	  {
+	    it = txtString.erase(it -1, it + 1); // erase "\n-"
+	    
+	    // so, newline removed, insert a break at the next word, same line
+	    for (; it != txtString.end() && *it != '\n'; ++it) {
+	      if (*it == ' ') {
+		*it = '\n';
+		++it;
+		break;
+	      }
+	    }
+	  }
+	else
+	  ++it;
+      }
+    
+    *txtStream << txtString;
     txtStream->close();
     delete txtStream;
   }
