@@ -53,5 +53,6 @@ BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
 CPPFLAGS += -I codecs/
+LDFLAGS += -lz # for the PDF compression, TODO: check for availability and disable the support code otherwise
 
 include build/bottom.make
