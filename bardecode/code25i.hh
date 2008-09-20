@@ -29,13 +29,20 @@ namespace BarDecode
         static const int START_SEQUENCE = 0xA;
         static const int END_SEQUENCE = 0xD;
         static const char no_entry = 0;
-    
+
+#ifdef __APPLE__
+	#define n_lq 15
+	#define n_hq 5.3
+	#define w_lq 5.2
+	#define w_hq 1.5
+	#define tol 0.2
+#else
         static const double n_lq = 15;
         static const double n_hq = 5.3;
         static const double w_lq = 5.2;
         static const double w_hq = 1.5;
         static const double tol = 0.2;
-
+#endif
         static const usize_t min_quiet_usize = 5;
         //static const usize_t min_quiet_usize = 10;
         static const usize_t min_quiet_usize_right = 5;
@@ -332,5 +339,13 @@ namespace BarDecode
     }
 
 }; // namespace BarDecode
+
+#ifdef __APPLE__
+	#undef n_lq
+	#undef n_hq
+	#undef w_lq
+	#undef w_hq
+	#undef tol
+#endif
 
 #endif // _CODE25I_HH_
