@@ -136,10 +136,10 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       }
       
       // allow a times higher threshold than deviation of pixel data
-      threshold[x] *= 8;
+      threshold[x] *= 6;
       
-      if (threshold[x] < 6./255)
-	threshold[x] = 6./255;
+      if (threshold[x] < 2./255)
+	threshold[x] = 2./255;
       else if (threshold[x] > 48./255)
 	threshold[x] = 48./255;
       
