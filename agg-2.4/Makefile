@@ -10,18 +10,11 @@ CPPFLAGS += $(FREETYPEINCS)
 CPPFLAGS += -I agg-2.4/font_freetype
 endif
 
-ifeq "$(WITHATSUI)" "1"
-SRCS += agg_font_atsui.cpp
-CPPFLAGS += 
-CPPFLAGS += -I agg-2.4/font_atsui
-endif
-
 ifeq "$(WITHWIN32)" "1"
 SRCS += agg_font_win32_tt.cpp
 CPPFLAGS += 
 CPPFLAGS += -I agg-2.4/font_win32_tt
 endif
-
 
 BINARY = libagg
 BINARY_EXT = $(X_LIBEXT)
