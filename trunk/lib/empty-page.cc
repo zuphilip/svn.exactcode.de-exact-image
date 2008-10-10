@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2007 René Rebe
+ * Copyright (C) 2005 - 2008 René Rebe
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -25,11 +25,11 @@
 #include "Matrix.hh"
 
 #include "empty-page.hh"
+#include "optimize2bw.hh"
 
 /* TODO: for more accurance one could introduce a hot-spot area that
    has a higher weight than the other (outer) region to more reliably
    detect crossed but otherwise empty pages */
-
 bool detect_empty_page (Image& im, double percent, int margin,
 			int* set_pixels)
 {
@@ -50,22 +50,10 @@ bool detect_empty_page (Image& im, double percent, int margin,
   else if (image.spp != 1 || image.bps != 1) {
     // don't care about cmyk vs. rgb, just get gray8 pixels, quickly
     colorspace_by_name (image, "gray8");
-    
-    // throw a dust removal mask over the data
-    {
-      // this is a custom, just sort of unsharp, mask
-      matrix_type matrix [3*3] = {
-	-0.677, -0.823, -0.677,
-	-0.823, 10.382 /*was 18, but that is overbright*/, -0.823,
-	-0.677, -0.823, -0.677
-      };
-      
-      convolution_matrix (image, matrix, 3, 3, 4.437);
-    }
-    
-    // DEBUG: ImageCodec::Write ("test.pnm", image);
-    
-    // convert to 1-bit (threshold)
+
+    // force quick pass, no color use, 1px radius
+    optimize2bw (image, 0, 0, 128, 0, 1);
+    // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
     colorspace_gray8_to_gray1 (image);
   }
   
