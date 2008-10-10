@@ -1,7 +1,7 @@
 /*
  * The ExactImage stable external API for use with SWIG.
  * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
- * Copyright (C) 2006 René Rebe, Archivista
+ * Copyright (C) 2006 - 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -191,9 +191,9 @@ struct it_color_init
 static it_color_init bg_color_init (background_color, 0, 0, 0);
 static it_color_init fg_color_init (foreground_color, 1, 1, 1);
 
-bool imageConvertColorspace (Image* image, const char* target_colorspace)
+bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold)
 {
-  return colorspace_by_name (*image, target_colorspace);
+  return colorspace_by_name (*image, target_colorspace, threshold);
 }
 
 void imageResize (Image* image, int x, int y)
