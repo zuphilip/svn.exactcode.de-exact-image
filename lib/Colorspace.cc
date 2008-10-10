@@ -18,6 +18,7 @@
  */
 
 #include <iostream>
+#include <map>
 
 #include "Image.hh"
 #include "ImageIterator2.hh"
@@ -27,89 +28,85 @@
 
 #include "Endianess.hh"
 
-void normalize_gray8 (Image& image, uint8_t low, uint8_t high)
+template <typename T>
+struct normalize_template
 {
-  int histogram[256] = { 0 };
-  
-  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd();)
-    histogram[*it++]++;
-
-  int lowest = 255, highest = 0;
-  for (int i = 0; i <= 255; i++)
+  void operator() (Image& image, uint8_t l, uint8_t h)
+  {
+    typename T::accu a;
+    typename T::accu::vtype black, white;
+    
+    // darkest 1%, lightest .5%
+    const int white_point = image.w * image.h / 100;
+    const int black_point = white_point / 2;
+    
     {
-      // std::cout << i << ": "<< histogram[i] << std::endl;
-      if (histogram[i] > 2) // magic denoise constant
+      // we use a map to efficiently support HDR images
+      typedef std::map<typename T::accu::vtype, int> histogram_type;
+      histogram_type histogram;
+      
+      T it (image);
+      typename T::accu::vtype l;
+      for (int y = 0; y < image.h; ++y) {
+	for (int x = 0; x < image.w; ++x)
+	  {
+	    a = *it;
+	    a.getL(l); // TODO: create discrete interval for floats etc.
+	    histogram[l]++;
+	    ++it;
+	  }
+      }
+
+      // find suitable black and white points
+      int count = 0;
+      for (typename histogram_type::iterator i = histogram.begin(); i != histogram.end(); ++i) {
+	count += i->second;
+	if (count >= black_point) {
+	  black = i->first;
+	  break;
+	}
+      }
+      count = 0;
+      for (typename histogram_type::reverse_iterator i = histogram.rbegin(); i != histogram.rend(); ++i) {
+	count += i->second;
+	if (count >= white_point) {
+	  white = i->first;
+	  break;
+	}
+      }
+    }
+    
+    // TODO: scale to type range
+    if (l)
+      black = l;
+    if (h)
+      white = h;
+    
+    typename T::accu::vtype fa, fb = -black;
+    T::accu::one().getL(fa);
+    fa *= 256; // shift for interger multiplication
+    fa /= (white - black);
+    
+    T it (image);
+    for (int y = 0; y < image.h; ++y) {
+      for (int x = 0; x < image.w; ++x)
 	{
-	  if (i < lowest)
-	    lowest = i;
-	  if (i > highest)
-	    highest = i;
+	  a = *it;
+	  a += fb;
+	  a *= fa;
+	  a /= 256;
+	  a.saturate();
+	  it.set (a);
+	  ++it;
 	}
     }
-  std::cerr << "lowest: " << lowest << ", highest: " << highest << std::endl;
-  
-  if (low)
-    lowest = low;
-  if (high)
-    highest = high;
-    
-  // TODO use options
-  signed int a = (255 * 256) / (highest - lowest);
-  signed int b = -a * lowest;
-
-  std::cerr << "a: " << (float) a / 256
-	    << " b: " << (float) b / 256 << std::endl;
-
-  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-    *it = ((int) *it * a + b) / 256;
-
-  image.setRawData();
-}
+    image.setRawData();
+  }
+};
 
 void normalize (Image& image, uint8_t l, uint8_t h)
 {
-  if (image.bps == 8 && image.spp == 1)
-    return normalize_gray8 (image, l, h);
-  
-  double low = 1.0;
-  double high = 0.0;
-
-  Image::iterator it = image.begin();
-  
-  double r = 0, g = 0, b = 0;
-  for (; it != image.end(); ++it) {
-    *it;
-    it.getRGB(r, g, b);
-
-    if (r < low)
-      low = r;
-    if (r > high)
-      high = r;
-
-    if (g < low)
-      low = g;
-    if (g > high)
-      high = g;
-    
-    if (b < low)
-      low = b;
-    if (b > high)
-      high = b;
-  }
-  
-  const double fa = 1.0 / (high - low);
-  const double fb = fa * low;
- 
-  std::cerr << "low: " << low << ", high: " << high << std::endl;
-  std::cerr << "a: " << fa<< " b: " << fb << std::endl;
-  
-  for (it = image.begin(); it != image.end(); ++it) {
-    *it;
-    it.getRGB (r, g, b);
-    it.setRGB (r * fa - fb, g * fa - fb, b * fa - fb);
-    it.set (it);
-  }
-  image.setRawData();
+  codegen<normalize_template> (image, l, h);
 }
 
 void colorspace_rgba8_to_rgb8 (Image& image)
