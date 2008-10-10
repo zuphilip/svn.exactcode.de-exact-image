@@ -52,12 +52,24 @@ public:
       return *this;
     }
 
-    accu operator* (int f) {
+    accu operator* (vtype f) {
       accu a = *this;
       return a *= f;
     }
+    
+    accu& operator+= (vtype f) {
+      v1 += f;
+      v2 += f;
+      v3 += f;
+      return *this;
+    }
+
+    accu operator+ (vtype f) {
+      accu a = *this;
+      return a += f;
+    }
       
-    accu& operator/= (int f) {
+    accu& operator/= (vtype f) {
       v1 /= f;
       v2 /= f;
       v3 /= f;
@@ -91,7 +103,11 @@ public:
     void getRGB (vtype& r, vtype& g, vtype& b) {
       r = v1; g = v2; b = v3;
     }
-
+    
+    void getL (vtype& l) {
+      l = v1;
+    }
+    
     void setRGB (vtype r, vtype g, vtype b) {
       v1 = r; v2 = g; v3 = b;
     }
@@ -166,12 +182,24 @@ public:
       return *this;
     }
 
-    accu operator* (int f) {
+    accu operator* (vtype f) {
       accu a = *this;
       return a *= f;
     }
-      
-    accu& operator/= (int f) {
+    
+    accu& operator+= (vtype f) {
+      v1 += f;
+      v2 += f;
+      v3 += f;
+      return *this;
+    }
+
+    accu operator+ (vtype f) {
+      accu a = *this;
+      return a += f;
+    }
+    
+    accu& operator/= (vtype f) {
       v1 /= f;
       v2 /= f;
       v3 /= f;
@@ -200,13 +228,17 @@ public:
       v3 = b * 0xffff;
       return *this;
     }
-
+    
     void getRGB (vtype& r, vtype& g, vtype& b) {
       r = v1; g = v2; b = v3;
     }
-
+    
+    void getL (vtype& l) {
+      l = v1;
+    }
+    
     void setRGB (vtype r, vtype g, vtype b) {
-       v1 = r;  v2 = g;  v3 = b;
+      v1 = r;  v2 = g;  v3 = b;
     }
 
   };
@@ -269,17 +301,27 @@ public:
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
     }
 
-    accu& operator*= (int f) {
+    accu& operator*= (vtype f) {
       v1 *= f;
       return *this;
     }
 
-    accu operator* (int f) {
+    accu operator* (vtype f) {
       accu a = *this;
       return a *= f;
     }
+
+    accu& operator+= (vtype f) {
+      v1 += f;
+      return *this;
+    }
+
+    accu operator+ (vtype f) {
+      accu a = *this;
+      return a += f;
+    }
       
-    accu& operator/= (int f) {
+    accu& operator/= (vtype f) {
       v1 /= f;
       return *this;
     }
@@ -302,7 +344,11 @@ public:
     void getRGB (vtype& r, vtype& g, vtype& b) {
       r = g =  b = v1;
     }
-
+    
+    void getL (vtype& l) {
+      l = v1;
+    }
+    
     void setRGB (vtype& r, vtype& g, vtype& b) {
       v1 = (21 * r + 71 * g + 8 * b) / 100;
     }
@@ -363,17 +409,27 @@ public:
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
     }
 
-    accu& operator*= (int f) {
+    accu& operator*= (vtype f) {
       v1 *= f;
       return *this;
     }
 
-    accu operator* (int f) {
+    accu operator* (vtype f) {
       accu a = *this;
       return a *= f;
     }
-      
-    accu& operator/= (int f) {
+    
+    accu& operator+= (vtype f) {
+      v1 += f;
+      return *this;
+    }
+
+    accu operator+ (vtype f) {
+      accu a = *this;
+      return a += f;
+    }
+    
+    accu& operator/= (vtype f) {
       v1 /= f;
       return *this;
     }
@@ -395,6 +451,10 @@ public:
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
       r = g = b = v1;
+    }
+    
+    void getL (vtype& l) {
+      l = v1;
     }
     
     void setRGB (vtype& r, vtype& g, vtype& b) {
