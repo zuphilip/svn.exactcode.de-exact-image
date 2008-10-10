@@ -450,6 +450,11 @@ void drawMatchedContours(LogoRepresentation* representation, Image* image)
 }
 
 
+void imageNormalize (Image* image)
+{
+  normalize (*image);
+}
+
 void imageInvert (Image* image)
 {
   invert (*image);
