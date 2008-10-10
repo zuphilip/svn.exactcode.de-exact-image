@@ -94,9 +94,9 @@ public:
     {
       double r = 0, g = 0, b = 0;
       background.getRGB(r, g, b);
-      v1 = r * 0xff;
-      v2 = g * 0xff;
-      v3 = b * 0xff;
+      v1 = (vtype)(r * 0xff);
+      v2 = (vtype)(g * 0xff);
+      v3 = (vtype)(b * 0xff);
       return *this;
     }
     
@@ -223,9 +223,9 @@ public:
     accu& operator= (const Image::iterator& background) {
       double r = 0, g = 0, b = 0;
       background.getRGB(r, g, b);
-      v1 = r * 0xffff;
-      v2 = g * 0xffff;
-      v3 = b * 0xffff;
+      v1 = (vtype)(r * 0xffff);
+      v2 = (vtype)(g * 0xffff);
+      v3 = (vtype)(b * 0xffff);
       return *this;
     }
     
