@@ -109,7 +109,7 @@ void imageSetYres (Image* image, int yres);
 // transforms the image into a new target colorspace - the names are the same as returned by
 // imageColorspace, might return false if the conversion was not possible
 // the threshold is used while converting to black&white (1 bit) data
-bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold);
+bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold = 127);
 
 void imageResize (Image* image, int x, int y);
 void imageRotate (Image* image, double angle);
