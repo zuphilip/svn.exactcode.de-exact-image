@@ -41,9 +41,11 @@ struct normalize_template
     const int black_point = white_point / 2;
     
     {
-      // we use a map to efficiently support HDR images
-      typedef std::map<typename T::accu::vtype, int> histogram_type;
-      histogram_type histogram;
+      // TODO: fall back to map for HDR types
+      typedef std::vector<typename T::accu::vtype> histogram_type;
+      typename T::accu::vtype hsize;
+      T::accu::one().getL(hsize);
+      histogram_type histogram(hsize);
       
       T it (image);
       typename T::accu::vtype l;
@@ -58,19 +60,21 @@ struct normalize_template
       }
 
       // find suitable black and white points
-      int count = 0;
-      for (typename histogram_type::iterator i = histogram.begin(); i != histogram.end(); ++i) {
-	count += i->second;
+      int count = 0, ii = 0;
+      for (typename histogram_type::iterator i = histogram.begin();
+	   i != histogram.end(); ++i, ++ii) {
+	count += *i;
 	if (count >= black_point) {
-	  black = i->first;
+	  black = ii;
 	  break;
 	}
       }
-      count = 0;
-      for (typename histogram_type::reverse_iterator i = histogram.rbegin(); i != histogram.rend(); ++i) {
-	count += i->second;
+      count = 0; ii = 255;
+      for (typename histogram_type::reverse_iterator i = histogram.rbegin();
+	   i != histogram.rend(); ++i, --ii) {
+	count += *i;
 	if (count >= white_point) {
-	  white = i->first;
+	  white = ii;
 	  break;
 	}
       }
