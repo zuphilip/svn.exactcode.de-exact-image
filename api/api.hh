@@ -139,6 +139,8 @@ bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines);
 void setForegroundColor (double r, double g, double b);
 void setBackgroundColor (double r, double g, double b);
 
+void imageNormalize (Image* image);
+
 void imageInvert (Image* image);
 void imageBrightnessContrastGamma (Image* image, double brightness, double contrast, double gamma);
 void imageHueSaturationLightness (Image* image, double hue, double saturation, double lightness);
