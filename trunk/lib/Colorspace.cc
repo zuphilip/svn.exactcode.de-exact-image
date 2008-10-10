@@ -176,7 +176,7 @@ void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
     }
 }
 
-void colorspace_gray8_threshold (Image& image, unsigned char threshold)
+void colorspace_gray8_threshold (Image& image, uint8_t threshold)
 {
   for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
     *it = *it > threshold ? 0xFF : 0x00;
@@ -643,7 +643,8 @@ void colorspace_de_palette (Image& image, int table_entries,
   image.setRawData (new_data);  
 }
 
-bool colorspace_by_name (Image& image, const std::string& target_colorspace)
+bool colorspace_by_name (Image& image, const std::string& target_colorspace,
+			 uint8_t threshold)
 {
   std::string space = target_colorspace;
   std::transform (space.begin(), space.end(), space.begin(), tolower);
@@ -717,7 +718,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace)
   
   if (spp == 1 && image.bps > bps) {
     if (image.bps == 8 && bps == 1)
-      colorspace_gray8_to_gray1 (image);
+      colorspace_gray8_to_gray1 (image, threshold);
     else if (image.bps == 8 && bps == 2)
       colorspace_gray8_to_gray2 (image);
     else if (image.bps == 8 && bps == 4)
