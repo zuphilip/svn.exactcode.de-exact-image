@@ -1,7 +1,7 @@
 /*
  * The ExactImage stable external API for use with SWIG.
  * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
- * Copyright (C) 2006 René Rebe, Archivista
+ * Copyright (C) 2006 - 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,7 +108,8 @@ void imageSetYres (Image* image, int yres);
 
 // transforms the image into a new target colorspace - the names are the same as returned by
 // imageColorspace, might return false if the conversion was not possible
-bool imageConvertColorspace (Image* image, const char* target_colorspace);
+// the threshold is used while converting to black&white (1 bit) data
+bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold);
 
 void imageResize (Image* image, int x, int y);
 void imageRotate (Image* image, double angle);
