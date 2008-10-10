@@ -109,6 +109,7 @@ void normalize (Image& image, uint8_t l, uint8_t h)
     it.setRGB (r * fa - fb, g * fa - fb, b * fa - fb);
     it.set (it);
   }
+  image.setRawData();
 }
 
 void colorspace_rgba8_to_rgb8 (Image& image)
