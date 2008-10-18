@@ -403,6 +403,9 @@ struct PDFContentStream : public PDFStream
     : PDFStream(_xref), parent(_page)
   {
     encoding = "/FlateDecode";
+    c.setf(std::ios::fixed, std::ios::floatfield);
+    c.setf(std::ios::showpoint);
+    c.precision(8);
   }
   
   virtual void writeStreamTagsImpl(std::ostream& s)
