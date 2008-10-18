@@ -22,5 +22,5 @@ api/lua/libdir := $(shell pkg-config lua --variable INSTALL_CMOD)
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
 	$(Q)echo "INSTALL LUA module $^"
-	$(Q)mkdir -p $(api/lua/libdir)
-	$(Q)install $^ $(api/lua/libdir)
+	$(Q)mkdir -p $(DESTDIR)$(api/lua/libdir)
+	$(Q)install $^ $(DESTDIR)$(api/lua/libdir)

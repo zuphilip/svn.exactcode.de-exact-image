@@ -20,5 +20,5 @@ X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
 	$(Q)echo "INSTALL PERL module $^"
-	$(Q)mkdir -p $(libdir)/perl5/site_perl/
-	$(Q)install $^ $(dir $^)/ExactImage.pm $(libdir)/perl5/site_perl/
+	$(Q)mkdir -p $(DESTDIR)$(libdir)/perl5/
+	$(Q)install $^ $(dir $^)/ExactImage.pm $(DESTDIR)$(libdir)/perl5/
