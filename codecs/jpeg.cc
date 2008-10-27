@@ -28,6 +28,7 @@
 
 #include "jpeg.hh"
 
+#include "crop.hh"
 #include "scale.hh"
 
 /*
@@ -506,7 +507,15 @@ bool JPEGCodec::crop (Image& image, unsigned int x, unsigned int y, unsigned int
   doTransform (JXFORM_NONE, image, 0 /* stream */, false /* to gray */, true /* crop */,
 	       x, y, w, h);
   
-  // TODO: account for residual cropping
+  // reminder of 8x8 JPEG block crop
+  x %= 8;
+  y %= 8;
+  if (x || y) {
+    // invalidate, otherwise the ::crop() does call us again
+    image.setRawData();
+    // global crop, not our method
+    ::crop(image, x, y, w, h);
+  }
   
   return true;
 }
