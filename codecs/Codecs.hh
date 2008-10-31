@@ -40,7 +40,7 @@ public:
   static bool Read (std::istream* stream, Image& image,
 		    std::string codec = "");
   static bool Write (std::ostream* stream, Image& image,
-		     std::string codec = "", std::string ext = "",
+		     std::string codec, std::string ext = "",
 		     int quality = 75, const std::string& compress = "");
   
   // OLD API, only left for compatibility.
