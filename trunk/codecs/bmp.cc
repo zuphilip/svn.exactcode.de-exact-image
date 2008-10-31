@@ -663,6 +663,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
   
+  int hdr_size = BIH_WIN4SIZE;
   int stride = image.stride ();
   
   memset (&file_hdr, 0, sizeof (file_hdr));
@@ -675,7 +676,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // BMPInfoHeader
   
-  info_hdr.iSize = BIH_WIN5SIZE;
+  info_hdr.iSize = hdr_size;
   info_hdr.iWidth = image.w;
   info_hdr.iHeight = image.h;
   info_hdr.iPlanes = 1;
@@ -694,12 +695,12 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   // BMP image payload needs to be 4 byte aligned :-(
   int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
   
-  file_hdr.iOffBits = BFH_SIZE + BIH_WIN5SIZE + info_hdr.iClrUsed * n_clr_elems;
+  file_hdr.iOffBits = BFH_SIZE + hdr_size + info_hdr.iClrUsed * n_clr_elems;
   file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
   
   // write header meta info
   stream->write ((char*)&file_hdr, BFH_SIZE);
-  stream->write ((char*)&info_hdr, BIH_WIN5SIZE);
+  stream->write ((char*)&info_hdr, hdr_size);
   
   // write color table
   if (info_hdr.iClrUsed) {
