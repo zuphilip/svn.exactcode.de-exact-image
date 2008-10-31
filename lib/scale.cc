@@ -51,9 +51,6 @@ struct nearest_scale_template
 {
   void operator() (Image& new_image, double scalex, double scaley)
   {
-    if (scalex == 1.0 && scaley == 1.0)
-      return;
-    
     Image image;
     image.copyTransferOwnership (new_image);
     
@@ -81,6 +78,8 @@ struct nearest_scale_template
 
 void nearest_scale (Image& image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
   codegen<nearest_scale_template> (image, scalex, scaley);
 }
 
@@ -89,9 +88,6 @@ struct bilinear_scale_template
 {
   void operator() (Image& new_image, double scalex, double scaley)
   {
-    if (scalex == 1.0 && scaley == 1.0)
-      return;
-
     Image image;
     image.copyTransferOwnership (new_image);
 
@@ -130,6 +126,8 @@ struct bilinear_scale_template
 
 void bilinear_scale (Image& image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
   codegen<bilinear_scale_template> (image, scalex, scaley);
 }
 
@@ -138,9 +136,6 @@ struct box_scale_template
 {
   void operator() (Image& new_image, double scalex, double scaley)
   {
-    if (scalex == 1.0 && scaley == 1.0)
-      return;
-    
     Image image;
     image.copyTransferOwnership (new_image);
     
@@ -194,6 +189,8 @@ struct box_scale_template
 
 void box_scale (Image& image, double scalex, double scaley)
 {
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
   codegen<box_scale_template> (image, scalex, scaley);
 }
 
