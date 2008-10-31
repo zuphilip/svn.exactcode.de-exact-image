@@ -146,6 +146,144 @@ public:
     
 };
 
+class rgba_iterator
+{
+public:
+  uint8_t* ptr;
+  uint8_t* ptr_begin;
+  const Image& image;
+  const int stride;
+  
+  class accu
+  {
+  public:
+    typedef signed int vtype;
+    vtype v1, v2, v3, v4;
+    
+    accu () { v1 = v2 = v3 = v4 = 0; }
+    
+    static accu one () {
+      accu a;
+      a.v1 = a.v2 = a.v3 = a.v4 = 0xff;
+      return a;
+    }
+    
+    void saturate () {
+      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
+      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xff);
+      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xff);
+      v4 = std::min (std::max (v4, (vtype)0), (vtype)0xff);
+    }
+    
+    accu& operator*= (vtype f) {
+      v1 *= f;
+      v2 *= f;
+      v3 *= f;
+      v4 *= f;
+      return *this;
+    }
+
+    accu operator* (vtype f) {
+      accu a = *this;
+      return a *= f;
+    }
+    
+    accu& operator+= (vtype f) {
+      v1 += f;
+      v2 += f;
+      v3 += f;
+      v4 += f;
+      return *this;
+    }
+
+    accu operator+ (vtype f) {
+      accu a = *this;
+      return a += f;
+    }
+      
+    accu& operator/= (vtype f) {
+      v1 /= f;
+      v2 /= f;
+      v3 /= f;
+      v4 /= f;
+      return *this;
+    }
+    
+    accu& operator+= (const accu& other) {
+      v1 += other.v1;
+      v2 += other.v2;
+      v3 += other.v3;
+      v4 += other.v4;
+      return *this;
+    }
+
+    accu& operator-= (const accu& other) {
+      v1 -= other.v1;
+      v2 -= other.v2;
+      v3 -= other.v3;
+      v4 -= other.v4;
+      return *this;
+    }
+    
+    accu& operator= (const Image::iterator& background)
+    {
+      double r = 0, g = 0, b = 0, a = 0;
+      background.getRGBA(r, g, b, a);
+      v1 = (vtype)(r * 0xff);
+      v2 = (vtype)(g * 0xff);
+      v3 = (vtype)(b * 0xff);
+      v4 = (vtype)(a * 0xff);
+      return *this;
+    }
+    
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = v1; g = v2; b = v3;
+    }
+    
+    void getL (vtype& l) {
+      l = v1;
+    }
+    
+    void setRGB (vtype r, vtype g, vtype b) {
+      v1 = r; v2 = g; v3 = b; v3 = 0xff;
+    }
+    
+  };
+    
+  rgba_iterator (Image& _image)
+    : ptr_begin(_image.getRawData()), image (_image), stride(_image.stride()) {
+    ptr = ptr_begin;
+  }
+    
+  rgba_iterator& at (int x, int y) {
+    ptr = ptr_begin + y * stride + x * 4;
+    return *this;
+  }
+    
+  rgba_iterator& operator++ () {
+    ptr += 4;
+    return *this;
+  }
+    
+  accu operator* () {
+    accu a;
+    a.v1 = ptr[0];
+    a.v2 = ptr[1];
+    a.v3 = ptr[2];
+    a.v4 = ptr[3];
+    return a;
+  }
+    
+  rgba_iterator& set (const accu& a) {
+    ptr[0] = a.v1;
+    ptr[1] = a.v2;
+    ptr[2] = a.v3;
+    ptr[3] = a.v4;
+    return *this;
+  }
+    
+};
+
 class rgb16_iterator
 {
 public:
@@ -559,6 +697,10 @@ void codegen (T1& a1)
       a (a1);
     }
   }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1);
+  }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
     a(a1);
@@ -627,6 +769,10 @@ void codegen (T1& a1, T2& a2, T3& a3)
       a (a1, a2, a3);
     }
   }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1, a2, a3);
+  }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
     a(a1, a2, a3);
@@ -660,6 +806,10 @@ void codegen (T1& a1, T2& a2, T3& a3, T4& a4)
       ALGO <rgb16_iterator> a;
       a (a1, a2, a3, a4);
     }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1, a2, a3, a4);
   }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
@@ -695,6 +845,10 @@ void codegen (T1& a1, T2& a2, T3& a3, T4& a4, T5& a5)
       a (a1, a2, a3, a4, a5);
     }
   }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1, a2, a3, a4, a5);
+  }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
     a(a1, a2, a3, a4, a5);
@@ -728,6 +882,10 @@ void codegen (T1& a1, T2& a2, T3& a3, T4& a4, T5& a5, T6& a6)
       ALGO <rgb16_iterator> a;
       a (a1, a2, a3, a5, a5, a6);
     }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1, a2, a3, a5, a5, a6);
   }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
@@ -765,6 +923,10 @@ void codegen (T1& a1, T2& a2, T3& a3, T4& a4,
       ALGO <rgb16_iterator> a;
       a (a1, a2, a3, a4, a5, a6, a7);
     }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    a (a1, a2, a3, a5, a5, a6, a7);
   }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
@@ -804,6 +966,10 @@ T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
       ALGO <rgb16_iterator> a;
       return a (a1, a2, a3, a4, a5, a6, a7);
     }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    return a (a1, a2, a3, a5, a5, a6, a7);
   }
   else if (a1.bps == 16) {
     ALGO <gray16_iterator> a;
