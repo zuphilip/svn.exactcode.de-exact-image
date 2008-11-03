@@ -108,6 +108,8 @@ typedef unsigned long long UINT64;
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 
+namespace dcraw {
+
 /*
    All global variables are defined here, and all functions that
    access them are prefixed with "CLASS".  Note that a thread-safe
@@ -8577,3 +8579,5 @@ cleanup:
 }
 
 #endif
+
+} // end of namespace

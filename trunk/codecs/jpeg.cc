@@ -276,7 +276,7 @@ JPEGCodec::JPEGCodec (Image* _image)
 {
 }
 
-bool JPEGCodec::readImage (std::istream* stream, Image& image)
+bool JPEGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   if (stream->peek () != 0xFF)
     return false;

@@ -244,7 +244,7 @@ rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
   }
 }
 
-bool BMPCodec::readImage (std::istream* stream, Image& image)
+bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;

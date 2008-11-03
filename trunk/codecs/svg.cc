@@ -1,6 +1,20 @@
 /*
- * Copyright (c) 2008 Rene Rebe <rene@exactcode.de>
+ * Copyright (C) 2008 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
  *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+
+/*
  * Based on the svg_test application window,
  * Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
  */
@@ -17,7 +31,7 @@
 
 #include "agg.hh" // EI Agg
 
-bool SVGCodec::readImage (std::istream* stream, Image& image)
+bool SVGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   agg::svg::path_renderer m_path;
   agg::svg::parser p (m_path);
