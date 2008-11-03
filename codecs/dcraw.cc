@@ -103,9 +103,9 @@ static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
 #define feof(stream) stream->eof()
 #define ftello(stream) stream->tellg()
 
-#define fseek(stream,pos,kind) stream->seekg (pos, kind)
+#define fseek(stream,pos,kind) (stream->clear(), stream->seekg(pos, kind))
 #define ftell(stream) (int) stream->tellg ()
-#define fseeko(stream, pos, kind) stream->seekg(pos, kind)
+#define fseeko(stream,pos,kind) (stream->clear(), stream->seekg(pos, kind))
 
 
 // now include the original dcraw source with our translation macros in-place
