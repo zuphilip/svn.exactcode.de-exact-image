@@ -2,8 +2,6 @@
 #include <istream>
 #include <sstream>
 
-// now this is an macro conversion from C FILE* to C++ iostream ,-)
-
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -18,7 +16,38 @@
 
 #include "dcraw.hh"
 
+/* Now this is an very crude macro++ hackery to convert the C FILE*
+   API to to C++ iostream for our codec, to be able to not only read
+   from regular files. -ReneR */
+
+static inline int wrapped_fread (std::iostream* stream, char* mem, int n)
+{
+  return stream->read (mem, n) ? n : 0;
+}
+
+static inline int wrapped_fwrite (std::iostream* stream, char* mem, int n)
+{
+  stream->write (mem,n);
+  return stream->good() ? n : 0;
+}
+
+static inline int wrapped_fprintf (std::ostream* stream, const char* buf, ...)
+{
+  std::cerr << "TODO: " << __PRETTY_FUNCTION__ << std::endl;
+  // TODO: so far used: %s %d %f %llx, in theory (main()) %c
+  return 0;
+}
+
+static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
+{
+  std::cerr << "TODO: " << __PRETTY_FUNCTION__ << std::endl;
+  // TODO: so far only %d and %f are used
+  return 0;
+}
+
 #define FILE std::iostream
+#undef stderr
+#define stderr (&std::cerr)
 
 #undef SEEK_SET
 #undef SEEK_CUR
@@ -28,47 +57,33 @@
 #define SEEK_CUR std::ios::cur
 #define SEEK_END std::ios::end
 
-#define fseek(stream,pos,kind) stream->seekg (pos, kind)
-#define ftell(stream) (int) stream->tellg ()
-
-static inline int wrapped_fread (std::iostream* stream, char* mem, int n)
-{
-	return stream->read (mem, n) ? n : 0;
-}
-
-static inline int wrapped_fwrite (std::iostream* stream, char* mem, int n)
-{
-	stream->write (mem,n);
-	return stream->good() ? n : 0;
-}
-
-static inline int wrapped_fscanf (std::iostream* stream, const char* buf, ...)
-{
-  std::cerr << "TODO: " << __PRETTY_FUNCTION__ << std::endl;
-  // TODO: so far only %d and %f are used
-  return 0;
-}
-
 #define fread(mem,n,m,stream) wrapped_fread (stream, (char*)mem,n*m)
 #define fwrite(mem,n,m,stream) wrapped_fwrite (stream, (char*)mem,n*m)
 
-#define fscanf(stream,buf,...) wrapped_fscanf (stream, buf, __VA_ARGS__)
+#define fprintf wrapped_fprintf
+#define fscanf wrapped_fscanf
 
 #define fgetc(stream) stream->get ()
 #define getc(stream) stream->get ()
 #define fgets(mem,n,stream) stream->get ((char*)mem, n);
 #define putc(c,stream) stream->put (c)
+#define fputc(c,stream) stream->put (c)
 
 #define tmpfile new std::stringstream
 #define fclose(stream) delete (stream);
 
 #define feof(stream) stream->eof()
 #define ftello(stream) stream->tellg()
-#define fseeko(stream, pos, mode) stream->seekg(pos) // TODO: mode
+
+#define fseek(stream,pos,kind) stream->seekg (pos, kind)
+#define ftell(stream) (int) stream->tellg ()
+#define fseeko(stream, pos, kind) stream->seekg(pos, kind)
+
 
 // now include the original dcraw source with our translation macros in-place
 
 #include "dcraw.h"
+
 
 bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& decompress)
 {
@@ -98,6 +113,39 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& 
   
   if (!is_raw)
     return false;
+  
+  // TODO: lowercase and find in comma seperated list
+  if (decompress == "thumb") {
+    if (!thumb_offset) {
+      std::cerr << "has no thumbnail." << std::endl;
+    }
+    else if (thumb_load_raw) {
+      load_raw = thumb_load_raw;
+      data_offset = thumb_offset;
+      width  = thumb_width;
+      height = thumb_height;
+      filters = 0;
+      // TODO: test this case
+    } else {
+      fseek (ifp, thumb_offset, SEEK_SET);
+      write_fun = write_thumb;
+      
+      std::stringstream thumbnail;
+      (*write_fun)(&thumbnail);
+      
+      // we can have a jpeg or pnm dump here
+      bool ret = ImageCodec::Read(&thumbnail, im, "", decompress);
+      if (ret) {
+	if (meta_data) free (meta_data);
+	if (oprof) free (oprof);
+	if (image) free (image);
+	
+	return true;
+      }
+      // else: there was an error, we have no thumbnail, so decode regular:
+      // TODO: test
+    }
+  }
   
   if (load_raw == &CLASS kodak_ycbcr_load_raw) {
     height += height & 1;
@@ -173,7 +221,6 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& 
       for (int c = 0; c < colors; ++c)
 	*ptr++ = lut[ image[row*width+col][c] ];
   
- cleanup:
   if (meta_data) free (meta_data);
   if (oprof) free (oprof);
   if (image) free (image);
