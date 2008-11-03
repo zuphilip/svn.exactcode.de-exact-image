@@ -1,7 +1,7 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2006 - 2008 René Rebe
- * Copyright (C) 2006 Archivista
+ * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -153,7 +153,7 @@ bool convert_split (const Argument<std::string>& arg)
 
 bool convert_colorspace (const Argument<std::string>& arg)
 {
-  return imageConvertColorspace (&image, arg.Get().c_str());
+  return colorspace_by_name (image, arg.Get().c_str());
 }
 
 bool convert_normalize (const Argument<bool>& arg)
@@ -695,10 +695,10 @@ int main (int argc, char* argv[])
   // print the usage if no argument was given or help requested
   if (argc == 1 || arg_help.Get() == true)
     {
-      std::cerr << "Exact image converter including a variety of fast algorithms (econvert)."
-		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2005 - 2008 by René Rebe and Archivista" << std::endl
-                << "Usage:" << std::endl;
+      std::cerr << "ExactImage converter, version " VERSION << std::endl
+		<< "Copyright (C) 2005 - 2008 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
+		<< "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
       return 1;
