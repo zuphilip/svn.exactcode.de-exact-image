@@ -65,20 +65,31 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
       return false;
     }
   
-  uint32 _w;
-  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &_w); image.w = _w;
+  uint32 _w = 0;
+  TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &_w);
   
-  uint32 _h;
-  TIFFGetField(in, TIFFTAG_IMAGELENGTH, &_h); image.h = _h;
+  uint32 _h = 0;
+  TIFFGetField(in, TIFFTAG_IMAGELENGTH, &_h);
   
-  uint16 _spp;
-  TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp); image.spp = _spp;
+  uint16 _spp = 0;
+  TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp);
   
-  uint16 _bps;
-  TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps); image.bps = _bps;
+  uint16 _bps = 0;
+  TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps);
   
-  uint16 config;
-  TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
+  if (!_w || !_h || !_spp || !_bps) {
+    TIFFClose(in);
+    stream->seekg(0);
+    return false;
+  }
+  
+  //uint16 config;
+  //TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
+  
+  image.w = _w;
+  image.h = _h;
+  image.spp = _spp;
+  image.bps = _bps;
   
   float _xres;
   if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
@@ -93,10 +104,6 @@ bool TIFCodec::readImage (std::istream* stream, Image& image)
     image.yres = 0;
   
   int stride = image.stride();
-
-  // printf ("w: %d h: %d\n", _w, _h);
-  // printf ("spp: %d bps: %d stride: %d\n", _spp, _bps, stride);
-
   image.resize (image.w, image.h);
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
