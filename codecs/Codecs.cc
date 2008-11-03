@@ -96,7 +96,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 	}
     }
   
-  std::cerr << "No matching codec found." << std::endl;
+  //std::cerr << "No matching codec found." << std::endl;
   return false;
 }
 
@@ -124,7 +124,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
 	}
     }
   
-  std::cerr << "No matching codec found." << std::endl;
+  //std::cerr << "No matching codec found." << std::endl;
   return false;
   
  do_write:
@@ -148,7 +148,7 @@ bool ImageCodec::Read (std::string file, Image& image, const std::string& decomp
     s = &std::cin;
   
   if (!*s) {
-    std::cerr << "Can not open file " << file.c_str() << std::endl;
+    //std::cerr << "Can not open file " << file.c_str() << std::endl;
     return false;
   }
   
@@ -171,7 +171,7 @@ bool ImageCodec::Write (std::string file, Image& image,
     s = &std::cout;
   
   if (!*s) {
-    std::cerr << "Can not write file " << file.c_str() << std::endl;
+    //std::cerr << "Can not write file " << file.c_str() << std::endl;
     return false;
   }
   
