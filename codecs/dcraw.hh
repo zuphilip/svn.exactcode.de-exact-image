@@ -34,6 +34,7 @@ public:
     registerCodec ("kdc", this); 
     registerCodec ("srf", this); // Sony
     registerCodec ("raw", this); // Panasonic, Casio, Leica
+    registerCodec ("rw2", this); // Panasonic
   };
   
   virtual std::string getID () { return "DCRAW"; };
