@@ -73,11 +73,20 @@ Argument<std::string> arg_compression ("", "compress",
 				       "depending on the output format, a reasonable setting by default",
 				       0, 1, true, true);
 
+Argument<std::string> arg_decompression ("", "decompress",
+					 "decompression method for reading images e.g. thumb\n\t\t"
+					 "depending on the input format, allowing to read partial data",
+					 0, 1, true, true);
+
 bool convert_input (const Argument<std::string>& arg)
 {
   image.setRawData (0);
 
-  if (!ImageCodec::Read(arg.Get(), image)) {
+  std::string decompression = "";
+  if (arg_decompression.Size())
+    decompression = arg_decompression.Get();
+
+  if (!ImageCodec::Read(arg.Get(), image, decompression)) {
     std::cerr << "Error reading input file." << std::endl;
     return false;
   }
@@ -493,6 +502,7 @@ int main (int argc, char* argv[])
   // global
   arglist.Add (&arg_quality);
   arglist.Add (&arg_compression);
+  arglist.Add (&arg_decompression);
   
   Argument<std::string> arg_split ("", "split",
 				   "filenames to save the images split in Y-direction into n parts",
