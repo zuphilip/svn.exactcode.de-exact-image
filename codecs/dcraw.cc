@@ -41,15 +41,31 @@ static inline int wrapped_fwrite (std::iostream* stream, char* mem, int n)
 	return stream->good() ? n : 0;
 }
 
+static inline int wrapped_fscanf (std::iostream* stream, const char* buf, ...)
+{
+  std::cerr << "TODO: " << __PRETTY_FUNCTION__ << std::endl;
+  // TODO: so far only %d and %f are used
+  return 0;
+}
+
 #define fread(mem,n,m,stream) wrapped_fread (stream, (char*)mem,n*m)
 #define fwrite(mem,n,m,stream) wrapped_fwrite (stream, (char*)mem,n*m)
 
+#define fscanf(stream,buf,...) wrapped_fscanf (stream, buf, __VA_ARGS__)
+
 #define fgetc(stream) stream->get ()
+#define getc(stream) stream->get ()
 #define fgets(mem,n,stream) stream->get ((char*)mem, n);
 #define putc(c,stream) stream->put (c)
 
 #define tmpfile new std::stringstream
 #define fclose(stream) delete (stream);
+
+#define feof(stream) stream->eof()
+#define ftello(stream) stream->tellg()
+#define fseeko(stream, pos, mode) stream->seekg(pos) // TODO: mode
+
+// now include the original dcraw source with our translation macros in-place
 
 #include "dcraw.h"
 
@@ -62,50 +78,78 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im)
   std::iostream ios (stream->rdbuf());
   ifp = &ios;
   
+  // dcraw::main()
+  
+  int use_fuji_rotate=1, quality, i;
+  
+#ifndef NO_LCMS
+  char *cam_profile=0, *out_profile=0;
+#endif
+
+  if (use_camera_matrix < 0)
+      use_camera_matrix = use_camera_wb;
+  
   identify();
   
   if (!is_raw)
     return false;
   
-  if (load_raw == kodak_ycbcr_load_raw) {
+  if (load_raw == &CLASS kodak_ycbcr_load_raw) {
     height += height & 1;
     width  += width  & 1;
   }
   
-  int half_size = 0, quality, use_fuji_rotate=1;
-  shrink = half_size && filters;
+  shrink = filters &&
+    (half_size || threshold || aber[0] != 1 || aber[2] != 1);
   iheight = (height + shrink) >> shrink;
   iwidth  = (width  + shrink) >> shrink;
-   
-  image = (ushort (*)[4]) calloc (iheight*iwidth*sizeof *image + meta_length, 1);
-  merror (image, "main()");
-  meta_data = (char *) (image + iheight*iwidth);
   
-  fseek (ifp, data_offset, SEEK_SET);
+  if (use_camera_matrix && cmatrix[0][0] > 0.25) {
+    memcpy (rgb_cam, cmatrix, sizeof cmatrix);
+    raw_color = 0;
+  }
+  
+  image = (ushort (*)[4]) calloc (iheight*iwidth, sizeof *image);
+  
+  if (meta_length) {
+    meta_data = (char *) malloc (meta_length);
+    merror (meta_data, "main()");
+  }
+  
+  if (shot_select >= is_raw)
+    fprintf (stderr,_("%s: \"-s %d\" requests a nonexistent image!\n"),
+	     ifname, shot_select);
+  fseeko (ifp, data_offset, SEEK_SET);
   (*load_raw)();
   // bad_pixels();
+  if (zero_is_bad) remove_zeroes();
   
-  height = iheight;
-  width  = iwidth;
   quality = 2 + !fuji_width;
   
   if (is_foveon && !document_mode) foveon_interpolate();
   if (!is_foveon && document_mode < 2) scale_colors();
-  if (shrink) filters = 0;
-  cam_to_cielab (NULL,NULL);
+  pre_interpolate();
   if (filters && !document_mode) {
     if (quality == 0)
       lin_interpolate();
-    else if (quality < 3 || colors > 3)
+    else if (quality == 1 || colors > 3)
       vng_interpolate();
+    else if (quality == 2)
+      ppg_interpolate();
     else ahd_interpolate();
   }
-  if (sigma_d > 0 && sigma_r > 0) bilateral_filter();
+  if (mix_green)
+    for (colors=3, i=0; i < height*width; i++)
+      image[i][1] = (image[i][1] + image[i][3]) >> 1;
+  if (!is_foveon && colors == 3) median_filter();
+  if (!is_foveon && highlight == 2) blend_highlights();
+  if (!is_foveon && highlight > 2) recover_highlights();
   if (use_fuji_rotate) fuji_rotate();
 #ifndef NO_LCMS
   if (cam_profile) apply_profile (cam_profile, out_profile);
 #endif
   convert_to_rgb();
+  if (use_fuji_rotate) stretch();
   
   im.bps = 16;
   im.spp = 3;
@@ -123,7 +167,12 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im)
     for (int col = 0; col < width; ++col)
       for (int c = 0; c < colors; ++c)
 	*ptr++ = lut[ image[row*width+col][c] ];
-    
+  
+ cleanup:
+  if (meta_data) free (meta_data);
+  if (oprof) free (oprof);
+  if (image) free (image);
+  
   return true;
 }
 
