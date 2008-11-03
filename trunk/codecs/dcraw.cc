@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdarg.h> // for wrapped printf/scanf
 
 #include "dcraw.hh"
 
@@ -31,11 +32,38 @@ static inline int wrapped_fwrite (std::iostream* stream, char* mem, int n)
   return stream->good() ? n : 0;
 }
 
-static inline int wrapped_fprintf (std::ostream* stream, const char* buf, ...)
+static inline int wrapped_fprintf (std::ostream* stream, const char* fmt, ...)
 {
-  std::cerr << "TODO: " << __PRETTY_FUNCTION__ << std::endl;
-  // TODO: so far used: %s %d %f %llx, in theory (main()) %c
-  return 0;
+  int size = 96; // probably less than a "terminal line"
+  char *p, *np;
+  va_list ap;
+  
+  if ((p = (char*)malloc(size)) == NULL)
+    return -1;
+  
+  while (1) {
+    // try to print into the allocated space
+    va_start(ap, fmt);
+    int n = vsnprintf(p, size, fmt, ap);
+      va_end(ap);
+    // if that worked, print the string
+    if (n > -1 && n < size) {
+      stream->write(p, size);
+      free(p);
+      return n;
+    }
+    // else try again with more space, ...
+    if (n > -1) // new libc's
+      size = n + 1; // precisely what is needed
+    else // unknown amount required, try twice the previous size
+      size *= 2;
+    if ((np = (char*)realloc(p, size)) == NULL) {
+      free(p);
+      return -1;
+    } else {
+      p = np;
+    }
+  }
 }
 
 static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
