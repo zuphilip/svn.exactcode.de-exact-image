@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 René Rebe
+ * Copyright (C) 2006 - 2008 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #include "raw.hh"
 
-bool RAWCodec::readImage (std::istream* stream, Image& image)
+bool RAWCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   image.resize (image.w, image.h);
   

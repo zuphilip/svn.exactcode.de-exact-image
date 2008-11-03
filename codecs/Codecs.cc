@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2006 - 2008 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
 
 #include "Codecs.hh"
 
@@ -51,7 +67,7 @@ std::string get_codec (std::string& filename)
 // NEW API
 
 bool ImageCodec::Read (std::istream* stream, Image& image,
-		       std::string codec)
+		       std::string codec, const std::string& decompress)
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
@@ -63,7 +79,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 	{
 	  // use primary entry to only try each codec once
 	  if (it->primary_entry && !it->via_codec_only) {
-	    if (it->loader->readImage (stream, image)) {
+	    if (it->loader->readImage (stream, image, decompress)) {
 	      image.setDecoderID (it->loader->getID ());
 	      return true;
 	    }
@@ -75,7 +91,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
       else // manual codec spec
 	{
 	  if (it->primary_entry && it->ext == codec) {
-	    return it->loader->readImage (stream, image);
+	    return it->loader->readImage (stream, image, decompress);
 	  }
 	}
     }
@@ -121,7 +137,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
 
 // OLD API
 
-bool ImageCodec::Read (std::string file, Image& image)
+bool ImageCodec::Read (std::string file, Image& image, const std::string& decompress)
 {
   std::string codec = get_codec (file);
   
@@ -136,7 +152,7 @@ bool ImageCodec::Read (std::string file, Image& image)
     return false;
   }
   
-  bool res = Read (s, image, codec);
+  bool res = Read (s, image, codec, decompress);
   if (s != &std::cin)
     delete s;
   return res;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 René Rebe
+ * Copyright (C) 2005 - 2008 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -10,7 +10,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <stdio.h>
@@ -121,7 +123,7 @@ static void jas_stream_initbuf (jas_stream_t* stream)
   stream->bufmode_ |= JAS_STREAM_BUFMODEMASK;
 }
 
-bool JPEG2000Codec::readImage (std::istream* stream, Image& im)
+bool JPEG2000Codec::readImage (std::istream* stream, Image& im, const std::string& decompres)
 {
   {
     // quick magic check

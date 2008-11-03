@@ -12,7 +12,10 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,7 +32,7 @@
 #include <algorithm>
 #include <iostream>
 
-bool TIFCodec::readImage (std::istream* stream, Image& image)
+bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   TIFF* in;
   

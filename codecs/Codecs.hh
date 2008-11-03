@@ -1,13 +1,19 @@
-#ifndef IMAGELOADER_HH
-#define IMAGELOADER_HH
-
-#include <stdio.h>
-
-#include <vector>
-#include <algorithm>
-#include <iosfwd>
-
-#include "Image.hh"
+/*
+ * Copyright (C) 2006 - 2008 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
 
 /* The Image decoder and coder collection.
  *
@@ -25,6 +31,17 @@
  * operations that sometimes can work on encoded data.
  */
 
+#ifndef IMAGELOADER_HH
+#define IMAGELOADER_HH
+
+#include <stdio.h>
+
+#include <vector>
+#include <algorithm>
+#include <iosfwd>
+
+#include "Image.hh"
+
 // just forward
 class Image;
 
@@ -38,7 +55,7 @@ public:
   
   // NEW API, allowing the use of any STL i/o stream derived source.
   static bool Read (std::istream* stream, Image& image,
-		    std::string codec = "");
+		    std::string codec = "", const std::string& decompress = "");
   static bool Write (std::ostream* stream, Image& image,
 		     std::string codec, std::string ext = "",
 		     int quality = 75, const std::string& compress = "");
@@ -46,13 +63,14 @@ public:
   // OLD API, only left for compatibility.
   // Not const string& because the filename is parsed and the copy is changed intern.
   // 
-  // Removed after 2007-06-01!
-  static bool Read (std::string file, Image& image);
+  // Removed after 2000-01-01!
+  static bool Read (std::string file, Image& image, const std::string& decompress = "");
   static bool Write (std::string file, Image& image,
 		     int quality = 75, const std::string& compress = "");
   
   // per codec methods
-  virtual bool readImage (std::istream* stream, Image& image) = 0;
+  virtual bool readImage (std::istream* stream, Image& image,
+			  const std::string& decompress = "") = 0;
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress) = 0;
   

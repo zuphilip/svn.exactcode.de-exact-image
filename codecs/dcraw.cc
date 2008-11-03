@@ -1,21 +1,4 @@
-/*
- * Copyright (C) 2006 - 2008 René Rebe
- * 
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2. A copy of the GNU General
- * Public License can be found in the file LICENSE.
- * 
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
- * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
- * Public License for more details.
- *
- * Alternatively, commercial licensing options are available from the
- * copyright holder ExactCODE GmbH Germany.
- */
 
-#include "dcraw.hh"
 #include <istream>
 #include <sstream>
 
@@ -32,6 +15,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "dcraw.hh"
 
 #define FILE std::iostream
 
@@ -85,8 +70,12 @@ static inline int wrapped_fscanf (std::iostream* stream, const char* buf, ...)
 
 #include "dcraw.h"
 
-bool DCRAWCodec::readImage (std::istream* stream, Image& im)
+bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& decompress)
 {
+  // dcraw namespace, to not tinker with the missign static linkage of the
+  // upstream C source on any updatey
+  using namespace dcraw;
+  
 #ifndef NO_LCMS
   char *cam_profile = NULL, *out_profile = NULL;
 #endif
