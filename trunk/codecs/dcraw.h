@@ -148,7 +148,7 @@ const double xyz_rgb[3][3] = {			/* XYZ from RGB */
   { 0.019334, 0.119193, 0.950227 } };
 const float d65_white[3] = { 0.950456, 1, 1.088754 };
 int histogram[4][0x2000];
-//void (*write_thumb)(FILE *), (*write_fun)(FILE *);
+void (*write_thumb)(FILE *), (*write_fun)(FILE *);
 void (*load_raw)(), (*thumb_load_raw)();
 jmp_buf failure;
 
@@ -1325,8 +1325,6 @@ void CLASS fuji_load_raw()
   free (pixel);
 }
 
-#if 0
-
 void CLASS jpeg_thumb (FILE *tfp);
 
 void CLASS ppm_thumb (FILE *tfp)
@@ -1375,8 +1373,6 @@ void CLASS rollei_thumb (FILE *tfp)
   }
   free (thumb);
 }
-
-#endif
 
 void CLASS rollei_load_raw()
 {
@@ -2775,8 +2771,6 @@ void CLASS foveon_decoder (unsigned size, unsigned code)
   foveon_decoder (size, code+1);
 }
 
-#if 0
-
 void CLASS foveon_thumb (FILE *tfp)
 {
   unsigned bwide, row, col, bitbuf=0, bit=1, c, i;
@@ -2815,8 +2809,6 @@ void CLASS foveon_thumb (FILE *tfp)
       }
   }
 }
-
-#endif
 
 void CLASS foveon_load_camf()
 {
@@ -5385,7 +5377,6 @@ void CLASS parse_tiff (int base)
     }
   if (thm >= 0) {
     thumb_misc |= tiff_ifd[thm].samples << 5;
-#if 0
     switch (tiff_ifd[thm].comp) {
       case 0:
 	write_thumb = &CLASS layer_thumb;
@@ -5400,7 +5391,6 @@ void CLASS parse_tiff (int base)
 	thumb_load_raw = tiff_ifd[thm].phint == 6 ?
 	  &CLASS kodak_ycbcr_load_raw : &CLASS kodak_rgb_load_raw;
     }
-#endif
   }
 }
 
@@ -5659,9 +5649,7 @@ void CLASS parse_rollei()
     timestamp = mktime(&t);
   strcpy (make, "Rollei");
   strcpy (model,"d530flex");
-#if 0
   write_thumb = &CLASS rollei_thumb;
-#endif
 }
 
 void CLASS parse_sinar_ia()
@@ -5692,9 +5680,7 @@ void CLASS parse_sinar_ia()
   load_raw = &CLASS unpacked_load_raw;
   thumb_width = (get4(),get2());
   thumb_height = get2();
-#if 0
   write_thumb = &CLASS ppm_thumb;
-#endif
   maximum = 0x3fff;
 }
 
@@ -5963,17 +5949,13 @@ void CLASS parse_foveon()
 		&& thumb_length < len-28) {
 	  thumb_offset = off+28;
 	  thumb_length = len-28;
-#if 0
 	  write_thumb = &CLASS jpeg_thumb;
-#endif
 	}
 	if (++img == 2 && !thumb_length) {
 	  thumb_offset = off+24;
 	  thumb_width = wide;
 	  thumb_height = high;
-#if 0
 	  write_thumb = &CLASS foveon_thumb;
-#endif
 	}
 	break;
       case 0x464d4143:			/* CAMF */
@@ -6576,9 +6558,7 @@ void CLASS identify()
   memset (white, 0, sizeof white);
   thumb_offset = thumb_length = thumb_width = thumb_height = 0;
   load_raw = thumb_load_raw = 0;
-#if 0
   write_thumb = &CLASS jpeg_thumb;
-#endif
   data_offset = meta_length = tiff_bps = tiff_compress = 0;
   kodak_cbpp = zero_after_ff = dng_version = load_flags = 0;
   timestamp = shot_order = tiff_samples = black = is_foveon = 0;
@@ -7600,9 +7580,7 @@ c603:
       thumb_width  = 192;
       thumb_offset = 6144;
       thumb_misc   = 360;
-#if 0
       write_thumb = &CLASS layer_thumb;
-#endif
       height = 1024;
       width  = 1536;
       data_offset = 79872;
@@ -8142,8 +8120,6 @@ void CLASS tiff_head (struct tiff_hdr *th, int full)
   strncpy (th->artist, artist, 64);
 }
 
-#if 0
-
 void CLASS jpeg_thumb (FILE *tfp)
 {
   char *thumb;
@@ -8165,6 +8141,8 @@ void CLASS jpeg_thumb (FILE *tfp)
   fwrite (thumb+2, 1, thumb_length-2, tfp);
   free (thumb);
 }
+
+#if 0
 
 void CLASS write_ppm_tiff (FILE *ofp)
 {
@@ -8403,9 +8381,7 @@ int CLASS main (int argc, char **argv)
 	filters = 0;
       } else {
 	fseek (ifp, thumb_offset, SEEK_SET);
-#if 0
 	write_fun = write_thumb;
-#endif
 	goto thumbnail;
       }
     }
