@@ -460,7 +460,6 @@ bool convert_foreground (const Argument<std::string>& arg)
   // TODO: pretty C++ parser
   if (a.size() && a[0] == '#')
     {
-      
       return true;
     }
   
@@ -497,7 +496,7 @@ bool convert_text (const Argument<std::string>& arg)
   double height;
   char text[512];
   
-  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%lf,%s",
+  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%lf,%[ a-zA-Z0-9+*/_-]",
 		  &x1, &y1, &height, text)) == 4)
     {
       std::cerr << x1 << ", " << y1 << ", " << height
