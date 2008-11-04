@@ -21,6 +21,7 @@
  */
 
 #include "vectorial.hh"
+#include "C.h" // ARRAY_SIZE
 #include <iostream>
 
 #include "agg.hh"
@@ -234,15 +235,33 @@ void Path::draw (Image& image, filling_rule_t fill)
 static const bool hinting = true;
 static const bool kerning = true;
 
-static const char* font = "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf"
-//"/usr/X11/share/fonts/TTF/DejaVuSans.ttf"
-//"/home/rene/.fonts/pala.ttf"
-;
+typedef agg::font_engine_freetype_int32 font_engine_type;
+typedef agg::font_cache_manager<font_engine_type> font_manager_type;
+static agg::glyph_rendering gren = agg::glyph_ren_outline;
+
+
+static const char* fonts[] = {
+ "/usr/X11/share/fonts/TTF/DejaVuSans.ttf",
+ "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf",
+ "/usr/X11/share/fonts/TTF/DejaVuSans-Bold.ttf"
+};
 
 // Attention! Right now the horizontal and on path
 // produce different strokes if non-zero. Review and
 // fix if changed or exported to the outside.
 static const double weight = 0;
+
+static bool load_font(font_engine_type& m_feng)
+{
+  for (int i = 0; i < ARRAY_SIZE(fonts); ++i)
+    {
+      if (m_feng.load_font (fonts[i], 0, gren))
+        return true;
+
+      std::cerr << "failed to load ttf font: " << fonts[i] << std::endl;
+    }
+  return false;
+}
 
 void Path::drawText (Image& image, const char* text, double height)
 {
@@ -257,22 +276,15 @@ void Path::drawText (Image& image, const char* text, double height)
   renderer_bin ren_bin (ren_base);
   ren_bin.color (agg::rgba (r, g, b, a));
   
-  typedef agg::font_engine_freetype_int32 font_engine_type;
-  typedef agg::font_cache_manager<font_engine_type> font_manager_type;
-  
   font_engine_type m_feng;
   font_manager_type m_fman (m_feng);
   
   // Pipeline to process the vectors glyph paths (curves + contour)
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
   agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
-  agg::glyph_rendering gren = agg::glyph_ren_outline;
-  
-  if (!m_feng.load_font (font, 0, gren))
-    {
-      std::cerr << "failed to load ttf font" << std::endl;
-      return;
-    }
+ 
+  if (!load_font(m_feng))
+    return;
   
   m_feng.hinting (hinting);
   m_feng.height (height);
@@ -348,22 +360,15 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   tcurve.add_path (smooth);
   // tcurve.preserve_x_scale(m_preserve_x_scale.status());
   
-  typedef agg::font_engine_freetype_int32 font_engine_type;
-  typedef agg::font_cache_manager<font_engine_type> font_manager_type;
-  
   font_engine_type m_feng;
   font_manager_type m_fman (m_feng);
   
   // Pipeline to process the vectors glyph paths (curves + contour)
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
   agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
-  agg::glyph_rendering gren = agg::glyph_ren_outline;
   
-  if (!m_feng.load_font (font, 0, gren))
-    {
-      std::cerr << "failed to load ttf font" << std::endl;
+  if (!load_font(m_feng))
       return;
-    }
   
   // Transform pipeline
   typedef agg::conv_curve<font_manager_type::path_adaptor_type> conv_font_curve_type;
