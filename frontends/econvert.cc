@@ -451,6 +451,23 @@ bool convert_background (const Argument<std::string>& arg)
   return false;
 }
 
+bool convert_foreground (const Argument<std::string>& arg)
+{
+  // TODO: unify with background, parse more color specs
+  
+  std::string a = arg.Get();
+  
+  // TODO: pretty C++ parser
+  if (a.size() && a[0] == '#')
+    {
+      
+      return true;
+    }
+  
+  std::cerr << "Error parsing color: '" << a << "'" << std::endl;
+  return false;
+}
+
 bool convert_line (const Argument<std::string>& arg)
 {
   unsigned int x1, y1, x2, y2, n;
@@ -472,13 +489,43 @@ bool convert_line (const Argument<std::string>& arg)
   return false;
 }
 
+#if WITHFREETYPE == 1
+
+bool convert_text (const Argument<std::string>& arg)
+{
+  unsigned int x1, y1, n;
+  double height;
+  char text[512];
+  
+  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%lf,%s",
+		  &x1, &y1, &height, text)) == 4)
+    {
+      std::cerr << x1 << ", " << y1 << ", " << height
+		<< ", " << text << std::endl;
+      Path path;
+      path.moveTo (x1, y1);
+      
+      double r = 0, g = 0, b = 0;
+      foreground_color.getRGB (r, g, b);
+      path.setFillColor (r, g, b);
+      path.drawText (image, text, height);
+
+      return true; 
+    }
+  
+  std::cerr << "Error parsing line: '" << arg.Get() << "'" << std::endl;
+  return false;
+}
+
+#endif
+
 int main (int argc, char* argv[])
 {
   ArgumentList arglist;
   background_color.type = Image::RGB8;
   background_color.setL (255);
   foreground_color.type = Image::RGB8;
-  foreground_color.setL (127);
+  foreground_color.setL (0);
   
   // setup the argument list
   Argument<bool> arg_help ("h", "help",
@@ -691,6 +738,12 @@ int main (int argc, char* argv[])
 					0, 1, true, true);
   arg_background.Bind (convert_background);
   arglist.Add (&arg_background);
+  
+  Argument<std::string> arg_foreground ("", "foreground",
+					"foreground color used for operations",
+					0, 1, true, true);
+  arg_foreground.Bind (convert_foreground);
+  arglist.Add (&arg_foreground);
  
   Argument<std::string> arg_line ("", "line",
                                   "draw a line: x1, y1, x2, y2",
@@ -698,6 +751,14 @@ int main (int argc, char* argv[])
   arg_line.Bind (convert_line);
   arglist.Add (&arg_line);
 
+#if WITHFREETYPE == 1
+  Argument<std::string> arg_text ("", "text",
+                                  "draw text: x1, y1, height, text",
+				  0, 1, true, true);
+  arg_text.Bind (convert_text);
+  arglist.Add (&arg_text);
+#endif
+  
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
     return 1;
