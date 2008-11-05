@@ -57,6 +57,8 @@
 
 #include "api/api.cc"
 
+#include "C.h"
+
 #include <functional>
 
 using namespace Utility;
@@ -419,59 +421,129 @@ bool convert_deinterlace (const Argument<bool>& arg)
   return true;
 }
 
-bool convert_background (const Argument<std::string>& arg)
+/*
+  #RGB                 (R,G,B are hex numbers, 4 bits each)
+  #RRGGBB              (8 bits each)
+  #RRRGGGBBB           (12 bits each)
+  #RRRRGGGGBBBB        (16 bits each)
+  
+  TODO:
+
+  #RGBA                (4 bits each)
+  #RRGGBBOO            (8 bits each)
+  #RRRGGGBBBOOO        (12 bits each)
+  #RRRRGGGGBBBBOOOO    (16 bits each)
+  
+  X11, SVG standard colors
+  name                 (identify -list color to see names)
+  
+  rgb(r,g,b)           0-255 for each of rgb
+  rgba(r,g,b,a)        0-255 for each of rgb and 0-1 for alpha
+  cmyk(c,m,y,k)        0-255 for each of cmyk
+  cmyka(c,m,y,k,a)     0-255 for each of cmyk and 0-1 for alpha
+  
+  hsl(0, 100%, 50%) }
+
+*/
+
+static struct {
+  const char* name;
+  const char* color;
+} named_colors[]  = {
+  // CSS2
+  { "white",   "#ffffff" },
+  { "yellow",  "#ffff00" },
+  { "orange",  "#ffA500" },
+  { "red",     "#ff0000" },
+  { "fuchsia", "#ff00ff" },
+  { "silver",  "#c0c0c0" },
+  { "gray",    "#808080" },
+  { "olive",   "#808000" },
+  { "purple",  "#800080" },
+  { "maroon",  "#800000" },
+  { "aqua",    "#00ffff" },
+  { "lime",    "#00ff00" },
+  { "teal",    "#008080" },
+  { "green",   "#008000" },
+  { "blue",    "#0000ff" },
+  { "navy",    "#000080" },
+  { "black",   "#000000" },
+};
+
+static bool parse_color (Image::iterator& it, const char* color)
 {
-  // parse
-  /*
-    name                 (identify -list color to see names)
-    #RGB                 (R,G,B are hex numbers, 4 bits each)
-    #RRGGBB              (8 bits each)
-    #RRRGGGBBB           (12 bits each)
-    #RRRRGGGGBBBB        (16 bits each)
-    #RGBA                (4 bits each)
-    #RRGGBBOO            (8 bits each)
-    #RRRGGGBBBOOO        (12 bits each)
-    #RRRRGGGGBBBBOOOO    (16 bits each)
-    rgb(r,g,b)           0-255 for each of rgb
-    rgba(r,g,b,a)        0-255 for each of rgb and 0-1 for alpha
-    cmyk(c,m,y,k)        0-255 for each of cmyk
-    cmyka(c,m,y,k,a)     0-255 for each of cmyk and 0-1 for alpha
-  */
+  unsigned int r, g, b;
+  int strl = strlen(color);
   
-  std::string a = arg.Get();
+  std::cerr << "parse_color: " << color << std::endl;
   
-  // TODO: pretty C++ parser
-  if (a.size() && a[0] == '#')
+  if (strl == 4 && sscanf(color, "#%1x%1x%1x", &r, &g, &b) == 3)
     {
-      
+      double _r, _g, _b;
+      _r = 1. / 0xf * r;
+      _g = 1. / 0xf * g;
+      _b = 1. / 0xf * b;
+      it.setRGB(_r, _g, _b);
       return true;
     }
-  
-  std::cerr << "Error parsing color: '" << a << "'" << std::endl;
+  else if (strl == 7 && sscanf(color, "#%2x%2x%2x", &r, &g, &b) == 3)
+    {
+      double _r, _g, _b;
+      _r = 1. / 0xff * r;
+      _g = 1. / 0xff * g;
+      _b = 1. / 0xff * b;
+      it.setRGB(_r, _g, _b);
+      return true;
+    }
+  else if (strl == 10 && sscanf(color, "#%3x%3x%3x", &r, &g, &b) == 3)
+    {
+      double _r, _g, _b;
+      _r = 1. / 0xfff * r;
+      _g = 1. / 0xfff * g;
+      _b = 1. / 0xfff * b;
+      it.setRGB(_r, _g, _b);
+      return true;
+    }
+  else if (strl == 13 && sscanf(color, "#%4x%4x%4x", &r, &g, &b) == 3)
+    {
+      double _r, _g, _b;
+      _r = 1. / 0xffff * r;
+      _g = 1. / 0xffff * g;
+      _b = 1. / 0xffff * b;
+      it.setRGB(_r, _g, _b);
+      return true;
+    }
+  else for (unsigned i = 0; i < ARRAY_SIZE(named_colors); ++i)
+    {
+      if (strcmp(color, named_colors[i].name) == 0)
+	return parse_color(it, named_colors[i].color);
+    }
   return false;
+}
+
+bool convert_background (const Argument<std::string>& arg)
+{
+  if (!parse_color(background_color, arg.Get().c_str())) {
+    std::cerr << "Error parsing color: '" << arg.Get() << "'" << std::endl;
+    return false;
+  }
+  return true;
 }
 
 bool convert_foreground (const Argument<std::string>& arg)
 {
-  // TODO: unify with background, parse more color specs
-  
-  std::string a = arg.Get();
-  
-  // TODO: pretty C++ parser
-  if (a.size() && a[0] == '#')
-    {
-      return true;
-    }
-  
-  std::cerr << "Error parsing color: '" << a << "'" << std::endl;
-  return false;
+  if (!parse_color(foreground_color, arg.Get().c_str())) {
+    std::cerr << "Error parsing color: '" << arg.Get() << "'" << std::endl;
+    return false;
+  }
+  return true;
 }
 
 bool convert_line (const Argument<std::string>& arg)
 {
-  unsigned int x1, y1, x2, y2, n;
+  unsigned int x1, y1, x2, y2;
   
-  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2)) == 4)
+  if (sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2) == 4)
     {
       Path path;
       path.moveTo (x1, y1);
@@ -492,12 +564,12 @@ bool convert_line (const Argument<std::string>& arg)
 
 bool convert_text (const Argument<std::string>& arg)
 {
-  unsigned int x1, y1, n;
+  unsigned int x1, y1;
   double height;
   char text[512];
   
-  if ((n = sscanf(arg.Get().c_str(), "%d,%d,%lf,%[ a-zA-Z0-9+*/_-]",
-		  &x1, &y1, &height, text)) == 4)
+  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%[ a-zA-Z0-9+*/_-]",
+	     &x1, &y1, &height, text) == 4)
     {
       std::cerr << x1 << ", " << y1 << ", " << height
 		<< ", " << text << std::endl;
