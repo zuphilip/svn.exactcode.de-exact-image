@@ -18,6 +18,7 @@
 #ifndef _CODE128_HH_
 #define _CODE128_HH_
 
+#include <stdio.h>
 #include <list>
 
 #include "scanner_utils.hh"
