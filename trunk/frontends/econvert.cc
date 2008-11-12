@@ -320,7 +320,7 @@ bool convert_convolve (const Argument<double>& arg)
 bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 {
   if (image.bps != 8) {
-    std::cerr << "Can only dither 8bit data right now." << std::endl;
+    std::cerr << "Can only dither 8 bit data right now." << std::endl;
     return false;
   }
   FloydSteinberg (image.getRawData(), image.w, image.h, arg.Get(), image.spp);
@@ -329,11 +329,11 @@ bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 
 bool convert_dither_riemersma (const Argument<int>& arg)
 {
-  if (image.spp != 1 || image.bps != 8) {
-    std::cerr << "Can only dither GRAY data right now." << std::endl;
+  if (image.bps != 8) {
+    std::cerr << "Can only dither 8 bit data right now." << std::endl;
     return false;
   }
-  Riemersma (image.getRawData(), image.w, image.h, arg.Get());
+  Riemersma (image.getRawData(), image.w, image.h, arg.Get(), image.spp);
   return true;
 }
 
