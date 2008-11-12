@@ -41,17 +41,15 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
       for (col = 0; col < width * bytes; col++)
 	nexterror[col] = 0;
 
-      if (direction == 1)
-	{
+      if (direction == 1) {
 	  start = 0;
 	  end = width;
-	}
-      else
-	{
-	  direction = -1;
-	  start = width - 1;
-	  end = -1;
-	}
+      }
+      else {
+	direction = -1;
+	start = width - 1;
+	end = -1;
+      }
 
       factor = (float) (shades - 1) / (float) 255;
 
@@ -66,7 +64,7 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	  else if (newval < 0)
 	    newval = 0;
 
-	  dest_row[col * bytes + channel] = (unsigned int) (newval + 0.5);
+	  dest_row[col * bytes + channel] = (unsigned int)(newval + 0.5);
 
 	  cerror = src_row[col * bytes + channel] + error[col * bytes +
 							  channel] -
@@ -88,7 +86,7 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
       src_row += width*bytes;
 
       /* next row in the opposite direction */
-      direction = -direction;
+      direction *= -1;
 
       /* swap error/nexerror */
       tmp = error;
