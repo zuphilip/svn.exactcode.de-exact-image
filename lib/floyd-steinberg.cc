@@ -13,9 +13,10 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 {
   uint8_t *src_row;
   float *error, *nexterror;
-  int row;
   int bytes = 1;
   int direction = 1;
+  
+  const float factor = (float) (shades - 1) / (float) 255;
   
   /*  allocate row/error buffers  */
   src_row = image;
@@ -24,19 +25,15 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
   nexterror = (float *) malloc (width * bytes * sizeof (float));
 
   /*  initialize the error buffers  */
-  for (row = 0; row < width * bytes; row++)
+  for (int row = 0; row < width * bytes; row++)
     error[row] = nexterror[row] = 0;
 
-  for (row = 0; row < height; row++)
+  for (int row = 0; row < height; row++)
     {
-      int col;
       int channel = 0;
       int start, end;
 
-      float newval, factor;
-      float cerror;
-
-      for (col = 0; col < width * bytes; col++)
+      for (int col = 0; col < width * bytes; col++)
 	nexterror[col] = 0;
 
       if (direction == 1) {
@@ -48,12 +45,10 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	start = width - 1;
 	end = -1;
       }
-
-      factor = (float) (shades - 1) / (float) 255;
-
-      for (col = start; col != end; col += direction)
+      
+      for (int col = start; col != end; col += direction)
 	{
-	  newval =
+	  float newval =
 	    src_row[col * bytes + channel] + error[col * bytes + channel];
 
           newval = floor (newval*factor + 0.5) / factor;
@@ -62,9 +57,9 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	  else if (newval < 0)
 	    newval = 0;
 
-	  uint8_t newvali = (unsigned int)(newval + 0.5);
+	  uint8_t newvali = (uint8_t)(newval+0.5);
 	  
-	  cerror = src_row[col * bytes + channel] + error[col * bytes +
+	  float cerror = src_row[col * bytes + channel] + error[col * bytes +
 							  channel] - newvali;
 	  src_row[col * bytes + channel] = newvali;
 	  
