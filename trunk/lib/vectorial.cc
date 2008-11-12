@@ -242,8 +242,7 @@ static agg::glyph_rendering gren = agg::glyph_ren_outline;
 
 static const char* fonts[] = {
  "/usr/X11/share/fonts/TTF/DejaVuSans.ttf",
- "/usr/X11/share/fonts/TTF/DejaVuSansBold.ttf",
- "/usr/X11/share/fonts/TTF/DejaVuSans-Bold.ttf"
+ "/usr/X11/share/fonts/TTF/Vera.ttf",
 };
 
 // Attention! Right now the horizontal and on path
