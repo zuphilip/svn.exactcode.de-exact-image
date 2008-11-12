@@ -9,7 +9,7 @@
 #include <string.h>
 #include <inttypes.h>	// int8_t
 
-enum {
+enum direction_t {
   NONE,
   UP,
   LEFT,
@@ -63,7 +63,7 @@ static int error[SIZE]; /* queue with error values of recent pixels */
   *pixel=(uint8_t)(pvalue + 0.5);
 }
 
-static void move (int direction)
+static void move (direction_t direction)
 {
   /* dither the current pixel */
   if (cur_x>=0 && cur_x<img_width && cur_y>=0 && cur_y<img_height)
@@ -90,7 +90,7 @@ static void move (int direction)
   } /* switch */
 }
 
-void hilbert_level(int level,int direction)
+void hilbert_level(int level, direction_t direction)
 {
   if (level==1) {
     switch (direction) {
@@ -162,7 +162,7 @@ inline double priv_log2(double n) {
   //return log2(n);
 }
 
-void Riemersma(uint8_t *image,int width,int height, int shades)
+void Riemersma(uint8_t *image,int width,int height, int shades, int samples)
 {
   int level,size;
 
