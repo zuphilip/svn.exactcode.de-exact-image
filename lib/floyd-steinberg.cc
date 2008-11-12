@@ -9,28 +9,22 @@
 #include <inttypes.h>	// uint8_t
 
 void
-FloydSteinberg (uint8_t *image, int width, int height, int shades)
+FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
 {
-  uint8_t *src_row;
-  float *error, *nexterror;
-  int bytes = 1;
   int direction = 1;
   
   const float factor = (float) (shades - 1) / (float) 255;
   
   /*  allocate row/error buffers  */
-  src_row = image;
+  float* error = (float*) malloc (width * bytes * sizeof (float));
+  float* nexterror = (float*) malloc (width * bytes * sizeof (float));
   
-  error = (float *) malloc (width * bytes * sizeof (float));
-  nexterror = (float *) malloc (width * bytes * sizeof (float));
-
   /*  initialize the error buffers  */
   for (int row = 0; row < width * bytes; row++)
     error[row] = nexterror[row] = 0;
 
   for (int row = 0; row < height; row++)
     {
-      int channel = 0;
       int start, end;
 
       for (int col = 0; col < width * bytes; col++)
@@ -48,6 +42,9 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
       
       for (int col = start; col != end; col += direction)
 	{
+	  for (int channel = 0; channel < bytes; channel++)
+	    {
+     
 	  float newval =
 	    src_row[col * bytes + channel] + error[col * bytes + channel];
 
@@ -72,15 +69,16 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	    }
 	  if (col - direction >= 0 && col - direction < width)
 	    nexterror[(col - direction) * bytes + channel] += cerror * 3 / 16;
+
+	    }
 	}
 
-      /* store in the data buffer we got */
       src_row += width*bytes;
 
       /* next row in the opposite direction */
       direction *= -1;
 
-      /* swap error/nexerror */
+      /* swap error/nexterror */
       float* tmp = error;
       error = nexterror;
       nexterror = tmp;
