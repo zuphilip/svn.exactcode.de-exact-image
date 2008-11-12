@@ -8,6 +8,8 @@
 #include <math.h>	// floor
 #include <inttypes.h>	// uint8_t
 
+#include "floyd-steinberg.h"
+
 void
 FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
 {
