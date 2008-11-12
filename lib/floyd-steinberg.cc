@@ -18,8 +18,7 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>	// memcpy
+#include <stdlib.h>	// malloc / free
 #include <math.h>	// floor
 #include <inttypes.h>	// uint8_t
 
