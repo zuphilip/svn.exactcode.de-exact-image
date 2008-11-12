@@ -44,21 +44,19 @@ static void init_weights(int a[], int size, int max)
 static void dither_pixel(uint8_t *pixel)
 {
 static int error[SIZE]; /* queue with error values of recent pixels */
-  int i,err;
-  float pvalue;
+ int err = 0L;
+ for (int i = 0; i < SIZE; i++)
+    err += error[i] * weights[i];
 
-  for (i=0,err=0L; i<SIZE; i++)
-    err+=error[i]*weights[i];
+ float pvalue = *pixel + err / MAX;
 
-  pvalue = *pixel + err/MAX;
-
-  pvalue = floor (pvalue*img_factor + 0.5) / img_factor;
+  pvalue = floor (pvalue * img_factor + 0.5) / img_factor;
   if (pvalue > 255)
     pvalue = 255;
   else if (pvalue < 0)
     pvalue = 0;
 
-  memmove(error,error+1,(SIZE-1)*sizeof error[0]);    /* shift queue */
+  memmove(error, error + 1, (SIZE - 1) * sizeof error[0]);    /* shift queue */
   error[SIZE-1] = *pixel - (uint8_t)(pvalue + 0.5);
   *pixel=(uint8_t)(pvalue + 0.5);
 }
@@ -66,7 +64,8 @@ static int error[SIZE]; /* queue with error values of recent pixels */
 static void move(direction_t direction)
 {
   /* dither the current pixel */
-  if (cur_x>=0 && cur_x<img_width && cur_y>=0 && cur_y<img_height)
+  if (cur_x >= 0 && cur_x < img_width &&
+      cur_y >= 0 && cur_y < img_height)
     dither_pixel(img_ptr);
 
   /* move to the next pixel */
@@ -81,11 +80,11 @@ static void move(direction_t direction)
     break;
   case UP:
     cur_y--;
-    img_ptr-=img_width;
+    img_ptr -= img_width;
     break;
   case DOWN:
     cur_y++;
-    img_ptr+=img_width;
+    img_ptr += img_width;
     break;
   } /* switch */
 }
@@ -118,40 +117,40 @@ void hilbert_level(int level, direction_t direction)
   } else {
     switch (direction) {
     case LEFT:
-      hilbert_level(level-1, UP);
+      hilbert_level(level - 1, UP);
       move(RIGHT);
-      hilbert_level(level-1, LEFT);
+      hilbert_level(level - 1, LEFT);
       move(DOWN);
-      hilbert_level(level-1, LEFT);
+      hilbert_level(level - 1, LEFT);
       move(LEFT);
-      hilbert_level(level-1, DOWN);
+      hilbert_level(level - 1, DOWN);
       break;
     case RIGHT:
-      hilbert_level(level-1, DOWN);
+      hilbert_level(level - 1, DOWN);
       move(LEFT);
-      hilbert_level(level-1, RIGHT);
+      hilbert_level(level - 1, RIGHT);
       move(UP);
-      hilbert_level(level-1, RIGHT);
+      hilbert_level(level - 1, RIGHT);
       move(RIGHT);
-      hilbert_level(level-1, UP);
+      hilbert_level(level - 1, UP);
       break;
     case UP:
-      hilbert_level(level-1, LEFT);
+      hilbert_level(level - 1, LEFT);
       move(DOWN);
-      hilbert_level(level-1, UP);
+      hilbert_level(level - 1, UP);
       move(RIGHT);
-      hilbert_level(level-1, UP);
+      hilbert_level(level - 1, UP);
       move(UP);
-      hilbert_level(level-1, RIGHT);
+      hilbert_level(level - 1, RIGHT);
       break;
     case DOWN:
-      hilbert_level(level-1, RIGHT);
+      hilbert_level(level - 1, RIGHT);
       move(UP);
-      hilbert_level(level-1, DOWN);
+      hilbert_level(level - 1, DOWN);
       move(LEFT);
-      hilbert_level(level-1, DOWN);
+      hilbert_level(level - 1, DOWN);
       move(DOWN);
-      hilbert_level(level-1, LEFT);
+      hilbert_level(level - 1, LEFT);
       break;
     } /* switch */
   } /* if */
