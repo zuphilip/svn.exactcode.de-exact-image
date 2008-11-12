@@ -12,15 +12,14 @@ void
 FloydSteinberg (uint8_t *image, int width, int height, int shades)
 {
   uint8_t *src_row;
-  uint8_t *dest_row;
-  float *error, *nexterror, *tmp;
+  float *error, *nexterror;
   int row;
   int bytes = 1;
-
+  int direction = 1;
+  
   /*  allocate row/error buffers  */
   src_row = image;
-  dest_row = (uint8_t *) malloc (width * bytes);
-
+  
   error = (float *) malloc (width * bytes * sizeof (float));
   nexterror = (float *) malloc (width * bytes * sizeof (float));
 
@@ -32,7 +31,6 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
     {
       int col;
       int channel = 0;
-      static int direction = 1;
       int start, end;
 
       float newval, factor;
@@ -64,12 +62,12 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	  else if (newval < 0)
 	    newval = 0;
 
-	  dest_row[col * bytes + channel] = (unsigned int)(newval + 0.5);
-
+	  uint8_t newvali = (unsigned int)(newval + 0.5);
+	  
 	  cerror = src_row[col * bytes + channel] + error[col * bytes +
-							  channel] -
-	    dest_row[col * bytes + channel];
-
+							  channel] - newvali;
+	  src_row[col * bytes + channel] = newvali;
+	  
 	  nexterror[col * bytes + channel] += cerror * 5 / 16;
 	  if (col + direction >= 0 && col + direction < width)
 	    {
@@ -82,19 +80,17 @@ FloydSteinberg (uint8_t *image, int width, int height, int shades)
 	}
 
       /* store in the data buffer we got */
-      memcpy (src_row, dest_row, width*bytes);
       src_row += width*bytes;
 
       /* next row in the opposite direction */
       direction *= -1;
 
       /* swap error/nexerror */
-      tmp = error;
+      float* tmp = error;
       error = nexterror;
       nexterror = tmp;
     }
 
-  free (dest_row);
   free (error);
   free (nexterror);
 }
