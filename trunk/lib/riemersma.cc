@@ -18,8 +18,8 @@ enum direction_t {
 };
 
 /* variables needed for the Riemersma dither algorithm */
-static int cur_x=0, cur_y=0;
-static int img_width=0, img_height=0;
+static int cur_x = 0, cur_y = 0;
+static int img_width = 0, img_height = 0;
 static float img_factor;
 static uint8_t *img_ptr;
 
@@ -29,7 +29,7 @@ static uint8_t *img_ptr;
 
 static int weights[SIZE];       /* weights for the errors of recent pixels */
 
-static void init_weights(int a[],int size,int max)
+static void init_weights(int a[], int size, int max)
 {
   double m = exp(log(max)/(size-1));
   double v;
@@ -63,7 +63,7 @@ static int error[SIZE]; /* queue with error values of recent pixels */
   *pixel=(uint8_t)(pvalue + 0.5);
 }
 
-static void move (direction_t direction)
+static void move(direction_t direction)
 {
   /* dither the current pixel */
   if (cur_x>=0 && cur_x<img_width && cur_y>=0 && cur_y<img_height)
@@ -92,7 +92,7 @@ static void move (direction_t direction)
 
 void hilbert_level(int level, direction_t direction)
 {
-  if (level==1) {
+  if (level == 1) {
     switch (direction) {
     case LEFT:
       move(RIGHT);
@@ -118,57 +118,55 @@ void hilbert_level(int level, direction_t direction)
   } else {
     switch (direction) {
     case LEFT:
-      hilbert_level(level-1,UP);
+      hilbert_level(level-1, UP);
       move(RIGHT);
-      hilbert_level(level-1,LEFT);
+      hilbert_level(level-1, LEFT);
       move(DOWN);
-      hilbert_level(level-1,LEFT);
+      hilbert_level(level-1, LEFT);
       move(LEFT);
-      hilbert_level(level-1,DOWN);
+      hilbert_level(level-1, DOWN);
       break;
     case RIGHT:
-      hilbert_level(level-1,DOWN);
+      hilbert_level(level-1, DOWN);
       move(LEFT);
-      hilbert_level(level-1,RIGHT);
+      hilbert_level(level-1, RIGHT);
       move(UP);
-      hilbert_level(level-1,RIGHT);
+      hilbert_level(level-1, RIGHT);
       move(RIGHT);
-      hilbert_level(level-1,UP);
+      hilbert_level(level-1, UP);
       break;
     case UP:
-      hilbert_level(level-1,LEFT);
+      hilbert_level(level-1, LEFT);
       move(DOWN);
-      hilbert_level(level-1,UP);
+      hilbert_level(level-1, UP);
       move(RIGHT);
-      hilbert_level(level-1,UP);
+      hilbert_level(level-1, UP);
       move(UP);
-      hilbert_level(level-1,RIGHT);
+      hilbert_level(level-1, RIGHT);
       break;
     case DOWN:
-      hilbert_level(level-1,RIGHT);
+      hilbert_level(level-1, RIGHT);
       move(UP);
-      hilbert_level(level-1,DOWN);
+      hilbert_level(level-1, DOWN);
       move(LEFT);
-      hilbert_level(level-1,DOWN);
+      hilbert_level(level-1, DOWN);
       move(DOWN);
-      hilbert_level(level-1,LEFT);
+      hilbert_level(level-1, LEFT);
       break;
     } /* switch */
   } /* if */
 }
 
 inline double priv_log2(double n) {
-  return log(n)/log(2);
+  return log(n) / log(2);
   //return log2(n);
 }
 
-void Riemersma(uint8_t *image,int width,int height, int shades, int samples)
+void Riemersma(uint8_t *image, int width, int height, int shades, int samples)
 {
-  int level,size;
-
   /* determine the required order of the Hilbert curve */
-  size = width > height ? width : height;
-  level = (int) priv_log2 (size);
+  int size = width > height ? width : height;
+  int level = (int) priv_log2 (size);
   if ((1L << level) < size)
     level++;
 
