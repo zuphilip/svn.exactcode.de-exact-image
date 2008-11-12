@@ -31,14 +31,14 @@ static int weights[SIZE];       /* weights for the errors of recent pixels */
 
 static void init_weights(int a[], int size, int max)
 {
-  double m = exp(log(max)/(size-1));
+  double m = exp(log(max) / (size-1));
   double v;
   int i;
 
-  for (i=0, v=1.0; i<size; i++) {
-    a[i]=(int)(v+0.5);  /* store rounded value */
-    v*=m;               /* next value */
-  } /*for */
+  for (i = 0, v = 1.0; i < size; i++) {
+    a[i] = (int)(v + 0.5);  /* store rounded value */
+    v *= m;                 /* next value */
+  }
 }
 
 static void dither_pixel(uint8_t *pixel)
@@ -57,8 +57,8 @@ static int error[SIZE]; /* queue with error values of recent pixels */
     pvalue = 0;
 
   memmove(error, error + 1, (SIZE - 1) * sizeof error[0]);    /* shift queue */
-  error[SIZE-1] = *pixel - (uint8_t)(pvalue + 0.5);
-  *pixel=(uint8_t)(pvalue + 0.5);
+  error[SIZE - 1] = *pixel - (uint8_t)(pvalue + 0.5);
+  *pixel = (uint8_t)(pvalue + 0.5);
 }
 
 static void move(direction_t direction)
