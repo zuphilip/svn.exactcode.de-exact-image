@@ -468,14 +468,14 @@ static struct {
   { "blue",    "#0000ff" },
   { "navy",    "#000080" },
   { "black",   "#000000" },
+  
+  // TODO: HTML, X11, SVG; ...
 };
 
 static bool parse_color (Image::iterator& it, const char* color)
 {
   unsigned int r, g, b;
   int strl = strlen(color);
-  
-  std::cerr << "parse_color: " << color << std::endl;
   
   if (strl == 4 && sscanf(color, "#%1x%1x%1x", &r, &g, &b) == 3)
     {
@@ -566,13 +566,11 @@ bool convert_text (const Argument<std::string>& arg)
 {
   unsigned int x1, y1;
   double height;
-  char text[512];
+  char* text = 0;
   
-  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%[ a-zA-Z0-9+*/_-]",
-	     &x1, &y1, &height, text) == 4)
+  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%a[^\r]", &x1, &y1, &height, &text) == 4)
     {
-      std::cerr << x1 << ", " << y1 << ", " << height
-		<< ", " << text << std::endl;
+      
       Path path;
       path.moveTo (x1, y1);
       
@@ -580,11 +578,12 @@ bool convert_text (const Argument<std::string>& arg)
       foreground_color.getRGB (r, g, b);
       path.setFillColor (r, g, b);
       path.drawText (image, text, height);
-
+      
+      free (text);
       return true; 
     }
   
-  std::cerr << "Error parsing line: '" << arg.Get() << "'" << std::endl;
+  std::cerr << "Error parsing text: '" << arg.Get() << "'" << std::endl;
   return false;
 }
 
