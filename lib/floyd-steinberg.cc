@@ -76,6 +76,15 @@ FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
 							  channel] - newvali;
 	  src_row[col * bytes + channel] = newvali;
 	  
+	  // limit color bleeding, limit to /4 of the sample range
+	  // TODO: make optional
+	  if (fabs(cerror) > 255 / 4) {
+	    if (cerror < 0)
+	      cerror = -255 / 4;
+	    else
+	      cerror = 255 / 4;
+	  }
+	  
 	  nexterror[col * bytes + channel] += cerror * 5 / 16;
 	  if (col + direction >= 0 && col + direction < width)
 	    {
