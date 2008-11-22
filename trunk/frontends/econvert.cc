@@ -567,8 +567,8 @@ bool convert_text (const Argument<std::string>& arg)
   unsigned int x1, y1;
   double height;
   char* text = 0;
-  
-  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%a[^\r]", &x1, &y1, &height, &text) == 4)
+  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%a[^\r]",
+	     &x1, &y1, &height, &text) == 4)
     {
       
       Path path;
