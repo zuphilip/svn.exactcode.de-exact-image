@@ -286,12 +286,12 @@ unsigned int InnerContours::RecursiveDist(const FGMatrix& image,
     break;
   case RIGHT:
     x += r;
-    if (x >= image.w)
+    if (x >= (int)image.w)
       return 0;
     break;
   case DOWN:
     y += r;
-    if (y >= image.h)
+    if (y >= (int)image.h)
       return 0;
     break;
   }
