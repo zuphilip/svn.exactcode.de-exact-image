@@ -27,6 +27,8 @@
 #include "agg.hh"
 #include "Image.hh"
 
+#include "Encodings.hh"
+
 #include "agg_conv_dash.h"
 #include "agg_conv_curve.h"
 #include "agg_conv_contour.h"
@@ -252,7 +254,7 @@ static const double weight = 0;
 
 static bool load_font(font_engine_type& m_feng)
 {
-  for (int i = 0; i < ARRAY_SIZE(fonts); ++i)
+  for (unsigned int i = 0; i < ARRAY_SIZE(fonts); ++i)
     {
       if (m_feng.load_font (fonts[i], 0, gren))
         return true;
@@ -287,24 +289,39 @@ void Path::drawText (Image& image, const char* text, double height)
   
   m_feng.hinting (hinting);
   m_feng.height (height);
-  m_feng.width (height);
   m_feng.flip_y (true);
   
   m_contour.width (-weight * height * 0.05);
-
-  const char* p = text;
   
   double x = path.last_x(), y = path.last_y();  
-  while (*p)
+  
+  std::vector<uint32_t> utf8 = DecodeUtf8(text, strlen(text));
+  for (unsigned int i = 0, n = 0; i < utf8.size(); ++i)
     {
-      const agg::glyph_cache* glyph = m_fman.glyph (*p);
+      switch (utf8[i]) {
+      case '\n':
+	n = 0;
+	x = path.last_x();
+	y += height * 1.2;
+	continue;
+      case '\t':
+	{
+	  const agg::glyph_cache* glyph = m_fman.glyph(' ');
+	  int skip = 8 - n % 8;
+	  x += glyph->advance_x * skip;
+	  y += glyph->advance_y * skip;
+	  n += skip;
+	}
+	continue;
+      }
+      
+      const agg::glyph_cache* glyph = m_fman.glyph(utf8[i]);
       if (glyph)
 	{
-	  if (kerning) {
+	  if (kerning)
 	    m_fman.add_kerning(&x, &y);
-	  }
 	  
-	  m_fman.init_embedded_adaptors (glyph, x, y);
+	  m_fman.init_embedded_adaptors(glyph, x, y);
 
 	  switch (glyph->data_type)
 	    {
@@ -336,12 +353,11 @@ void Path::drawText (Image& image, const char* text, double height)
 	  x += glyph->advance_x;
 	  y += glyph->advance_y;
 	}
-      ++p;
     }
   
-  agg::render_scanlines (ras, sl, ren_solid);
+  agg::render_scanlines(ras, sl, ren_solid);
   
-  path.move_to (x, y); // save last point for further drawing
+  path.move_to(x, y); // save last point for further drawing
 }
 
 void Path::drawTextOnPath (Image& image, const char* text, double height)
@@ -382,26 +398,41 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   
   m_feng.hinting (hinting);
   m_feng.height (height);
-  m_feng.width (height);
   m_feng.flip_y (true);
   
   m_contour.width (-weight * height * 0.05);
   
-  const char* p = text;
-  
   ras.reset ();
   
-  double x = 0, y = 3;  
-  while (*p)
+  double x = 0, y = 3; // TODO: 3? 
+  
+  std::vector<uint32_t> utf8 = DecodeUtf8(text, strlen(text));
+  for (unsigned int i = 0, n = 0; i < utf8.size(); ++i)
     {
-      const agg::glyph_cache* glyph = m_fman.glyph (*p);
+      switch (utf8[i]) {
+      case '\n':
+	n = 0;
+	x = 0;
+	y += height * 1.2;
+	continue;
+      case '\t':
+	{
+	  const agg::glyph_cache* glyph = m_fman.glyph(' ');
+	  int skip = 8 - n % 8;
+	  x += glyph->advance_x * skip;
+	  y += glyph->advance_y * skip;
+	  n += skip;
+	}
+	continue;
+      }
+      
+      const agg::glyph_cache* glyph = m_fman.glyph(utf8[i]);
       if (glyph)
 	{
-	  if (kerning) {
+	  if (kerning)
 	    m_fman.add_kerning(&x, &y);
-	  }
 	  
-	  m_fman.init_embedded_adaptors (glyph, x, y);
+	  m_fman.init_embedded_adaptors(glyph, x, y);
 	  
 	  if (glyph->data_type == agg::glyph_data_outline)
 	    {
@@ -414,12 +445,11 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
 	  x += glyph->advance_x;
 	  y += glyph->advance_y;
 	}
-      ++p;
     }
   
-    agg::render_scanlines(ras, sl, ren_solid);
-    
-    path.move_to (x, y); // save last point for further drawing
+  agg::render_scanlines(ras, sl, ren_solid);
+  
+  path.move_to(x, y); // save last point for further drawing
 }
 
 #endif
