@@ -240,6 +240,10 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     /* If we get here, we had a problem reading the file */
     return false;
   }
+  quality = Z_BEST_COMPRESSION * (quality + Z_BEST_COMPRESSION) / 100;
+  if (quality < 1) quality = 1;
+  else if (quality > Z_BEST_COMPRESSION) quality = Z_BEST_COMPRESSION;
+  png_set_compression_level(png_ptr, quality);
   
   png_info_init (info_ptr);
   
