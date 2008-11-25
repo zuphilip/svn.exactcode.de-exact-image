@@ -52,7 +52,7 @@ public:
       return *this;
     }
 
-    accu operator* (vtype f) {
+    accu operator* (vtype f) const {
       accu a = *this;
       return a *= f;
     }
@@ -64,7 +64,7 @@ public:
       return *this;
     }
 
-    accu operator+ (vtype f) {
+    accu operator+ (vtype f) const {
       accu a = *this;
       return a += f;
     }
@@ -75,12 +75,24 @@ public:
       v3 /= f;
       return *this;
     }
+
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
     
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       v2 += other.v2;
       v3 += other.v3;
       return *this;
+    }
+    
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
     }
 
     accu& operator-= (const accu& other) {
@@ -183,7 +195,7 @@ public:
       return *this;
     }
 
-    accu operator* (vtype f) {
+    accu operator* (vtype f) const {
       accu a = *this;
       return a *= f;
     }
@@ -195,8 +207,8 @@ public:
       v4 += f;
       return *this;
     }
-
-    accu operator+ (vtype f) {
+    
+    accu operator+ (vtype f) const {
       accu a = *this;
       return a += f;
     }
@@ -209,12 +221,24 @@ public:
       return *this;
     }
     
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
+    
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       v2 += other.v2;
       v3 += other.v3;
       v4 += other.v4;
       return *this;
+    }
+    
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
     }
 
     accu& operator-= (const accu& other) {
@@ -320,7 +344,7 @@ public:
       return *this;
     }
 
-    accu operator* (vtype f) {
+    accu operator* (vtype f) const {
       accu a = *this;
       return a *= f;
     }
@@ -332,7 +356,7 @@ public:
       return *this;
     }
 
-    accu operator+ (vtype f) {
+    accu operator+ (vtype f) const {
       accu a = *this;
       return a += f;
     }
@@ -343,12 +367,24 @@ public:
       v3 /= f;
       return *this;
     }
-      
+    
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
+    
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       v2 += other.v2;
       v3 += other.v3;
       return *this;
+    }
+    
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
     }
 
     accu& operator-= (const accu& other) {
@@ -444,7 +480,7 @@ public:
       return *this;
     }
 
-    accu operator* (vtype f) {
+    accu operator* (vtype f) const {
       accu a = *this;
       return a *= f;
     }
@@ -454,7 +490,7 @@ public:
       return *this;
     }
 
-    accu operator+ (vtype f) {
+    accu operator+ (vtype f) const {
       accu a = *this;
       return a += f;
     }
@@ -463,12 +499,24 @@ public:
       v1 /= f;
       return *this;
     }
-      
+
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
+    
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       return *this;
     }
 
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
+    }
+    
     accu& operator-= (const accu& other) {
       v1 -= other.v1;
       return *this;
@@ -552,7 +600,7 @@ public:
       return *this;
     }
 
-    accu operator* (vtype f) {
+    accu operator* (vtype f) const {
       accu a = *this;
       return a *= f;
     }
@@ -562,7 +610,7 @@ public:
       return *this;
     }
 
-    accu operator+ (vtype f) {
+    accu operator+ (vtype f) const {
       accu a = *this;
       return a += f;
     }
@@ -571,10 +619,22 @@ public:
       v1 /= f;
       return *this;
     }
-      
+    
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
+    
     accu& operator+= (const accu& other) {
       v1 += other.v1;
       return *this;
+    }
+    
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
     }
     
     accu& operator-= (const accu& other) {
