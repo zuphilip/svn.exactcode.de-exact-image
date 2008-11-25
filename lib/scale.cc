@@ -273,118 +273,149 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
   }
 }
 
-void ddt_scale (Image& new_image, double scalex, double scaley)
+template <typename T>
+struct ddt_scale_template
+{
+  void operator() (Image& new_image, double scalex, double scaley)
+  {
+    Image image;
+    image.copyTransferOwnership (new_image);
+    
+    new_image.resize((int)(scalex * (double) image.w),
+		     (int)(scaley * (double) image.h));
+    new_image.xres = (int)(scalex * image.xres);
+    new_image.yres = (int)(scaley * image.yres);
+    
+    // first scan the source image and build a direction map
+    char dir_map [image.h][image.w];
+    
+    T src_a(image), src_b(image), src_c(image), src_d(image);
+    src_a.at(0, 1);
+    src_b.at(1, 0);
+    src_c.at(1, 1);
+    
+    for (int y = 0; y < image.h-1; ++y) {
+      for (int x = 0; x < image.w-1; ++x) {
+	typename T::accu::vtype a, b, c, d;
+	(*src_a).getL(a); ++src_a;
+	(*src_b).getL(b); ++src_b;
+	(*src_c).getL(c); ++src_c;
+	(*src_d).getL(d); ++src_d;
+	
+	//std::cout << "x: " << x << ", y: " << y << std::endl;
+	//std::cout << "a: " << a << ", b: " << b
+	//	  << ", c: " << c << ", d: " << d << std::endl;
+	
+	if (abs(a-c) < abs(b-d))
+	  dir_map[y][x] = '\\';
+	else
+	  dir_map[y][x] = '/';
+      }
+      ++src_a; ++src_b; ++src_c; ++src_d;
+    }
+    
+    if (false)
+      {
+	int n = 0;
+	for (int y = 0; y < image.h-1; ++y) {
+	  for (int x = 0; x < image.w-1; ++x) {
+	    std::cout << (dir_map[y][x] == '/' ? ' ' : '\\');
+	    if (dir_map[y][x] == '/') ++n;
+	  }
+	  std::cout << std::endl;
+	}
+	std::cout << "NW-SE: " << n << std::endl;
+	
+	std::cout << std::endl;
+	
+	n = 0;
+	for (int y = 0; y < image.h-1; ++y) {
+	  for (int x = 0; x < image.w-1; ++x) {
+	    std::cout << (dir_map[y][x] == '/' ? '/' : ' ');
+	    if (dir_map[y][x] != '/') ++n;
+	  }
+	  std::cout << std::endl;
+	}
+	std::cout << "NE-SW: " << n << std::endl;
+      }
+    
+    T dst(new_image);
+    T src(image);
+    for (int y = 0; y < new_image.h; ++y) {
+      const double by = (-1.0 + image.h) * y / new_image.h;
+      const int sy = (int)floor(by);
+      const int ydist = (int)((by - sy) * 256);
+      
+      for (int x = 0; x < new_image.w; ++x) {
+	const double bx = (-1.0+image.w) * x / new_image.w;
+	const int sx = (int)floor(bx);
+	const int xdist = (int)((bx - sx) * 256);
+	
+	/*
+	  std::cout << "bx: " << bx << ", by: " << by
+	  << ", x: " << x << ", y: " << y
+	  << ", sx: " << sx << ", sy: " << sy << std::endl;
+	*/
+	
+	typename T::accu v;
+	
+	// which triangle does the point fall into?
+	if (dir_map[sy][sx] == '/') {
+	  const typename T::accu b = *src.at(sx, sy + 1);
+	  const typename T::accu d = *src.at(sx + 1, sy);
+	  
+	  if (xdist <= 256 - ydist) // left side triangle
+	    {
+	      const typename T::accu a = *src.at(sx, sy);
+	      // std::cout << "/-left" << std::endl;
+	      v =  a       * (256 - xdist) * (256 - ydist);
+	      v += b       * (256 - xdist) * ydist;
+	      v += d       * xdist         * (256 - ydist);
+	      v += (b+d)/2 * xdist         * ydist;
+	    }
+	  else // right side triangle
+	    {
+	      const typename T::accu c = *src.at(sx + 1, sy + 1);
+	      //std::cout << "/-right" << std::endl;
+	      v =  b       * (256 - xdist) * ydist;
+	      v += c       * xdist         * ydist;
+	      v += d       * xdist         * (256 - ydist);
+	      v += (b+d)/2 * (256 - xdist) * (256 - ydist);
+	    }
+	}
+	else {
+	  const typename T::accu a = *src.at(sx, sy);
+	  const typename T::accu c = *src.at(sx + 1, sy + 1);
+	  if (xdist <= ydist) // left side triangle
+	    {
+	      const typename T::accu b = *src.at(sx, sy + 1);
+	      //std::cout << "\\-left" << std::endl;
+	      v =  a       * (256 - xdist) * (256 - ydist);
+	      v += b       * (256 - xdist) * ydist;
+	      v += c       * xdist         * ydist;
+	      v += (a+c)/2 * xdist         * (256 - ydist);
+	    }
+	  else // right side triangle
+	    {
+	      const typename T::accu d = *src.at(sx + 1, sy);
+	      //std::cout << "\\-right" << std::endl;
+	      v =  a       * (256 - xdist) * (256 - ydist);
+	      v += c       * xdist         * ydist;
+	      v += d       * xdist         * (256 - ydist);
+	      v += (a+c)/2 * (256 - xdist) * ydist;
+	    }
+	}
+	v /= (256 * 256);
+	dst.set(v);
+	++dst;
+      }
+    }
+  }
+};
+  
+void ddt_scale (Image& image, double scalex, double scaley)
 {
   if (scalex == 1.0 && scaley == 1.0)
     return;
-
-  Image image;
-  image.copyTransferOwnership (new_image);
-  
-  new_image.resize ((int)(scalex * (double) image.w),
-		    (int)(scaley * (double) image.h));
-  new_image.xres = (int)(scalex * image.xres);
-  new_image.yres = (int)(scaley * image.yres);
-  
-  // first scan the source image and build a direction map
-  char dir_map [image.h][image.w];
-  
-  Image::iterator src_a = image.begin();
-  Image::iterator src_b = src_a.at (0, 1);
-  Image::iterator src_c = src_b.at (1, 0);
-  Image::iterator src_d = src_c.at (1, 1);
-  for (int y = 0; y < image.h-1; ++y) {
-    for (int x = 0; x < image.w-1; ++x) {
-      const int a = (*src_a).getL(); ++src_a;
-      const int b = (*src_b).getL(); ++src_b;
-      const int c = (*src_c).getL(); ++src_c;
-      const int d = (*src_d).getL(); ++src_d;
-      
-      //std::cout << "x: " << x << ", y: " << y << std::endl;
-      //std::cout << "a: " << a << ", b: " << b
-      //	  << ", c: " << c << ", d: " << d << std::endl;
-      
-      if (abs(a-c) < abs(b-d))
-	dir_map[y][x] = '\\';
-      else
-	dir_map[y][x] = '/';
-      //std::cout << dir_map[y][x];
-    }
-    ++src_a; ++src_b; ++src_c; ++src_d;
-    //std::cout << std::endl;
-  }
-
-  Image::iterator dst = new_image.begin();
-  Image::iterator src = image.begin();
-  for (int y = 0; y < new_image.h; ++y) {
-    const double by = (-1.0+image.h) * y / new_image.h;
-    const int sy = (int)floor(by);
-    const int ydist = (int) ((by - sy) * 256);
-    
-    for (int x = 0; x < new_image.w; ++x) {
-      const double bx = (-1.0+image.w) * x / new_image.w;
-      const int sx = (int)floor(bx);
-      const int xdist = (int) ((bx - sx) * 256);
-      
-      /*
-      std::cout << "bx: " << bx << ", by: " << by << ", x: " << x << ", y: " << y
-		<< ", sx: " << sx << ", sy: " << sy << std::endl;
-      */
-      
-      Image::iterator a = src.at (sx, sy);
-      Image::iterator b = src.at (sx, sy+1);
-      Image::iterator c = b; ++c;
-      Image::iterator d = a; ++d;
-      Image::iterator v;
-      
-      // which triangle does the point fall into?
-      if (dir_map[sy][sx] == '/') {
-	if (xdist <= 256-ydist) // left side triangle
-	  {
-	    // std::cout << "/-left" << std::endl;
-	    v = (
-		 *a * (256-xdist) * (256-ydist) +
-		 *b * (256-xdist) * ydist +
-		 *d * xdist       * (256-ydist) +
-		 (*b+*d) /2 * xdist * ydist
-		 );
-	  }
-	else // right side triangle
-	  {
-	    //std::cout << "/-right" << std::endl;
-	    v = (
-		 *b * (256-xdist) * ydist +
-		 *c * xdist       * ydist +
-		 *d * xdist       * (256-ydist) +
-		 (*b+*d) /2 * (256-xdist) * (256-ydist)
-		 );
-	  }
-      }
-      else {
-	if (xdist <= ydist) // left side triangle
-	  {
-	    //std::cout << "\\-left" << std::endl;
-	    v = (
-		 *a * (256-xdist) * (256-ydist) +
-		 *b * (256-xdist) * ydist +
-		 *c * xdist       * ydist +
-		 (*a+*c) /2 * xdist * (256-ydist)
-		 );
-	  }
-	else // right side triangle
-	  {
-	    //std::cout << "\\-right" << std::endl;
-	    v = (
-		 *a * (256-xdist) * (256-ydist) +
-		 *c * xdist       * ydist +
-		 *d * xdist       * (256-ydist) +
-		 (*a+*c) /2 * (256-xdist) * ydist
-		 );
-	  }
-      }
-      
-      dst.set (v / (256*256) );
-      ++dst;
-    }
-  }
+  codegen<ddt_scale_template> (image, scalex, scaley);
 }
