@@ -37,19 +37,26 @@ using namespace Exact;
 
 int getNextHeaderNumber (std::istream* stream)
 {
-  std::string s;
-  
-  int c = stream->peek ();
-  switch (c) {
-  case '\n':
-  case '\r':
-    stream->get (); // consume silently
-    // comment line?
-    while (stream->peek () == '#') {
-      std::string str;
-      std::getline (*stream, str); // consume comment line
+  for (bool whitespace = true; whitespace && stream;)
+    {
+      int c = stream->peek();
+      switch (c) {
+      case ' ':
+	stream->get(); // consume silently
+	break;
+      case '\n':
+      case '\r':
+	stream->get(); // consume silently
+	// comment line?
+	while (stream->peek() == '#') {
+	  std::string str;
+	  std::getline(*stream, str); // consume comment line
+	}
+	break;
+      default:
+	whitespace = false;
+      }
     }
-  }
   
   int i;
   *stream >> i;
@@ -61,10 +68,9 @@ bool PNMCodec::readImage (std::istream* stream, Image& image, const std::string&
   // check signature
   if (stream->peek () != 'P')
     return false;
+  stream->get(); // consume P
   
   image.bps = 0;
-  
-  stream->get(); // consume P
   char mode = stream->peek();
   switch (mode) {
   case '1':
