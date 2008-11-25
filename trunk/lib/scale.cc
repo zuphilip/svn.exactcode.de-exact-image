@@ -338,7 +338,7 @@ void ddt_scale (Image& new_image, double scalex, double scaley)
       Image::iterator v;
       
       // which triangle does the point fall into?
-      if (false && dir_map[sy][sx] == '/') {
+      if (dir_map[sy][sx] == '/') {
 	if (xdist <= 256-ydist) // left side triangle
 	  {
 	    // std::cout << "/-left" << std::endl;
