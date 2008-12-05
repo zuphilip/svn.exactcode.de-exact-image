@@ -171,11 +171,11 @@ void rot90 (Image& image, int angle)
   bool cw = false; // clock-wise
   if (angle == 90)
     cw = true; // else 270 or -90 or whatever and thus counter cw
-    
-  int rot_bytes = (image.h*image.spp*image.bps + 7) / 8;
   
+  int rot_stride = (image.h * image.spp * image.bps + 7) / 8;
+   
   uint8_t* data = image.getRawData();
-  uint8_t* rot_data = (uint8_t*) malloc (rot_bytes * image.w);
+  uint8_t* rot_data = (uint8_t*) malloc(rot_stride * image.w);
   
   // TODO: 16bps
   switch (image.spp * image.bps)
@@ -193,7 +193,7 @@ void rot90 (Image& image, int angle)
 	if (cw)
 	  new_row = &rot_data [ (image.h - 1 - y) / spb ];
 	else
-	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y / spb ];
+	  new_row = &rot_data [ (image.w - 1) * rot_stride + y / spb ];
 	
 	for (int x = 0; x < image.w;) {
 	  // spread the bits thru the various row slots
@@ -202,11 +202,11 @@ void rot90 (Image& image, int angle)
 	  for (; i < spb && x < image.w; ++i) {
 	    if (cw) {
 	      *new_row = *new_row >> bps | (bits & mask);
-	      new_row += rot_bytes;
+	      new_row += rot_stride;
 	    }
 	    else {
 	      *new_row = *new_row << bps | (bits & mask) >> (8-bps);
-	      new_row -= rot_bytes;
+	      new_row -= rot_stride;
 	    }
 	    bits <<= bps;
 	    ++x;
@@ -215,11 +215,11 @@ void rot90 (Image& image, int angle)
 	  // TODO: recheck this residual bit for correctness
 	  if (i < spb) {
 	    if (cw) {
-	      new_row -= rot_bytes;
+	      new_row -= rot_stride;
 	      *new_row = *new_row >> (8 - (bps*i));
 	    }
 	    else {
-	      new_row += rot_bytes;
+	      new_row += rot_stride;
 	      *new_row = *new_row << (8 - (bps*i));
 	      
 	    }
@@ -232,46 +232,31 @@ void rot90 (Image& image, int angle)
       break;
       
     case 8:
-      for (int y = 0; y < image.h; ++y) {
-	uint8_t* new_row;
-	if (cw)
-	  new_row = &rot_data [ image.h - 1 - y ];
-	else
-	  new_row = &rot_data [ (image.w - 1) * rot_bytes + y ];
-	for (int x = 0; x < image.w; ++x) {
-	  *new_row = *data++;
-	  if (cw)
-	    new_row += rot_bytes;
-	  else
-	    new_row -= rot_bytes;
-	}
-      }
-      break;
-      
+    case 16:
     case 24:
+    case 32:
+    case 48:
       {
-	rgb* rgb_data = (rgb*) image.getRawData(); 
+	const int bps = (image.bps + 7) / 8 * image.spp; // bytes...
+	
 	for (int y = 0; y < image.h; ++y) {
-	  rgb* new_row;
-	  if (cw)
-	    new_row = (rgb*)
-	      &rot_data [ (image.h - 1 - y) * image.spp ];
-	  else
-	    new_row = (rgb*)
-	      &rot_data [ (image.w - 1) * rot_bytes + (y * image.spp) ];
+	  uint8_t* new_row =
+	    cw ?
+	    &rot_data[(image.h - 1 - y) * image.spp] :
+	    &rot_data[(image.w - 1) * rot_stride + (y * image.spp)];
+	  
 	  for (int x = 0; x < image.w; ++x) {
-	    *new_row = *rgb_data++;
-	    if (cw)
-	      new_row += image.h;
-	    else
-	      new_row -= image.h;
+	    for (int i = 0; i < image.spp; ++i)
+	      *new_row++ = *data++;
+	    new_row += cw ? rot_stride - bps : -rot_stride - bps;
 	  }
 	}
       }
       break;
       
     default:
-      std::cerr << "rot90: unsupported depth. spp: " << image.spp << ", bpp:" << image.bps << std::endl;
+      std::cerr << "rot90: unsupported depth. spp: "
+		<< image.spp << ", bpp:" << image.bps << std::endl;
       free (rot_data);
       return;
     }
