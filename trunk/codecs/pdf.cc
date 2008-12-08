@@ -831,7 +831,7 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   const double ih = 72. * image.h / (image.yres ? image.yres : 72);
 
   context.beginPage(iw, ih);
-  context.currentPage->content.showImage(*i, 0, 0, iw, iw);
+  context.currentPage->content.showImage(*i, 0, 0, iw, ih);
   
   return true;
 }
