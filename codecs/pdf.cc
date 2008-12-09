@@ -434,23 +434,21 @@ struct PDFXObject : public PDFStream
     
 #if WITHLIBJPEG == 1
     else if (encoding == "/DCTDecode") {
-      JPEGCodec codec;
-      codec.writeImage (&s, image, quality, compress);
+      ImageCodec::Write(&s, image, "jpeg", "jpg", quality, compress);
     }
 #endif
 #if WITHJASPER == 1
     else if (encoding == "/JPXDecode") {
-      JPEG2000Codec codec;
-      codec.writeImage (&s, image, quality, compress);
+      ImageCodec::Write(&s, image, "jp2", "jp2", quality, compress);
     }
 #endif
     
+    // TODO: let the codecs remove what they consumed
     Args args(compress);
     args.containsAndRemove("recompress");
     if (!args.str().empty())
       std::cerr << "PDFCodec: Unrecognized encoding option '"
 		<< args.str() << "'" << std::endl;
-    
   }
   
   uint32_t imageID;
