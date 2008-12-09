@@ -312,6 +312,64 @@ struct PDFFont : public PDFObject
   uint32_t fontID;
 };
 
+class Args
+{
+public:
+  Args(const std::string& _args)
+  {
+    size_t it1 = 0;
+    while (it1 < _args.size())
+      {
+	size_t it2 = _args.find_first_of(",;|:", it1);
+	args.insert (_args.substr(it1, it2 - it1));
+	
+	if (it2 != std::string::npos)
+	  it1 = it2 + 1;
+	else
+	  it1 = _args.size();
+      }
+  }
+  
+  bool contains(const std::string& arg)
+  {
+    if (args.find(arg) != args.end())
+      return true;
+    else
+      return false;
+  }
+  
+  void remove(const std::string& arg)
+  {
+    args.erase(arg);
+  }
+  
+  bool containsAndRemove(const std::string& arg)
+  {
+    if (contains(arg)) {
+      remove(arg);
+      return true;
+    }
+    return false;
+  }
+  
+  std::string str()
+  {
+    std::string ret;
+    std::set<std::string>::iterator it = args.begin();
+    if (it != args.end())
+      ret = *it++;
+    
+    for (; it != args.end(); ++it) {
+      ret += ",";
+      ret += *it;
+    }
+    return ret;
+  }
+  
+protected:
+  std::set<std::string> args;
+};
+
 // so far always an image
 struct PDFXObject : public PDFStream
 {
@@ -338,23 +396,21 @@ struct PDFXObject : public PDFStream
     if (image.bps < 8) encoding = "/FlateDecode";
     else encoding = "/DCTDecode";
     
-    if (!compress.empty())
-      {
-	std::string c (compress);
-	std::transform (c.begin(), c.end(), c.begin(), tolower);
-	
-	if (c == "ascii85")
-	  encoding = "/ASCII85Decode";
-	else if (c == "hex")
-	  encoding = "/ASCIIHexDecode";
-	else if (c == "jpeg")
-	  encoding = "/DCTDecode";
-	else if (c == "jpeg2000")
-	  encoding = "/JPXDecode";
-	else
-	  std::cerr << "PDFCodec: Unrecognized encoding option '"
-		    << compress << "'" << std::endl;
-      }
+    // TODO: move transform to Args class
+    std::string c(compress);
+    std::transform(c.begin(), c.end(), c.begin(), tolower);
+    Args args(c);
+    
+    if (args.containsAndRemove("ascii85"))
+      encoding = "/ASCII85Decode";
+    else if (args.containsAndRemove("hex"))
+      encoding = "/ASCIIHexDecode";
+    else if (args.containsAndRemove("jpeg"))
+      encoding = "/DCTDecode";
+    else if (args.containsAndRemove("jpeg2000"))
+      encoding = "/JPXDecode";
+    
+    compress = args.str();
     
     s << "/Type /XObject\n"
       "/Subtype /Image\n"
@@ -375,6 +431,7 @@ struct PDFXObject : public PDFStream
       EncodeASCII85(s, data, bytes);
     else if (encoding == "/ASCIIHexDecode")
       EncodeHex(s, data, bytes);
+    
 #if WITHLIBJPEG == 1
     else if (encoding == "/DCTDecode") {
       JPEGCodec codec;
@@ -387,12 +444,19 @@ struct PDFXObject : public PDFStream
       codec.writeImage (&s, image, quality, compress);
     }
 #endif
+    
+    Args args(compress);
+    args.containsAndRemove("recompress");
+    if (!args.str().empty())
+      std::cerr << "PDFCodec: Unrecognized encoding option '"
+		<< args.str() << "'" << std::endl;
+    
   }
   
   uint32_t imageID;
   
   Image& image;
-  const std::string& compress;
+  std::string compress;
   std::string encoding;
   int quality;
 };
@@ -822,7 +886,7 @@ bool PDFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
   PDFContext context(stream);
-
+  
   PDFXObject* i = new PDFXObject(context.xref, image, compress, quality);
   *context.s << *i;
   context.images.push_back(i);
