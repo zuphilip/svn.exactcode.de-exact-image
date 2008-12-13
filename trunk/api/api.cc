@@ -344,7 +344,6 @@ void imageOptimize2BW (Image* image, int low, int high,
   if (target_dpi && image->xres)
     {
       double scale = (double)(target_dpi) / image->xres;
-      std::cerr << "scale: " << scale << std::endl;
       if (scale < 1.0)
 	box_scale (*image, scale, scale);
       else
@@ -357,8 +356,9 @@ void imageOptimize2BW (Image* image, int low, int high,
 
   if (!threshold)
     threshold = 200;
-  
-  colorspace_gray8_to_gray1 (*image, threshold);
+
+  if (image->bps > 1)
+    colorspace_gray8_to_gray1 (*image, threshold);
 }
 
 bool imageIsEmpty (Image* image, double percent, int margin)
