@@ -7,8 +7,8 @@ feature_options="evasgl"
 
 PACKAGE="exact-image"
 VERSION_MAJOR=0
-VERSION_MINOR=6
-VERSION_MICRO=9
+VERSION_MINOR=7
+VERSION_MICRO=0
 
 init
 
