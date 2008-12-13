@@ -168,7 +168,8 @@ int main (int argc, char* argv[])
   if (arg_threshold.Get() == 0)
     threshold = 200;
   
-  if (arg_denoise.Get())
+  // denoise? only if more than 1bps in the source image
+  if (arg_denoise.Get() && image.bps > 1)
     {
       colorspace_gray8_threshold (image, threshold);
       colorspace_gray8_denoise_neighbours (image);
@@ -176,7 +177,8 @@ int main (int argc, char* argv[])
     }
   else
     {
-      colorspace_gray8_to_gray1 (image, threshold);
+      if (image.bps > 1)
+	colorspace_gray8_to_gray1 (image, threshold);
     }
   
   if (!ImageCodec::Write(arg_output.Get(), image)) {
