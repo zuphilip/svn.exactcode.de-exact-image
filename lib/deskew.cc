@@ -89,10 +89,11 @@
 
 deskew_rect deskewParameters (Image& image, int raster_rows)
 {
+  const bool debug =
 #ifdef DEBUG
-  const bool debug = true;
+    true;
 #else
-  const bool debug = false;
+    false;
 #endif
   
   deskew_rect rect;
@@ -118,7 +119,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       // average
       double r, g, b, r_avg = 0, g_avg = 0, b_avg = 0;
       for (int y = 0; y < raster_rows; ++y) {
-	it = it.at (x, y);
+	it = it.at(x, y);
 	*it;
 	it.getRGB (r, g, b);
 	r_avg += r / raster_rows; g_avg += g / raster_rows; b_avg += b / raster_rows;
@@ -127,7 +128,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
       // deviations -> threshold
       threshold[x] = 0;
       for (int y = 0; y < raster_rows; ++y) {
-	it = it.at (x, y);
+	it = it.at(x, y);
 	*it;
 	it.getRGB (r, g, b);
 	double th = (fabs(r_avg-r) + fabs(g_avg-g) + fabs(b_avg-b)) / 3;
@@ -165,7 +166,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
 #ifdef DEBUG
   struct marker {
     void operator() (Image::iterator& it, int x, int y, Image::iterator& color) {
-      it = it.at (x, y);
+      it = it.at(x, y);
       it.set (color);
     }
     void operator() (Image::iterator& it, std::pair<int, int> point, Image::iterator& color) {
@@ -173,7 +174,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     }
 
     void operator() (Image::iterator& it, int x, int y, Image::iterator& color, double alpha) {
-      it = it.at (x, y);
+      it = it.at(x, y);
       double r1, r2, g1, g2, b1, b2;
       r1 = r2 = g1 = g2 = b1 = b2 = 0; // make gcc happy
       *it;
@@ -195,72 +196,90 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   // calculation - the slope would be near inf. otherwise ...
 
   std::list<std::pair<int, int> > points_left, points_right, points_top, points_bottom;
-
+  
+  const int n = 3; // the nth differing pixel to look for
+  
   // left
   for (int y = 0; y < image.height() * 5 / 6; ++y)
     {
-      it = it.at (0,y);
-      it_ref = reference_image.begin ();
+      it = it.at(0, y);
+      it_ref = reference_image.begin();
       
-      for (int x = 0; x < image.width(); ++x, ++it, ++it_ref)
+      for (int x = 0, m = 0; x < image.width() - n + 1; ++x, ++it, ++it_ref)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (x >= border_margin)
-		points_left.push_back (std::pair<int,int> (y, x)); // flipped
-	      break;
+	      if (++m >= n) {
+		if (x >= border_margin)
+		  points_left.push_back (std::pair<int,int> (y, x)); // flipped
+		break;
+	      }
 	    }
+	  else
+	    m = 0;
 	}
     }
   
   // right
   for (int y = 0; y < image.height() * 5 / 6; ++y)
     {
-      it = it.at (image.width() - 1, y);
-      it_ref = it_ref.at (image.width() - 1, 0);
+      it = it.at(image.width() - 1, y);
+      it_ref = it_ref.at(image.width() - 1, 0);
       
-      for (int x = image.width() - 1; x >= 0; --x, --it, --it_ref)
+      for (int x = image.width() - 1, m = 0; x >= n - 1; --x, --it, --it_ref)
 	{
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (x <= image.width() - border_margin)
-		points_right.push_back (std::pair<int,int> (y, x)); // flipped
-	      break;
+	      if (++m >= n) {
+		if (x <= image.width() - border_margin)
+		  points_right.push_back (std::pair<int,int> (y, x)); // flipped
+		break;
+	      }
 	    }
+	  else
+	    m = 0;
 	}
     }
   
   // top, only 1/4 of the area is searched thru
   for (int x = 0; x < image.width(); ++x)
     {
-      it_ref = it_ref.at (x, 0);
-      // this is off-by one intentionally -ReneR
+      it_ref = it_ref.at(x, 0);
+      // this is off-by one intentionally (hint: think scanners) -ReneR
       const int y_offset = raster_rows + 1;
-      for (int y = y_offset; y < image.height() / 4; ++y)
+      for (int y = y_offset, m = 0; y < image.height() / 4; ++y)
 	{
-	  it = it.at (x, y);
+	  it = it.at(x, y);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (y >= y_offset + border_margin)
-		points_top.push_back (std::pair<int,int> (x, y));
-	      break;
+	      if (++m >= n) {
+		if (y >= y_offset + border_margin)
+		  points_top.push_back (std::pair<int,int> (x, y));
+		break;
+	      }
 	    }
+	  else
+	    m = 0;
 	}
     }
   
   // bottom, only 1/2 of the area is searched thru
   for (int x = 0; x < image.width(); ++x)
     {
-      it_ref = it_ref.at (x, 0);
-      for (int y = image.height() - 1; y >= image.height() / 2; --y)
+      it_ref = it_ref.at(x, 0);
+      for (int y = image.height() - 1, m = 0; y >= image.height() / 2; --y)
 	{
-	  it = it.at (x, y);
+	  it = it.at(x, y);
 	  if (comparator(it_ref, it, threshold[x]))
 	    {
-	      if (y <= image.height() - border_margin)
-		points_bottom.push_back (std::pair<int,int> (x, y));
-	      break;
+	      if (++m >= n) {
+		if (y <= image.height() - border_margin)
+		  points_bottom.push_back (std::pair<int,int> (x, y));
+		break;
+	      }
 	    }
+	  else
+	    m = 0;
 	}	  
     }
   
