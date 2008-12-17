@@ -89,11 +89,19 @@ bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& 
   
   // TODO: differentiate between "maybe be old TGA" and definetly
   //       should be new-style TGA with footer
-  
-  std::cerr << "TGA: " << (int)header.IDLength << ", " << (int)header.ImageType
-    	    << ", " << (int)header.ImageDepth << ", " << (int)header.ColorMapType << ", "
-	    << header.ImageWidth << ", " << header.ImageHeight << std::endl;
-  
+
+  switch (header.ImageDepth)
+    {
+    case 1:
+    case 8:
+    case 16:
+    case 24:
+    case 32:
+      break;
+    default:
+      goto no_tga;
+    };
+
   // TODO: harden checks for "maybe TGA", ...
   
   switch (header.ImageType)
@@ -115,6 +123,10 @@ bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& 
     default:
       goto no_tga;
     }
+
+  std::cerr << "TGA: " << (int)header.IDLength << ", " << (int)header.ImageType
+            << ", " << (int)header.ImageDepth << ", " << (int)header.ColorMapType << ", "
+            << header.ImageWidth << ", " << header.ImageHeight << std::endl;
   
   if (header.ImageDepth == 32)
     image.spp = 4;
