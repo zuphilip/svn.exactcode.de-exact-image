@@ -1,4 +1,9 @@
 
+* crash on 0 byte input?
+* eimport
+* cut and resave in edisplay
+
+ - GRAY, RGB, CMYK, YUV iterators with bit fields specified
  - SVG text tag, styles, def refs (e.g. text pathes, styles)
  - black / white- point
 
@@ -7,9 +12,11 @@ image[][]
 
 type inside the image: RGB, YUV, CMYK, palette (direct, without expansion on load)
 
-cheap copies
-copy on write
-sub-images
+ - cheap copies
+ - copy on write
+ - sub-images
+ - shear
+ - rotate by double shear
 
 Loaders:
  - palette saving
