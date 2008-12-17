@@ -211,7 +211,7 @@ void imageRotate (Image* image, double angle)
   rotate (*image, angle, background_color);
 }
 
-Image* copyImageCropRotate (Image* image, unsigned int x, unsigned int y,
+Image* copyImageCropRotate (Image* image, int x, int y,
 			   unsigned int w, unsigned int h, double angle)
 {
   return copy_crop_rotate (*image, x, y, w, h, angle, background_color);
