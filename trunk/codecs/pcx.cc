@@ -65,19 +65,41 @@ bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& 
 {
   PCXHeader header;
   
-  if (stream->peek() == 10) {
-    header.Manufacturer = stream->get();
-    if (stream->peek() > 5) {
-      stream->unget();
-      return false;
-    }
+  if (stream->peek() != 10)
+    return false;
+
+  header.Manufacturer = stream->get();
+  if ((unsigned)stream->peek() > 5) {
     stream->unget();
+    return false;
   }
+  stream->unget();
   
   if (!stream->read((char*)&header, sizeof(header)))
     return false;
-  
-  std::cerr << sizeof(header) << std::endl;
+
+  switch (header.BitsPerPixel)
+   {
+   case 1:
+   case 8:
+   case 16:
+   case 24:
+   case 32:
+     break;
+   default:
+     goto no_pcx;
+   };
+
+
+  switch (header.NPlanes)
+   {
+   case 1:
+   case 3:
+   case 4:
+     break;
+   default:
+     goto no_pcx;
+   };
   
   image.bps = header.BitsPerPixel;
   image.spp = header.NPlanes;
@@ -142,6 +164,10 @@ bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& 
   }
   
   return true;
+
+no_pcx:
+  stream->seekg(0);
+  return false;
 }
 
 bool PCXCodec::writeImage(std::ostream* stream, Image& image, int quality,
