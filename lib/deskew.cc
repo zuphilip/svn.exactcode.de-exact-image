@@ -112,7 +112,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   Image::iterator it = image.begin();
   Image::iterator it_ref = reference_image.begin ();
   
-  const int border_margin = 2; // skip border pixels, as a cropped edge screws up the line angle
+  const int border_margin = 3; // skip border pixels, as a cropped edge screws up the line angle
   
   for (int x = 0; x < image.width(); ++x, ++it_ref)
     {
@@ -200,7 +200,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   const int n = 3; // the nth differing pixel to look for
   
   // left
-  for (int y = 0; y < image.height() * 5 / 6; ++y)
+  for (int y = 0; y < image.height() * 7 / 8; ++y)
     {
       it = it.at(0, y);
       it_ref = reference_image.begin();
@@ -221,7 +221,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     }
   
   // right
-  for (int y = 0; y < image.height() * 5 / 6; ++y)
+  for (int y = 0; y < image.height() * 7 / 8; ++y)
     {
       it = it.at(image.width() - 1, y);
       it_ref = it_ref.at(image.width() - 1, 0);
