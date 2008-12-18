@@ -25,7 +25,7 @@ struct deskew_rect {
 };
 
 deskew_rect deskewParameters (Image& image, int background_lines,
-			      bool from_bottom);
-bool deskew (Image& image, int background_lines, bool from_bottom = true);
+			      bool from_bottom = false);
+bool deskew (Image& image, int background_lines, bool from_bottom = false);
 
 #endif
