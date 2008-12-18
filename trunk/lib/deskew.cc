@@ -87,7 +87,8 @@
    to be sensitive or lighter or darker changes.
 */
 
-deskew_rect deskewParameters (Image& image, int raster_rows)
+deskew_rect deskewParameters (Image& image, int raster_rows,
+			      bool from_bottom)
 {
   const bool debug =
 #ifdef DEBUG
@@ -118,7 +119,10 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     {
       // average
       double r, g, b, r_avg = 0, g_avg = 0, b_avg = 0;
-      for (int y = 0; y < raster_rows; ++y) {
+      
+      for (int y = (from_bottom ? image.h - 1 : 0);
+	   y != (from_bottom ? image.h - 1 - raster_rows: raster_rows);
+	   y += (from_bottom ? -1 : 1)) {
 	it = it.at(x, y);
 	*it;
 	it.getRGB (r, g, b);
@@ -246,7 +250,7 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
     {
       it_ref = it_ref.at(x, 0);
       // this is off-by one intentionally (hint: think scanners) -ReneR
-      const int y_offset = raster_rows + 1;
+      const int y_offset = from_bottom ? 0 : raster_rows + 1;
       for (int y = y_offset, m = 0; y < image.height() / 4; ++y)
 	{
 	  it = it.at(x, y);
@@ -551,9 +555,9 @@ deskew_rect deskewParameters (Image& image, int raster_rows)
   return rect;
 }
 
-bool deskew (Image& image, const int raster_rows)
+bool deskew (Image& image, const int raster_rows, bool from_bottom)
 {
-  deskew_rect rect = deskewParameters (image, raster_rows);
+  deskew_rect rect = deskewParameters (image, raster_rows, from_bottom);
   
 #ifndef DEBUG
   // TODO: fill with nearest in-document color, or so ...
