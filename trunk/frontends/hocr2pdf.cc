@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's hOCR to PDF
- * Copyright (C) 2008 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008-2009 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2008 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -415,7 +415,7 @@ int main(int argc, char* argv[])
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "hOCR to PDF converter, version " VERSION << std::endl
-		<< "Copyright (C) 2008 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2008-2009 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
@@ -489,10 +489,11 @@ int main(int argc, char* argv[])
 	    closed = true;
 	  }
 	
-	// HTML asymetric tags, TODO: more of those?
+	// HTML asymetric tags, TODO: more of those (and !DOCTYPE)?
+	// TODO: maybe specially treat meta & co?
 	{
 	  std::string lowTag = lowercaseStr(tagName(*curTag));
-	  if (lowTag == "br" || lowTag == "img")
+	  if (lowTag == "br" || lowTag == "img" || lowTag == "meta")
 	    closed = true;
 	}
 	
