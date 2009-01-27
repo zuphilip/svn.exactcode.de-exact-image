@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 - 2008 Susanne Klaus <susanne@exactcode.de>
- * Copyright (c) 2008 René Rebe <rene@exactcode.de>
+ * Copyright (c) 2008 - 2009 René Rebe <rene@exactcode.de>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -711,10 +711,12 @@ void PDFContentStream::showText(const PDFFont& f, const std::string& text, doubl
   c <<  "(";
   
   // parse string and use proper escape
-  // TODO: UTF-8 input parsing
   // TODO: Unicode mappings
   bool first_newline = true;
-  for (std::string::const_iterator it = text.begin(); it != text.end(); ++it)
+  
+  // decode utf8, locally
+  std::vector<uint32_t> utf8 = DecodeUtf8(text.c_str(), text.size());
+  for (std::vector<uint32_t>::const_iterator it = utf8.begin(); it != utf8.end(); ++it)
     {
       switch (*it)
 	{
@@ -737,7 +739,7 @@ void PDFContentStream::showText(const PDFFont& f, const std::string& text, doubl
 	  
 	  // just copy by default:
 	default:
-	  c << *it;
+	  c << (char)*it;
 	}
     }
   
