@@ -395,7 +395,7 @@ bool hocr2pdf(std::istream& hocrStream, PDFCodec* pdfContext,
   std::vector<std::string> openTags;  
   std::string* curTag = 0;
   std::string closingTag;
-  while (hocrStream.get(c), !hocrStream.eof()) {
+  while (hocrStream.get(c), hocrStream.good()) {
     // consume tag element text
     if (curTag && c != '>') {
       *curTag += c;
