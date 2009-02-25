@@ -990,9 +990,10 @@ void PDFCodec::showText(const std::string& font, const std::string& text,
 }
 
 void PDFCodec::showImage(Image& image, double x, double y,
-			 double width, double height)
+			 double width, double height, int quality,
+			 const std::string& compress)
 {
-  PDFXObject* i = new PDFXObject(context->xref, image); // TODO: compress, quality
+  PDFXObject* i = new PDFXObject(context->xref, image, compress, quality);
   *context->s << *i;
   context->currentPage->content.showImage(*i, x, y, width, height);
   context->images.push_back(i);

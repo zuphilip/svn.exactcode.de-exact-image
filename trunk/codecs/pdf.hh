@@ -73,7 +73,8 @@ public:
   void showText(const std::string& font, const std::string& text,
 		double height);
   void showImage(Image& image, double x, double y,
-		 double width, double height);
+		 double width, double height, int quality = 80,
+		 const std::string& compress = "");
   void endText();
   
 private:
