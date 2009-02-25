@@ -1,6 +1,7 @@
 /*
  * Vector element rasterization, via Agg.
- * Copyright (C) 2007 Susanne Klaus, René Rebe ExactCODE GmbH
+ * Copyright (C) 2007 - 2009 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,8 +86,8 @@ public:
  
 #if WITHFREETYPE == 1
   // temp. simple text draw method
-  void drawText (Image& image, const char* text, double height);
-  void drawTextOnPath (Image& image, const char* text, double height);
+  void drawText (Image& image, const char* text, double height, const char* fontfile = 0);
+  void drawTextOnPath (Image& image, const char* text, double height, const char* fontfile = 0);
 #endif
   
 protected:

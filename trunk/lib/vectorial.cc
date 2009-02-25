@@ -1,6 +1,6 @@
 /*
  * Agg vector rasterization interface
- * Copyright (C) 2007 - 2008 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 - 2009 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  *
  * based on GSMP/plugins-gtk/GUI-gtk/Pixmap.cc:
@@ -252,19 +252,28 @@ static const char* fonts[] = {
 // fix if changed or exported to the outside.
 static const double weight = 0;
 
-static bool load_font(font_engine_type& m_feng)
+static bool load_font(font_engine_type& m_feng, const char* fontfile)
 {
-  for (unsigned int i = 0; i < ARRAY_SIZE(fonts); ++i)
-    {
-      if (m_feng.load_font (fonts[i], 0, gren))
-        return true;
-
-      std::cerr << "failed to load ttf font: " << fonts[i] << std::endl;
-    }
+  if (fontfile) {
+    if (m_feng.load_font (fontfile, 0, gren))
+      return true;
+    
+    std::cerr << "failed to load ttf font: " << fontfile << std::endl;
+    return false;
+  }
+  else {
+    for (unsigned int i = 0; i < ARRAY_SIZE(fonts); ++i)
+      {
+	if (m_feng.load_font (fonts[i], 0, gren))
+	  return true;
+	
+	std::cerr << "failed to load ttf font: " << fonts[i] << std::endl;
+      }
+  }
   return false;
 }
 
-void Path::drawText (Image& image, const char* text, double height)
+void Path::drawText (Image& image, const char* text, double height, const char* fontfile)
 {
   renderer_exact_image ren_base (image);
   
@@ -284,7 +293,7 @@ void Path::drawText (Image& image, const char* text, double height)
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
   agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
  
-  if (!load_font(m_feng))
+  if (!load_font(m_feng, fontfile))
     return;
   
   m_feng.hinting (hinting);
@@ -360,7 +369,7 @@ void Path::drawText (Image& image, const char* text, double height)
   path.move_to(x, y); // save last point for further drawing
 }
 
-void Path::drawTextOnPath (Image& image, const char* text, double height)
+void Path::drawTextOnPath (Image& image, const char* text, double height, const char* fontfile)
 {
   renderer_exact_image ren_base (image);
   
@@ -382,7 +391,7 @@ void Path::drawTextOnPath (Image& image, const char* text, double height)
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
   agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
   
-  if (!load_font(m_feng))
+  if (!load_font(m_feng, fontfile))
       return;
   
   // Transform pipeline
