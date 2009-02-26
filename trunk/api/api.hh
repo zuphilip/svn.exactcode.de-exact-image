@@ -1,6 +1,6 @@
 /*
  * The ExactImage stable external API for use with SWIG.
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 - 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -150,7 +150,8 @@ void setLineWidth (double width);
 void imageDrawLine (Image* image, double x, double y, double x2, double y2);
 void imageDrawRectangle (Image* image, double x, double y, double x2, double y2);
 #if WITHFREETYPE == 1
-void imageDrawText (Image* image, double x, double y, char* text, double height);
+void imageDrawText (Image* image, double x, double y, char* text,
+                    double height, const char* fontfile = NULL);
 #endif
 
 // advanced all-in-one algorithms
