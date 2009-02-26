@@ -39,6 +39,9 @@ class Image; // just forward, never ever care about the internal layout
 
 // instanciate new image class
 Image* newImage ();
+Image* newImageWithTypeAndSize (unsigned int samplesPerPixel, // e.g. 3
+				unsigned int bitsPerSample, // e.g. 8
+				unsigned int width, unsigned int height);
 
 // destroy image instance
 void deleteImage (Image* image);
@@ -136,8 +139,8 @@ bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines);
 
 // color controls
 
-void setForegroundColor (double r, double g, double b);
-void setBackgroundColor (double r, double g, double b);
+void setForegroundColor (double r, double g, double b, double a = 1.0);
+void setBackgroundColor (double r, double g, double b, double a = 1.0);
 
 void imageNormalize (Image* image);
 
@@ -149,10 +152,29 @@ void imageHueSaturationLightness (Image* image, double hue, double saturation, d
 void setLineWidth (double width);
 void imageDrawLine (Image* image, double x, double y, double x2, double y2);
 void imageDrawRectangle (Image* image, double x, double y, double x2, double y2);
+
+class Path; // external path
+Path* newPath();
+void deletePath(Path* path);
+
+void pathClear(Path* path); // removes existing path elements
+
+void pathMoveTo(Path* path, double x, double y);
+void pathLineTo(Path* path, double x, double y);
+void pathCurveTo(Path* path, double x, double y, double x2, double y2);
+void pathQuadCurveTo(Path* path, double x, double y, double x2, double y2, double x3, double y3);
+void pathClose(Path* path);
+
+void pathStroke(Path* path, Image* image);
+void pathFill(Path* path, Image* image);
+
 #if WITHFREETYPE == 1
-void imageDrawText (Image* image, double x, double y, char* text,
-                    double height, const char* fontfile = NULL);
+void imageDrawText(Image* image, double x, double y, char* text,
+		   double height, const char* fontfile = NULL);
+void imageDrawTextOnPath(Image* image, Path* path, char* text,
+			 double height, const char* fontfile = NULL);
 #endif
+
 
 // advanced all-in-one algorithms
 void imageOptimize2BW (Image* image, int low = 0, int high = 255,
