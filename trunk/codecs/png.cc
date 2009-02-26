@@ -273,9 +273,6 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		(int)(image.xres*100/2.54), (int)(image.yres*100/2.54),
 		PNG_RESOLUTION_METER);
 
-  /* The call to png_read_info() gives us all of the information from the
-   * PNG file before the first IDAT (image data chunk).  REQUIRED
-   */
   png_write_info (png_ptr, info_ptr);
   
   int stride = png_get_rowbytes (png_ptr, info_ptr);
