@@ -1,6 +1,6 @@
 /*
  * The ExactImage stable external API for use with SWIG.
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 - 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -323,14 +323,15 @@ void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
 }
 
 #if WITHFREETYPE == 1
-void imageDrawText (Image* image, double x, double y, char* text, double height)
+void imageDrawText (Image* image, double x, double y, char* text,
+                    double height, const char* fontfile)
 {
   Path path;
   double r = 0, g = 0, b = 0;
   foreground_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
   path.moveTo (x, y);
-  path.drawText (*image, text, height);
+  path.drawText (*image, text, height, fontfile);
 }
 #endif
 
