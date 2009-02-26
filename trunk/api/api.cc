@@ -50,6 +50,20 @@ Image* newImage ()
 {
   return new Image;
 }
+Image* newImageWithTypeAndSize (unsigned int samplesPerPixel, unsigned int bitsPerSample,
+				unsigned int width, unsigned int height)
+{
+  Image* image = newImage();
+  image->spp = samplesPerPixel;
+  image->bps = bitsPerSample;
+  image->resize(width, height);
+  
+  // make sure it's clean initially, also because we only allow painting
+  // OVER and thus not allowing to create transparency
+  memset(image->getRawData(), 0, image->stride() * image->h);
+  
+  return image;
+}
 
 void deleteImage (Image* image)
 {
@@ -182,14 +196,14 @@ static Image::iterator foreground_color;
 
 struct it_color_init
 {
-  it_color_init (Image::iterator& it, double r, double g, double b)
+  it_color_init (Image::iterator& it, double r, double g, double b, double a)
   {
-     it.type = Image::RGB8;
-     it.setRGB (r, g, b);
+     it.type = Image::RGB8A;
+     it.setRGBA(r, g, b, a);
   }
 };
-static it_color_init bg_color_init (background_color, 0, 0, 0);
-static it_color_init fg_color_init (foreground_color, 1, 1, 1);
+static it_color_init bg_color_init (background_color, 0, 0, 0, 1);
+static it_color_init fg_color_init (foreground_color, 1, 1, 1, 1);
 
 bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold)
 {
@@ -264,14 +278,14 @@ bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines)
 
 // color controls
 
-void setForegroundColor (double r, double g, double b)
+void setForegroundColor (double r, double g, double b, double a)
 {
-  foreground_color.setRGB (r, g, b);
+  foreground_color.setRGBA(r, g, b, a);
 }
 
-void setBackgroundColor (double r, double g, double b)
+void setBackgroundColor (double r, double g, double b, double a)
 {
-  background_color.setRGB (r, g, b);
+  background_color.setRGBA(r, g, b, a);
 }
 
 // vector elements
@@ -292,6 +306,13 @@ void setLineWidth (double width)
   style.width = width;
 }
 
+void color_to_path (Path& p)
+{
+  double r = 0, g = 0, b = 0, a = 0;
+  foreground_color.getRGBA (r, g, b, a);
+  p.setFillColor (r, g, b, a);
+}
+
 void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 {
   Path path;
@@ -300,10 +321,8 @@ void imageDrawLine (Image* image, double x, double y, double x2, double y2)
 
   path.setLineWidth (style.width);
   path.setLineDash (0, style.dash);
-  double r = 0, g = 0, b = 0;
-  foreground_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
   
+  color_to_path(path);
   path.draw (*image);
 }
 
@@ -315,10 +334,7 @@ void imageDrawRectangle (Image* image, double x, double y, double x2, double y2)
   path.setLineDash (0, style.dash);
   path.setLineJoin (agg::miter_join);
   
-  double r = 0, g = 0, b = 0;
-  background_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
+  color_to_path(path);
   path.draw (*image);
 }
 
@@ -327,13 +343,70 @@ void imageDrawText (Image* image, double x, double y, char* text,
                     double height, const char* fontfile)
 {
   Path path;
-  double r = 0, g = 0, b = 0;
-  foreground_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
+  
+  color_to_path(path);
   path.moveTo (x, y);
   path.drawText (*image, text, height, fontfile);
 }
+
+void imageDrawTextOnPath (Image* image, Path* path, char* text,
+			  double height, const char* fontfile)
+{
+  color_to_path(*path);
+  path->drawTextOnPath (*image, text, height, fontfile);
+}
 #endif
+
+Path* newPath()
+{
+  return new Path;
+}
+void deletePath(Path* path)
+{
+  delete path;
+}
+
+void pathClear(Path* path)
+{
+  path->clear();
+}
+
+void pathMoveTo(Path* path, double x, double y)
+{
+  path->moveTo(x, y);
+}
+
+void pathLineTo(Path* path, double x, double y)
+{
+  path->addLineTo(x, y);
+}
+
+void pathCurveTo(Path* path, double x, double y, double x2, double y2)
+{
+  path->addCurveTo(x, y, x2, y2);
+}
+
+void pathQuadCurveTo(Path* path, double x, double y, double x2, double y2, double x3, double y3)
+{
+  path->addCurveTo(x, y, x2, y2, x3, y3);
+}
+
+void pathClose(Path* path)
+{
+  path->close();
+}
+
+void pathStroke(Path* path, Image* image)
+{
+  color_to_path(*path);
+  path->draw(*image, Path::fill_none);
+}
+
+void pathFill(Path* path, Image* image)
+{
+  color_to_path(*path);
+  path->draw(*image, Path::fill_non_zero);
+}
 
 void imageOptimize2BW (Image* image, int low, int high,
 		       int threshold,
