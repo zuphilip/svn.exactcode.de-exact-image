@@ -48,6 +48,14 @@ NOT_SRCS += agg_svg_parser.cc agg_svg_path_renderer.cc \
             agg_svg_path_tokenizer.cc svg.cc
 endif
 
+ifeq "$(PCX)" "0"
+NOT_SRCS += pcx.cc
+endif
+
+ifeq "$(TGA)" "0"
+NOT_SRCS += tga.cc
+endif 
+
 BINARY = lib
 BINARY_EXT = $(X_LIBEXT)
 DEPS =

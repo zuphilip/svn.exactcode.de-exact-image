@@ -3,7 +3,10 @@
 . config/functions
 
 with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode lua swig perl python php ruby"
-feature_options="evasgl"
+
+feature_options="evasgl tga pcx"
+TGA=1 # default to yes
+PCX=1
 
 PACKAGE="exact-image"
 VERSION_MAJOR=0
