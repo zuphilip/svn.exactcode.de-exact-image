@@ -46,12 +46,30 @@
 
 #include "api.hh"
 
+
+// initializer
+
+static Image::iterator background_color;
+static Image::iterator foreground_color;
+
+struct it_color_init
+{
+  it_color_init (Image::iterator& it, double r, double g, double b, double a)
+  {
+     it.type = Image::RGB8A;
+     it.setRGBA(r, g, b, a);
+  }
+};
+static it_color_init bg_color_init (background_color, 0, 0, 0, 1);
+static it_color_init fg_color_init (foreground_color, 1, 1, 1, 1);
+
+
 Image* newImage ()
 {
   return new Image;
 }
 Image* newImageWithTypeAndSize (unsigned int samplesPerPixel, unsigned int bitsPerSample,
-				unsigned int width, unsigned int height)
+				unsigned int width, unsigned int height, int fill)
 {
   Image* image = newImage();
   image->spp = samplesPerPixel;
@@ -60,7 +78,18 @@ Image* newImageWithTypeAndSize (unsigned int samplesPerPixel, unsigned int bitsP
   
   // make sure it's clean initially, also because we only allow painting
   // OVER and thus not allowing to create transparency
-  memset(image->getRawData(), 0, image->stride() * image->h);
+  if (fill == 0)
+    memset(image->getRawData(), 0, image->stride() * image->h);
+  else {
+    double r = 0, g = 0, b = 0, a = 0;
+    background_color.getRGBA(r, g, b, a);
+    
+    Image::iterator it = image->begin();
+    // optimization: only set FP based values once, copy the rest
+    it.setRGBA(r, g, b, a);
+    for (Image::iterator it_end = image->end(); it != it_end; ++it)
+      it.set(it);
+  }
   
   return image;
 }
@@ -188,22 +217,6 @@ void imageSetYres (Image* image, int yres)
 }
 
 // image manipulation
-
-static Image::iterator background_color;
-static Image::iterator foreground_color;
-
-// initializer
-
-struct it_color_init
-{
-  it_color_init (Image::iterator& it, double r, double g, double b, double a)
-  {
-     it.type = Image::RGB8A;
-     it.setRGBA(r, g, b, a);
-  }
-};
-static it_color_init bg_color_init (background_color, 0, 0, 0, 1);
-static it_color_init fg_color_init (foreground_color, 1, 1, 1, 1);
 
 bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold)
 {

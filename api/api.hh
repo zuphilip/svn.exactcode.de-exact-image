@@ -39,9 +39,14 @@ class Image; // just forward, never ever care about the internal layout
 
 // instanciate new image class
 Image* newImage ();
+
+// instanciate new imgae class with specified sample cound, bit-depth
+// and width and height - if fill is 0 the image will be pre-filled
+// with RGBA(0,0,0,0), if fill is 1 the current background color will
+// be used.
 Image* newImageWithTypeAndSize (unsigned int samplesPerPixel, // e.g. 3
 				unsigned int bitsPerSample, // e.g. 8
-				unsigned int width, unsigned int height);
+				unsigned int width, unsigned int height, int fill = 0);
 
 // destroy image instance
 void deleteImage (Image* image);
