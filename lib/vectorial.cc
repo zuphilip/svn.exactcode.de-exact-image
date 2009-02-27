@@ -99,23 +99,7 @@ void Path::addCurveTo (double c1x, double c1y, double c2x, double c2y,
 {
   path.curve4 (c1x, c1y, c2x, c2y, x, y);
 }
-/*
-void Path::addText (char* text, double height)
-{
-  agg::gsv_text t;
-  t.flip (true);
-  t.size (height);
-  t.text (text);
-  t.start_point (x, y);
-  
-  agg::conv_stroke<agg::gsv_text> stroke (t);
-  stroke.width (1.0);
-  ras.add_path (stroke);
-  
-  ren.color (agg::rgba8(r, g, b, a));
-  agg::render_scanlines (ras, sl, ren);
-}
-*/
+
 void Path::end ()
 {
   // do not close the path, we have ::close() for that purpose
@@ -413,7 +397,7 @@ void Path::drawTextOnPath (Image& image, const char* text, double height, const 
   
   ras.reset ();
   
-  double x = 0, y = 3; // TODO: 3? 
+  double x = 0, y = 0;
   
   std::vector<uint32_t> utf8 = DecodeUtf8(text, strlen(text));
   for (unsigned int i = 0, n = 0; i < utf8.size(); ++i)
