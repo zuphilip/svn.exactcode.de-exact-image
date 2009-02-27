@@ -412,6 +412,7 @@ void pathClose(Path* path)
 void pathStroke(Path* path, Image* image)
 {
   color_to_path(*path);
+  path->setLineWidth (style.width);
   path->draw(*image, Path::fill_none);
 }
 
