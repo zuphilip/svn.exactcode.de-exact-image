@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -73,53 +73,25 @@ void flipX (Image& image)
       }
       break;
     case 8:
-      {
-	for (int y = 0; y < image.h; ++y)
-	  {
-	    uint8_t* row = &data [y*stride];
-	    for (int x = 0; x < image.w/2; ++x) {
-	      uint8_t v = row [x];
-	      row[x] = row[image.w - 1 - x];
-	      row[image.w - 1 - x] = v;
-	    }
-	  }
-      }
-      break;
     case 16:
-      {
-	for (int y = 0; y < image.h; ++y)
-	  {
-	    uint16_t* row = (uint16_t*) &data [y*stride];
-	    for (int x = 0; x < image.w/2; ++x) {
-	      uint16_t v = row [x];
-	      row[x] = row[image.w - 1 - x];
-	      row[image.w - 1 - x] = v;
-	    }
-	  }
-      }
-      break;
     case 24:
-      {
-	for (int y = 0; y < image.h; ++y) {
-	  rgb* rgb_row = (rgb*) &data[y*stride]; 
-	  for (int x = 0; x < image.w/2; ++x) {
-	    rgb v = rgb_row [x];
-	    rgb_row[x] = rgb_row[image.w - 1 - x];
-	    rgb_row[image.w - 1 - x] = v;
-	  }
-	}
-      }
-      break;
+    case 32:
     case 48:
       {
-	for (int y = 0; y < image.h; ++y) {
-	  rgb16* rgb_row = (rgb16*) &data[y*stride]; 
-	  for (int x = 0; x < image.w/2; ++x) {
-	    rgb16 v = rgb_row [x];
-	    rgb_row[x] = rgb_row[image.w - 1 - x];
-	    rgb_row[image.w - 1 - x] = v;
+	const unsigned int bytes = image.spp * image.bps / 8;
+	for (int y = 0; y < image.h; ++y)
+	  {
+	    uint8_t* ptr1 = &data[y * stride];
+	    uint8_t* ptr2 = ptr1 + stride - bytes;
+	    
+	    for (; ptr1 < ptr2; ptr2 -= 2 * bytes) {
+	      for (int b = 0; b < bytes; b++) {
+		uint8_t v = *ptr1;
+		*ptr1++ = *ptr2;
+		*ptr2++ = v;
+	      }
+	    }
 	  }
-	}
       }
       break;
     default:
@@ -136,14 +108,14 @@ void flipY (Image& image)
     if (image.getCodec()->flipY(image))
       return;
   
-  int bytes = image.stride();
+  const unsigned int bytes = image.stride();
   uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h / 2; ++y)
     {
       int y2 = image.h - y - 1;
 
-      uint8_t* row1 = &data[y*bytes];
-      uint8_t* row2 = &data[y2*bytes];
+      uint8_t* row1 = &data[y * bytes];
+      uint8_t* row2 = &data[y2 * bytes];
 
       for (int x = 0; x < bytes; ++x)
 	{
