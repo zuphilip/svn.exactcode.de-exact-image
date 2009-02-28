@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions..
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE
+ * Copyright (C) 2006 - 2008 Ren√© Rebe, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,10 +100,9 @@ void fastAutoCrop (Image& image)
   
   // which value to compare against, get RGB of first pixel of the last line
   // iterator is a generic way to get RGB regardless of the bit-depth
-  u_int16_t r = 0, g = 0, b = 0;
   Image::const_iterator it = image.begin();
   it = it.at (0, image.h - 1);
-  r = 0; g = 0; b = 0;
+  u_int16_t r = 0, g = 0, b = 0;
   (*it).getRGB (&r, &g, &b);
   
   if (r != g || g != b)
