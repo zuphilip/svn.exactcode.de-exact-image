@@ -93,49 +93,38 @@ void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigne
   }
 }
 
+// auto crop just the bottom of an image filled in the same, solid color
+// optimization: for sub-byte depth we compare a 8bit pattern unit at-a-time
 void fastAutoCrop (Image& image)
 {
   if (!image.getRawData())
     return;
   
-  // which value to compare against, get RGB of first pixel of the last line
-  // iterator is a generic way to get RGB regardless of the bit-depth
-  Image::const_iterator it = image.begin();
-  it = it.at (0, image.h - 1);
-  u_int16_t r = 0, g = 0, b = 0;
-  (*it).getRGB (&r, &g, &b);
-  
-  if (r != g || g != b)
-    return; // not a uniform color
-  
-  if (r != 0 && r != 255)
-    return; // not min nor max
-  
   const int stride = image.stride();
+  const unsigned int bytes = (image.spp * image.bps + 7) / 8;
   
-  // first determine the color to crop, for now we only accept full black or white
-  int h = image.h-1;
-  for (; h >= 0; --h) {
+  int h = image.h - 1;
+  uint8_t* data = image.getRawData() + stride * h;
+  
+  // which value to compare against, first pixel of the last line
+  uint8_t v[bytes];
+  memcpy(v, data, bytes);
+  
+  for (; h >= 0; --h, data -= stride) {
     // data row
-    uint8_t* data = image.getRawData() + stride * h;
-    
-    // optimization assumption: we have an [0-8) bit-depth gray or RGB image
-    // here and we just care to compare for min or max, thus we can compare
-    // just the raw payload
-    int x = 0;
-    for (; x < stride-1; ++x)
-      if (data[x] != r) {
-	// std::cerr << "breaking in inner loop at: " << x << std::endl;
-	break;
+    int i = 0;
+    for (; i < stride; i += bytes)
+      {
+	if (data[i] != v[0] ||
+	    (bytes > 1 && memcmp(&data[i+1], &v[1], bytes - 1) != 0)) {
+	  break; // pixel differs, break out
+	}
       }
     
-    if (x != stride-1) {
-      // std::cerr << "breaking in outer loop at height: " << h << " with x: " << x << " vs. " << stride << std::endl;
-      break;
-    }
+    if (i != stride)
+      break; // non-solid line, break out
   }
   ++h; // we are at the line that differs
-
   if (h == 0) // do not crop if the image is totally empty
     return;
   
