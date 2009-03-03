@@ -214,6 +214,7 @@ void Path::draw (Image& image, filling_rule_t fill)
   }
   
   agg::render_scanlines (ras, sl, ren);
+  image.setRawData(); // invalidate cache
 }
 
 #if WITHFREETYPE == 1
@@ -349,7 +350,8 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
     }
   
   agg::render_scanlines(ras, sl, ren_solid);
-  
+  image.setRawData(); // invalidate cache
+
   path.move_to(x, y); // save last point for further drawing
 }
 
@@ -441,7 +443,8 @@ void Path::drawTextOnPath (Image& image, const char* text, double height, const 
     }
   
   agg::render_scanlines(ras, sl, ren_solid);
-  
+  image.setRawData(); // invalidate cache
+
   path.move_to(x, y); // save last point for further drawing
 }
 
