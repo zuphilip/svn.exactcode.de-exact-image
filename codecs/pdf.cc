@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 - 2008 Susanne Klaus <susanne@exactcode.de>
+ * Copyright (c) 2007 - 2009 Susanne Klaus <susanne@exactcode.de>
  * Copyright (c) 2008 - 2009 René Rebe <rene@exactcode.de>
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -405,11 +405,16 @@ struct PDFXObject : public PDFStream
       encoding = "/ASCII85Decode";
     else if (args.containsAndRemove("hex"))
       encoding = "/ASCIIHexDecode";
+#if WITHLIBJPEG == 1
     else if (args.containsAndRemove("jpeg"))
       encoding = "/DCTDecode";
+#endif
+#if WITHLIBJASPER == 1
     else if (args.containsAndRemove("jpeg2000"))
       encoding = "/JPXDecode";
-    
+#endif
+    if (args.containsAndRemove("flate"))
+      encoding = "/FlateDecode";
     compress = args.str();
     
     s << "/Type /XObject\n"
