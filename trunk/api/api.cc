@@ -218,6 +218,25 @@ void imageSetYres (Image* image, int yres)
 
 // image manipulation
 
+void get(Image* image, unsigned int x, unsigned int y, double* r, double* g, double* b, double* a)
+{
+  Image::iterator it = image->begin();
+  it = it.at(x, y);
+  *it;
+  it.getRGBA(*r, *g, *b, *a);
+}
+
+void set(Image* image, unsigned int x, unsigned int y, double r, double g, double b, double a)
+{
+  Image::iterator it = image->begin();
+  it = it.at(x, y);
+  it.setRGBA(r, g, b, a);
+  it.set(it);
+  
+  // TODO: this should not be done so frequently, for every pixel
+  image->setRawData();
+}
+
 bool imageConvertColorspace (Image* image, const char* target_colorspace, int threshold)
 {
   return colorspace_by_name (*image, target_colorspace, threshold);
