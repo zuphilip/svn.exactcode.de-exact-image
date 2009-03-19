@@ -114,6 +114,13 @@ void imageSetYres (Image* image, int yres);
 
 // image manipulation
 
+// single pixel access, attention: slow - just for testing / drafting
+#ifdef SWIG
+%apply double *OUTPUT { double* r, double* g, double* b, double* a };
+#endif
+void get(Image* image, unsigned int x, unsigned int y, double* r, double* g, double* b, double* a);
+void set(Image* image, unsigned int x, unsigned int y, double r, double g, double b, double a = 1.0);
+
 // transforms the image into a new target colorspace - the names are the same as returned by
 // imageColorspace, might return false if the conversion was not possible
 // the threshold is used while converting to black&white (1 bit) data

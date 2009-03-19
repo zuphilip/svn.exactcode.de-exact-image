@@ -1,6 +1,6 @@
 /*
  * The ExactImage stable external API for use with SWIG.
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 René Rebe, Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -16,6 +16,9 @@
  */
 
 %module ExactImage
+
+%include "typemaps.i"
+
 %include "cstring.i"
 %include "std_string.i"
 
