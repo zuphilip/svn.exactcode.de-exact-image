@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany.
- *               2008 Rene Rebe, ExactCODE GmbH Germany.
+ *               2008 - 2009 Rene Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
