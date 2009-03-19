@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany.
- *               2008 Rene Rebe, ExactCODE GmbH Germany.
+ *               2008 - 2009 Rene Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,6 +15,9 @@
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
  */
+
+#ifndef CONTOURS_HH
+#define CONTOURS_HH
 
 #include "FG-Matrix.hh"
 #include <vector>
@@ -56,3 +59,5 @@ class InnerContours : public Contours
 public:
   InnerContours(const FGMatrix& image);
 };
+
+#endif // CONTOURS_HH
