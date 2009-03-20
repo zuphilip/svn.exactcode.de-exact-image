@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2007 René Rebe
+ * Copyright (C) 2005 - 2009 René Rebe
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  *
  * This program is free software; you can redistribute it and/or modify
@@ -11,8 +11,13 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
- * 
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
+
+#ifndef OPTIMIZE2BW_HH
+#define OPTIMIZE2BW_HH
 
 #include "Image.hh"
 
@@ -37,3 +42,5 @@ void differential_optimize2bw (Image& image,
 			       int sloppy_threshold = 0,
 			       int radius = 3,
 			       double standard_deviation = 2.1);
+
+#endif // OPTIMIZE2BW_HH
