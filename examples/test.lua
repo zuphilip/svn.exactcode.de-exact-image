@@ -18,7 +18,7 @@ then
 	print "image decoded all fine."
 else
 	print "something went wrong ..."
-	exit()
+	os.exit(1)
 end
 
 if ExactImage.encodeImageFile (image, "test.jpg", 80, "")
@@ -26,7 +26,7 @@ then
         print "image written all fine."
 else
         print "something went wrong writing the image ..."
-        exit()
+        os.exit(1)
 end
 
 -- advanced use, use in memory locations
@@ -37,7 +37,7 @@ then
         print "image read from RAM."
 else
         print "something went wrong decoding the RAM ..."
-        exit()
+        os.exit(1)
 end
 f:close()
 
@@ -72,7 +72,7 @@ then
         print "image encoded all fine."
 else
         print "something went wrong encoding the image into RAM ..."
-        exit()
+        os.exit(1)
 end
 
 -- write the file to disc natively
