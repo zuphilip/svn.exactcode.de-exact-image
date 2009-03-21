@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -13,6 +13,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -38,6 +40,7 @@
 #include "scale.hh"
 #include "crop.hh"
 #include "rotate.hh"
+#include "canvas.hh"
 #include "deskew.hh"
 
 #include "Matrix.hh"
@@ -92,6 +95,23 @@ bool convert_input (const Argument<std::string>& arg)
     std::cerr << "Error reading input file." << std::endl;
     return false;
   }
+  return true;
+}
+
+bool convert_append (const Argument<std::string>& arg)
+{
+  Image i;
+  
+  std::string decompression = "";
+  if (arg_decompression.Size())
+    decompression = arg_decompression.Get();
+
+  if (!ImageCodec::Read(arg.Get(), i, decompression)) {
+    std::cerr << "Error reading append file." << std::endl;
+    return false;
+  }
+  
+  append(image, i);
   return true;
 }
 
@@ -615,6 +635,14 @@ int main (int argc, char* argv[])
 				    0, 1, true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
+
+  Argument<std::string> arg_append ("a", "append",
+				   "append file or '-' for stdin, optionally prefixed with format:"
+				   "\n\t\te.g: jpg:- or raw:rgb8-dump",
+                                   0, 1, true, true);
+  arg_append.Bind (convert_append);
+  arglist.Add (&arg_append);
+
   
   // global
   arglist.Add (&arg_quality);
@@ -837,7 +865,7 @@ int main (int argc, char* argv[])
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2008 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005 - 2009 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
