@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions..
- * Copyright (C) 2006 - 2008 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -734,6 +734,21 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace,
     return false;
   }
   return true;
+}
+
+const char* colorspace_name (Image& image)
+{
+  switch (image.spp * image.bps)
+    {
+    case 1: return "gray1";
+    case 2: return "gray2";
+    case 4: return "gray4";
+    case 8: return "gray8";
+    case 16: return "gray16";
+    case 24: return "rgb8";
+    case 48: return "rgb16";
+    default: return "";
+    }
 }
 
 // --

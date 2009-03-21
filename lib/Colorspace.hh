@@ -30,6 +30,8 @@ void colorspace_8_to_16 (Image& image);
 bool colorspace_by_name (Image& image, const std::string& target_colorspace,
 			 uint8_t threshold = 127);
 
+const char* colorspace_name (Image& image);
+
 void brightness_contrast_gamma (Image& image, double b, double c, double g);
 void hue_saturation_lightness (Image& image, double h, double s, double v);
 

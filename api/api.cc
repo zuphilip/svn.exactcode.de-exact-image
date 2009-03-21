@@ -193,17 +193,7 @@ int imageYres (Image* image)
 
 const char* imageColorspace (Image* image)
 {
-  switch (image->spp * image->bps)
-    {
-    case 1: return "gray1";
-    case 2: return "gray2";
-    case 4: return "gray4";
-    case 8: return "gray8";
-    case 16: return "gray16";
-    case 24: return "rgb8";
-    case 48: return "rgb16";
-    default: return "";
-    }
+  return colorspace_name (*image);
 }
 
 void imageSetXres (Image* image, int xres)
