@@ -71,6 +71,7 @@ protected:
   
   virtual void ImageLoaded () {};
   virtual void ImageClicked (unsigned int x, unsigned int y, int button) {};
+  virtual bool ImageKey(KeySym keysym) { return false; };
   
 private:
   const std::vector<std::string>& images;
