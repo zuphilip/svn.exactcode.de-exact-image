@@ -432,9 +432,12 @@ int Viewer::Run (bool opengl)
 	      break;
 	    
 	    case KeyPress:
-	      //cout << "key: " << ev.xkey.keycode << endl;
 	      KeySym ks;	      
 	      XLookupString ((XKeyEvent*)&ev, 0, 0, &ks, NULL);
+	      if (ImageKey(ks))
+		break;
+	      
+	      //cout << "key: " << ev.xkey.keycode << endl;
 	      //cout << "sym: " << ks << endl;
 	      switch (ks)
 		{
