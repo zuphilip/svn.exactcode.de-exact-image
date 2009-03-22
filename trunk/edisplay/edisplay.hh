@@ -1,3 +1,34 @@
+/*
+ * The ExactImage library's displayy compatible command line frontend.
+ * Copyright (C) 2006 - 2009 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
+
+#ifndef EDISPLAY_HH
+#define EDISPLAY_HH
+
+#include "Image.hh"
+
+// display stuff
+#include "X11Helper.hh"
+#include "EvasHelper.hh"
+
+#include "Timer.hh"
+
+#include <string>
+#include <vector>
 
 class Viewer {
 public:
@@ -7,7 +38,8 @@ public:
     it = images.begin();
     image = new Image;
   }
-  ~Viewer() {
+  
+  virtual ~Viewer() {
     if (evas_data) {
       delete (evas_data); evas_data = 0;
     }
@@ -23,6 +55,7 @@ public:
 protected:
   
   void ImageToEvas ();
+  EvasImage* ImageToEvas (Image*, EvasImage* = 0);
   
   void Zoom (double factor);
   void Move (int _x, int _y);
@@ -36,12 +69,17 @@ protected:
 
   void SetOSDZoom ();
   
+  virtual void ImageLoaded () {};
+  virtual void ImageClicked (unsigned int x, unsigned int y, int button) {};
+  
 private:
   const std::vector<std::string>& images;
   std::vector<std::string>::const_iterator it;
   
   // Image
+protected:
   Image* image;
+private:
   uint8_t* evas_data;
   
   // on screen display
@@ -64,4 +102,10 @@ private:
   EvasCanvas* evas;
   EvasImage* evas_image;
   EvasImage* evas_bgr_image;
+  
+protected:
+  // real canvas payload
+  std::vector<EvasImage*> evas_content;
 };
+
+#endif // EDISPLAY_HH

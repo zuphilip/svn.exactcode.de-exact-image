@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -12,6 +12,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include "config.h"
@@ -31,17 +33,10 @@
 #include <sstream>
 
 #include "ArgumentList.hh"
-#include "Timer.hh"
 using namespace Utility;
-
-// display stuff
-
-#include "X11Helper.hh"
-#include "EvasHelper.hh"
 
 // imaging stuff
 
-#include "Image.hh"
 #include "Codecs.hh"
 #include "Colorspace.hh"
 
@@ -88,15 +83,16 @@ void Viewer::Zoom (double f)
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
   
-  evas_image->Resize (w, h);
-  evas_image->ImageFill (0, 0, w, h);
-  
   evas_bgr_image->Resize (w, h);
   
   // recenter view
-  //using std::cout;
-  evas_image->Move (- (xcent * zoom / 100 - (evas->OutputWidth() / 2)),
-		    - (ycent * zoom / 100 - (evas->OutputHeight() / 2)) );
+  for (std::vector<EvasImage*>::iterator it = evas_content.begin();
+       it != evas_content.end(); ++it) {
+    (*it)->Resize (w, h);
+    (*it)->ImageFill (0, 0, w, h);
+    (*it)->Move (- (xcent * zoom / 100 - (evas->OutputWidth() / 2)),
+		 - (ycent * zoom / 100 - (evas->OutputHeight() / 2)) );
+  }
 
   // limit / clip accordingly
   Move (0, 0);
@@ -128,7 +124,9 @@ void Viewer::Move (int _x, int _y)
   if (y > 0)
     y = 0;
   
-  evas_image->Move (x, y);
+  for (std::vector<EvasImage*>::iterator it = evas_content.begin();
+       it != evas_content.end(); ++it)
+    (*it)->Move (x, y);
 }
 
 
@@ -389,17 +387,12 @@ int Viewer::Run (bool opengl)
 		}
 	      }
 	      break;
-#if 0
 	    case ButtonRelease:
-	      // evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
-	      // evas->EventFeedMouseUp (ev.xbutton.button, flags);
-	      switch (ev.xbutton.button) {
-	      case 1:
-		button1 = false;
-		break;
-	      }
+	      // TODO: filter drags
+	      ImageClicked(Window2ImageX (ev.xmotion.x),
+			   Window2ImageY (ev.xmotion.y),
+			   ev.xbutton.button);
 	      break;
-#endif
 	      
 	    case MotionNotify:
 	      // evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
@@ -637,7 +630,10 @@ bool Viewer::Load ()
     cerr << "Error loading file: " << *it << endl;
     return false;
   }
-
+  
+  // notify early to allow sub-class to make modifications
+  ImageLoaded ();
+  
   if (false)
   cerr << "Loaded: '" << *it
        << "', " << image->w << "x" << image->h
@@ -682,8 +678,32 @@ void Viewer::ImageToEvas ()
     evas_image->Layer (1);
     evas_image->Move (0, 0);
     evas_image->Resize (image->w,image->h);
+    evas_content.push_back(evas_image);
   } else {
     evas_image->SetData (0);
+  }
+
+  evas_image = ImageToEvas (image, evas_image);
+  
+  // position and resize, keep zoom
+  if (false) {
+    zoom = 100;
+  }
+  Zoom (1.0);
+}
+
+EvasImage* Viewer::ImageToEvas (Image* image, EvasImage* eimage)
+{
+  uint8_t* evas_data = 0;
+  
+  if (!eimage) {
+    eimage = new EvasImage (*evas);
+    eimage->SmoothScale (false);
+    eimage->Layer (1);
+    eimage->Move (0, 0);
+    eimage->Resize (image->w,image->h);
+  } else {
+    eimage->SetData (0);
   }
   
   evas_data = (uint8_t*) realloc (evas_data, image->w*image->h*4);
@@ -695,22 +715,22 @@ void Viewer::ImageToEvas ()
   if (channel == 0)
     {
       for (int y=0; y < image->h; ++y)
-	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  if (!Exact::NativeEndianTraits::IsBigendian) {
-	    dest_ptr[0] = src_ptr[2];
-	    dest_ptr[1] = src_ptr[1];
-	    dest_ptr[2] = src_ptr[0];
-	    if (spp == 4)
-	      dest_ptr[3] = src_ptr[3]; // alpha
-	  }
-	  else {
-	    dest_ptr[1] = src_ptr[0];
-	    dest_ptr[2] = src_ptr[1];
-	    dest_ptr[3] = src_ptr[2];
-	    if (spp == 4)
-	      dest_ptr[0] = src_ptr[3]; // alpha
-	  }
-	}
+        for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+          if (!Exact::NativeEndianTraits::IsBigendian) {
+            dest_ptr[0] = src_ptr[2];
+            dest_ptr[1] = src_ptr[1];
+            dest_ptr[2] = src_ptr[0];
+            if (spp == 4)
+              dest_ptr[3] = src_ptr[3]; // alpha
+          }
+          else {
+            dest_ptr[1] = src_ptr[0];
+            dest_ptr[2] = src_ptr[1];
+            dest_ptr[3] = src_ptr[2];
+            if (spp == 4)
+              dest_ptr[0] = src_ptr[3]; // alpha
+          }
+        }
     }
   else
     {
@@ -718,34 +738,36 @@ void Viewer::ImageToEvas ()
       int ch = (channel-1) % 3;
       
       for (int y=0; y < image->h; ++y)
-	for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-	  if (!Exact::NativeEndianTraits::IsBigendian) {
-	    dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
-	      intensity ? src_ptr[ch] : 0;
-	    if (!intensity)
+        for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+          if (!Exact::NativeEndianTraits::IsBigendian) {
+            dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
+              intensity ? src_ptr[ch] : 0;
+            if (!intensity)
 	      dest_ptr[2-ch] = src_ptr[ch];
-	  }
-	  else {
-	    dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
-	      intensity ? src_ptr[ch] : 0;
-	    if (!intensity)
-	      dest_ptr[1+ch] = src_ptr[ch];
-	  }
-	}
+          }
+          else {
+            dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
+              intensity ? src_ptr[ch] : 0;
+            if (!intensity)
+              dest_ptr[1+ch] = src_ptr[ch];
+          }
+        }
     }
   
-  evas_image->Alpha (spp == 4);
-  evas_image->ImageSize (image->w,image->h);
-  evas_image->ImageFill (0, 0, image->w,image->h);
-  evas_image->SetData (evas_data);
-  evas_image->DataUpdateAdd (0, 0, image->w,image->h);
-  evas_image->Show ();
+  eimage->Alpha (spp == 4);
+  eimage->Resize (image->w, image->h);
+  eimage->ImageSize (image->w, image->h);
+  eimage->ImageFill (0, 0, image->w,image->h);
+  eimage->SetData (evas_data);
+  eimage->DataUpdateAdd (0, 0, image->w,image->h);
+  eimage->Show ();
   
-  // position and resize, keep zoom
-  if (false) {
-    zoom = 100;
-  }
-  Zoom (1.0);
+  return eimage;
+}
+
+Viewer* __attribute__ ((weak)) createViewer(const std::vector<std::string>& args)
+{
+  return new Viewer(args);
 }
 
 int main (int argc, char** argv)
@@ -767,19 +789,22 @@ int main (int argc, char** argv)
     {
       cerr << "Exact image viewer (edisplay)."
 	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 - 2008 by René Rebe" << std::endl
+	   <<  " - Copyright (C) 2006 - 2009 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
       return 1;
     }
   
-  Viewer viewer(arglist.Residuals());
-  return viewer.Run (
+  Viewer* viewer= createViewer(arglist.Residuals());
+  
+  int ret = viewer->Run (
 #if EVASGL == 1
-  arg_gl.Get()
+			 arg_gl.Get()
 #else
-  false
+			 false
 #endif
-  );
+			 );
+  delete viewer; viewer = 0;
+  return ret;
 }
