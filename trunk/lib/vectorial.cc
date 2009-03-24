@@ -260,6 +260,7 @@ static bool load_font(font_engine_type& m_feng, const char* fontfile)
 
 void Path::drawText (Image& image, const char* text, double height, const char* fontfile)
 {
+  if (!text) return;
   renderer_exact_image ren_base (image);
   
   rasterizer_scanline ras;
@@ -357,6 +358,7 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
 
 void Path::drawTextOnPath (Image& image, const char* text, double height, const char* fontfile)
 {
+  if (!text) return;
   renderer_exact_image ren_base (image);
   
   renderer_aa ren_solid (ren_base);
