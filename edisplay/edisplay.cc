@@ -338,6 +338,7 @@ int Viewer::Run (bool opengl)
   bool quit = false;
   Utility::Timer timer;
   int dnd_x = 0, dnd_y = 0;
+  bool dnd_moved = false;
 
   while (image_loaded && !quit)
     {
@@ -361,6 +362,7 @@ int Viewer::Run (bool opengl)
 	      {
 		//evas->EventFeedMouseMove (ev.xbutton.x, ev.xbutton.y);
 		//evas->EventFeedMouseDown (ev.xbutton.button, flags);
+		dnd_moved = false;
 		switch (ev.xbutton.button) {
 		case 1:
 		  dnd_x = ev.xbutton.x;
@@ -388,16 +390,17 @@ int Viewer::Run (bool opengl)
 	      }
 	      break;
 	    case ButtonRelease:
-	      // TODO: filter drags
-	      ImageClicked(Window2ImageX (ev.xmotion.x),
-			   Window2ImageY (ev.xmotion.y),
-			   ev.xbutton.button);
+	      if (!dnd_moved)
+		ImageClicked(Window2ImageX (ev.xmotion.x),
+			     Window2ImageY (ev.xmotion.y),
+			     ev.xbutton.button);
 	      break;
 	      
 	    case MotionNotify:
 	      // evas->EventFeedMouseMove (ev.xmotion.x, ev.xmotion.y);
 	      
 	      // dragged around:
+	      dnd_moved = true;
 	      if (ev.xmotion.state & Button1Mask)
 		{
 		  int dx = ev.xmotion.x - dnd_x;
