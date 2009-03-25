@@ -28,17 +28,21 @@ class Contours
 public:
   typedef std::vector < std::pair<unsigned int, unsigned int> > Contour;
   typedef DataMatrix<int> VisitMap;
+  typedef std::vector<Contour*>::iterator iterator;
 
   Contours(const FGMatrix& image);
   Contours() {} // empty constructor for generic usage
-
+  
+  void clear ();
+  void scan (const FGMatrix& image);
+  
   ~Contours();
 
   std::vector <Contour*> contours;
 };
 
 
-// "mindpoint of scanlines" inner storke /tracer/"
+// "midpoint of scanlines" inner storke /tracer/"
 class MidContours : public Contours
 {
 public:
