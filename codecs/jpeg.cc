@@ -301,13 +301,13 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image, const std::string
   image.setRawData (0);
   
   // freestanding instance
-  JPEGCodec* codec = new JPEGCodec (&image);
+  JPEGCodec* codec = new JPEGCodec(&image);
+  image.setCodec(codec);
   
   // private copy for deferred decoding
+  //private_copy.str().resize(stream->tellg());
   stream->seekg (0);
   *stream >> codec->private_copy.rdbuf();
-  
-  image.setCodec (codec);
   
   return true;
 }
