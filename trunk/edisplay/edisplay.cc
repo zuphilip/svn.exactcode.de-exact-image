@@ -643,7 +643,7 @@ bool Viewer::Load ()
   if (false)
   cerr << "Loaded: '" << *it
        << "', " << image->w << "x" << image->h
-       << " @ " << image->xres << "x" << image->yres
+       << " @ " << image->resolutionX() << "x" << image->resolutionY()
        << " dpi - spp: " << image->spp << ", bps: " << image->bps << endl;
   
   // convert colorspace

@@ -383,8 +383,7 @@ bool convert_resolution (const Argument<std::string>& arg)
     {
       if (n < 2)
 	yres = xres;
-      image.xres = xres;
-      image.yres = yres;
+      image.setResolution(xres, yres);
       return true;
     }
   std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;

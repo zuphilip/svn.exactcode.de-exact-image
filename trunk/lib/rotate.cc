@@ -238,10 +238,8 @@ void rot90 (Image& image, int angle)
   image.w = image.h;
   image.h = x;
   // resolution, likewise
-  x = image.xres;
-  image.xres = image.yres;
-  image.yres = x;
-
+  image.setResolution(image.resolutionY(), image.resolutionX());
+  
   // set the new data
   image.setRawData (rot_data);
 }

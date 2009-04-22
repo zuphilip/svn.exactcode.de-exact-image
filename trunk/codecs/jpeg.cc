@@ -82,14 +82,14 @@ my_error_exit (j_common_ptr cinfo)
 void jpeg_compress_set_density (jpeg_compress_struct* dstinfo, const Image& image)
 {
   dstinfo->JFIF_minor_version = 2; // emit JFIF 1.02 extension markers ...
-  if (image.xres == 0 || image.yres == 0) {
+  if (image.resolutionX() == 0 || image.resolutionY() == 0) {
     dstinfo->density_unit = 0; /* unknown */
     dstinfo->X_density = dstinfo->Y_density = 0;
   }
   else {
     dstinfo->density_unit = 1; /* 1 for dots/inch */
-    dstinfo->X_density = image.xres;
-    dstinfo->Y_density = image.yres;
+    dstinfo->X_density = image.resolutionX();
+    dstinfo->Y_density = image.resolutionY();
   }
 }
 
@@ -612,20 +612,19 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   switch (cinfo->density_unit)
     {
     case 1: /* dots/inch */
-      image.xres = cinfo->X_density;
-      image.yres = cinfo->Y_density;
+      image.setResolution(cinfo->X_density, cinfo->Y_density);
       break;
     case 2: /* dots/cm */
-      image.xres = cinfo->X_density * 254 / 100;
-      image.yres = cinfo->Y_density * 254 / 100;
+      image.setResolution(cinfo->X_density * 254 / 100,
+			  cinfo->Y_density * 254 / 100);
       break;
     default: /* 0 for unknown, ratio may still be defined */
-      image.xres = image.yres = 0;
+      image.setResolution(0, 0);
     }
   
   /* This is an important step since it will release a good deal of memory. */
   jpeg_finish_decompress(cinfo);
-  jpeg_destroy_decompress (cinfo);
+  jpeg_destroy_decompress(cinfo);
   delete (cinfo);
 
   return true;
@@ -713,7 +712,8 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   switch (code) {
   case JXFORM_ROT_90:
   case JXFORM_ROT_270:
-    { int t = image.xres; image.xres = image.yres; image.yres = t;} break;
+    image.setResolution(image.resolutionX(), image.resolutionY());
+    break;
   default:
     ; // silence compiler
   }

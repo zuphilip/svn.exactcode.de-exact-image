@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,8 +109,7 @@ bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string&
   png_uint_32 res_x, res_y;
   res_x = png_get_x_pixels_per_meter(png_ptr, info_ptr);
   res_y = png_get_y_pixels_per_meter(png_ptr, info_ptr);
-  image.xres = (int)((2.54*res_x+.5) / 100);
-  image.yres = (int)((2.54*res_y+.5) / 100);
+  image.setResolution((2.54 * res_x + .5) / 100, (2.54 * res_y + .5) / 100);
   
   /* Extract multiple pixels with bit depths of 1, 2, and 4 from a single
    * byte into separate bytes (useful for paletted and grayscale images) */
@@ -270,7 +269,8 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		PNG_FILTER_TYPE_BASE);
   
   png_set_pHYs (png_ptr, info_ptr,
-		(int)(image.xres*100/2.54), (int)(image.yres*100/2.54),
+		(int)(image.resolutionX() * 100 / 2.54),
+		(int)(image.resolutionY() * 100 / 2.54),
 		PNG_RESOLUTION_METER);
 
   png_write_info (png_ptr, info_ptr);

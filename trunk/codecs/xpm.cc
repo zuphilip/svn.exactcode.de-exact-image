@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 - 2008 René Rebe
+ * Copyright (C) 2007 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -159,7 +159,7 @@ bool XPMCodec::readImage (std::istream* stream, Image& image, const std::string&
   image.bps = 8; // for now, later this could be optimized
   image.spp = 3; // for now, later this could be optimized
   image.resize (image.w, image.h);
-  image.xres = image.yres = 0;
+  image.setResolution(0, 0);
   
   skip_comments (stream);
 

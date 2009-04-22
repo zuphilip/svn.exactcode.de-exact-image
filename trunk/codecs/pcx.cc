@@ -1,6 +1,6 @@
 /*
  * C++ PCX library.
- * Copyright (C) 2008 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2009 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -103,8 +103,7 @@ bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& 
   
   image.bps = header.BitsPerPixel;
   image.spp = header.NPlanes;
-  image.xres = header.HDpi;
-  image.yres = header.VDpi;
+  image.setResolution(header.HDpi, header.VDpi);
   
   image.resize(header.WindowXmax - header.WindowXmin + 1,
 	       header.WindowYmax - header.WindowYmin + 1);
@@ -177,8 +176,8 @@ bool PCXCodec::writeImage(std::ostream* stream, Image& image, int quality,
   
   header.Manufacturer = 10;
   header.Version = 5; // TODO: use lower version for non RGB images
-  header.HDpi = image.xres;
-  header.VDpi = image.yres;
+  header.HDpi = image.resolutionX();
+  header.VDpi = image.resolutionY();
   header.WindowXmin = 0;
   header.WindowYmin = 0;
   header.WindowXmax = image.width() - 1;

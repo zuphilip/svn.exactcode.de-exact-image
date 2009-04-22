@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's hOCR to PDF command line frontend
- * Copyright (C) 2008-2009 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2009 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2008 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -101,13 +101,13 @@ int main(int argc, char* argv[])
     }
   
   if (arg_resolution.Size())
-    image.xres = image.yres = arg_resolution.Get();
-  if (image.xres <= 0 || image.yres <= 0) {
+    image.setResolution(arg_resolution.Get(), arg_resolution.Get());
+  if (image.resolutionX() <= 0 || image.resolutionY() <= 0) {
     std::cerr << "Warning: Image x/y resolution not set, defaulting to: "
 	      << 300 << std::endl;
-    image.xres = image.yres = 300;
+    image.setResolution(300, 300);
   }
-  unsigned int res = image.xres;
+  unsigned int res = image.resolutionX();
   bool sloppy = arg_sloppy_text.Get();
   
   std::ofstream* txtStream = 0;
