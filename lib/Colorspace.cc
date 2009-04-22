@@ -360,7 +360,7 @@ void colorspace_grayX_to_gray8 (Image& image)
   if (image.spp != 1)
     return;
 
-  Image gray8_image;
+  Image gray8_image;  gray8_image.copyMeta(image);
   gray8_image.bps = 8;
   gray8_image.spp = 1;
   gray8_image.resize (image.w, image.h);
@@ -383,7 +383,7 @@ void colorspace_grayX_to_rgb8 (Image& image)
   if (image.spp != 1)
     return;
   
-  Image rgb_image;
+  Image rgb_image; rgb_image.copyMeta(image);
   rgb_image.bps = 8;
   rgb_image.spp = 3;
   rgb_image.resize (image.w, image.h);
