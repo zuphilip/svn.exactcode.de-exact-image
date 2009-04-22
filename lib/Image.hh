@@ -1,5 +1,5 @@
 /* The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2008 René Rebe
+ * Copyright (C) 2005 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -216,8 +216,9 @@ public:
   void setBitsPerSample (int _bps) { bps = _bps; }
   void setSamplesPerPixel (int _spp) { spp = _spp; }
 
-  void setResolutionX (int _xres) { xres = _xres; }
-  void setResolutionY (int _yres) { yres = _yres; }
+  void setResolution (int _xres, int _yres) { xres = _xres; yres = _yres; }
+  void setResolutionX (int _xres) { setResolution(_xres, yres); }
+  void setResolutionY (int _yres) { setResolution(xres, _yres); }
 
   /* TODO: should be unsigned */
   int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED, xres DEPRECATED, yres DEPRECATED;
