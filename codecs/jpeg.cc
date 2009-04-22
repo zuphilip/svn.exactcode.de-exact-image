@@ -323,10 +323,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (_image && c != "recompress") {
     // if meta information was modified re-encode the stream
     if (image.isMetaModified()) {
-      std::cerr << "Re-encoding DCT coefficients (due meta changes)" << std::endl;
+      std::cerr << "Re-encoding DCT coefficients (due meta changes)." << std::endl;
       doTransform (JXFORM_NONE, image, stream);
     } else {
-      std::cerr << "Writing unmodified DCT buffer" << std::endl;
+      std::cerr << "Writing unmodified DCT buffer." << std::endl;
       *stream << private_copy.str();
     }
     
@@ -739,24 +739,46 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     // Update meta: w, h, spp might have changed.
     
     // avoid the expensive readMeta for some cases
+    switch (code) {
+    case JXFORM_ROT_90:
+    case JXFORM_ROT_270:
+      if (image.w % 8 == 0 && image.h % 8 == 0) {
+	image.setResolution(image.resolutionX(), image.resolutionY());
+	image.setCodec(this);
+	{ int t = image.w; image.w = image.h; image.h = t; }
+	return true;
+      }
+      break;
+      
+    case JXFORM_ROT_180:
+    case JXFORM_FLIP_H:
+    case JXFORM_FLIP_V:
+      if (image.w % 8 == 0 && image.h % 8 == 0)
+	return true;
+      
+    default:
+      ; // silence compiler
+    }
+    
+    if (crop) {
+      if (x % 8 == 0 && y % 8 == 0 &&
+	  w % 8 == 0 && h % 8 == 0)
+	{
+	  image.w = w;
+	  image.h = h;
+	  return true;
+	}
+    }
+    
     if (to_gray) {
       image.spp = 1;
       return true;
     }
     
-    // as we read back just the basics, some manual translations
-    switch (code) {
-    case JXFORM_ROT_90:
-    case JXFORM_ROT_270:
-      image.setResolution(image.resolutionX(), image.resolutionY());
-      break;
-    default:
-      ; // silence compiler
-    }
-    
     // We re-read the header because we do not want to re-hardcode the
-    // trimming required for some operations.
+    // trimming required for all the other corner cases.
     // Tail call as micro optimization to already free tmp objects.
+    std::cerr << "Re-reading meta data." << std::endl;
     return readMeta (&private_copy, image);
   }
   
