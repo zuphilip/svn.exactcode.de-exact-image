@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -646,8 +646,6 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   jpeg_compress_struct dstinfo;
   jpeg_error_mgr jsrcerr, jdsterr;
   
-  std::stringstream stream;
-  
   std::cerr << "Transforming DCT coefficients." << std::endl;
   
   jvirt_barray_ptr * src_coef_arrays;
@@ -710,6 +708,9 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     dst_coef_arrays = src_coef_arrays;
   
   /* Specify data destination for compression */
+  std::stringstream stream;
+  if (!s)
+    stream.str().reserve(private_copy.str().size());
   cpp_stream_dest (&dstinfo, s ? s : &stream);
   
   // as we read back just the basics, some manual translations
@@ -739,17 +740,17 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   
   // if we are not just writing
   if (!s) {
-    private_copy.str (stream.str());
     // copy into the shadow buffer
+    private_copy.str (stream.str());
+    
+    // if the data is accessed again, it must be re-encoded
+    image.setRawData(0);
+    image.setCodec(this);
     
     // Update meta, w/h,spp might have changed.
     // We re-read the header because we do not want to re-hardcode the
     // trimming required for some operations.
     readMeta (&private_copy, image);
-
-    // if the data is accessed again, it must be re-encoded
-    image.setRawData(0);
-    image.setCodec(this);
   }
   
   return true;
