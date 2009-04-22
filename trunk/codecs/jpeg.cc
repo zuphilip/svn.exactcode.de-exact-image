@@ -608,24 +608,20 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   image.bps = 8;
   
   /* These three values are not used by the JPEG code, merely copied */
-  /* into the JFIF APP0 marker.  density_unit can be 0 for unknown, */
-  /* 1 for dots/inch, or 2 for dots/cm.  Note that the pixel aspect */
-  /* ratio is defined by X_density/Y_density even when density_unit=0. */
-  switch (cinfo->density_unit)           /* JFIF code for pixel size units */
+  /* into the JFIF APP0 marker. JFIF code for pixel size units. */
+  switch (cinfo->density_unit)
     {
-    case 1:
+    case 1: /* dots/inch */
       image.xres = cinfo->X_density;
       image.yres = cinfo->Y_density;
       break;
-    case 2:
+    case 2: /* dots/cm */
       image.xres = cinfo->X_density * 254 / 100;
       image.yres = cinfo->Y_density * 254 / 100;
       break;
-    default:
+    default: /* 0 for unknown, ratio may still be defined */
       image.xres = image.yres = 0;
     }
-  
-  /* Step 8: Release JPEG decompression object */
   
   /* This is an important step since it will release a good deal of memory. */
   jpeg_finish_decompress(cinfo);
