@@ -318,12 +318,18 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   std::string c (compress);
   std::transform (c.begin(), c.end(), c.begin(), tolower);
 
-  // if the instance is freestanding it can only be called by the mux if the cache is valid
+  // if the instance is freestanding it can only be called by the mux
+  // if the cache is valid
   if (_image && c != "recompress") {
-    // since potentially meta data might have changed we have to re-create
-    // the stream here
-    doTransform (JXFORM_NONE, image, stream);
-    std::cerr << "Wrote DCT coefficients" << std::endl;
+    // if meta information was modified re-encode the stream
+    if (image.isMetaModified()) {
+      std::cerr << "Re-encoding DCT coefficients (due meta changes)" << std::endl;
+      doTransform (JXFORM_NONE, image, stream);
+    } else {
+      std::cerr << "Writing unmodified DCT buffer" << std::endl;
+      *stream << private_copy.str();
+    }
+    
     return true;
   }
   
