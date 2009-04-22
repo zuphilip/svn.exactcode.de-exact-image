@@ -484,23 +484,21 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
 bool JPEGCodec::flipX (Image& image)
 {
-  doTransform (JXFORM_FLIP_H, image);
-  return true;
+  return doTransform (JXFORM_FLIP_H, image);
 }
 
 bool JPEGCodec::flipY (Image& image)
 {
-  doTransform (JXFORM_FLIP_V, image);
-  return true;
+  return doTransform (JXFORM_FLIP_V, image);
 }
 
 bool JPEGCodec::rotate (Image& image, double angle)
 {
   // so roate if the first fraction is zero
   switch ((int)(angle * 10)) {
-  case 900:  doTransform (JXFORM_ROT_90, image); return true;
-  case 1800: doTransform (JXFORM_ROT_180, image); return true;
-  case 2700: doTransform (JXFORM_ROT_270, image); return true;
+  case 900:  return doTransform (JXFORM_ROT_90, image);
+  case 1800: return doTransform (JXFORM_ROT_180, image);
+  case 2700: return doTransform (JXFORM_ROT_270, image);
   default:
     ; // no acceleration, fall thru
   }
@@ -528,8 +526,7 @@ bool JPEGCodec::crop (Image& image, unsigned int x, unsigned int y, unsigned int
 
 bool JPEGCodec::toGray (Image& image)
 { 
-  doTransform (JXFORM_NONE, image, 0 /* stream */, true /* to gray */);
-  return true;
+  return doTransform (JXFORM_NONE, image, 0 /* stream */, true /* to gray */);
 }
 
 bool JPEGCodec::scale (Image& image, double xscale, double yscale)
@@ -714,16 +711,6 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     stream.str().reserve(private_copy.str().size());
   cpp_stream_dest (&dstinfo, s ? s : &stream);
   
-  // as we read back just the basics, some manual translations
-  switch (code) {
-  case JXFORM_ROT_90:
-  case JXFORM_ROT_270:
-    image.setResolution(image.resolutionX(), image.resolutionY());
-    break;
-  default:
-    ; // silence compiler
-  }
-  
   jpeg_compress_set_density (&dstinfo, image);
   
   /* Start compressor (note no image data is actually written here) */
@@ -749,10 +736,28 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     image.setRawData(0);
     image.setCodec(this);
     
-    // Update meta, w/h,spp might have changed.
+    // Update meta: w, h, spp might have changed.
+    
+    // avoid the expensive readMeta for some cases
+    if (to_gray) {
+      image.spp = 1;
+      return true;
+    }
+    
+    // as we read back just the basics, some manual translations
+    switch (code) {
+    case JXFORM_ROT_90:
+    case JXFORM_ROT_270:
+      image.setResolution(image.resolutionX(), image.resolutionY());
+      break;
+    default:
+      ; // silence compiler
+    }
+    
     // We re-read the header because we do not want to re-hardcode the
     // trimming required for some operations.
-    readMeta (&private_copy, image);
+    // Tail call as micro optimization to already free tmp objects.
+    return readMeta (&private_copy, image);
   }
   
   return true;
