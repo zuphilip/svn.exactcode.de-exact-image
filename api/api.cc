@@ -183,12 +183,12 @@ int imageHeight (Image* image)
 
 int imageXres (Image* image)
 {
-  return image->yres;
+  return image->resolutionX();
 }
 
 int imageYres (Image* image)
 {
-  return image->yres;
+  return image->resolutionY();
 }
 
 const char* imageColorspace (Image* image)
@@ -198,12 +198,12 @@ const char* imageColorspace (Image* image)
 
 void imageSetXres (Image* image, int xres)
 {
-  image->xres = xres;
+  image->setResolutionX(xres);
 }
 
 void imageSetYres (Image* image, int yres)
 {
-  image->yres = yres;
+  image->setResolutionY(yres);
 }
 
 // image manipulation
@@ -438,9 +438,9 @@ void imageOptimize2BW (Image* image, int low, int high,
   optimize2bw (*image, low, high, threshold, 0 /* sloppy thr */,
 	       radius, sd);
   
-  if (target_dpi && image->xres)
+  if (target_dpi && image->resolutionX())
     {
-      double scale = (double)(target_dpi) / image->xres;
+      double scale = (double)(target_dpi) / image->resolutionX();
       if (scale < 1.0)
 	box_scale (*image, scale, scale);
       else
@@ -608,8 +608,9 @@ char** imageDecodeBarcodesExt (Image* im, const char* c,
   Image* image = new Image;
   *image = *im; // deep copy
   
-  if (image->xres == 0)
-    image->xres = 300; // passed down the lib ...
+  int xres = 300;
+  if (image->resolutionX() != 0)
+    xres = image->resolutionX();
   
   // the barcode library does not support such a high bit-depth
   if (image->bps == 16)
@@ -776,14 +777,14 @@ char** imageDecodeBarcodesExt (Image* im, const char* c,
 	      << ", w: " << image->w << ", h: " << image->h
 	      << ", spp: " << image->spp << ", bps: " << image->bps
 	      << ", stride: " << image->stride()
-	      << ", res: " << image->xres << std::endl;
+	      << ", res: " << xres << std::endl;
   
   char** bar_codes;
   char** bar_codes_type;
   
   // 0 == photometric min is black, but this appears to be inverted?
   int photometric = 1;
-  int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, image->xres,
+  int bar_count = STReadBarCodeFromBitmap (hBarcode, &bbitmap, xres,
 					   &bar_codes, &bar_codes_type,
 					   photometric);
   

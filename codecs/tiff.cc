@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH, Berlin
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -94,17 +94,12 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
   image.spp = _spp;
   image.bps = _bps;
   
-  float _xres;
-  if (TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
-    image.xres = (int)_xres;
-  else
-    image.xres = 0;
-  
-  float _yres;
-  if (TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
-    image.yres = (int)_yres;
-  else
-    image.yres = 0;
+  float _xres, _yres;
+  if (!TIFFGetField(in, TIFFTAG_XRESOLUTION, &_xres))
+    _xres = 0;
+  if (!TIFFGetField(in, TIFFTAG_YRESOLUTION, &_yres))
+    _yres = 0;
+  image.setResolution(_xres, _yres);
   
   int stride = image.stride();
   image.resize (image.w, image.h);
@@ -228,13 +223,13 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   else
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_RGB);
   
-  if (image.xres != 0) {
-    float _xres = image.yres;
+  if (image.resolutionX() != 0) {
+    float _xres = image.resolutionX();
     TIFFSetField (out, TIFFTAG_XRESOLUTION, _xres);
   }
   
-  if (image.yres != 0) {
-    float _yres = image.yres;
+  if (image.resolutionY() != 0) {
+    float _yres = image.resolutionY();
     TIFFSetField (out, TIFFTAG_YRESOLUTION, _yres);
   }
   

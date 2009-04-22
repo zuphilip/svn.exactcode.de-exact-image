@@ -91,11 +91,13 @@ class ImageCodec;
 class Image
 {
 protected:
-  uint8_t* data;
-  bool modified;
+  bool modified, meta_modified;
+  int xres, yres;
   
   std::string decoderID;
   ImageCodec* codec;
+  
+  uint8_t* data;
 
 public:
   
@@ -114,7 +116,8 @@ public:
   ImageCodec* getCodec();
   void setCodec (ImageCodec* _codec);
   
-  bool isModified ();
+  bool isModified () { return modified; }
+  bool isMetaModified () { return meta_modified; }
   
   typedef enum {
     GRAY1 = 1,
@@ -216,12 +219,17 @@ public:
   void setBitsPerSample (int _bps) { bps = _bps; }
   void setSamplesPerPixel (int _spp) { spp = _spp; }
 
-  void setResolution (int _xres, int _yres) { xres = _xres; yres = _yres; }
+  void setResolution (int _xres, int _yres) {
+    if (xres != _xres || yres != _yres)
+      meta_modified = true;
+    xres = _xres;
+    yres = _yres;
+  }
   void setResolutionX (int _xres) { setResolution(_xres, yres); }
   void setResolutionY (int _yres) { setResolution(xres, _yres); }
 
   /* TODO: should be unsigned */
-  int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED, xres DEPRECATED, yres DEPRECATED;
+  int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED;
   
 public:
   

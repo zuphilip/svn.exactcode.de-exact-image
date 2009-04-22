@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2008 Valentin Ziegler <valentin@exactcode.de>
  * Copyright (c) 2008 Susanne Klaus <susanne@exactcode.de>
+ * Copyright (c) 2009 Rene Rebe <rene@exactcode.de>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +34,8 @@ bool PSCodec::writeImage (std::ostream* stream, Image& image, int quality,
 {
 	const int w = image.w;
 	const int h = image.h;
-	double dpi = image.xres ? image.xres : 72; // TODO: yres might be different
+	// TODO: yres might be different
+	double dpi = image.resolutionX() ? image.resolutionY() : 72;
 	double scale = 72 / dpi; //postscript native resolution is 72dpi.
 
 	const char* creatorName = "ExactImage";

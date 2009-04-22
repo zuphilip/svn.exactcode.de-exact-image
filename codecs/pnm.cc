@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image, const std::string&
     ++image.bps;
   
   // not stored in the format :-(
-  image.xres = image.yres = 0;
+  image.setResolution(0, 0);
   
   // allocate data, if necessary
   image.resize (image.w, image.h);

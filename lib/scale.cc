@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -56,8 +56,8 @@ struct nearest_scale_template
     
     new_image.resize ((int)(scalex * (double) image.w),
 		      (int)(scaley * (double) image.h));
-    new_image.xres = (int) (scalex * image.xres);
-    new_image.yres = (int) (scaley * image.yres);
+    new_image.setResolution (scalex * image.resolutionX(),
+			     scaley * image.resolutionY());
     
     T dst (new_image);
     T src (image);
@@ -93,9 +93,9 @@ struct bilinear_scale_template
 
     new_image.resize ((int)(scalex * (double) image.w),
 		      (int)(scaley * (double) image.h));
-    new_image.xres = (int) (scalex * image.xres);
-    new_image.yres = (int) (scaley * image.yres);
-  
+    new_image.setResolution (scalex * image.resolutionX(),
+			     scaley * image.resolutionY());
+    
     T dst (new_image);
     T src (image);
     
@@ -141,8 +141,8 @@ struct box_scale_template
     
     new_image.resize ((int)(scalex * (double) image.w),
 		      (int)(scaley * (double) image.h));
-    new_image.xres = (int) (scalex * image.xres);
-    new_image.yres = (int) (scaley * image.yres);
+    new_image.setResolution (scalex * image.resolutionX(),
+			     scaley * image.resolutionY());
     
     T src (image);
     T dst (new_image);
@@ -223,9 +223,9 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
   
   new_image.resize ((int)(scalex * (double) image.w),
 		    (int)(scaley * (double) image.h));
-  new_image.xres = (int) (scalex * image.xres);
-  new_image.yres = (int) (scaley * image.yres);
-
+  new_image.setResolution (scalex * image.resolutionX(),
+			   scaley * image.resolutionY());
+  
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
 
@@ -283,8 +283,8 @@ struct ddt_scale_template
     
     new_image.resize((int)(scalex * (double) image.w),
 		     (int)(scaley * (double) image.h));
-    new_image.xres = (int)(scalex * image.xres);
-    new_image.yres = (int)(scaley * image.yres);
+    new_image.setResolution (scalex * image.resolutionX(),
+			     scaley * image.resolutionY());
     
     // first scan the source image and build a direction map
     char dir_map [image.h][image.w];

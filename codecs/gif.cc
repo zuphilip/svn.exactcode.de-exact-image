@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,8 +68,7 @@ bool GIFCodec::readImage (std::istream* stream, Image& image, const std::string&
   
   image.spp = 1;
   image.bps = 8;
-  image.xres = 0;
-  image.yres = 0;
+  image.setResolution(0, 0);
   image.resize (GifFile->SWidth,GifFile->SHeight);
   
   /* Scan the content of the GIF file and load the image(s) in: */

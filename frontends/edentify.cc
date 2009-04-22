@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's identify compatible command line frontend.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -132,9 +132,9 @@ int main (int argc, char* argv[])
 		case 'w': //   width
 		  std::cout << image.w; break;
 		case 'x': //   x resolution
-		  std::cout << image.xres << " PixelsPerInch"; break;
+		  std::cout << image.resolutionX() << " PixelsPerInch"; break;
 		case 'y': //   y resolution
-		  std::cout << image.yres << " PixelsPerInch"; break;
+		  std::cout << image.resolutionY() << " PixelsPerInch"; break;
 		case 'z': //   image depth
 		  std::cout << image.bps; break;
 		  // %D   image dispose method
@@ -181,10 +181,11 @@ int main (int argc, char* argv[])
 		  << (image.getDecoderID().empty() ? "NONE" : image.getDecoderID() )
 		  << " " << image.w << "x" << image.h;
 	
-	if (image.xres && image.yres)
-	  std::cout << " @ " << image.xres << "x" << image.yres << "dpi ("
-		    << 254 * image.w / image.xres / 10 << "x"
-		    << 254 * image.h / image.yres / 10 << "mm)";
+	if (image.resolutionY() && image.resolutionY())
+	  std::cout << " @ " << image.resolutionX()
+		    << "x" << image.resolutionY() << "dpi ("
+		    << 254 * image.w / image.resolutionX() / 10 << "x"
+		    << 254 * image.h / image.resolutionY() / 10 << "mm)";
 	
 	int bits = image.bps * image.spp;
 	std::cout << " " << bits << " bit" << (bits>1 ? "s" : "") << ", "

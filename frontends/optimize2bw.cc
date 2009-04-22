@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH
  *           (C) 2005, 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -139,15 +139,15 @@ int main (int argc, char* argv[])
   }
   
   if (dpi != 0) {
-    if (image.xres == 0)
-      image.xres = image.yres;
+    if (image.resolutionX() == 0)
+      image.setResolution(image.resolutionY(), image.resolutionY());
     
-    if (image.xres == 0) {
+    if (image.resolutionX() == 0) {
       std::cerr << "Image does not include DPI information!" << std::endl;
       return 1;
     }
     
-    scale = (double)(dpi) / image.xres;
+    scale = (double)(dpi) / image.resolutionX();
   }
 
   if (scale < 0.0) {
