@@ -420,3 +420,97 @@ void ddt_scale (Image& image, double scalex, double scaley)
     return;
   codegen<ddt_scale_template> (image, scalex, scaley);
 }
+
+void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
+{
+  if (scalex == 1.0 && scaley == 1.0)
+    return;
+  
+  Image image;
+  image.copyTransferOwnership (new_image);
+  
+  new_image.bps = 8; // always output 8bit gray
+  new_image.resize((int)(scalex * (double) image.w),
+		   (int)(scaley * (double) image.h));
+  new_image.setResolution (scalex * image.resolutionX(),
+			   scaley * image.resolutionY());
+  uint8_t* src = image.getRawData();
+  uint8_t* dst = new_image.getRawData();
+  
+  uint32_t boxes[new_image.w];
+  uint32_t count[new_image.w];
+  
+  // pre-compute box indexes
+  int bindex [image.w];
+  for (int sx = 0; sx < image.w; ++sx)
+    bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
+  
+  const int bps = image.bps;
+  const int vmax = 1 << bps;
+  uint8_t gray_lookup[vmax];
+  for (int i = 0; i < vmax; ++i) {
+    gray_lookup[i] = 0xff * i / (vmax - 1);
+    //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
+  }
+  
+  const unsigned int bitshift = 8 - bps;
+  
+  int dy = 0;
+  for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
+    {
+      // clear for accumulation
+      memset (boxes, 0, sizeof (boxes));
+      memset (count, 0, sizeof (count));
+      
+      for (; sy < image.h && sy * scaley < dy + 1; ++sy)
+	{
+	  uint8_t z = 0;
+	  unsigned int bits = 0;
+	  
+	  for (int sx = 0; sx < image.w; ++sx)
+	    {
+	      if (bits == 0) {
+		z = *src++;
+		bits = 8;
+	      }
+	      
+	      const int dx = bindex[sx];
+	      boxes[dx] += gray_lookup[z >> bitshift];
+	      ++count[dx];
+	      
+	      z <<= bps;
+	      bits -= bps;
+	    }
+	}
+      
+      for (int dx = 0; dx < new_image.w; ++dx) {
+	*dst = (boxes[dx] / count[dx]);
+	++dst;
+      }
+    }
+}
+
+void thumbnail_scale (Image& image, double scalex, double scaley)
+{
+  // only optimize the regular thumbnail down-scaling
+  if (scalex > 1 || scaley > 1)
+    return scale(image, scalex, scaley);
+  
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (image.getCodec()->scale(image, scalex, scaley))
+      return;
+  
+  // quick sub byte scaling
+  if (image.bps <= 8) {
+    box_scale_grayX_to_gray8(image, scalex, scaley);
+  }
+  else {
+    if (image.spp == 1 && image.bps > 8)
+      colorspace_by_name(image, "gray");
+    else if (image.spp > 3 || image.bps > 8)
+      colorspace_by_name(image, "rgb");
+    
+    box_scale(image, scalex, scaley);
+  }
+}
