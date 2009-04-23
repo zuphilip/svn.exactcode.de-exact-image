@@ -14,14 +14,13 @@ void colorspace_gray8_denoise_neighbours (Image &image);
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold = 127);
 void colorspace_gray8_to_gray2 (Image& image);
 void colorspace_gray8_to_gray4 (Image& image);
-void colorspace_gray8_to_rgb8 (Image& image);
-
-void colorspace_grayX_to_gray8 (Image& image);
-void colorspace_grayX_to_rgb8 (Image& image);
 
 void colorspace_gray1_to_gray2 (Image& image);
 void colorspace_gray1_to_gray4 (Image& image);
-void colorspace_gray1_to_gray8 (Image& image);
+
+void colorspace_grayX_to_gray8 (Image& image);
+void colorspace_gray8_to_rgb8 (Image& image);
+void colorspace_grayX_to_rgb8 (Image& image);
 
 void colorspace_16_to_8 (Image& image);
 void colorspace_8_to_16 (Image& image);

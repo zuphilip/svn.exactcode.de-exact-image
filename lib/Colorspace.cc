@@ -356,48 +356,85 @@ void colorspace_gray8_to_rgb8 (Image& image)
 
 void colorspace_grayX_to_gray8 (Image& image)
 {
-  // sanity and for compiler optimization
-  if (image.spp != 1)
-    return;
-
-  Image gray8_image;  gray8_image.copyMeta(image);
-  gray8_image.bps = 8;
-  gray8_image.spp = 1;
-  gray8_image.resize (image.w, image.h);
-
-  Image::iterator it = image.begin();
-  Image::iterator gray8_it = gray8_image.begin();
-
-  while (gray8_it != gray8_image.end()) {
-    *it;
-    gray8_it.setL (it.getL());
-    gray8_it.set (gray8_it);
-    ++it; ++gray8_it;
+  uint8_t* old_data = image.getRawData();
+  int old_stride = image.stride();
+  
+  const int bps = image.bps;
+  image.bps = 8;
+  image.setRawDataWithoutDelete ((uint8_t*)malloc(image.h * image.stride()));
+  uint8_t* output = image.getRawData();
+  
+  const int vmax = 1 << bps;
+  uint8_t gray_lookup[vmax];
+  for (int i = 0; i < vmax; ++i) {
+    gray_lookup[i] = 0xff * i / (vmax - 1);
+    //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
   }
-  image = gray8_image;
+  
+  const unsigned int bitshift = 8 - bps;
+  for (int row = 0; row < image.h; ++row)
+    {
+      uint8_t* input  = old_data + row * old_stride;
+      uint8_t z = 0;
+      unsigned int bits = 0;
+      
+      for (int x = 0; x < image.w; ++x)
+	{
+	  if (bits == 0) {
+	    z = *input++;
+	    bits = 8;
+	  }
+	  
+	  *output++ = gray_lookup[z >> bitshift];
+	  
+	  z <<= bps;
+	  bits -= bps;
+	}
+    }
+  free (old_data);
 }
 
 void colorspace_grayX_to_rgb8 (Image& image)
 {
-  // sanity and for compiler optimization
-  if (image.spp != 1)
-    return;
+  uint8_t* old_data = image.getRawData();
+  int old_stride = image.stride();
   
-  Image rgb_image; rgb_image.copyMeta(image);
-  rgb_image.bps = 8;
-  rgb_image.spp = 3;
-  rgb_image.resize (image.w, image.h);
+  const int bps = image.bps;
+  image.bps = 8;
+  image.spp = 3;
+  image.setRawDataWithoutDelete ((uint8_t*)malloc(image.h * image.stride()));
+  uint8_t* output = image.getRawData();
   
-  Image::iterator it = image.begin();
-  Image::iterator rgb_it = rgb_image.begin();
-  
-  while (rgb_it != rgb_image.end()) {
-    *it;
-    rgb_it.setL (it.getL());
-    rgb_it.set (rgb_it);
-    ++it; ++rgb_it;
+  const int vmax = 1 << bps;
+  uint8_t gray_lookup[vmax];
+  for (int i = 0; i < vmax; ++i) {
+    gray_lookup[i] = 0xff * i / (vmax - 1);
+    //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
   }
-  image = rgb_image;
+  
+  const unsigned int bitshift = 8 - bps;
+  for (int row = 0; row < image.h; ++row)
+    {
+      uint8_t* input  = old_data + row * old_stride;
+      uint8_t z = 0;
+      unsigned int bits = 0;
+      
+      for (int x = 0; x < image.w; ++x)
+	{
+	  if (bits == 0) {
+	    z = *input++;
+	    bits = 8;
+	  }
+	  
+	  *output++ = gray_lookup[z >> bitshift];
+	  *output++ = gray_lookup[z >> bitshift];
+	  *output++ = gray_lookup[z >> bitshift];
+	  
+	  z <<= bps;
+	  bits -= bps;
+	}
+    }
+  free (old_data);
 }
 
 void colorspace_gray1_to_gray2 (Image& image)
@@ -479,33 +516,6 @@ void colorspace_gray1_to_gray4 (Image& image)
 	}
     }
   
-  free (old_data);
-}
-
-void colorspace_gray1_to_gray8 (Image& image)
-{
-  uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
-  
-  image.bps = 8;
-  image.setRawDataWithoutDelete ((uint8_t*) malloc (image.h*image.stride()));
-  uint8_t* output = image.getRawData();
- 
-  for (int row = 0; row < image.h; ++row)
-    {
-      uint8_t* input  = old_data + row * old_stride;
-      uint8_t z = 0;
-      
-      for (int x = 0; x < image.w; ++x)
-	{
-	  if (x % 8 == 0)
-	    z = *input++;
-	  
-	  *output++ = (z >> 7) ? 0xff : 0x00;
-	  
-	  z <<= 1;
-	}
-    }
   free (old_data);
 }
 
