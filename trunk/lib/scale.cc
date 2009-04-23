@@ -151,10 +151,14 @@ struct box_scale_template
     typename T::accu boxes [new_image.w];
     int count [new_image.w];
     
+    // pre-compute box indexes
+    int bindex [image.w];
+    for (int sx = 0; sx < image.w; ++sx)
+      bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
+    
     int dy = 0;
     for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
       {
-	
 	// clear for accumulation
 	for (int x = 0; x < new_image.w; ++x) {
 	  boxes[x] = typename T::accu();
@@ -164,8 +168,8 @@ struct box_scale_template
 	for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
 	  //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
 	  for (int sx = 0; sx < image.w; ++sx) {
-	    const int dx = std::min ((int)(scalex*sx), new_image.w-1);
 	    //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
+	    const int dx = bindex[sx];
 	    boxes[dx] += *src; ++src;
 	    ++count[dx];
 	  }
@@ -178,9 +182,6 @@ struct box_scale_template
 	  //       		<< ", count: " << count[dx] << std::endl;      
 	  boxes[dx] /= count[dx];
 	  dst.set (boxes[dx]);
-	  /* Test pattern:
-	     dst.setL (dx*dy);
-	     dst.set (dst); */
 	  ++dst;
 	}
       }
