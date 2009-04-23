@@ -138,6 +138,7 @@ void imageScale (Image* image, double factor, double yfactor = .0);
 void imageNearestScale (Image* image, double factor, double yfactor = .0);
 void imageBoxScale (Image* image, double factor, double yfactor = .0);
 void imageBilinearScale (Image* image, double factor, double yfactor = .0);
+void imageThumbnailScale (Image* image, double factor, double yfactor = .0);
 
 void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
 
