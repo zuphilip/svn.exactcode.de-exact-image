@@ -283,6 +283,11 @@ void imageBilinearScale (Image* image, double factor, double yfactor)
   bilinear_scale (*image, factor, yfactor != .0 ? yfactor : factor);
 }
 
+void imageThumbnailScale (Image* image, double factor, double yfactor)
+{
+  thumbnail_scale (*image, factor, yfactor != .0 ? yfactor : factor);
+}
+
 void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
 {
   crop (*image, x, y, w, h);
