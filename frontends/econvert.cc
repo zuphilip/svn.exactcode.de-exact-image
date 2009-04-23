@@ -234,6 +234,13 @@ bool convert_scale (const Argument<double>& arg)
   return true;
 }
 
+bool convert_thumbnail_scale (const Argument<double>& arg)
+{
+  double f = arg.Get();
+  thumbnail_scale (image, f, f);
+  return true;
+}
+
 bool convert_hue (const Argument<double>& arg)
 {
   double f = arg.Get();
@@ -752,7 +759,13 @@ int main (int argc, char* argv[])
   arg_box_scale.Bind (convert_box_scale);
   arglist.Add (&arg_box_scale);
 
-  Argument<double> arg_rotate ("", "rotate",
+  Argument<double> arg_thumbnail_scale ("", "thumbnail",
+					"quick and dirty down-scale for a thumbnail",
+					0.0, 0, 1, true, true);
+  arg_thumbnail_scale.Bind (convert_thumbnail_scale);
+  arglist.Add (&arg_thumbnail_scale);
+
+   Argument<double> arg_rotate ("", "rotate",
 			       "rotation angle",
 			       0, 1, true, true);
   arg_rotate.Bind (convert_rotate);
