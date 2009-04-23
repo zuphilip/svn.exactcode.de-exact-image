@@ -9,3 +9,5 @@ void bilinear_scale (Image& image, double xscale, double yscale);
 void bicubic_scale (Image& image, double xscale, double yscale);
 
 void ddt_scale (Image& image, double xscale, double yscale);
+
+void thumbnail_scale (Image& image, double xscale, double yscale);
