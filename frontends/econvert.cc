@@ -83,6 +83,12 @@ Argument<std::string> arg_decompression ("", "decompress",
 					 "depending on the input format, allowing to read partial data",
 					 0, 1, true, true);
 
+#if WITHFREETYPE == 1
+Argument<std::string> arg_font ("", "font",
+				"draw text using specified font file",
+				0, 1, true, true);
+#endif
+
 bool convert_input (const Argument<std::string>& arg)
 {
   image.setRawData (0);
@@ -596,7 +602,8 @@ bool convert_text (const Argument<std::string>& arg)
       double r = 0, g = 0, b = 0;
       foreground_color.getRGB (r, g, b);
       path.setFillColor (r, g, b);
-      path.drawText (image, text, height);
+      path.drawText (image, text, height,
+		     arg_font.Size() ? arg_font.Get().c_str() : NULL);
       
       free (text);
       return true; 
@@ -854,6 +861,7 @@ int main (int argc, char* argv[])
 				  0, 1, true, true);
   arg_text.Bind (convert_text);
   arglist.Add (&arg_text);
+  arglist.Add (&arg_font);
 #endif
   
   // parse the specified argument list - and maybe output the Usage
