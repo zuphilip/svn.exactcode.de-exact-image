@@ -502,7 +502,7 @@ void thumbnail_scale (Image& image, double scalex, double scaley)
       return;
   
   // quick sub byte scaling
-  if (image.bps <= 8) {
+  if (image.bps <= 8 && image.spp == 1) {
     box_scale_grayX_to_gray8(image, scalex, scaley);
   }
   else {
