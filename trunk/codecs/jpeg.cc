@@ -779,7 +779,8 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     // trimming required for all the other corner cases.
     // Tail call as micro optimization to already free tmp objects.
     std::cerr << "Re-reading meta data." << std::endl;
-    return readMeta (&private_copy, image);
+    readMeta (&private_copy, image);
+    image.setCodec(this);
   }
   
   return true;
