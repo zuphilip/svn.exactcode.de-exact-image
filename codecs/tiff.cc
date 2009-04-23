@@ -116,13 +116,18 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
     {
       if (TIFFReadScanline(in, data2, row, 0) < 0)
 	break;
+      
+      if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
+	for (int i = 0; i < stride; ++i)
+	  data2[i] = data2[i] ^ 0xFF;
+      
       data2 += stride;
     }
   
   /* some post load fixup */
   
-  /* invert if saved "inverted" */
-  if (photometric == PHOTOMETRIC_MINISWHITE)
+  /* invert if saved "inverted", we already invert 1bps on-the-fly */
+  if (photometric == PHOTOMETRIC_MINISWHITE && image.bps != 1)
     invert (image);
   
   /* strange 16bit gray images ??? or GRAYA? */
