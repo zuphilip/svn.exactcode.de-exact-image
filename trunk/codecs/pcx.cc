@@ -61,20 +61,20 @@ typedef struct
   uint8_t Filler[54];
 } __attribute__((packed)) PCXHeader;
 
-bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
+bool PCXCodec::readImage(std::istream* stream,
+			 Image& image, const std::string& decompres)
 {
-  PCXHeader header;
-  
   if (stream->peek() != 10)
     return false;
-
-  header.Manufacturer = stream->get();
+  stream->get();
   if ((unsigned)stream->peek() > 5) {
+  std::cerr << "here" << std::endl;
     stream->unget();
     return false;
   }
   stream->unget();
   
+  PCXHeader header;
   if (!stream->read((char*)&header, sizeof(header)))
     return false;
 
@@ -87,9 +87,9 @@ bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& 
    case 32:
      break;
    default:
+     std::cerr << "PCX invalid bit-depth: " << header.BitsPerPixel << std::endl;
      goto no_pcx;
    };
-
 
   switch (header.NPlanes)
    {
@@ -98,6 +98,7 @@ bool PCXCodec::readImage(std::istream* stream, Image& image, const std::string& 
    case 4:
      break;
    default:
+     std::cerr << "PCX invalid plane count: " << header.NPlanes << std::endl;
      goto no_pcx;
    };
   
@@ -173,9 +174,28 @@ bool PCXCodec::writeImage(std::ostream* stream, Image& image, int quality,
 			  const std::string& compress)
 {
   PCXHeader header;
-  
   header.Manufacturer = 10;
-  header.Version = 5; // TODO: use lower version for non RGB images
+  header.Version = 5; // TODO: save older versions if not RGB
+  
+  header.Encoding = 0; // 1: RLE
+  header.NPlanes = image.spp;
+  header.BytesPerLine = image.stride() / image.spp;
+  header.BitsPerPixel = image.bps;
+  header.PaletteInfo = 0;
+  
+  switch (header.BitsPerPixel)
+    {
+    case 1:
+    case 8:
+    case 16:
+    case 24:
+    case 32:
+     break;
+    default:
+      std::cerr << "unsupported PCX bit-depth" << std::endl;
+      return false;
+   };
+  
   header.HDpi = image.resolutionX();
   header.VDpi = image.resolutionY();
   header.WindowXmin = 0;
@@ -185,9 +205,22 @@ bool PCXCodec::writeImage(std::ostream* stream, Image& image, int quality,
   
   stream->write((char*)&header, sizeof(header));
   
-  // TODO: write image data
+  // write "un"compressed image data
+  // TODO: RLE compress
+  for (int y = 0; y < image.h; ++y)
+    {
+      for (int plane = 0; plane < image.spp; ++plane)
+	{
+	  uint8_t* data = image.getRawData() + image.stride() * y + plane;
+	  for (int x = 0; x < image.w; ++x)
+	    {
+	      stream->write((char*)data, 1);
+	      data += image.spp;
+	    }
+	}
+    }
   
-  return false;
+  return true;
 }
 
 PCXCodec pcx_codec;
