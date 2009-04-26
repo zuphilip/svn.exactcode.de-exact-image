@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,8 +43,40 @@ void stdstream_flush_data(png_structp png_ptr)
   stream = stream;
 }
 
+// just for the custom png data decoding
 
-bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+static void
+png_read_data(png_structp png_ptr, png_bytep data, png_size_t length)
+{
+  if (png_ptr->read_data_fn != NULL)
+    (*(png_ptr->read_data_fn))(png_ptr, data, length);
+}
+
+
+static void
+png_crc_read(png_structp png_ptr, png_bytep buf, png_size_t length)
+{
+  if (png_ptr == NULL) return;
+  png_read_data(png_ptr, buf, length);
+  //png_calculate_crc(png_ptr, buf, length);
+}
+
+static bool got_cgbi; // TODO: non-static for reentrance
+
+int read_chunk_callback(png_structp ptr, png_unknown_chunkp chunk)
+{
+  if (chunk->name[0] == 'C' &&
+      chunk->name[1] == 'g' &&
+      chunk->name[2] == 'B' &&
+      chunk->name[3] == 'I') {
+    got_cgbi = true;
+    return 1;
+  }
+  return 0;
+}
+
+bool PNGCodec::readImage (std::istream* stream, Image& image,
+			  const std::string& decompres)
 {
   { // quick magic check
     char buf [4];
@@ -59,6 +91,8 @@ bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string&
   png_infop info_ptr;
   png_uint_32 width, height;
   int bit_depth, color_type, interlace_type;
+  
+  got_cgbi = false;
   
   png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING,
 				   NULL /*user_error_ptr*/,
@@ -92,6 +126,12 @@ bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string&
   
   ///* If we have already read some of the signature */
   //png_set_sig_bytes(png_ptr, sig_read);
+  
+  png_set_read_user_chunk_fn(png_ptr, png_get_user_chunk_ptr(png_ptr),
+			     read_chunk_callback);
+  
+  png_set_keep_unknown_chunks(png_ptr, PNG_HANDLE_CHUNK_ALWAYS,
+			      png_bytep_NULL, 0);
   
   /* The call to png_read_info() gives us all of the information from the
    * PNG file before the first IDAT (image data chunk).  REQUIRED
@@ -193,10 +233,100 @@ bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string&
   png_bytep row_pointers[1];
   
   /* The other way to read images - deal with interlacing: */
-  for (int pass = 0; pass < number_passes; ++pass)
-    for (unsigned int y = 0; y < height; ++y) {
-      row_pointers[0] = image.getRawData() + y * stride;
-      png_read_rows(png_ptr, row_pointers, png_bytepp_NULL, 1);
+  
+  if (!got_cgbi)
+    {
+      for (int pass = 0; pass < number_passes; ++pass)
+	for (unsigned int y = 0; y < height; ++y) {
+	  row_pointers[0] = image.getRawData() + y * stride;
+	  png_read_rows(png_ptr, row_pointers, png_bytepp_NULL, 1);
+	}
+    }
+  else // we need to unpack cgbi images ourself
+    {
+      // we need a bigger buffer for uncompression due row indexes
+      image.setRawDataWithoutDelete((uint8_t*)realloc(image.getRawData(),
+						      (image.stride() + 1) *
+						      image.height()));
+      
+      z_stream strm;
+      /* allocate deflate state */
+      
+      strm.zalloc = Z_NULL;
+      strm.zfree = Z_NULL;
+      strm.opaque = Z_NULL;
+      strm.avail_in = 0;
+      strm.next_in = NULL;
+      
+      strm.next_out = image.getRawData();
+      strm.avail_out = image.stride() * image.h;
+      
+      int ret = inflateInit2(&strm, -8);
+      
+      do {
+	// decompress all in one go, otherwise zlib errors
+	// out and I have not found out why
+	std::string s; s.resize(png_ptr->idat_size);
+	
+	if (!strm.avail_in) {
+	  strm.next_in = (Bytef*)&s[0]; // png_ptr->zbuf;
+	  strm.avail_in = s.size(); // png_ptr->zbuf_size;
+	  
+	  if (strm.avail_in > png_ptr->idat_size)
+	    strm.avail_in = png_ptr->idat_size;
+	  png_crc_read(png_ptr, strm.next_in, strm.avail_in);
+	  png_ptr->idat_size -= strm.avail_in;
+	}
+	
+	ret = inflate(&strm, Z_NO_FLUSH);
+	
+      }
+      while (ret != Z_STREAM_END &&
+	     ret == Z_OK &&
+	     strm.avail_out > 0);
+      
+      inflateEnd(&strm);
+      
+      if (ret != Z_OK && ret != Z_STREAM_END) {
+	png_destroy_read_struct(&png_ptr, &info_ptr, png_infopp_NULL);
+	return false;
+      }
+      
+      uint8_t* dst = image.getRawData();
+      uint8_t* src = dst;
+      for (int y = 0; y < image.h; ++y)
+	{
+	  // filter?
+	  const uint8_t filter = *src++;
+	  // 0:none, 1:sub, 2:up, 3:avg, 4:paeth
+	  switch (filter) {
+	  case 0: // none
+	  case 1: // sub
+	    break;
+	    // case 2: // up
+	    // case 3: // avg
+	    // case 4: // paeth
+	  default:
+	    std::cerr << "unimplemented filter: " << (int) filter << std::endl;
+	  }
+	  for (int x = 0; x < image.w; ++x)
+	    {
+	      uint8_t b = src[0], g = src[1], r = src[2], a = src[3];
+	      src += 4;
+	      
+	      if (x > 0 && filter == 1) {
+		r += dst[-4];
+		g += dst[-3];
+		b += dst[-2];
+		a += dst[-1];
+	      }
+	      
+	      *dst++ = r;
+	      *dst++ = g;
+	      *dst++ = b;
+	      *dst++ = a;
+	    }
+	}
     }
   
   /* clean up after the read, and free any memory allocated - REQUIRED */
