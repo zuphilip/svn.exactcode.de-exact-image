@@ -125,8 +125,9 @@ bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& 
     }
 
   std::cerr << "TGA: " << (int)header.IDLength << ", " << (int)header.ImageType
-            << ", " << (int)header.ImageDepth << ", " << (int)header.ColorMapType << ", "
-            << header.ImageWidth << ", " << header.ImageHeight << std::endl;
+            << ", " << (int)header.ImageDepth << ", " << (int)header.ColorMapType
+	    << ", " << header.ImageWidth << ", " << header.ImageHeight
+	    << ", " << header.ImageDescriptor << std::endl;
   
   if (header.ImageDepth == 32)
     image.spp = 4;
@@ -141,6 +142,9 @@ bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& 
       // seek to color map
       stream->seekg(sizeof(header) + header.IDLength);
     }
+  
+  // seek to image data
+  stream->seekg(sizeof(header) + header.IDLength);
   
   if (!rle) {
     // TODO: interpret flip/flop bits
@@ -169,6 +173,13 @@ bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& 
 	  }
       }
   }
+  
+  {
+    unsigned ori = (header.ImageDescriptor >> 4) & 2;
+    if (ori != 2)
+      std::cerr << "unimplemented TGA orientation: " << ori << std::endl;
+  }
+  
   return true;
   
  no_tga:
@@ -180,16 +191,34 @@ bool TGACodec::writeImage(std::ostream* stream, Image& image, int quality,
 			  const std::string& compress)
 {
   TGAHeader header;
+  header.IDLength = 0;
+  header.ColorMapType = 0;
+  header.ImageType = image.spp == 1 ? 3 /*Truecolor*/ : 2/*bw*/;
+  header.ColorMapIndex = 0;
+  header.ColorMapLength = 0;
+  header.ColorMapEntrySize = 0;
   
-  // TODO: header filling
-
+  header.ImageXOrigin = 0;
+  header.ImageYOrigin = 0;
+  header.ImageWidth = image.width();
+  header.ImageHeight = image.height();
+  header.ImageDepth = image.spp * image.bps;
+  header.ImageDescriptor = 0x20; // top-left
+  
   stream->write((char*)&header, sizeof(header));
   
-  // TODO: write image data
+  stream->write((char*)image.getRawData(), image.stride() * image.height());
   
-  // TODO: optionally write the "new-style" footer
+  TGAFooter footer;
+  footer.ExtensionOffset = 0;
+  footer.DeveloperOffset = 0;
   
-  return false;
+  strcpy(footer.Signature, "TRUEVISION-XFILE");
+  footer.ReservedCharacter = '.';
+  footer.ZeroTerminator = 0;
+  stream->write((char*)&footer, sizeof(footer));
+  
+  return true;
 }
 
 TGACodec tga_codec;
