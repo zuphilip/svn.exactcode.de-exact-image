@@ -621,9 +621,9 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
       
       for (int i = 0; i < (1 << image.bps); ++i) {
 	// BMP maps have BGR order ...
-	rmap[i] = clr_tbl [i * n_clr_elems + 2] << 8;
-	gmap[i] = clr_tbl [i * n_clr_elems + 1] << 8;
-	bmap[i] = clr_tbl [i * n_clr_elems + 0] << 8;
+	rmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 2];
+	gmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 1];
+	bmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 0];
       }
       
       colorspace_de_palette (image, clr_tbl_size, rmap, gmap, bmap);
