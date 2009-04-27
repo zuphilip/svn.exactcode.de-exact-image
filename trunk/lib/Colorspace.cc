@@ -689,6 +689,8 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace,
     spp = 1; bps = 16;
   } else if (space == "rgb" || space == "rgb8") {
     spp = 3; bps = 8;
+  } else if (space == "rgba" || space == "rgb8a") {
+    spp = 4; bps = 8;
   } else if (space == "rgb16") {
     spp = 3; bps = 16;
   // TODO: CYMK, YVU, RGBA, GRAYA...
