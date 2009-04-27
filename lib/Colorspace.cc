@@ -590,8 +590,8 @@ void colorspace_de_palette (Image& image, int table_entries,
     int i;
     // std::cerr << "checking for gray table" << std::endl;
     for (i = 0; i < table_entries; ++i) {
-      int ref = i * 255 / (table_entries-1);
-      if (rmap[i] >> 8 != ref || rmap[i] >> 8 != gmap[i] >> 8 || rmap[i] >> 8 != bmap[i] >> 8)
+      if (rmap[i] >> 8 != gmap[i] >> 8 ||
+	  rmap[i] >> 8 != bmap[i] >> 8)
 	break;
     }
     
@@ -600,11 +600,21 @@ void colorspace_de_palette (Image& image, int table_entries,
       is_gray = true;
     }
     
-    // shortpath if the data is already 8bit gray
-    if (is_gray && (image.bps == 8 || image.bps == 4 || image.bps == 2) ) {
-      // std::cerr << "is gray table" << std::endl;
-      return;
-    }
+    // quick path if the table is already ordered
+    if (is_gray && (image.bps == 8 || image.bps == 4 || image.bps == 2))
+      {
+	for (i = 0; i < table_entries; ++i) {
+	  const int ref = i * 0xff / (table_entries - 1);
+	  if (rmap[i] >> 8 != ref ||
+	      gmap[i] >> 8 != ref ||
+	      bmap[i] >> 8 != ref)
+	    break;
+	}
+	if (i == table_entries) {
+	  // std::cerr << "perfect gray table." << std::endl;
+	  return;
+	}
+      }
   }
   
   int new_size = image.w * image.h;
