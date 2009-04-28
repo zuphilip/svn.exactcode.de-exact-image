@@ -595,7 +595,7 @@ void colorspace_de_palette (Image& image, int table_entries,
     
     // std::cerr << "checking for gray table" << std::endl;
     for (int i = 0; (is_gray || is_ordered_gray) && i < table_entries; ++i) {
-      std::cerr << rmap[i] << " " << gmap[i] << " " << bmap[i] << std::endl;
+      // std::cerr << rmap[i] << " " << gmap[i] << " " << bmap[i] << std::endl;
       if (rmap[i] >> 8 != gmap[i] >> 8 ||
 	  rmap[i] >> 8 != bmap[i] >> 8) {
 	is_gray = is_ordered_gray = false;
