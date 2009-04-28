@@ -587,34 +587,32 @@ void colorspace_de_palette (Image& image, int table_entries,
   // detect gray tables
   bool is_gray = false;
   if (table_entries > 1) {
-    int i;
+    bool is_ordered_gray = (image.bps == 8 || image.bps == 4 ||
+			    image.bps == 2) && (1 << image.bps == table_entries);
+    is_gray = true;
+    
+    // std::cerr << (1 << image.bps) << " vs " << table_entries << std::endl;
+    
     // std::cerr << "checking for gray table" << std::endl;
-    for (i = 0; i < table_entries; ++i) {
+    for (int i = 0; (is_gray || is_ordered_gray) && i < table_entries; ++i) {
+      std::cerr << rmap[i] << " " << gmap[i] << " " << bmap[i] << std::endl;
       if (rmap[i] >> 8 != gmap[i] >> 8 ||
-	  rmap[i] >> 8 != bmap[i] >> 8)
-	break;
-    }
-    
-    if (i == table_entries) {
-      // std::cerr << "found gray table." << std::endl;
-      is_gray = true;
-    }
-    
-    // quick path if the table is already ordered
-    if (is_gray && (image.bps == 8 || image.bps == 4 || image.bps == 2))
-      {
-	for (i = 0; i < table_entries; ++i) {
-	  const int ref = i * 0xff / (table_entries - 1);
-	  if (rmap[i] >> 8 != ref ||
-	      gmap[i] >> 8 != ref ||
-	      bmap[i] >> 8 != ref)
-	    break;
-	}
-	if (i == table_entries) {
-	  // std::cerr << "perfect gray table." << std::endl;
-	  return;
-	}
+	  rmap[i] >> 8 != bmap[i] >> 8) {
+	is_gray = is_ordered_gray = false;
       }
+      else if (is_ordered_gray) {
+	const int ref = i * 0xff / (table_entries - 1);
+	if (rmap[i] >> 8 != ref ||
+	    gmap[i] >> 8 != ref ||
+	    bmap[i] >> 8 != ref)
+	  is_ordered_gray = false;
+      }
+    }
+    
+    // std::cerr << "gray: " << is_gray << ", is ordered: " << is_ordered_gray << std::endl;
+    
+    if (is_ordered_gray)
+      return;
   }
   
   int new_size = image.w * image.h;
