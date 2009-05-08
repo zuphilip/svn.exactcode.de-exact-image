@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -107,7 +107,8 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	  bg_b = i;
       }
     highest = (int) (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
-        
+    
+    if (false)
     std::cerr << "lowest: " << lowest << ", highest: " << highest
 	      << ", back rgb: " << bg_r << " " <<  bg_g << " " << bg_b
 	      << std::endl;
@@ -121,12 +122,14 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     if (high)
       highest = high;
 
+    if (false)
     std::cerr << "after limit and overwrite, lowest: " << lowest
 	      << ", highest: " << highest << std::endl;
     
     signed int a = (255 * 256) / (highest - lowest);
     signed int b = (-a * lowest);
     
+    if (false)
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
 
