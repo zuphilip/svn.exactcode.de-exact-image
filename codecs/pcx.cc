@@ -68,7 +68,6 @@ bool PCXCodec::readImage(std::istream* stream,
     return false;
   stream->get();
   if ((unsigned)stream->peek() > 5) {
-  std::cerr << "here" << std::endl;
     stream->unget();
     return false;
   }
