@@ -148,11 +148,16 @@ struct box_scale_template
     T dst (new_image);
   
     // prepare boxes
+#ifdef _MSC_VER
+    std::vector<typename T::accu> boxes(new_image.w);
+    std::vector<int> count(new_image.w);
+    std::vector<int> bindex(new_image.w);
+#else
     typename T::accu boxes [new_image.w];
     int count [new_image.w];
-    
     // pre-compute box indexes
     int bindex [image.w];
+#endif
     for (int sx = 0; sx < image.w; ++sx)
       bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
     
@@ -273,6 +278,7 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
     }
   }
 }
+#ifndef _MSC_VER
 
 template <typename T>
 struct ddt_scale_template
@@ -421,6 +427,8 @@ void ddt_scale (Image& image, double scalex, double scaley)
   codegen<ddt_scale_template> (image, scalex, scaley);
 }
 
+#endif
+
 void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
 {
   if (scalex == 1.0 && scaley == 1.0)
@@ -437,17 +445,26 @@ void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
   uint8_t* src = image.getRawData();
   uint8_t* dst = new_image.getRawData();
   
+#ifdef _MSC_VER
+  std::vector<uint32_t> boxes(new_image.w);
+  std::vector<uint32_t> count(new_image.w);
+  std::vector<int> bindex(image.w);
+#else
   uint32_t boxes[new_image.w];
   uint32_t count[new_image.w];
-  
   // pre-compute box indexes
   int bindex [image.w];
+#endif
   for (int sx = 0; sx < image.w; ++sx)
     bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
   
   const int bps = image.bps;
   const int vmax = 1 << bps;
+#ifdef _MSC_VER
+  std::vector<uint8_t> gray_lookup(vmax);
+#else
   uint8_t gray_lookup[vmax];
+#endif
   for (int i = 0; i < vmax; ++i) {
     gray_lookup[i] = 0xff * i / (vmax - 1);
     //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
@@ -459,8 +476,8 @@ void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
   for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
     {
       // clear for accumulation
-      memset (boxes, 0, sizeof (boxes));
-      memset (count, 0, sizeof (count));
+      memset (&boxes[0], 0, sizeof(boxes[0]) * new_image.w);
+      memset (&count[0], 0, sizeof(count[0]) * new_image.w);
       
       for (; sy < image.h && sy * scaley < dy + 1; ++sy)
 	{
