@@ -365,7 +365,11 @@ void colorspace_grayX_to_gray8 (Image& image)
   uint8_t* output = image.getRawData();
   
   const int vmax = 1 << bps;
+#ifdef _MSC_VER
+  std::vector<uint8_t> gray_lookup(vmax);
+#else
   uint8_t gray_lookup[vmax];
+#endif
   for (int i = 0; i < vmax; ++i) {
     gray_lookup[i] = 0xff * i / (vmax - 1);
     //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
@@ -406,7 +410,11 @@ void colorspace_grayX_to_rgb8 (Image& image)
   uint8_t* output = image.getRawData();
   
   const int vmax = 1 << bps;
+#ifdef _MSC_VER
+  std::vector<uint8_t> gray_lookup(vmax);
+#else
   uint8_t gray_lookup[vmax];
+#endif
   for (int i = 0; i < vmax; ++i) {
     gray_lookup[i] = 0xff * i / (vmax - 1);
     //std::cerr << i << " = " << (int)gray_lookup[i] << std::endl;
