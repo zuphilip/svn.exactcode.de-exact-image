@@ -82,7 +82,9 @@ class ImageCodec;
 /// temp. state to migrate away from public member's
 #define DEPRECATED
 #ifndef DEPRECATED
+#ifdef __GNUC__
 #define DEPRECATED __attribute__ ((deprecated))
+#endif
 #endif
 
 #define WARN_UNHANDLED std::cerr << "unhandled spp/bps in " << __FILE__ << ":" << __LINE__ << std::endl
@@ -109,7 +111,7 @@ public:
   void setRawDataWithoutDelete (uint8_t* _data);
   
   void resize (int _w, int _h);
-  void New (int _w, int _h) __attribute__ ((deprecated)) { resize (_w, _h); }
+  void New (int _w, int _h) DEPRECATED { resize (_w, _h); }
   
   void setDecoderID (const std::string& id);
   const std::string& getDecoderID ();
@@ -202,7 +204,7 @@ public:
     return (w * spp * bps + 7) / 8;
   }
   
-  int Stride () const __attribute__ ((deprecated)) {
+  int Stride () const DEPRECATED {
     return stride ();
   }
   
