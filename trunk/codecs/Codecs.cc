@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2009 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -188,8 +188,8 @@ void ImageCodec::registerCodec (const char* _ext, ImageCodec* _loader,
   if (!loader)
     loader = new std::vector<loader_ref>;
   
-  loader->push_back ( (loader_ref) {_ext, _loader,
-			  _loader != last_loader, _via_codec_only} );
+  loader_ref ref = {_ext, _loader, _loader != last_loader, _via_codec_only};
+  loader->push_back(ref);
   last_loader = _loader;
 }
 
