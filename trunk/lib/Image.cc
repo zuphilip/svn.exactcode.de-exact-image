@@ -136,7 +136,7 @@ const std::string& Image::getDecoderID () {
   return decoderID;
 }
 
-ImageCodec* Image::Image::getCodec() {
+ImageCodec* Image::getCodec() {
   return codec;
 }
 
