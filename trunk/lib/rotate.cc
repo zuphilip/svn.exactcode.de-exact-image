@@ -335,6 +335,27 @@ void rotate (Image& image, double angle, const Image::iterator& background)
   codegen<rotate_template> (image, angle, background);
 }
 
+void exif_rotate(Image& image, unsigned exif_orientation)
+{
+  Image::iterator bgrd(image.begin()); // not used
+  
+  std::cerr << exif_orientation << std::endl;
+  switch (exif_orientation) {
+  case 0:
+  case 1: break;
+  case 2: flipX(image); break;
+  case 3: rotate(image, 180, bgrd); break;
+  case 4: flipY(image); break;
+  case 5: rotate(image, -90, bgrd); break; // tested
+  case 6: rotate(image, 90, bgrd); break;
+  case 7: rotate(image, 90, bgrd); flipX(image); break;
+  case 8: rotate(image, -90, bgrd); break;
+  default:
+    std::cerr << "unknown exif orientation: " << exif_orientation << std::endl;
+  }
+}
+
+
 template <typename T>
 struct copy_crop_rotate_template
 {
