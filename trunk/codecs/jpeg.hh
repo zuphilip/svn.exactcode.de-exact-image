@@ -56,6 +56,7 @@ public:
   
 private:
 
+  void parseExif (Image& image);
   void decodeNow (Image* image, int factor);
   
   // internals and helper
