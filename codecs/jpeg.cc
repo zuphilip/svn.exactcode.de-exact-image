@@ -30,6 +30,9 @@
 
 #include "crop.hh"
 #include "scale.hh"
+#include "rotate.hh"
+
+#include "Endianess.hh"
 
 /*
  * ERROR HANDLING:
@@ -309,6 +312,9 @@ bool JPEGCodec::readImage (std::istream* stream, Image& image, const std::string
   stream->seekg (0);
   *stream >> codec->private_copy.rdbuf();
   
+  // parse Exif data, might contain non-identifiy orientation transform
+  codec->parseExif(image);
+  
   return true;
 }
 
@@ -391,6 +397,100 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     std::cerr << jerr.num_warnings << " Warnings." << std::endl;
 
   return true;
+}
+
+template<typename T>
+T readExif(const void* raw_ptr, const bool big_endian)
+{
+  const T v = *(const T*)raw_ptr;
+  using namespace Exact;
+  if (big_endian)
+    return ByteSwap<BigEndianTraits, NativeEndianTraits, T>::Swap(v);
+  else
+    return ByteSwap<LittleEndianTraits, NativeEndianTraits, T>::Swap(v);
+}
+
+void JPEGCodec::parseExif (Image& image)
+{
+  // for now we're only interested in the orientation tag
+  // TODO: parse, provide and re-write the whole meta data
+  
+  const std::string& exif_data_p = private_copy.str();
+  const uint8_t* exif_data = (uint8_t*)exif_data_p.c_str();
+  
+  // check for JPEG SOI + Exif APP1
+  if (exif_data[0] != 0xFF ||
+      exif_data[1] != 0xD8 ||
+      exif_data[2] != 0xFF ||
+      exif_data[3] != 0xE1)
+    return;
+
+  // Get the marker parameter length count
+  unsigned length = readExif<uint32_t>(exif_data + 4, true); // always big-endian
+  
+  // length includes itself, so must be at least 2 + Exif data length must be at least 6
+  if (length < 8)
+    return;
+  length -= 8;
+
+  if (length < 12)
+    return; // length of an IFD entry
+  
+  exif_data += 6;
+
+  // check "Exif" header
+  if (exif_data[0] != 'E' ||
+      exif_data[1] != 'x' ||
+      exif_data[2] != 'i' ||
+      exif_data[3] != 'f' ||
+      exif_data[4] != 0 ||
+      exif_data[5] != 0)
+    return;
+  
+  exif_data += 6;
+
+  // honor byte order
+  bool big_endian;
+  if (exif_data[0] == 0x49 && exif_data[1] == 0x49)
+    big_endian = false;
+  else if (exif_data[0] == 0x4D && exif_data[1] == 0x4D)
+    big_endian = true;
+  else
+    return;
+  
+  // Check tag mark
+  if (big_endian) {
+    if (exif_data[2] != 0) return;
+    if (exif_data[3] != 0x2A) return;
+  } else {
+    if (exif_data[3] != 0) return;
+    if (exif_data[2] != 0x2A) return;
+  }
+
+  // get first IFD offset (offset to IFD0)
+  unsigned offset = readExif<uint32_t>(exif_data + 4, big_endian);
+  if (offset > length - 2) return; // check end of data segment
+
+  // get the number of directory entries contained in this IFD
+  unsigned number_of_tags = readExif<uint16_t>(exif_data + offset, big_endian);
+  if (number_of_tags == 0) return;
+  offset += 2;
+
+  // search for orientation tag in IFD0
+  for (;;) {
+    if (offset > length - 12) return; // check end of data segment
+    // get tag number
+    unsigned tagnum = readExif<uint16_t>(exif_data + offset, big_endian);
+    if (tagnum == 0x0112) break; // orientation tag
+    if (--number_of_tags == 0) return;
+    offset += 12;
+  }
+
+  // get the orientation value
+  unsigned orientation = readExif<uint16_t>(exif_data + offset + 8, big_endian);
+  if (orientation > 8) return;
+  
+  exif_rotate(image, orientation);
 }
 
 // on-demand decoding
