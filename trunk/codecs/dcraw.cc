@@ -17,6 +17,8 @@
 
 #include "dcraw.hh"
 
+#include "rotate.hh"
+
 /* Now this is an very crude macro++ hackery to convert the C FILE*
    API to to C++ iostream for our codec, to be able to not only read
    from regular files. -ReneR */
@@ -128,6 +130,7 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& 
   
   // dcraw::main()
   
+  flip = 0;
   int use_fuji_rotate=1, quality, i;
   
 #ifndef NO_LCMS
@@ -252,6 +255,9 @@ bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& 
   if (meta_data) free (meta_data);
   if (oprof) free (oprof);
   if (image) free (image);
+  
+  // compensate for Exif encoded orientation
+  exif_rotate(im, flip);
   
   return true;
 }
