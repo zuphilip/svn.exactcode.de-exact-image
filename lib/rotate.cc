@@ -338,17 +338,25 @@ void exif_rotate(Image& image, unsigned exif_orientation)
 {
   Image::iterator bgrd(image.begin()); // not used
   
-  std::cerr << exif_orientation << std::endl;
+  //std::cerr << exif_orientation << std::endl;
   switch (exif_orientation) {
-  case 0:
-  case 1: break;
-  case 2: flipX(image); break;
-  case 3: rotate(image, 180, bgrd); break;
-  case 4: flipY(image); break;
-  case 5: rotate(image, -90, bgrd); break; // tested
-  case 6: rotate(image, 90, bgrd); break;
-  case 7: rotate(image, 90, bgrd); flipX(image); break;
-  case 8: rotate(image, -90, bgrd); break;
+  case 0: // undefined, but handled as NOP
+  case 1: // top, left side
+    break;
+  case 2: // top, rigth side
+    flipX(image); break;
+  case 3: // bottom, rigth side
+    rotate(image, 180, bgrd); break;
+  case 4: // bottom, left side
+    flipY(image); break;
+  case 5: // left side, top
+    rotate(image, -90, bgrd); break; // tested
+  case 6: // right side, top
+    rotate(image, 90, bgrd); break;
+  case 7: // right side, bottom
+    rotate(image, 90, bgrd); flipX(image); break;
+  case 8: // left side, bottom
+    rotate(image, -90, bgrd); break; // tested
   default:
     std::cerr << "unknown exif orientation: " << exif_orientation << std::endl;
   }
