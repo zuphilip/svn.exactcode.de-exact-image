@@ -149,7 +149,6 @@ void rot90 (Image& image, int angle)
   uint8_t* data = image.getRawData();
   uint8_t* rot_data = (uint8_t*) malloc(rot_stride * image.w);
   
-  // TODO: 16bps
   switch (image.spp * image.bps)
     {
     case 1:
@@ -214,11 +213,11 @@ void rot90 (Image& image, int angle)
 	for (int y = 0; y < image.h; ++y) {
 	  uint8_t* new_row =
 	    cw ?
-	    &rot_data[(image.h - 1 - y) * image.spp] :
-	    &rot_data[(image.w - 1) * rot_stride + (y * image.spp)];
+	    &rot_data[(image.h - 1 - y) * bps] :
+	    &rot_data[(image.w - 1) * rot_stride + (y * bps)];
 	  
 	  for (int x = 0; x < image.w; ++x) {
-	    for (int i = 0; i < image.spp; ++i)
+	    for (int i = 0; i < bps; ++i)
 	      *new_row++ = *data++;
 	    new_row += cw ? rot_stride - bps : -rot_stride - bps;
 	  }
