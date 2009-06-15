@@ -12,7 +12,7 @@ include("ExactImage.php");
 
 $image = newImage();
 
-if (decodeImageFile ($image, "./testsuite/tif/4.2.04.tif"))
+if (decodeImageFile ($image, "testsuite/tif/4.2.04.tif"))
 {
     print "image decoded all fine.\n";
 }

@@ -13,7 +13,7 @@ my $image = ExactImage::newImage ();
 
 # easy use, use on-disc files:
 
-if (ExactImage::decodeImageFile ($image, "./testsuite/tif/4.2.04.tif"))
+if (ExactImage::decodeImageFile ($image, "testsuite/tif/4.2.04.tif"))
 {
 	print "image decoded all fine.\n";
 } else {
@@ -80,7 +80,7 @@ print IMG $image_bits;
 close IMG;
 
 # complex all-in-one function
-if (ExactImage::decodeImageFile ($image, "testsuite/deskew/01.tif"))
+if (ExactImage::decodeImageFile ($image, "testsuite/tif/4.2.04.tif"))
   {
     my $image_copy = ExactImage::copyImage ($image);
 

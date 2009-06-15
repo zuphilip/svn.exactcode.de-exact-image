@@ -7,7 +7,7 @@ sys.path.append('./objdir/api/python')
 import ExactImage
 image = ExactImage.newImage()
 
-if ExactImage.decodeImageFile (image, "./testsuite/tif/4.2.04.tif"):
+if ExactImage.decodeImageFile (image, "testsuite/tif/4.2.04.tif"):
     print "image decoded all fine."
 else:
     print "something went wrong ..."

@@ -13,7 +13,7 @@ image = ExactImage.newImage ()
 
 -- easy use, use on-disc files:
 
-if ExactImage.decodeImageFile (image, "./testsuite/tif/4.2.04.tif")
+if ExactImage.decodeImageFile (image, "testsuite/tif/4.2.04.tif")
 then
 	print "image decoded all fine."
 else
@@ -30,7 +30,7 @@ else
 end
 
 -- advanced use, use in memory locations
-f = io.open ("testsuite/tif/5.1.13.tif")
+f = io.open ("testsuite/tif/4.2.04.tif")
 image_bits = f:read("*all")
 if ExactImage.decodeImage (image, image_bits)
 then
@@ -60,9 +60,17 @@ print ("Xres: " .. ExactImage.imageXres (image))
 print ("Yres: " .. ExactImage.imageYres (image))
 
 -- image data manipulation
+--[[
 ExactImage.imageRotate (image, 90)
 ExactImage.imageScale (image, 4)
-ExactImage.imageBoxScale (image, .5)
+ExactImage.imageBoxScale (image, .5) ]]--
+
+for y = 0, ExactImage.imageHeight(image) - 1 do
+   for x = 0, ExactImage.imageWidth(image) - 1 do
+      local r, g, b, a = ExactImage.get(image, x, y)
+      ExactImage.set(image, x, y, 1-r, 1-g, 1-b, 1-a) -- x / 256, y / 256, x*y / 256, 1)
+   end
+end
 
 image_bits = ExactImage.encodeImage (image, "jpeg", 80, "")
 print ("size: " .. string.len(image_bits))
@@ -81,7 +89,7 @@ f:write (image_bits)
 f:close ()
 
 -- complex all-in-one function
-if ExactImage.decodeImageFile (image, "testsuite/deskew/01.tif")
+if ExactImage.decodeImageFile (image, "testsuite/tif/4.2.04.tif")
 then
     image_copy = ExactImage.copyImage (image);
 
