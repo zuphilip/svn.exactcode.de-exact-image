@@ -85,6 +85,11 @@ Argument<std::string> arg_decompression ("", "decompress",
 					 "depending on the input format, allowing to read partial data",
 					 0, 1, true, true);
 
+
+Argument<double> arg_stroke_width ("", "stroke-width",
+				   "the stroke with for vector primitives",
+				   0, 1, true, true);
+
 #if WITHFREETYPE == 1
 
 Argument<double> arg_text_rotation ("", "text-rotation",
@@ -591,6 +596,8 @@ bool convert_line (const Argument<std::string>& arg)
       double r = 0, g = 0, b = 0;
       foreground_color.getRGB (r, g, b);
       path.setFillColor (r, g, b);
+      if (arg_stroke_width.Size())
+	path.setLineWidth(arg_stroke_width.Get());
       path.draw (image);
       return true; 
     }
@@ -614,9 +621,6 @@ bool convert_text (const Argument<std::string>& arg)
       return false;
     }
   
-  std::cerr << "> " << (gravity ? gravity : "NULL")
-	    << " " << x << " " << y << std::endl;
-  
   Path path;
   path.moveTo (0, 0);
   double r = 0, g = 0, b = 0;
@@ -625,6 +629,9 @@ bool convert_text (const Argument<std::string>& arg)
 
   agg::trans_affine mtx;
   mtx.rotate(arg_text_rotation.Size() ? arg_text_rotation.Get() / 180 * M_PI : 0);
+  
+  if (arg_stroke_width.Size())
+    path.setLineWidth(arg_stroke_width.Get());
   
   if (gravity) {
     std::string c(gravity);
@@ -667,9 +674,9 @@ bool convert_text (const Argument<std::string>& arg)
     
     double w = 0, h = 0, dx = 0, dy = 0;
     path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx, &w, &h, &dx, &dy);
-    
-    std::cerr << w << " " << h << " - " << dx << " " << dy << std::endl;
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero,
+		  &w, &h, &dx, &dy);
     
     switch (x_align) {
     case A: x = 0;
@@ -691,12 +698,14 @@ bool convert_text (const Argument<std::string>& arg)
     
     mtx.translate(dx + x, dy + y);
     path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
   }
   else {
     mtx.translate(x, y);
     path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
   }
   
   free(text); free(gravity);
@@ -944,6 +953,8 @@ int main (int argc, char* argv[])
 					0, 1, true, true);
   arg_foreground.Bind (convert_foreground);
   arglist.Add (&arg_foreground);
+
+  arglist.Add (&arg_stroke_width);
  
   Argument<std::string> arg_line ("", "line",
                                   "draw a line: x1, y1, x2, y2",
