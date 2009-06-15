@@ -651,7 +651,7 @@ bool convert_text (const Argument<std::string>& arg)
     else if (c == "east" || c == "right") {
       x_align = C; y_align = B;
     }
-    else if (c == "soutwest") {
+    else if (c == "southwest") {
       x_align = A; y_align = C;
     }
     else if (c == "south" || c == "bottom") {
@@ -671,7 +671,6 @@ bool convert_text (const Argument<std::string>& arg)
     
     std::cerr << w << " " << h << " - " << dx << " " << dy << std::endl;
     
-
     switch (x_align) {
     case A: x = 0;
       break;
@@ -680,7 +679,7 @@ bool convert_text (const Argument<std::string>& arg)
     case C: x = image.w - w;
       break;
     }
-
+    
     switch (y_align) {
     case A: y = 0;
       break;
@@ -690,7 +689,7 @@ bool convert_text (const Argument<std::string>& arg)
       break;
     }
     
-    mtx.translate(x, y);
+    mtx.translate(dx + x, dy + y);
     path.drawText(image, text, height,
 		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
   }
@@ -699,6 +698,7 @@ bool convert_text (const Argument<std::string>& arg)
     path.drawText(image, text, height,
 		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
   }
+  
   free(text); free(gravity);
   return true; 
 }
