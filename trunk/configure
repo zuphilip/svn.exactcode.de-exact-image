@@ -88,9 +88,7 @@ if pkgcheck bardecode shell BARDECODE \
     var_append BARDECODELIBS " " "external/bardecode.a"
 else
 	cat <<-EOT
-
-		For proprietary barcode recognition, place the commercial, binary-only blob
-		library (from http://www.bardecode.com/) into the 'external/' directory.
+		For optional, proprietary barcode recognition, place it in 'external/'.
 
 EOT
 fi
