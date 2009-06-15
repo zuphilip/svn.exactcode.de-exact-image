@@ -51,6 +51,8 @@
 #include "vectorial.hh"
 #include "GaussianBlur.hh"
 
+#include "agg_trans_affine.h"
+
 /* Let's reuse some parts of the official, stable API to avoid
  * duplicating code.
  *
@@ -84,6 +86,11 @@ Argument<std::string> arg_decompression ("", "decompress",
 					 0, 1, true, true);
 
 #if WITHFREETYPE == 1
+
+Argument<double> arg_text_rotation ("", "text-rotation",
+				    "draw text using specified rotation",
+				    0, 1, true, true);
+
 Argument<std::string> arg_font ("", "font",
 				"draw text using specified font file",
 				0, 1, true, true);
@@ -596,28 +603,104 @@ bool convert_line (const Argument<std::string>& arg)
 
 bool convert_text (const Argument<std::string>& arg)
 {
-  unsigned int x1, y1;
+  int x = 0, y = 0;
   double height;
-  char* text = 0;
+  char* text = 0; char* gravity = 0;
   if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%a[^\r]",
-	     &x1, &y1, &height, &text) == 4)
-    {
-      
-      Path path;
-      path.moveTo (x1, y1);
-      
-      double r = 0, g = 0, b = 0;
-      foreground_color.getRGB (r, g, b);
-      path.setFillColor (r, g, b);
-      path.drawText (image, text, height,
-		     arg_font.Size() ? arg_font.Get().c_str() : NULL);
-      
-      free (text);
-      return true; 
+	     &x, &y, &height, &text) != 4)
+    if (sscanf(arg.Get().c_str(), "%a[^,],%lf,%a[^\r]",
+	       &gravity, &height, &text) != 3) {
+      std::cerr << "Error parsing text: '" << arg.Get() << "'" << std::endl;
+      return false;
     }
   
-  std::cerr << "Error parsing text: '" << arg.Get() << "'" << std::endl;
-  return false;
+  std::cerr << "> " << (gravity ? gravity : "NULL")
+	    << " " << x << " " << y << std::endl;
+  
+  Path path;
+  path.moveTo (0, 0);
+  double r = 0, g = 0, b = 0;
+  foreground_color.getRGB (r, g, b);
+  path.setFillColor (r, g, b);
+
+  agg::trans_affine mtx;
+  mtx.rotate(arg_text_rotation.Size() ? arg_text_rotation.Get() / 180 * M_PI : 0);
+  
+  if (gravity) {
+    std::string c(gravity);
+    std::transform (c.begin(), c.end(), c.begin(), tolower);
+    
+    enum align {A, B, C};
+    align x_align = A, y_align = A;
+    
+    if (c == "northwest") {
+      x_align = A; y_align = A;
+    }
+    else if (c == "north" || c == "top") {
+      x_align = B; y_align = A;
+    }
+    else if (c == "northeast") {
+      x_align = C; y_align = A;
+    }
+    else if (c == "west" || c == "left") {
+      x_align = A; y_align = B;
+    }
+    else if (c == "center") {
+      x_align = B; y_align = B;
+    }
+    else if (c == "east" || c == "right") {
+      x_align = C; y_align = B;
+    }
+    else if (c == "soutwest") {
+      x_align = A; y_align = C;
+    }
+    else if (c == "south" || c == "bottom") {
+      x_align = B; y_align = C;
+    }
+    else if (c == "southeast") {
+      x_align = C; y_align = C;
+    }
+    else {
+      std::cerr << "Unknown gravity: " << gravity << std::endl;
+      return false;
+    }
+    
+    double w = 0, h = 0, dx = 0, dy = 0;
+    path.drawText(image, text, height,
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx, &w, &h, &dx, &dy);
+    
+    std::cerr << w << " " << h << " - " << dx << " " << dy << std::endl;
+    
+
+    switch (x_align) {
+    case A: x = 0;
+      break;
+    case B: x = (image.w - w) / 2;
+      break;
+    case C: x = image.w - w;
+      break;
+    }
+
+    switch (y_align) {
+    case A: y = 0;
+      break;
+    case B: y = (image.h - h) / 2;
+      break;
+    case C: y = image.h - h;
+      break;
+    }
+    
+    mtx.translate(x, y);
+    path.drawText(image, text, height,
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
+  }
+  else {
+    mtx.translate(x, y);
+    path.drawText(image, text, height,
+		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx);
+  }
+  free(text); free(gravity);
+  return true; 
 }
 
 #endif
@@ -875,6 +958,7 @@ int main (int argc, char* argv[])
   arg_text.Bind (convert_text);
   arglist.Add (&arg_text);
   arglist.Add (&arg_font);
+  arglist.Add (&arg_text_rotation);
 #endif
   
   // parse the specified argument list - and maybe output the Usage
