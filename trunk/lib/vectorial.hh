@@ -28,6 +28,8 @@
 #include "agg_math_stroke.h"
 #include "agg_path_storage.h"
 
+#include "agg_trans_affine.h"
+
 class Path
 {
 public:
@@ -88,8 +90,11 @@ public:
  
 #if WITHFREETYPE == 1
   // temp. simple text draw method
-  void drawText (Image& image, const char* text, double height, const char* fontfile = 0);
-  void drawTextOnPath (Image& image, const char* text, double height, const char* fontfile = 0);
+  void drawText (Image& image, const char* text, double height,
+		 const char* fontfile = 0, agg::trans_affine mtx = agg::trans_affine(),
+		 double* w = 0, double* h = 0, double* dx = 0, double* dy = 0);
+  void drawTextOnPath (Image& image, const char* text, double height,
+		       const char* fontfile = 0);
 #endif
   
 protected:

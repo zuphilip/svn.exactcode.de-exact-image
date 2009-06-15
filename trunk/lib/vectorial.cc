@@ -23,6 +23,7 @@
 #include "vectorial.hh"
 #include "C.h" // ARRAY_SIZE
 #include <iostream>
+#include <cmath>
 
 #include "agg.hh"
 #include "Image.hh"
@@ -258,7 +259,9 @@ static bool load_font(font_engine_type& m_feng, const char* fontfile)
   return false;
 }
 
-void Path::drawText (Image& image, const char* text, double height, const char* fontfile)
+void Path::drawText (Image& image, const char* text, double height,
+		     const char* fontfile, agg::trans_affine mtx,
+		     double* w, double* h, double* dx, double* dy)
 {
   if (!text) return;
   renderer_exact_image ren_base (image);
@@ -274,10 +277,19 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
   
   font_engine_type m_feng;
   font_manager_type m_fman (m_feng);
+ 
+  mtx.translate(path.last_x(), path.last_y());
   
   // Pipeline to process the vectors glyph paths (curves + contour)
-  agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
-  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
+  agg::conv_curve<font_manager_type::path_adaptor_type>
+    m_curves(m_fman.path_adaptor());
+  agg::conv_transform<agg::conv_curve<font_manager_type::path_adaptor_type> >
+    m_curves_mtx(m_curves, mtx);
+  
+  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> >
+    m_contour(m_curves);
+  agg::conv_transform<agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > >
+    m_contour_mtx(m_contour, mtx);
  
   if (!load_font(m_feng, fontfile))
     return;
@@ -288,9 +300,8 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
   
   m_contour.width (-weight * height * 0.05);
   
-  double x = path.last_x(), y = path.last_y();  
-  
   std::vector<uint32_t> utf8 = DecodeUtf8(text, strlen(text));
+  double x = 0, y = 0;
   for (unsigned int i = 0, n = 0; i < utf8.size(); ++i)
     {
       switch (utf8[i]) {
@@ -299,6 +310,7 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
 	x = path.last_x();
 	y += height * 1.2;
 	continue;
+	
       case '\t':
 	{
 	  const agg::glyph_cache* glyph = m_fman.glyph(' ');
@@ -315,33 +327,36 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
 	{
 	  if (kerning)
 	    m_fman.add_kerning(&x, &y);
-	  
 	  m_fman.init_embedded_adaptors(glyph, x, y);
 
 	  switch (glyph->data_type)
 	    {
 	    case agg::glyph_data_mono:
-	      agg::render_scanlines (m_fman.mono_adaptor(), 
-				     m_fman.mono_scanline(), 
-				     ren_bin);
+	      if (!w && !h)
+		agg::render_scanlines (m_fman.mono_adaptor(), 
+				       m_fman.mono_scanline(), 
+				       ren_bin);
 	      break;
 
 	    case agg::glyph_data_gray8:
-	      ren_solid.color (agg::rgba (r, g, b, a));
-	      agg::render_scanlines (m_fman.gray8_adaptor(), 
-				     m_fman.gray8_scanline(), 
-				     ren_solid);
+	      if (!w && !h)
+		agg::render_scanlines (m_fman.gray8_adaptor(), 
+				       m_fman.gray8_scanline(), 
+				       ren_solid);
 	      break;
 
 	    case agg::glyph_data_outline:
 	      // Skip the contour converter for weight about zero.
-	      if (fabs (weight <= 0.01))
-		ras.add_path (m_curves);
-	      else
-		ras.add_path (m_contour);
+	      if (!w && !h) {
+		if (fabs (weight <= 0.01))
+		  ras.add_path (m_curves_mtx);
+		else
+		  ras.add_path (m_contour_mtx);
+	      }
 	      break;
 	      
-	    default: break;
+	    default:
+	      break;
 	    }
 
 	  // increment pen position
@@ -350,9 +365,21 @@ void Path::drawText (Image& image, const char* text, double height, const char* 
 	}
     }
   
+  if (w || h) {
+    // TODO: real bounding box
+    *w = x; *h = y + height;
+    mtx.transform(w, h);
+    *w = std::abs(*w);
+    *h = std::abs(*h);
+    
+    *dx = *dy = 0; // TODO
+    return;
+  }
+  
   agg::render_scanlines(ras, sl, ren_solid);
   image.setRawData(); // invalidate cache
-
+  
+  mtx.transform(&x, &y);
   path.move_to(x, y); // save last point for further drawing
 }
 
