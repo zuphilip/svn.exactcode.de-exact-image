@@ -234,11 +234,6 @@ static const char* fonts[] = {
  "/usr/X11/share/fonts/TTF/Vera.ttf",
 };
 
-// Attention! Right now the horizontal and on path
-// produce different strokes if non-zero. Review and
-// fix if changed or exported to the outside.
-static const double weight = 0;
-
 static bool load_font(font_engine_type& m_feng, const char* fontfile)
 {
   if (fontfile) {
@@ -262,6 +257,7 @@ static bool load_font(font_engine_type& m_feng, const char* fontfile)
 
 void Path::drawText (Image& image, const char* text, double height,
 		     const char* fontfile, agg::trans_affine mtx,
+		     filling_rule_t fill,
 		     double* w, double* h, double* dx, double* dy)
 {
   if (!text) return;
@@ -281,16 +277,17 @@ void Path::drawText (Image& image, const char* text, double height,
  
   mtx.translate(path.last_x(), path.last_y());
   
-  // Pipeline to process the vectors glyph paths (curves + contour)
+  // Pipeline to process the vectors glyph paths
   agg::conv_curve<font_manager_type::path_adaptor_type>
     m_curves(m_fman.path_adaptor());
   agg::conv_transform<agg::conv_curve<font_manager_type::path_adaptor_type> >
     m_curves_mtx(m_curves, mtx);
   
-  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> >
-    m_contour(m_curves);
-  agg::conv_transform<agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > >
-    m_contour_mtx(m_contour, mtx);
+  agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> >
+    m_stroke(m_curves);
+  m_stroke.width(2);
+  agg::conv_transform<agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> > >
+    m_stroke_mtx(m_stroke, mtx);
  
   if (!load_font(m_feng, fontfile))
     return;
@@ -299,7 +296,6 @@ void Path::drawText (Image& image, const char* text, double height,
   m_feng.height (height);
   m_feng.flip_y (true);
   
-  m_contour.width (-weight * height * 0.05);
   
   agg::rect_d bbox(0, 0, -1, -1);
   
@@ -349,8 +345,7 @@ void Path::drawText (Image& image, const char* text, double height,
 	      break;
 
 	    case agg::glyph_data_outline:
-	      // Skip the contour converter for weight about zero.
-	      if (fabs (weight <= 0.01)) {
+	      if (fill != fill_none) {
 		if (w && h) {
 		  agg::rect_d r;
 		  agg::bounding_rect_single(m_curves_mtx, 0,
@@ -365,14 +360,14 @@ void Path::drawText (Image& image, const char* text, double height,
 	      else {
 		if (w && h) {
 		  agg::rect_d r;
-		  agg::bounding_rect_single(m_contour_mtx, 0,
+		  agg::bounding_rect_single(m_stroke_mtx, 0,
 					    &r.x1, &r.y1, &r.x2, &r.y2);
 		  if (!bbox.is_valid())
 		    bbox = r;
 		  else
 		    bbox = agg::unite_rectangles(bbox, r);
 		} else
-		  ras.add_path (m_contour_mtx);
+		  ras.add_path (m_stroke_mtx);
 	      }
 	      break;
 	      
@@ -387,9 +382,6 @@ void Path::drawText (Image& image, const char* text, double height,
     }
   
   if (w || h) {
-    std::cerr << bbox.x1 << " " << bbox.y1 << " "
-	      << bbox.x2 << " " << bbox.y2 << std::endl;
-    
     *w = bbox.x2 - bbox.x1 + 1;
     *h = bbox.y2 - bbox.y1 + 1;
     
@@ -408,7 +400,8 @@ void Path::drawText (Image& image, const char* text, double height,
   path.move_to(x, y); // save last point for further drawing
 }
 
-void Path::drawTextOnPath (Image& image, const char* text, double height, const char* fontfile)
+void Path::drawTextOnPath (Image& image, const char* text, double height,
+			   const char* fontfile) // TODO: , filling_rule_t fill)
 {
   if (!text) return;
   renderer_exact_image ren_base (image);
@@ -427,9 +420,8 @@ void Path::drawTextOnPath (Image& image, const char* text, double height, const 
   font_engine_type m_feng;
   font_manager_type m_fman (m_feng);
   
-  // Pipeline to process the vectors glyph paths (curves + contour)
+  // Pipeline to process the vectors glyph paths
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
-  agg::conv_contour<agg::conv_curve<font_manager_type::path_adaptor_type> > m_contour (m_curves);
   
   if (!load_font(m_feng, fontfile))
       return;
@@ -448,8 +440,6 @@ void Path::drawTextOnPath (Image& image, const char* text, double height, const 
   m_feng.hinting (hinting);
   m_feng.height (height);
   m_feng.flip_y (true);
-  
-  m_contour.width (-weight * height * 0.05);
   
   ras.reset ();
   
