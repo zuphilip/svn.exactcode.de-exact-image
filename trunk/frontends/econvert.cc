@@ -41,7 +41,6 @@
 #include "crop.hh"
 #include "rotate.hh"
 #include "canvas.hh"
-#include "deskew.hh"
 
 #include "Matrix.hh"
 
@@ -379,12 +378,6 @@ bool convert_dither_riemersma (const Argument<int>& arg)
     return false;
   }
   Riemersma (image.getRawData(), image.w, image.h, arg.Get(), image.spp);
-  return true;
-}
-
-bool convert_deskew (const Argument<int>& arg)
-{
-  deskew (image, arg.Get());
   return true;
 }
 
@@ -900,12 +893,6 @@ int main (int argc, char* argv[])
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
   
-  Argument<int> arg_deskew ("", "deskew",
-			     "deskew digitalized paper",
-			     0, 1, true, true);
-  arg_deskew.Bind (convert_deskew);
-  arglist.Add (&arg_deskew);
-
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
 					0, 1, true, true);

@@ -148,8 +148,6 @@ void imageCrop (Image* image, unsigned int x, unsigned int y, unsigned int w, un
 //  the bottom crop enabled by default)
 void imageFastAutoCrop (Image* image);
 
-bool imageAutoCropDeskew (Image* image, unsigned int top_overscan_lines);
-
 // color controls
 
 void setForegroundColor (double r, double g, double b, double a = 1.0);
