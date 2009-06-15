@@ -285,7 +285,7 @@ void Path::drawText (Image& image, const char* text, double height,
   
   agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> >
     m_stroke(m_curves);
-  m_stroke.width(2);
+  m_stroke.width(line_width);
   agg::conv_transform<agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> > >
     m_stroke_mtx(m_stroke, mtx);
  
