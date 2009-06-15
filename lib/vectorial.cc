@@ -37,6 +37,7 @@
 #include "agg_conv_smooth_poly1.h"
 #include "agg_path_storage.h"
 #include "agg_trans_single_path.h"
+#include "agg_bounding_rect.h"
 
 #if WITHFREETYPE == 1
 #include "agg_font_freetype.h"
@@ -300,6 +301,8 @@ void Path::drawText (Image& image, const char* text, double height,
   
   m_contour.width (-weight * height * 0.05);
   
+  agg::rect_d bbox(0, 0, -1, -1);
+  
   std::vector<uint32_t> utf8 = DecodeUtf8(text, strlen(text));
   double x = 0, y = 0;
   for (unsigned int i = 0, n = 0; i < utf8.size(); ++i)
@@ -347,10 +350,28 @@ void Path::drawText (Image& image, const char* text, double height,
 
 	    case agg::glyph_data_outline:
 	      // Skip the contour converter for weight about zero.
-	      if (!w && !h) {
-		if (fabs (weight <= 0.01))
+	      if (fabs (weight <= 0.01)) {
+		if (w && h) {
+		  agg::rect_d r;
+		  agg::bounding_rect_single(m_curves_mtx, 0,
+					    &r.x1, &r.y1, &r.x2, &r.y2);
+		  if (!bbox.is_valid())
+		    bbox = r;
+		  else
+		    bbox = agg::unite_rectangles(bbox, r);
+		} else
 		  ras.add_path (m_curves_mtx);
-		else
+	      }
+	      else {
+		if (w && h) {
+		  agg::rect_d r;
+		  agg::bounding_rect_single(m_contour_mtx, 0,
+					    &r.x1, &r.y1, &r.x2, &r.y2);
+		  if (!bbox.is_valid())
+		    bbox = r;
+		  else
+		    bbox = agg::unite_rectangles(bbox, r);
+		} else
 		  ras.add_path (m_contour_mtx);
 	      }
 	      break;
@@ -366,13 +387,17 @@ void Path::drawText (Image& image, const char* text, double height,
     }
   
   if (w || h) {
-    // TODO: real bounding box
-    *w = x; *h = y + height;
-    mtx.transform(w, h);
-    *w = std::abs(*w);
-    *h = std::abs(*h);
+    std::cerr << bbox.x1 << " " << bbox.y1 << " "
+	      << bbox.x2 << " " << bbox.y2 << std::endl;
     
-    *dx = *dy = 0; // TODO
+    *w = bbox.x2 - bbox.x1 + 1;
+    *h = bbox.y2 - bbox.y1 + 1;
+    
+    *dx = *dy = 0;
+    mtx.transform(dx, dy);
+    *dx -= bbox.x1;
+    *dy -= bbox.y1;
+    
     return;
   }
   
