@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 - 2008 Lars Kuhtz, ExactCODE GmbH Germany.
+ * Copyright (C) 2009 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +21,10 @@
 
 #define NDEBUG
 
-#include <iterator>
-
 #include "Image.hh"
+
+#include <iterator>
+#include <vector>
 
 #ifdef __APPLE__
 #include <sys/types.h>
