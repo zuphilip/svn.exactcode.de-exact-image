@@ -421,7 +421,7 @@ bool convert_size (const Argument<std::string>& arg)
       image.setRawData (0);
       return true;
     }
-  std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;
+  std::cerr << "Size '" << arg.Get() << "' could not be parsed." << std::endl;
   return false;
 }
 
