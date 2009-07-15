@@ -11,6 +11,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * All rights reserved. Commercial licensing options are
+ * available from the copyright holder ExactCODE GmbH Germany.
  */
 
 #include <stdio.h>
@@ -21,12 +23,42 @@
 
 #include "raw.hh"
 
-bool RAWCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+bool RAWCodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
 {
-  image.resize (image.w, image.h);
+  int h = image.h;
+  if (h > 0) // if we know the height up-front
+    image.resize(image.w, image.h);
   
-  return (size_t) stream->readsome ((char*)image.getRawData(), image.stride()*image.h)
-    == (size_t) image.stride()*image.h;
+  
+  int y = 0;
+  for (y = 0; h == 0 || y < h; ++y)
+    {
+      if (h <= 0) // height not known up-front, resize line by line
+	image.resize (image.w, y + 1);
+	
+      stream->read((char*)image.getRawData() + image.stride() * y,
+		   image.stride());
+      if (!stream->good())
+	break;
+    }
+  
+  if (h > 0)
+    {
+      if (y != h) {
+	std::cerr << "RAWCodec: Error reading line: " << y << std::endl;
+	return false;
+      }
+      return true;
+    }
+  else
+    {
+      if (y == 0) {
+	std::cerr << "RAWCodec: Error reading a line of image with undefined height at all." << std::endl;
+	return false;
+      }
+      image.resize (image.w, y - 1); // final size of scanlines fully read
+      return true;
+    }
 }
 
 bool RAWCodec::writeImage (std::ostream* stream, Image& image, int quality,
