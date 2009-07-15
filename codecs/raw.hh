@@ -11,8 +11,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  *
- * Alternatively, commercial licensing options are available from the
- * copyright holder ExactCODE GmbH Germany.
+ * All rights reserved. Commercial licensing options are
+ * available from the copyright holder ExactCODE GmbH Germany.
  */
 
 #include "Codecs.hh"
