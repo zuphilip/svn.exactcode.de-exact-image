@@ -47,12 +47,13 @@ typedef struct
   EndianessConverter<uint16_t,LittleEndianTraits> HDpi;
   EndianessConverter<uint16_t,LittleEndianTraits> VDpi;
   
-  uint8_t Colormap[48];
+  uint8_t Colormap[16][3];
   uint8_t Reserved;
   
   uint8_t NPlanes;
   
   EndianessConverter<uint16_t,LittleEndianTraits> BytesPerLine;
+  // 0: udef, 1: color, 2: grayscale
   EndianessConverter<uint16_t,LittleEndianTraits> PaletteInfo;
 
   EndianessConverter<uint16_t,LittleEndianTraits> HScreenSize;
@@ -64,7 +65,7 @@ typedef struct
 bool PCXCodec::readImage(std::istream* stream,
 			 Image& image, const std::string& decompres)
 {
-  if (stream->peek() != 10)
+  if (stream->peek() != 0x0a)
     return false;
   stream->get();
   if ((unsigned)stream->peek() > 5) {
@@ -160,6 +161,42 @@ bool PCXCodec::readImage(std::istream* stream,
       }
     if (header.NPlanes > 1)
       delete[] scanline;
+  }
+  
+  if (image.bps == 8 && image.spp == 1)
+  {
+    uint16_t rmap[256];
+    uint16_t gmap[256];
+    uint16_t bmap[256];
+    
+    int colormap_magic = stream->get();
+    if (colormap_magic == 0x0c) {
+      std::cerr << "reading colormap" << std::endl;
+      for (int i = 0; i < 256; ++i)
+	{
+	  uint8_t entry[3];
+	  stream->read((char*)entry, sizeof(entry));
+	  rmap[i] = entry[0] * 0xffff / 0xff;
+	  gmap[i] = entry[1] * 0xffff / 0xff;
+	  bmap[i] = entry[2] * 0xffff / 0xff;
+	}
+      if (!stream->good()) {
+	std::cerr << "error reading PCX colormap" << std::endl;
+	return false;
+      }
+      
+      colorspace_de_palette (image, 256, rmap, gmap, bmap);
+    }
+    else if (header.PaletteInfo == 1 or header.PaletteInfo == 2)
+      {
+	for (int i = 0; i < 16; ++i)
+	  {
+	    rmap[i] = header.Colormap[i][0] * 0xffff / 0xff;
+	    gmap[i] = header.Colormap[i][1] * 0xffff / 0xff;
+	    bmap[i] = header.Colormap[i][2] * 0xffff / 0xff;
+	  }
+	colorspace_de_palette (image, 16, rmap, gmap, bmap); // TODO: ncolors
+      }
   }
   
   return true;
