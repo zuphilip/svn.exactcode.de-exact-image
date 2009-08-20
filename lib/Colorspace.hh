@@ -26,6 +26,7 @@ void colorspace_16_to_8 (Image& image);
 void colorspace_8_to_16 (Image& image);
 
 // the threshold is used during conversion to b/w formats
+bool colorspace_convert (Image& image, int spp, int bps, uint8_t threshold = 127);
 bool colorspace_by_name (Image& image, const std::string& target_colorspace,
 			 uint8_t threshold = 127);
 
