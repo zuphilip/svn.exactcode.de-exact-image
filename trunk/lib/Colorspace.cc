@@ -675,13 +675,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace,
 {
   std::string space = target_colorspace;
   std::transform (space.begin(), space.end(), space.begin(), tolower);
-  
-  // thru the codec?
-  if (!image.isModified() && image.getCodec())
-    if (space == "gray" || space == "gray8")
-      if (image.getCodec()->toGray(image))
-	return true;
-  
+    
   int spp, bps;
   if (space == "bw" || space == "bilevel" || space == "gray1") {
     spp = 1; bps = 1;
@@ -705,6 +699,17 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace,
               << std::endl;
     return false;
   }
+
+  return colorspace_convert(image, spp, bps, threshold);
+}
+
+bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
+{
+  // thru the codec?
+  if (!image.isModified() && image.getCodec())
+    if (spp = 1 && bps >= 8)
+      if (image.getCodec()->toGray(image))
+	return true;
 
   // no image data, e.g. for loading raw images
   if (!image.getRawData()) {
