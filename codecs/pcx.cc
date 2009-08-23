@@ -104,28 +104,30 @@ bool PCXCodec::readImage(std::istream* stream,
   
   image.bps = header.BitsPerPixel;
   image.spp = header.NPlanes;
+  if (image.spp == 4 && image.bps == 1)
+    image.spp = 1, image.bps = 4;
   image.setResolution(header.HDpi, header.VDpi);
   
   image.resize(header.WindowXmax - header.WindowXmin + 1,
 	       header.WindowYmax - header.WindowYmin + 1);
-  
   std::cerr << image.w << "x" << image.h << std::endl;
   std::cerr << "Version: " << (int)header.Version
 	    << ", PaletteInfo: " << header.PaletteInfo << std::endl;
-  std::cerr << "BitesPerPixel: " << (int)header.BitsPerPixel
+  std::cerr << "BitsPerPixel: " << (int)header.BitsPerPixel
 	    << ", NPlanes: " << (int)header.NPlanes << std::endl;
   std::cerr << "BytesPerLine: " << (int)header.BytesPerLine << std::endl;
   std::cerr << "Encoding: " << (int)header.Encoding << std::endl;
   
   // TODO: more buffer checks, palette handling
   
+  
   {
-    uint8_t* scanline = (header.NPlanes > 1 ?
+    const bool plane_packing = header.NPlanes > 1;
+    uint8_t* scanline = (plane_packing ?
 			 new uint8_t[header.BytesPerLine * header.NPlanes] :
 			 image.getRawData());
     for (int y = 0; y < image.h; ++y)
       {
-	//std::cerr << "y: " << y << std::endl;
 	for (int i = 0; i < header.BytesPerLine * header.NPlanes;)
 	  {
 	    uint8_t n = 1, v = stream->get();
@@ -134,24 +136,56 @@ bool PCXCodec::readImage(std::istream* stream,
 	      v = stream->get();
 	    }
 	    
-	    //std::cerr << (int)n << "*: " << std::hex << (int)v << std::endl;
-	    
 	    while (n-- > 0 && i < header.BytesPerLine * header.NPlanes)
 	      {
-		//std::cerr << "i: " << i << std::endl;
 		scanline[i++] = v;
 	      }
 	  }
 	
-	if (header.NPlanes > 1) // re-pack planes
+	if (plane_packing) // re-pack planes
 	  {
-	    for (int p = 0; p < header.NPlanes; ++p)
+            const unsigned int bits = header.BitsPerPixel;
+	    const unsigned int planes = header.NPlanes;
+	    uint8_t* dst = image.getRawData() + image.stride() * y;
+	    
+	    struct BitPacker {
+	      uint8_t* ptr;
+	      int p;
+	      const uint8_t bits, mask;
+	      const bool msb_first;
+	      
+	      BitPacker(uint8_t* _ptr, int _bits, bool _msb_first = true)
+		: ptr(_ptr), p(_msb_first ? 8 - _bits : 0),
+		  bits(_bits), mask((1 << _bits) - 1), msb_first(_msb_first)
 	      {
-		uint8_t* dst = image.getRawData() + image.stride() * y;
-		uint8_t* src = scanline + p * header.BytesPerLine;;
-		for (int i = 0, j = p; i < header.BytesPerLine; ++i, j += header.NPlanes) {
-		  dst[j] = src[i];
+	      }
+	      
+	      void push(uint8_t v)
+	      {
+		if (!msb_first) {
+		  *ptr = (*ptr & ~(mask << p)) | ((v & mask) << p);
+		  p += bits;
+		  if (p >= 8)
+		    p = 0, ++ptr;
+		} else {
+		  *ptr = (*ptr & ~(mask << p)) | ((v & mask) << p);
+		  p -= bits;
+		  if (p < 0)
+		    p = 8 - bits, ++ptr;
 		}
+	      }
+	    };
+	    BitPacker packer(dst, bits);
+	    
+	    for (int i = 0; i < image.w; ++i)
+	      {
+		for (int p = 0; p < planes; ++p)
+		  {
+		    uint8_t* src = scanline + p * header.BytesPerLine;
+		    int idx = i * bits / 8;
+		    int bit = i * bits % 8;
+		    bit = 8 - bits - bit;
+		  }
 	      }
 	  }
 	else // in-memory write
@@ -159,11 +193,11 @@ bool PCXCodec::readImage(std::istream* stream,
 	    scanline += image.stride();
 	  }
       }
-    if (header.NPlanes > 1)
+    if (plane_packing)
       delete[] scanline;
   }
-  
-  if (image.bps == 8 && image.spp == 1)
+
+  if (image.spp == 1)
   {
     uint16_t rmap[256];
     uint16_t gmap[256];
@@ -200,7 +234,7 @@ bool PCXCodec::readImage(std::istream* stream,
   }
   
   return true;
-
+  
 no_pcx:
   stream->seekg(0);
   return false;
