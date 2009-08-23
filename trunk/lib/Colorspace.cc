@@ -635,32 +635,32 @@ void colorspace_de_palette (Image& image, int table_entries,
 
   // TODO: allow 16bit output if the palette contains that much dynamic
 
-  int bits_used = 0;
-  int x = 0;
+  const unsigned int bitshift = 8 - image.bps;
   while (dst < new_data + new_size)
-    {
-      uint8_t v = *src >> (8 - image.bps);
-      if (is_gray) {
-	*dst++ = rmap[v] >> 8;
-      } else {
-	*dst++ = rmap[v] >> 8;
-	*dst++ = gmap[v] >> 8;
-	*dst++ = bmap[v] >> 8;
-      }
-      
-      bits_used += image.bps;
-      ++x;
+  {
+    uint8_t z = 0;
+    unsigned int bits = 0;
 
-      if (bits_used == 8 || x == image.w) {
-	++src;
-	bits_used = 0;
-	if (x == image.w)
-	  x = 0;
+    for (int x = 0; x < image.w; ++x)
+    {
+      if (bits == 0) {
+        z = *src++;
+        bits = 8;
       }
-      else {
-	*src <<= image.bps;
+
+      if (is_gray) {
+	*dst++ = rmap[z >> bitshift] >> 8;
+      } else {
+	*dst++ = rmap[z >> bitshift] >> 8;
+	*dst++ = gmap[z >> bitshift] >> 8;
+	*dst++ = bmap[z >> bitshift] >> 8;
       }
+
+      z <<= image.bps;
+      bits -= image.bps;
     }
+  }
+
   image.bps = 8;
   if (is_gray)
     image.spp = 1;
