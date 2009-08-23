@@ -63,7 +63,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   const bool debug = false;
   
   // color normalize on background color
-  // search for background color */
+  // search for background color
   {
     int histogram[256][3] = { {0}, {0} };
     
