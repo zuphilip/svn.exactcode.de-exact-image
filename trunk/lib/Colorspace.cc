@@ -378,7 +378,7 @@ void colorspace_grayX_to_gray8 (Image& image)
   const unsigned int bitshift = 8 - bps;
   for (int row = 0; row < image.h; ++row)
     {
-      uint8_t* input  = old_data + row * old_stride;
+      uint8_t* input = old_data + row * old_stride;
       uint8_t z = 0;
       unsigned int bits = 0;
       
@@ -423,7 +423,7 @@ void colorspace_grayX_to_rgb8 (Image& image)
   const unsigned int bitshift = 8 - bps;
   for (int row = 0; row < image.h; ++row)
     {
-      uint8_t* input  = old_data + row * old_stride;
+      uint8_t* input = old_data + row * old_stride;
       uint8_t z = 0;
       unsigned int bits = 0;
       
@@ -458,7 +458,7 @@ void colorspace_gray1_to_gray2 (Image& image)
     {
       uint8_t z = 0;
       uint8_t zz = 0;
-      uint8_t* input  = old_data + row * old_stride;
+      uint8_t* input = old_data + row * old_stride;
 
       int x;
       for (x = 0; x < image.w; ++x)
@@ -499,7 +499,7 @@ void colorspace_gray1_to_gray4 (Image& image)
       uint8_t z = 0;
       uint8_t zz = 0;
       
-      uint8_t* input  = old_data + row * old_stride;
+      uint8_t* input = old_data + row * old_stride;
       
       int x;
       for (x = 0; x < image.w; ++x)
