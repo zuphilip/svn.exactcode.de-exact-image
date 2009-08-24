@@ -175,16 +175,24 @@ bool PCXCodec::readImage(std::istream* stream,
 		}
 	      }
 	    };
-	    BitPacker packer(dst, bits);
+	    BitPacker packer(dst, bits == 8 ? bits : bits * planes);
 	    
 	    for (int i = 0; i < image.w; ++i)
 	      {
+		uint8_t v = 0, mask = (1 << bits) - 1;
+		int b = 0;
 		for (int p = 0; p < planes; ++p)
 		  {
 		    uint8_t* src = scanline + p * header.BytesPerLine;
 		    int idx = i * bits / 8;
 		    int bit = i * bits % 8;
 		    bit = 8 - bits - bit;
+		    v |= ((src[idx] >> bit) & mask) << b;
+                    b += bits;
+		    if (b >= (bits == 8 ? bits : bits * planes)) {
+		      packer.push(v);
+		      b = v = 0;
+		    }
 		  }
 	      }
 	  }
@@ -223,13 +231,14 @@ bool PCXCodec::readImage(std::istream* stream,
     }
     else if (header.PaletteInfo == 1 or header.PaletteInfo == 2)
       {
-	for (int i = 0; i < 16; ++i)
+	const int ncolors = 1 << image.bps;
+	for (int i = 0; i < ncolors; ++i)
 	  {
 	    rmap[i] = header.Colormap[i][0] * 0xffff / 0xff;
 	    gmap[i] = header.Colormap[i][1] * 0xffff / 0xff;
 	    bmap[i] = header.Colormap[i][2] * 0xffff / 0xff;
 	  }
-	colorspace_de_palette (image, 16, rmap, gmap, bmap); // TODO: ncolors
+	colorspace_de_palette(image, ncolors, rmap, gmap, bmap);
       }
   }
   
