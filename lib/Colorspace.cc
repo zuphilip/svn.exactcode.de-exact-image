@@ -707,7 +707,7 @@ bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
 {
   // thru the codec?
   if (!image.isModified() && image.getCodec())
-    if (spp = 1 && bps >= 8)
+    if (spp == 1 && bps >= 8)
       if (image.getCodec()->toGray(image))
 	return true;
 
