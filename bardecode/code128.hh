@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 - 2008 Lars Kuhtz, ExactCODE GmbH Germany.
+ * Copyright (C) 2009 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -428,7 +429,7 @@ namespace BarDecode
                                 break;
                     case FNC2:
                     case FNC3:
-                    case FNC4: std::cerr << "WARNING: Function charaters for code128 are not supported for now." << std::endl;
+                    case FNC4: std::cerr << "WARNING: Function charaters for code128 are not yet supported." << std::endl;
                                 break;
                     default: code += result;
                     }
@@ -444,8 +445,8 @@ namespace BarDecode
 
         // Checksum and return result
         if (  (checksum % 103) != (long) table[list.back()] ) {
-            std::cerr << "WARNING: checksum test for code128 failed on \""<< code << "\"." << std::endl;
-            std::cerr << "         checksum: " << checksum << " % 103 = " << checksum % 103 << " != " << (long) table[list.back()] << std::endl;
+            //std::cerr << "WARNING: checksum test for code128 failed on \""<< code << "\"." << std::endl;
+            //std::cerr << "         checksum: " << checksum << " % 103 = " << checksum % 103 << " != " << (long) table[list.back()] << std::endl;
             return scanner_result_t();
         } else {
             return scanner_result_t(type,code,x,y);
