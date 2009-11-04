@@ -6,14 +6,10 @@ DEPS =
 
 # as fallback use the built-in Agg, we depend on it, ...
 
-ifeq "$(WITHLIBAGG)" "0"
-DEPS += $(agg-2.4_BINARY)
-else
 CPPFLAGS += $(LIBAGGINCS)
 LDFLAGS += $(LIBAGGLIBS)
 ifeq "$(WITHFREETYPE)" "1"
 LDFLAGS += -laggfontfreetype
-endif
 endif
 
 ifeq "$(WITHFREETYPE)" "1"

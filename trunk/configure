@@ -2,7 +2,7 @@
 
 . config/functions
 
-with_options="x11 libagg freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode lua swig perl python php ruby"
+with_options="x11 freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode lua swig perl python php ruby"
 
 feature_options="evasgl tga pcx"
 TGA=1 # default to yes
@@ -33,16 +33,9 @@ headercheck c++ iostream string iostream sstream fstream || \
 	status_error "Not all tested STL headers are present - please install them."
 
 pkgcheck x11 compile X11 atleast 11.0
-if ! pkgcheck libagg pkg-config LIBAGG atleast 2.4; then
-	cat <<-EOT
-
-		Anti-Grain Geometry was not found - an internal copy
-		will be built as AGG is required to render vector
-		graphics (such as even lines and text).
-		AGG can be obtained from: www.antigrain.com
-
-EOT
-fi
+pkgcheck libagg pkg-config LIBAGG atleast 2.4 || status_error \
+	"Anti-Grain Geometry was not found, since it is vital
+(for vector objects and text) obtained it from: www.antigrain.com"
 
 # latest tested, even older ones /might/ work -ReneR
 if ! pkgcheck freetype2 pkg-config FREETYPE atleast 9.5.0; then
