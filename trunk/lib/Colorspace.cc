@@ -689,7 +689,7 @@ bool colorspace_by_name (Image& image, const std::string& target_colorspace,
     spp = 1; bps = 16;
   } else if (space == "rgb" || space == "rgb8") {
     spp = 3; bps = 8;
-  } else if (space == "rgba" || space == "rgb8a") {
+  } else if (space == "rgba" || space == "rgba8") {
     spp = 4; bps = 8;
   } else if (space == "rgb16") {
     spp = 3; bps = 16;
@@ -779,6 +779,7 @@ const char* colorspace_name (Image& image)
     case 8: return "gray8";
     case 16: return "gray16";
     case 24: return "rgb8";
+    case 32: return "rgba8";
     case 48: return "rgb16";
     default: return "";
     }
