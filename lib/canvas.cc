@@ -40,3 +40,21 @@ void append (Image& image, Image& other)
 	 other.getRawData(),
 	 other.stride() * other.h);
 }
+
+void copy (Image& image, int x,	int y, int w, int h, Image& other, int sx, int sy)
+{
+  //const int rx = sx - x;
+  //const int ry = sy - y;
+
+  // TODO: clip
+
+  // must be in the same colorspace
+  colorspace_by_name(other, colorspace_name(image));
+  
+  const int bpp = (image.bps * image.spp + 7) / 8;
+  uint8_t* src = image.getRawData() + image.stride() * y + bpp * x;
+  uint8_t* dst = other.getRawData() + other.stride() * sy + bpp *sx;
+  
+  for (int i = 0; i < h; ++i, src += image.stride(), dst += other.stride())
+    memmove(src, dst, bpp * w);
+}
