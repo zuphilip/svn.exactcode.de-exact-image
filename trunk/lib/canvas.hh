@@ -18,3 +18,4 @@
 #include "Image.hh"
 
 void append (Image& image, Image& other);
+void copy (Image& image, int x, int y, int w, int h, Image& other, int sx, int sy);
