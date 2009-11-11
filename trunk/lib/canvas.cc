@@ -52,9 +52,17 @@ void copy (Image& image, int x,	int y, int w, int h, Image& other, int sx, int s
   colorspace_by_name(other, colorspace_name(image));
   
   const int bpp = (image.bps * image.spp + 7) / 8;
-  uint8_t* src = image.getRawData() + image.stride() * y + bpp * x;
-  uint8_t* dst = other.getRawData() + other.stride() * sy + bpp *sx;
+  uint8_t* dst = image.getRawData() + image.stride() * y + bpp * x;
+  uint8_t* src = other.getRawData() + other.stride() * sy + bpp *sx;
   
-  for (int i = 0; i < h; ++i, src += image.stride(), dst += other.stride())
-    memmove(src, dst, bpp * w);
+  if (y <= sy) {
+    for (; h > 0; --h, dst += image.stride(), src += other.stride())
+      memmove(dst, src, bpp * w);
+  } else {
+    dst += image.stride() * (h-1);
+    src += other.stride() * (h-1);
+    
+    for (; h > 0; --h, dst -= image.stride(), src -= other.stride())
+      memmove(dst, src, bpp * w);
+  }
 }
