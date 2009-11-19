@@ -119,6 +119,10 @@ typedef struct                  /* This structure contains the x, y, and z */
   BMPCIEXYZ   iCIEBlue;
 } BMPCIEXYZTriple;
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
+
 typedef struct
 {
   char	bType[2];       /* Signature "BM" */
@@ -129,7 +133,15 @@ typedef struct
   uint16_t	iReserved1;     /* Reserved, set as 0 */
   uint16_t	iReserved2;     /* Reserved, set as 0 */
   EndianessConverter<uint32_t,LittleEndianTraits> iOffBits; /* Offset of the image from file start in bytes */
-}  __attribute__((packed)) BMPFileHeader;
+}
+#ifdef __GCC__
+__attribute__((packed))
+#endif
+BMPFileHeader;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 /* File header size in bytes: */
 const int       BFH_SIZE = 14;
@@ -183,7 +195,11 @@ typedef struct
 			 * in 16^16 format. */
   EndianessConverter<int32_t,LittleEndianTraits> iGammaGreen;    /* Toned response curve for green. */
   EndianessConverter<int32_t,LittleEndianTraits> iGammaBlue;     /* Toned response curve for blue. */
-}  __attribute__((packed)) BMPInfoHeader;
+}
+#ifdef __GCC__
+__attribute__((packed))
+#endif
+BMPInfoHeader;
 
 /*
  * Info header size in bytes:
@@ -454,7 +470,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
 	stream->seekg (offset);
 	
 	if (stream->tellg () != offset) {
-	  fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
+	  std::cerr << "scanline " << row << " Seek error: " << stream->tellg() << " vs " << offset << std::endl;
 	}
 	
 	if (stream->read ((char*)row_data, file_stride) < 0) {
@@ -700,9 +716,12 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   // write color table
   if (info_hdr.iClrUsed) {
     int n = info_hdr.iClrUsed;
-    
+#ifdef _MSC_VER
+    std::vector<uint8_t> _clrtbl(n_clr_elems*n);
+    uint8_t* clrtbl = &_clrtbl[0];
+#else
     uint8_t clrtbl [n_clr_elems*n];
-    
+#endif
     for (int i = 0; i < n; ++i) {
       clrtbl[n_clr_elems*i+0] = clrtbl[n_clr_elems*i+1] = clrtbl[n_clr_elems*i+2] = i * 0xff / (n - 1);
       
@@ -716,8 +735,12 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   switch (info_hdr.iCompression) {
   case BMPC_RGB:
     {
+#ifdef _MSC_VER
+      std::vector<uint8_t> _payload(file_stride);
+      uint8_t* payload = &_payload[0];
+#else
       uint8_t payload [file_stride];
-      
+#endif
       for (int row = image.h-1; row >=0; --row)
 	{
 	  memcpy (payload, image.getRawData() + stride*row, stride);
