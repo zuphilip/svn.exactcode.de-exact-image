@@ -149,7 +149,7 @@ bool ImageCodec::Read (std::string file, Image& image, const std::string& decomp
   
   std::istream* s;
   if (file != "-")
-    s = new std::ifstream (file.c_str());
+    s = new std::ifstream (file.c_str(), std::ios::in | std::ios::binary);
   else
     s = &std::cin;
   
@@ -172,7 +172,7 @@ bool ImageCodec::Write (std::string file, Image& image,
   
   std::ostream* s;
   if (file != "-")
-    s = new std::ofstream (file.c_str());
+    s = new std::ofstream (file.c_str(), std::ios::out | std::ios::binary);
   else
     s = &std::cout;
   
