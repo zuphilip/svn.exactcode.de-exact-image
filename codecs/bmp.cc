@@ -253,7 +253,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
   uint32_t row, stride;
   
   uint32_t clr_tbl_size = 0, n_clr_elems = 3;
-  uint8_t *clr_tbl = 0;
+  uint8_t* clr_tbl = 0;
   uint8_t* data = 0;
   
   stream->read ((char*)&file_hdr.bType, 2);
@@ -366,15 +366,14 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
 	  1 << image.bps : info_hdr.iClrUsed;
       else
 	clr_tbl_size = 1 << image.bps;
-      clr_tbl = (uint8_t *)
-	malloc (n_clr_elems * clr_tbl_size);
+
+      //std::cerr << "n_clr_elems: " << n_clr_elems << ", clr_tbl_size: " << clr_tbl_size << std::endl;
+
+      clr_tbl = (uint8_t *) malloc (n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
 	std::cerr << "BMPCodec:: Can't allocate space for color table" << std::endl;
 	goto bad;
       }
-      
-      /*printf ("n_clr_elems: %d, clr_tbl_size: %d\n",
-	n_clr_elems, clr_tbl_size); */
       
       stream->seekg (BFH_SIZE + info_hdr.iSize);
       stream->read ((char*)clr_tbl, n_clr_elems * clr_tbl_size);
@@ -431,11 +430,12 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
     {
       uint32_t file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
       
-      /*printf ("bitcount: %d, stride: %d, file stride: %d\n",
-	      info_hdr.iBitCount, stride, file_stride);
+      /*std::cerr << "bitcount: " << info_hdr.iBitCount << ", stride: " << stride
+                << ", file stride: " << file_stride << std::endl;
      
-      printf ("red mask: %x, green mask: %x, blue mask: %x\n",
-      info_hdr.iRedMask, info_hdr.iGreenMask, info_hdr.iBlueMask); */
+      std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
+                << ", green mask: " << info_hdr.iGreenMask
+                << ", blue mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
       
       data = (uint8_t*) malloc (stride*image.h);
       uint8_t* row_data = (uint8_t*) malloc (file_stride);
@@ -615,11 +615,11 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
   // no color table anyway or RGB* ?
   if (clr_tbl && image.spp < 3)
     {
-      uint16_t* rmap = new uint16_t [1 << image.bps];
-      uint16_t* gmap = new uint16_t [1 << image.bps];
-      uint16_t* bmap = new uint16_t [1 << image.bps];
+      uint16_t* rmap = new uint16_t [clr_tbl_size];
+      uint16_t* gmap = new uint16_t [clr_tbl_size];
+      uint16_t* bmap = new uint16_t [clr_tbl_size];
       
-      for (int i = 0; i < (1 << image.bps); ++i) {
+      for (int i = 0; i < clr_tbl_size; ++i) {
 	// BMP maps have BGR order ...
 	rmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 2];
 	gmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 1];
