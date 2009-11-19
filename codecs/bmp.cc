@@ -614,7 +614,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
       uint16_t* gmap = new uint16_t [clr_tbl_size];
       uint16_t* bmap = new uint16_t [clr_tbl_size];
       
-      for (int i = 0; i < clr_tbl_size; ++i) {
+      for (unsigned int i = 0; i < clr_tbl_size; ++i) {
 	// BMP maps have BGR order ...
 	rmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 2];
 	gmap[i] = 0x101 * clr_tbl[i * n_clr_elems + 1];
