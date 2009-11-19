@@ -53,8 +53,14 @@ std::string get_ext (const std::string& filename)
 
 std::string get_codec (std::string& filename)
 {
-  // parse the filename extension
+  // parse the codec spec, prefixed to the filename, e.g. jpg:, tif:, raw:, ...
   std::string::size_type idx_colon = filename.find (':');
+  // unfortunately, Windows has this silly concept of drive "letters",
+  // just limit the codec spec to anything longer than a single char
+#ifdef _WIN32
+  if (idx_colon && idx_colon < 2)
+    idx_colon = filename.find (':', idx_colon + 1);
+#endif
   if (idx_colon && idx_colon != std::string::npos) {
     std::string codec = filename.substr (0, idx_colon);
     filename.erase (0, idx_colon+1);
