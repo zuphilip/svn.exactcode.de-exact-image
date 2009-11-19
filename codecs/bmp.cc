@@ -448,30 +448,25 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
       const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
       const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
       
-      for (row = 0; row < (uint32_t)image.h; ++row) {
-	std::istream::pos_type offset;
-	
-	if (info_hdr.iHeight > 0)
-	  offset = file_hdr.iOffBits + (image.h - row - 1) * file_stride;
-	else
-	  offset = file_hdr.iOffBits + row * file_stride;
-	
+      for (row = 0; row < (uint32_t)image.h; ++row)
+      {
+	std::istream::pos_type offset = file_hdr.iOffBits + row * file_stride;
 	stream->seekg (offset);
-	/*
-	  if (stream->tellg () != offset) {
+	
+	if (stream->tellg () != offset) {
 	  fprintf(stderr, "scanline %lu: Seek error\n", (unsigned long) row);
-	  }
-	*/
+	}
 	
 	if (stream->read ((char*)row_data, file_stride) < 0) {
 	  std::cerr << "scanline " << row << ": Read error\n";
 	}
 	
 	// convert to RGB
+	uint8_t* rgb_ptr = data + stride * (info_hdr.iHeight < 0 ? row : image.h - row - 1);
+
 	if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
 	    uint8_t* bf_ptr = row_data;
-	    uint8_t* rgb_ptr = data + stride * row;
 	    
 	    for (int i = 0; i < image.w; ++i, rgb_ptr += 3)
 	      {
@@ -495,7 +490,7 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
 	  }
 	else {
 	  rearrangePixels (row_data, image.w, info_hdr.iBitCount);
-	  memcpy (data+stride*row, row_data, stride);
+	  memcpy (rgb_ptr, row_data, stride);
 	}
       }
       free(row_data);
