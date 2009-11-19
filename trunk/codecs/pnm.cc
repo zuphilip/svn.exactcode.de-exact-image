@@ -99,7 +99,7 @@ bool PNMCodec::readImage (std::istream* stream, Image& image, const std::string&
   }
   
   image.bps = 1;
-  while ( (1 << image.bps) < maxval)
+  while ((1 << image.bps) < maxval)
     ++image.bps;
   
   // not stored in the format :-(
@@ -148,7 +148,6 @@ bool PNMCodec::readImage (std::istream* stream, Image& image, const std::string&
       for (int y = 0; y < image.h; ++y)
 	{
 	  uint8_t* dest = image.getRawData() + y * stride;
-	  
 	  stream->read ((char*)dest, stride);
 
 	  // is it publically defined somewhere???
