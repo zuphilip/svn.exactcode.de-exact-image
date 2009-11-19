@@ -628,9 +628,9 @@ bool BMPCodec::readImage (std::istream* stream, Image& image, const std::string&
       
       colorspace_de_palette (image, clr_tbl_size, rmap, gmap, bmap);
       
-      delete (rmap);
-      delete (gmap);
-      delete (bmap);
+      delete[] (rmap);
+      delete[] (gmap);
+      delete[] (bmap);
       
       free(clr_tbl);
       clr_tbl = NULL;
