@@ -564,7 +564,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap)
 {
   // detect 1bps b/w tables
-  if (image.bps == 1) {
+  if (image.bps == 1 && table_entries >= 2) {
     if (rmap[0] == 0 &&
 	gmap[0] == 0 &&
 	bmap[0] == 0 &&
