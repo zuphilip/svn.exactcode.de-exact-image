@@ -24,12 +24,12 @@
 #include "Codecs.hh"
 
 Image::Image ()
-  : w(0), h(0), xres(0), yres(0), spp(0), bps(0), modified(false), meta_modified(false), codec(0), data(0)
+  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0)
 {
 }
 
 Image::Image (Image& other)
-  : w(0), h(0), xres(0), yres(0), spp(0), bps(0), modified(false), meta_modified(false), codec(0), data(0)
+  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0)
 {
   operator= (other);
 }
