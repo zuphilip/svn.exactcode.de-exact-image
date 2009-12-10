@@ -134,7 +134,7 @@ typedef struct
   uint16_t	iReserved2;     /* Reserved, set as 0 */
   EndianessConverter<uint32_t,LittleEndianTraits> iOffBits; /* Offset of the image from file start in bytes */
 }
-#ifdef __GCC__
+#ifdef __GNUC__
 __attribute__((packed))
 #endif
 BMPFileHeader;
@@ -196,7 +196,7 @@ typedef struct
   EndianessConverter<int32_t,LittleEndianTraits> iGammaGreen;    /* Toned response curve for green. */
   EndianessConverter<int32_t,LittleEndianTraits> iGammaBlue;     /* Toned response curve for blue. */
 }
-#ifdef __GCC__
+#ifdef __GNUC__
 __attribute__((packed))
 #endif
 BMPInfoHeader;
