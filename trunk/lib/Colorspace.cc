@@ -1,6 +1,6 @@
 /*
- * Colorspace conversions..
- * Copyright (C) 2006 - 2009 René Rebe, ExactCOD GmbH Germany
+ * Colorspace conversions.
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -185,8 +185,9 @@ void colorspace_gray8_threshold (Image& image, uint8_t threshold)
   image.setRawData();
 }
 
-void colorspace_gray8_denoise_neighbours (Image &image)
+void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 {
+  std::cerr << "denoise" << std::endl;
   // we need some pixels to compare, also avoids conditionals
   // below
   if (image.w < 3 ||
@@ -207,24 +208,50 @@ void colorspace_gray8_denoise_neighbours (Image &image)
     // without the inner(area) compiler guidance the conditionals are
     // not optimized away well enough
     void operator() (const int x, const int y, uint8_t* it,
-		     const bool inner = false)
+		     const bool inner = false, const bool gross = false)
     {
-      unsigned int n = 0, sum = 0;
+      int n = 0, sum = 0;
       
+      // +
       if (inner || x > 0)
-	sum += *(it-1), ++n;
+	sum += it[-1], ++n;
       if (inner || y > 0)
-	sum += *(it-stride), ++n;
+	sum += it[-stride], ++n;
+      
       if (inner || x < image.w-1)
-	sum += *(it+1), ++n;
+	sum += it[1], ++n;
       if (inner || y < image.h-1)
-	sum += *(it+stride), ++n;
+	sum += it[stride], ++n;
+
+      // x
+      if (gross) {
+	if (y > 0) {
+	  if (inner || x > 0)
+	    sum += it[-1 -stride], ++n;
+	  if (inner || x < image.w-1)
+	    sum += it[1 -stride], ++n;
+	}
+	
+	if (y < image.w-1) {
+	  if (inner || x > 0)
+	    sum += it[-1 +stride], ++n;
+	  if (inner || x < image.w-1)
+	    sum += it[1 +stride], ++n;
+	}
+      }
       
       // if all direct neighbours are black or white, fill it
-      if (sum == 0)
-	*it = 0;
-      else if (sum == n * 0xff)
-	*it = 0xff;
+      if (gross) {
+        if (sum <= 1 * 0xff)
+	  *it = 0;
+        else if (sum >= (n - 1) * 0xff)
+	  *it = 0xff;
+      } else {
+        if (sum == 0)
+	  *it = 0;
+        else if (sum == n * 0xff)
+	  *it = 0xff;
+      }
     }
   } compare_and_set (image);
   
@@ -233,14 +260,14 @@ void colorspace_gray8_denoise_neighbours (Image &image)
       // optimize conditionals away for the inner area
       if (y > 0 && y < image.h-1)
 	{
-	  compare_and_set (1, y, it++);
+	  compare_and_set (1, y, it++, gross);
 	  for (int x = 1; x < image.w-1; ++x, ++it)
-	    compare_and_set (x, y, it, true);
-	  compare_and_set (image.w-1, y, it++);
+	    compare_and_set (x, y, it, true, gross);
+	  compare_and_set (image.w-1, y, it++, gross);
 	}
       else // quite some out of bounds conditions to check
 	for (int x = 0; x < image.w; ++x, ++it) 
-	  compare_and_set (x, y, it);
+	  compare_and_set (x, y, it, gross);
     }
     
   image.setRawData();

@@ -1,3 +1,22 @@
+/*
+ * Colorspace conversions.
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
+
 #ifndef COLORSPACE_HH
 #define COLORSPACE_HH
 
@@ -9,7 +28,7 @@ void colorspace_rgb8_to_gray8 (Image& image);
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha=0xff);
 
 void colorspace_gray8_threshold (Image& image, uint8_t threshold = 127);
-void colorspace_gray8_denoise_neighbours (Image &image);
+void colorspace_gray8_denoise_neighbours (Image &image, bool gross = false);
 
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold = 127);
 void colorspace_gray8_to_gray2 (Image& image);
