@@ -208,7 +208,7 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
     // without the inner(area) compiler guidance the conditionals are
     // not optimized away well enough
     void operator() (const int x, const int y, uint8_t* it,
-		     const bool inner = false, const bool gross = false)
+		     const bool inner, const bool gross = false)
     {
       int n = 0, sum = 0;
       
@@ -232,7 +232,7 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 	    sum += it[1 -stride], ++n;
 	}
 	
-	if (y < image.w-1) {
+	if (y < image.h-1) {
 	  if (inner || x > 0)
 	    sum += it[-1 +stride], ++n;
 	  if (inner || x < image.w-1)
@@ -260,14 +260,14 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
       // optimize conditionals away for the inner area
       if (y > 0 && y < image.h-1)
 	{
-	  compare_and_set (1, y, it++, gross);
+	  compare_and_set (0, y, it++, false, gross);
 	  for (int x = 1; x < image.w-1; ++x, ++it)
 	    compare_and_set (x, y, it, true, gross);
-	  compare_and_set (image.w-1, y, it++, gross);
+	  compare_and_set (image.w-1, y, it++, false, gross);
 	}
       else // quite some out of bounds conditions to check
 	for (int x = 0; x < image.w; ++x, ++it) 
-	  compare_and_set (x, y, it, gross);
+	  compare_and_set (x, y, it, false, gross);
     }
     
   image.setRawData();
