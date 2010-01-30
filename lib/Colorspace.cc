@@ -187,7 +187,6 @@ void colorspace_gray8_threshold (Image& image, uint8_t threshold)
 
 void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 {
-  std::cerr << "denoise" << std::endl;
   // we need some pixels to compare, also avoids conditionals
   // below
   if (image.w < 3 ||
