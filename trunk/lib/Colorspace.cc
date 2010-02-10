@@ -896,51 +896,42 @@ struct hue_saturation_lightness_template {
   void operator() (Image& image, double hue, double saturation, double lightness)
   {
     T it (image);
+
+    // H in degree, S and L [-1, 1]
     
     hue = fmod (hue, 360);
     if (hue < 0)
       hue += 360;
-    
-    //saturation = std::max (std::min (saturation, 2.), -2.);
-    //lightness = std::max (std::min (lightness, 2.), -2.);
 
-    typename T::accu a;
-    typename T::accu::vtype _r, _g, _b;
-    double r, g, b, h, s, v;
-    
     for (int i = 0; i < image.h * image.w; ++i)
       {
-	// H in degree, S, L [-1, 1]
-	a = *it;
-	
+	typename T::accu a = *it;	
+        typename T::accu::vtype _r, _g, _b;
 	a.getRGB (_r, _g, _b);
-	r = _r, g = _g, b = _b;
-	r /= T::accu::one().v1;
-	g /= T::accu::one().v1;
-	b /= T::accu::one().v1;
-	
+
 	// RGB to HSV
+	double h, s, v;
 	{
-	  const double min = std::min (std::min (r, g), b);
-	  const double max = std::max (std::max (r, g), b);
-	  const double delta = max - min;
-	  
-	  v = max;
+	  const typename T::accu::vtype min = std::min (std::min (_r, _g), _b);
+	  const typename T::accu::vtype max = std::max (std::max (_r, _g), _b);
+	  const typename T::accu::vtype delta = max - min;
+	  v = (double)max / T::accu::one().v1;
+
 	  if (delta == 0) {
 	    h = 0;
 	    s = 0;
 	  }
 	  else {
-	    s = max == 0 ? 0 : 1. - min / max;
+	    s = max == 0 ? 0 : 1. - ((double)min / max);
 	    
-	    if (max == r) // yellow - magenta
-	      h = 60. * (g - b) / delta + (g >= b ? 0 : 360);
-	    else if (max == g) // cyan - yellow
-	      h = 60. * (b - r) / delta + 120;
+	    if (max == _r) // yellow - magenta
+	      h = 60. * (_g - _b) / delta + (_g >= _b ? 0 : 360);
+	    else if (max == _g) // cyan - yellow
+	      h = 60. * (_b - _r) / delta + 120;
 	    else // magenta - cyan
-	      h = 60. * (r - g) / delta + 240;
+	      h = 60. * (_r - _g) / delta + 240;
 	  }
-	} // end
+	}
 	
 	h += hue;
 	if (h < 0)
@@ -956,9 +947,10 @@ struct hue_saturation_lightness_template {
 	v = std::max (std::min (v, 1.), 0.);
 	
 	
-	// HSV to RGB
+	// back from HSV to RGB
+	double r, g, b;
 	{
-	  h /= 60.;
+	  h /= 60;
 	  const int i = (int) (floor(h)) % 6;
 	  
 	  const double f = h - i;
@@ -1000,9 +992,11 @@ struct hue_saturation_lightness_template {
 	  }
 	
 	} // end
+
 	_r = (typename T::accu::vtype)(r * T::accu::one().v1);
 	_g = (typename T::accu::vtype)(g * T::accu::one().v1);
 	_b = (typename T::accu::vtype)(b * T::accu::one().v1);
+
 	a.setRGB (_r, _g, _b);
 	it.set(a);
 	++it;
