@@ -893,71 +893,73 @@ void brightness_contrast_gamma (Image& image, double brightness, double contrast
 
 template <typename T>
 struct hue_saturation_lightness_template {
-  void operator() (Image& image, double hue, double saturation, double lightness)
+  void operator() (Image& image, double _hue, double saturation, double lightness)
   {
     T it (image);
 
-    // H in degree, S and L [-1, 1]
-    
-    hue = fmod (hue, 360);
-    if (hue < 0)
-      hue += 360;
+    // optimized ONE2 in divisions imprecise shifts if not an FP type
+    const typename T::accu::vtype ONE = T::accu::one().v1,
+                                  ONE2 = ONE > 1 ? ONE + 1 : ONE;
+
+    // H in degree, S and L [-1, 1], latér scaled to the integer range
+    _hue = fmod (_hue, 360);
+    if (_hue < 0)
+      _hue += 360;
+    const typename T::accu::vtype
+      hue = ONE * _hue / 360;
 
     for (int i = 0; i < image.h * image.w; ++i)
       {
 	typename T::accu a = *it;	
-        typename T::accu::vtype _r, _g, _b;
-	a.getRGB (_r, _g, _b);
+	typename T::accu::vtype r, g, b;
+	a.getRGB (r, g, b);
 
 	// RGB to HSV
-	double h, s, v;
+	typename T::accu::vtype h, s, v;
 	{
-	  const typename T::accu::vtype min = std::min (std::min (_r, _g), _b);
-	  const typename T::accu::vtype max = std::max (std::max (_r, _g), _b);
+	  const typename T::accu::vtype min = std::min (std::min (r, g), b);
+	  const typename T::accu::vtype max = std::max (std::max (r, g), b);
 	  const typename T::accu::vtype delta = max - min;
-	  v = (double)max / T::accu::one().v1;
+	  v = max;
 
 	  if (delta == 0) {
 	    h = 0;
 	    s = 0;
 	  }
 	  else {
-	    s = max == 0 ? 0 : 1. - ((double)min / max);
+	    s = max == 0 ? 0 : ONE - (ONE * min / max);
 	    
-	    if (max == _r) // yellow - magenta
-	      h = 60. * (_g - _b) / delta + (_g >= _b ? 0 : 360);
-	    else if (max == _g) // cyan - yellow
-	      h = 60. * (_b - _r) / delta + 120;
+	    if (max == r) // yellow - magenta
+	      h = (60*ONE/360) * (g - b) / delta + (g >= b ? 0 : ONE);
+	    else if (max == g) // cyan - yellow
+	      h = (60*ONE/360) * (b - r) / delta + 120*ONE/360;
 	    else // magenta - cyan
-	      h = 60. * (_r - _g) / delta + 240;
+	      h = (60*ONE/360) * (r - g) / delta + 240*ONE/360;
 	  }
 	}
 	
+	// hue should only be positive, se we only need to check one overflow
 	h += hue;
-	if (h < 0)
-	  h += 360;
-	else if (h >= 360)
-	  h -= 360;
+	if (h >= ONE)
+	  h -= ONE;
 	
 	// TODO: this might not be accurate, double check, ...
 	s = s + s * saturation;
-	s = std::max (std::min (s, 1.), 0.);
+	s = std::max (std::min (s, ONE), (typename T::accu::vtype)0);
 	
 	v = v + v * lightness;
-	v = std::max (std::min (v, 1.), 0.);
-	
+	v = std::max (std::min (v, ONE), (typename T::accu::vtype)0);
 	
 	// back from HSV to RGB
-	double r, g, b;
 	{
-	  h /= 60;
-	  const int i = (int) (floor(h)) % 6;
+	  const int i = 6 * h / ONE2;
 	  
-	  const double f = h - i;
-	  const double p = v * (1 - s);
-	  const double q = v * (1 - f * s);
-	  const double t = v * (1 - (1. - f) * s);
-	  
+	  const typename T::accu::vtype f = 6 * h % ONE2;
+	  // only compute the ones "on-demand" as needed
+	  #define p (v * (ONE - s) / ONE2)
+	  #define q (v * (ONE - f * s / ONE2) / ONE2)
+	  #define t (v * (ONE - (ONE - f) * s / ONE2) / ONE2)
+
 	  switch (i) {
 	  case 0:
 	    r = v;
@@ -990,14 +992,12 @@ struct hue_saturation_lightness_template {
 	    b = q;
 	    break;
 	  }
-	
+#undef p
+#undef q
+#undef t
 	} // end
 
-	_r = (typename T::accu::vtype)(r * T::accu::one().v1);
-	_g = (typename T::accu::vtype)(g * T::accu::one().v1);
-	_b = (typename T::accu::vtype)(b * T::accu::one().v1);
-
-	a.setRGB (_r, _g, _b);
+	a.setRGB (r, g, b);
 	it.set(a);
 	++it;
       }
