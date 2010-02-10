@@ -28,7 +28,7 @@ public:
   class accu
   {
   public:
-    typedef signed int vtype;
+    typedef int32_t vtype;
     vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
@@ -167,7 +167,7 @@ public:
   class accu
   {
   public:
-    typedef signed int vtype;
+    typedef int32_t vtype;
     vtype v1, v2, v3, v4;
     
     accu () { v1 = v2 = v3 = v4 = 0; }
@@ -316,7 +316,7 @@ public:
   class accu
   {
   public:
-    typedef signed int vtype;
+    typedef int64_t vtype;
     vtype v1, v2, v3;
     
     accu () { v1 = v2 = v3 = 0; }
@@ -455,7 +455,7 @@ public:
   class accu
   {
   public:
-    typedef signed int vtype;
+    typedef int32_t vtype;
     vtype v1;
     
     accu () { v1 = 0; }
@@ -573,7 +573,7 @@ public:
   class accu
   {
   public:
-    typedef signed int vtype;
+    typedef int64_t vtype;
     vtype v1;
     
     accu () { v1 = 0; }
