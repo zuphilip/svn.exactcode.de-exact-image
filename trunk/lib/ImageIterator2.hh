@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2008 - 2010 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -123,7 +123,6 @@ public:
     void setRGB (vtype r, vtype g, vtype b) {
       v1 = r; v2 = g; v3 = b;
     }
-    
   };
     
   rgb_iterator (Image& _image)
@@ -154,8 +153,7 @@ public:
     ptr[1] = a.v2;
     ptr[2] = a.v3;
     return *this;
-  }
-    
+  }  
 };
 
 class rgba_iterator
@@ -271,9 +269,8 @@ public:
     void setRGB (vtype r, vtype g, vtype b) {
       v1 = r; v2 = g; v3 = b; v3 = 0xff;
     }
-    
   };
-    
+  
   rgba_iterator (Image& _image)
     : ptr_begin(_image.getRawData()), image (_image), stride(_image.stride()) {
     ptr = ptr_begin;
@@ -288,7 +285,7 @@ public:
     ptr += 4;
     return *this;
   }
-    
+  
   accu operator* () {
     accu a;
     a.v1 = ptr[0];
@@ -305,7 +302,6 @@ public:
     ptr[3] = a.v4;
     return *this;
   }
-    
 };
 
 class rgb16_iterator
@@ -412,9 +408,8 @@ public:
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = r;  v2 = g;  v3 = b;
+      v1 = r; v2 = g; v3 = b;
     }
-
   };
   
   rgb16_iterator (Image& _image)
@@ -446,7 +441,7 @@ public:
     ptr[1] = a.v2;
     ptr[2] = a.v3;
     return *this;
-  }    
+  }
 };
 
 class gray_iterator
@@ -528,7 +523,7 @@ public:
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = g =  b = v1;
+      r = g = b = v1;
     }
     
     void getL (vtype& l) {
@@ -538,7 +533,6 @@ public:
     void setRGB (vtype& r, vtype& g, vtype& b) {
       v1 = (21 * r + 71 * g + 8 * b) / 100;
     }
-    
   };
     
   gray_iterator (Image& _image)
@@ -566,7 +560,6 @@ public:
     ptr[0] = a.v1;
     return *this;
   }
-    
 };
 
 class gray16_iterator
@@ -576,7 +569,7 @@ public:
   uint16_t* ptr_begin;
   const Image& image;
   const int stride;
-    
+  
   class accu
   {
   public:
@@ -687,7 +680,6 @@ public:
     ptr[0] = a.v1;
     return *this;
   }
-    
 };
 
 template <unsigned int bitdepth>
@@ -729,17 +721,17 @@ public:
     }
     return *this;
   }
-    
+  
   accu operator* () {
     accu a;
     a.v1 = ((*ptr >> (bitpos - (bitdepth - 1))) & mask) * 0xff / mask;
     return a;
   }
-    
+  
   bit_iterator& set (const accu& a) {
     *ptr &= ~(mask << (bitpos - (bitdepth - 1)));
     *ptr |= (a.v1 >> (8 - bitdepth)) << (bitpos - (bitdepth - 1));
-      
+    
     return *this;
   }
 };
@@ -973,7 +965,7 @@ template <template <typename T> class ALGO,
 	  class T1, class T2, class T3, class T4,
 	  class T5, class T6, class T7>
 void codegen (T1& a1, T2& a2, T3& a3, T4& a4,
-	      T5& a5, T6& a6, T7& a7)	   
+	      T5& a5, T6& a6, T7& a7)
 {
   if (a1.spp == 3) {
     if (a1.bps == 8) {
@@ -1016,7 +1008,7 @@ template <class T0, template <typename T> class ALGO,
 	  class T1, class T2, class T3, class T4,
 	  class T5, class T6, class T7>
 T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
-		   T5& a5, T6& a6, T7& a7)	   
+		   T5& a5, T6& a6, T7& a7)
 {
   if (a1.spp == 3) {
     if (a1.bps == 8) {
