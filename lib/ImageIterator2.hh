@@ -139,6 +139,11 @@ public:
     ptr += 3;
     return *this;
   }
+
+  rgb_iterator& operator-- () {
+    ptr -= 3;
+    return *this;
+  }
     
   accu operator* () {
     accu a;
@@ -285,6 +290,11 @@ public:
     ptr += 4;
     return *this;
   }
+
+  rgba_iterator& operator-- () {
+    ptr -= 4;
+    return *this;
+  }
   
   accu operator* () {
     accu a;
@@ -427,6 +437,11 @@ public:
     ptr += 3;
     return *this;
   }
+
+  rgb16_iterator& operator-- () {
+    ptr -= 3;
+    return *this;
+  }
     
   accu operator* () {
     accu a;
@@ -549,6 +564,11 @@ public:
     ptr += 1;
     return *this;
   }
+
+  gray_iterator& operator-- () {
+    ptr -= 1;
+    return *this;
+  }
     
   accu operator* () {
     accu a;
@@ -653,7 +673,7 @@ public:
     }
     
   };
-    
+     
   gray16_iterator (Image& _image)
     : ptr_begin((uint16_t*)_image.getRawData()), image (_image),
       stride(_image.stride()) {
@@ -667,6 +687,11 @@ public:
     
   gray16_iterator& operator++ () {
     ptr += 1;
+    return *this;
+  }
+
+  gray16_iterator& operator-- () {
+    ptr -= 1;
     return *this;
   }
     
@@ -717,6 +742,19 @@ public:
       if (_x == width)
 	_x = 0;
       ++ptr;
+      bitpos = 7;
+    }
+    return *this;
+  }
+
+  // untested, TODO: test !!!
+  bit_iterator& operator-- () {
+    --_x;
+    bitpos += bitdepth;
+    if (bitpos < 0 || _x < 0) {
+      if (_x < 0)
+	_x = width;
+      --ptr;
       bitpos = 7;
     }
     return *this;
