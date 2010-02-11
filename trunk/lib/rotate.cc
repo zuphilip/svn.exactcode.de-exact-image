@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -123,17 +123,6 @@ void flipY (Image& image)
 	  *row1++ = *row2;
 	  *row2++ = v;
 	}
-    }
-  image.setRawData();
-}
-
-void shear (Image& image, double xangle, double yangle)
-{
-  if (xangle != 0.0)
-    {
-    }
-  if (yangle != 0.0)
-    {
     }
   image.setRawData();
 }
