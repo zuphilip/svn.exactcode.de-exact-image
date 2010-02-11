@@ -1005,6 +1005,92 @@ void codegen (T1& a1, T2& a2, T3& a3, T4& a4,
 // with return
 
 template <class T0, template <typename T> class ALGO,
+	  class T1, class T2>
+T0 codegen_return (T1& a1, T2& a2)
+{
+  if (a1.spp == 3) {
+    if (a1.bps == 8) {
+      ALGO <rgb_iterator> a;
+      return a (a1, a2);
+    } else {
+      ALGO <rgb16_iterator> a;
+      return a (a1, a2);
+    }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    return a (a1, a2);
+  }
+  else if (a1.bps == 16) {
+    ALGO <gray16_iterator> a;
+    return a (a1, a2);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    return a (a1, a2);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    return a (a1, a2);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    return a (a1, a2);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    return a (a1, a2);
+  }
+  
+  // warn unhandled
+  T0 t;
+  return t;
+}
+
+template <class T0, template <typename T> class ALGO,
+	  class T1, class T2, class T3>
+T0 codegen_return (T1& a1, T2& a2, T3& a3)
+{
+  if (a1.spp == 3) {
+    if (a1.bps == 8) {
+      ALGO <rgb_iterator> a;
+      return a (a1, a2, a3);
+    } else {
+      ALGO <rgb16_iterator> a;
+      return a (a1, a2, a3);
+    }
+  }
+  else if (a1.spp == 4 && a1.bps == 8) {
+    ALGO <rgba_iterator> a;
+    return a (a1, a2, a3);
+  }
+  else if (a1.bps == 16) {
+    ALGO <gray16_iterator> a;
+    return a (a1, a2, a3);
+  }
+  else if (a1.bps == 8) {
+    ALGO <gray_iterator> a;
+    return a (a1, a2, a3);
+  }
+  else if (a1.bps == 4) {
+    ALGO <bit_iterator<4> > a;
+    return a (a1, a2, a3);
+  }
+  else if (a1.bps == 2) {
+    ALGO <bit_iterator<2> > a;
+    return a (a1, a2, a3);
+  }
+  else if (a1.bps == 1) {
+    ALGO <bit_iterator<1> > a;
+    return a (a1, a2, a3);
+  }
+  
+  // warn unhandled
+  T0 t;
+  return t;
+}
+
+template <class T0, template <typename T> class ALGO,
 	  class T1, class T2, class T3, class T4,
 	  class T5, class T6, class T7>
 T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
@@ -1045,6 +1131,6 @@ T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
   }
   
   // warn unhandled
-  T0 t(0);
+  T0 t;
   return t;
 }
