@@ -308,25 +308,6 @@ bool convert_ddt_scale (const Argument<double>& arg)
   return true;
 }
 
-bool convert_shear (const Argument<std::string>& arg)
-{
-  double xangle, yangle;;
-  int n;
-  // parse
-  
-  // TODO: pretty C++ parser
-  if ((n = sscanf(arg.Get().c_str(), "%lfx%lf", &xangle, &yangle)))
-    {
-      if (n < 2)
-	yangle = xangle;
-    }
-  
-  std::cerr << "Shear: " << xangle << ", " << yangle << std::endl;
-  
-  shear (image, xangle, yangle);
-  return true;
-}
-
 bool convert_flip (const Argument<bool>& arg)
 {
   flipY (image);
