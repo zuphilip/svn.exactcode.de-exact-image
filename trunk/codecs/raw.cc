@@ -29,7 +29,6 @@ bool RAWCodec::readImage(std::istream* stream, Image& image, const std::string& 
   if (h > 0) // if we know the height up-front
     image.resize(image.w, image.h);
   
-  
   int y = 0;
   for (y = 0; h == 0 || y < h; ++y)
     {
@@ -53,7 +52,7 @@ bool RAWCodec::readImage(std::istream* stream, Image& image, const std::string& 
   else
     {
       if (y == 0) {
-	std::cerr << "RAWCodec: Error reading a line of image with undefined height at all." << std::endl;
+	std::cerr << "RAWCodec: Error reading a line of image with undefined height at all (stride: " << image.stride() << ")" << std::endl;
 	return false;
       }
       image.resize (image.w, y - 1); // final size of scanlines fully read
