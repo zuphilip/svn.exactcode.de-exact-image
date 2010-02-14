@@ -94,8 +94,10 @@ static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
 #define fscanf wrapped_fscanf
 
 #define fgetc(stream) stream->get ()
+#undef getc
 #define getc(stream) stream->get ()
 #define fgets(mem,n,stream) stream->get ((char*)mem, n);
+#undef putc
 #define putc(c,stream) stream->put (c)
 #define fputc(c,stream) stream->put (c)
 
