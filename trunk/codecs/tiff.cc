@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH, Berlin
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -65,6 +65,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
       break;
     default:
       std::cerr << "TIFCodec: Unrecognized photometric: " << (int)photometric << std::endl;
+      TIFFClose(in);
       return false;
     }
   
@@ -146,9 +147,7 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
   
   if (photometric == PHOTOMETRIC_PALETTE) {
     colorspace_de_palette (image, 1 << image.bps, rmap, gmap, bmap);
-    /*    free (rmap);
-	  free (gmap);
-	  free (bmap); */
+    /* free'd by TIFFClose; free (rmap); free (gmap); free (bmap); */
   }
 
   TIFFClose (in);
@@ -241,7 +240,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   if (page <= 1) {
     TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
   }
-  TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "");
+  //TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "");
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
                 TIFFDefaultStripSize (out, rowsperstrip));
   
