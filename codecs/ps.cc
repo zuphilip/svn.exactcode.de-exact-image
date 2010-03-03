@@ -24,7 +24,7 @@
 #include "jpeg.hh"
 #endif
 
-bool PSCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int PSCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
     return false;
 }

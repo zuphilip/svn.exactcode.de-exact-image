@@ -67,7 +67,7 @@ typedef struct
 } __attribute__((packed)) TGAFooter;
 
 
-bool TGACodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
+int TGACodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
 {
   bool rle = false;
 

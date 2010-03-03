@@ -31,7 +31,7 @@
 
 #include "agg.hh" // EI Agg
 
-bool SVGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int SVGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   agg::svg::path_renderer m_path;
   agg::svg::parser p (m_path);

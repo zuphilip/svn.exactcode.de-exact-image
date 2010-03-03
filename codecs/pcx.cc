@@ -62,7 +62,7 @@ typedef struct
   uint8_t Filler[54];
 } __attribute__((packed)) PCXHeader;
 
-bool PCXCodec::readImage(std::istream* stream,
+int PCXCodec::readImage(std::istream* stream,
 			 Image& image, const std::string& decompres)
 {
   if (stream->peek() != 0x0a)

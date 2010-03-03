@@ -24,7 +24,7 @@ public:
   
   virtual std::string getID () { return "JPEG2000"; };
   
-  virtual bool readImage (std::istream* stream, Image& im, const std::string& decompres);
+  virtual int readImage (std::istream* stream, Image& im, const std::string& decompres);
   virtual bool writeImage (std::ostream* stream, Image& im,
 			   int quality, const std::string& compress);
 };

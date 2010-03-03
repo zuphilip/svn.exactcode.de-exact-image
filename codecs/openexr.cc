@@ -123,7 +123,7 @@ private:
   std::ostream* _stream;
 };
 
-bool OpenEXRCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int OpenEXRCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   STDIStream istream (stream, "");
   

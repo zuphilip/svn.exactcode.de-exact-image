@@ -23,7 +23,7 @@
 
 #include "raw.hh"
 
-bool RAWCodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
+int RAWCodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
 {
   int h = image.h;
   if (h > 0) // if we know the height up-front

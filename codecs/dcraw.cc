@@ -117,7 +117,7 @@ static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
 #include "dcraw.h"
 
 
-bool DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& decompress)
+int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& decompress)
 {
   // dcraw namespace, to not tinker with the missign static linkage of the
   // upstream C source on any updatey

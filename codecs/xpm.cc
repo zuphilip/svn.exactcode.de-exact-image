@@ -78,7 +78,7 @@ void skip_comments (std::istream* stream)
     }
 }
 
-bool XPMCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   // check signature
   std::string line;

@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's identify compatible command line frontend.
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2010 René Rebe
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -79,12 +79,15 @@ int main (int argc, char* argv[])
   int errors = 0;
   const std::vector<std::string>& list = arglist.Residuals();
   for (std::vector<std::string>::const_iterator file = list.begin();
-       file != list.end(); ++file)
+       file != list.end(); ++file) {
+    for (int i = 0, n = 1; i < n; ++i)
     {
-      if (!ImageCodec::Read(*file, image)) {
+      int ret = ImageCodec::Read(*file, image, "", i);
+      if (ret < 1) {
 	std::cout << "edentify: unable to open image '" << *file << "'." << std::endl;
 	continue;
       }
+      if (i == 0) n = ret;
       
       if (arg_format.Size() > 0)
 	{
@@ -177,7 +180,9 @@ int main (int argc, char* argv[])
 	  std::cout << "TODO: implement verbose output" << std::endl;
 	}
       else {
-	std::cout << *file << ": "
+	std::cout << *file;
+	if (n > 1) std::cout << "[" << i << "]";
+	std::cout << ": "
 		  << (image.getDecoderID().empty() ? "NONE" : image.getDecoderID() )
 		  << " " << image.w << "x" << image.h;
 	
@@ -194,5 +199,6 @@ int main (int argc, char* argv[])
 	std::cout << std::endl;
       }
     }
+  }
   return errors;
 }

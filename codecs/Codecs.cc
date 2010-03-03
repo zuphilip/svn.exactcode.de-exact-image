@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2010 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ ImageCodec::~ImageCodec ()
     unregisterCodec (this);
 }
 
-std::string get_ext (const std::string& filename)
+std::string ImageCodec::getExtension (const std::string& filename)
 {
   // parse the filename extension
   std::string::size_type idx_ext = filename.rfind ('.');
@@ -51,7 +51,7 @@ std::string get_ext (const std::string& filename)
     return "";
 } 
 
-std::string get_codec (std::string& filename)
+std::string ImageCodec::getCodec (std::string& filename)
 {
   // parse the codec spec, prefixed to the filename, e.g. jpg:, tif:, raw:, ...
   std::string::size_type idx_colon = filename.find (':');
@@ -72,8 +72,9 @@ std::string get_codec (std::string& filename)
 
 // NEW API
 
-bool ImageCodec::Read (std::istream* stream, Image& image,
-		       std::string codec, const std::string& decompress)
+int ImageCodec::Read (std::istream* stream, Image& image,
+		      std::string codec, const std::string& decompress,
+		      int index)
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
@@ -85,9 +86,11 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 	{
 	  // use primary entry to only try each codec once
 	  if (it->primary_entry && !it->via_codec_only) {
-	    if (it->loader->readImage (stream, image, decompress)) {
+	    int res = it->loader->readImage (stream, image, decompress, index);
+            if (res > 0)
+	    {
 	      image.setDecoderID (it->loader->getID ());
-	      return true;
+	      return res;
 	    }
 	    // TODO: remove once the codecs are clean
 	    stream->clear ();
@@ -97,7 +100,7 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
       else // manual codec spec
 	{
 	  if (it->primary_entry && it->ext == codec) {
-	    return it->loader->readImage (stream, image, decompress);
+	    return it->loader->readImage (stream, image, decompress, index);
 	  }
 	}
     }
@@ -108,7 +111,8 @@ bool ImageCodec::Read (std::istream* stream, Image& image,
 
 bool ImageCodec::Write (std::ostream* stream, Image& image,
 			std::string codec, std::string ext,
-			int quality, const std::string& compress)
+			int quality, const std::string& compress,
+			int index)
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
@@ -136,16 +140,16 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
  do_write:
   // reuse attached codec (if any and the image is unmodified)
   if (image.getCodec() && !image.isModified() && image.getCodec()->getID() == it->loader->getID())
-    return (image.getCodec()->writeImage (stream, image, quality, compress));
+    return (image.getCodec()->writeImage (stream, image, quality, compress, index));
   else
-    return (it->loader->writeImage (stream, image, quality, compress));
+    return (it->loader->writeImage (stream, image, quality, compress, index));
 }
 
 // OLD API
 
-bool ImageCodec::Read (std::string file, Image& image, const std::string& decompress)
+int ImageCodec::Read (std::string file, Image& image, const std::string& decompress, int index)
 {
-  std::string codec = get_codec (file);
+  std::string codec = getCodec (file);
   
   std::istream* s;
   if (file != "-")
@@ -158,17 +162,17 @@ bool ImageCodec::Read (std::string file, Image& image, const std::string& decomp
     return false;
   }
   
-  bool res = Read (s, image, codec, decompress);
+  int res = Read (s, image, codec, decompress, index);
   if (s != &std::cin)
     delete s;
   return res;
 }
   
 bool ImageCodec::Write (std::string file, Image& image,
-			int quality, const std::string& compress)
+			int quality, const std::string& compress, int index)
 {
-  std::string codec = get_codec (file);
-  std::string ext = get_ext (file);
+  std::string codec = getCodec (file);
+  std::string ext = getExtension (file);
   
   std::ostream* s;
   if (file != "-")
@@ -181,7 +185,7 @@ bool ImageCodec::Write (std::string file, Image& image,
     return false;
   }
   
-  bool res = Write (s, image, codec, ext, quality, compress);
+  bool res = Write (s, image, codec, ext, quality, compress, index);
   if (s != &std::cout)
     delete s;
   return res;
@@ -218,6 +222,36 @@ void ImageCodec::unregisterCodec (ImageCodec* _loader)
     delete loader;
     loader = 0;
   }
+}
+
+int ImageCodec::readImage (std::istream* stream, Image& image,
+			   const std::string& decompress)
+{
+  return 0;
+}
+
+int ImageCodec::readImage (std::istream* stream, Image& image,
+			   const std::string& decompress, int index)
+{
+  if (index == 0)
+    return readImage(stream, image, decompress);
+  else
+    return 0;
+}
+
+bool ImageCodec::writeImage (std::ostream* stream, Image& image,
+			     int quality, const std::string& compress)
+{
+  return false;
+}
+
+bool ImageCodec::writeImage (std::ostream* stream, Image& image,
+			     int quality, const std::string& compress, int index)
+{
+  if (index == 0)
+    return writeImage(stream, image, quality, compress);
+  else
+    return false;
 }
 
 /*bool*/ void ImageCodec::decodeNow (Image* image)

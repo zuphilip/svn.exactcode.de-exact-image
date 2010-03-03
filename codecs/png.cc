@@ -44,7 +44,7 @@ void stdstream_flush_data(png_structp png_ptr)
 }
 
 
-bool PNGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int PNGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   { // quick magic check
     char buf [4];
