@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -602,7 +602,7 @@ bool convert_text (const Argument<std::string>& arg)
   path.setFillColor (r, g, b);
 
   agg::trans_affine mtx;
-  mtx.rotate(arg_text_rotation.Size() ? arg_text_rotation.Get() / 180 * M_PI : 0);
+  mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ? arg_text_rotation.Get() / 180 * M_PI : 0);
   
   if (arg_stroke_width.Size())
     path.setLineWidth(arg_stroke_width.Get());
@@ -670,13 +670,13 @@ bool convert_text (const Argument<std::string>& arg)
       break;
     }
     
-    mtx.translate(dx + x, dy + y);
+    mtx *= agg::trans_affine_translation(dx + x, dy + y);
     path.drawText(image, text, height,
 		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
 		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
   }
   else {
-    mtx.translate(x, y);
+    mtx *= agg::trans_affine_translation(x, y);
     path.drawText(image, text, height,
 		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
 		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
