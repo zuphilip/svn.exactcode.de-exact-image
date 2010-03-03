@@ -20,9 +20,12 @@
 #include <math.h>
 
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
 #include <algorithm>
+
+#include <limits>
 
 #include <list>
 
@@ -67,7 +70,21 @@
 
 using namespace Utility;
 
-Image image; // the global Image we work on
+// the global "stack" of images we work on
+std::list<Image*> images;
+typedef std::list<Image*>::iterator images_iterator;
+
+#define FOR_ALL_IMAGES(f,...) \
+  for (images_iterator it = images.begin(); it != images.end(); ++it) \
+    f(**it, ##__VA_ARGS__)
+
+static void freeImages()
+{
+  while (!images.empty()) {
+    delete(images.back());
+    images.pop_back();
+  }
+}
 
 Argument<int> arg_quality ("", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
@@ -102,71 +119,93 @@ Argument<std::string> arg_font ("", "font",
 
 bool convert_input (const Argument<std::string>& arg)
 {
-  image.setRawData (0);
-
-  std::string decompression = "";
-  if (arg_decompression.Size())
-    decompression = arg_decompression.Get();
-
-  if (!ImageCodec::Read(arg.Get(), image, decompression)) {
-    std::cerr << "Error reading input file." << std::endl;
-    return false;
-  }
+  freeImages();
+  
+  for (int j = 0; j < arg.Size(); ++j)
+    {
+      std::ifstream stream(arg.Get(j).c_str(), std::ios::in | std::ios::binary);
+      
+      std::string decompression = "";
+      if (arg_decompression.Size())
+	decompression = arg_decompression.Get();
+      
+      for (int i = 0, n = 1; i < n; ++i)
+	{
+	  Image* image = new Image;
+	  
+	  int ret = ImageCodec::Read(&stream, *image, "", decompression, i);
+	  if (n <= 0) {
+	    std::cerr << "Error reading input file, image: " << i << std::endl;
+	    delete image;
+	    return false;
+	  }
+	  if (i == 0)
+	    n = ret;
+	  
+	  images.push_back(image);
+	}
+    }
+  
   return true;
 }
 
 bool convert_append (const Argument<std::string>& arg)
 {
-  Image i;
-  
-  std::string decompression = "";
-  if (arg_decompression.Size())
-    decompression = arg_decompression.Get();
-
-  if (!ImageCodec::Read(arg.Get(), i, decompression)) {
-    std::cerr << "Error reading append file." << std::endl;
-    return false;
+  Image* base = 0;
+  for (images_iterator it = images.begin(); it != images.end(); ++it) {
+    if (it == images.begin())
+      base = *it;
+    else
+      append(*base, **it);
   }
-  
-  append(image, i);
   return true;
 }
 
 bool convert_output (const Argument<std::string>& arg)
 {
-  // we can check this way anymore as it might trigger on-the-fly
-  // decoding
-#if 0
-  if (image.getRawData() == 0) {
-    std::cerr << "No image available." << std::endl;
-    return false;
-  }
-#endif
+  // TODO: use mulitple output files when not multi-page file
+  for (int j = 0; j < arg.Size(); ++j)
+    {
+      std::string file = arg.Get(j);
+      std::string codec = ImageCodec::getCodec(file);
+      std::string ext = ImageCodec::getExtension(file);
+      
+      std::fstream stream(file.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
+      
+      // TODO:
+      int quality = 75;
+      if (arg_quality.Size())
+	quality = arg_quality.Get();
+      std::string compression = "";
+      if (arg_compression.Size())
+	compression = arg_compression.Get();
+      
+      int i = 0;
+      for (images_iterator it = images.begin(); it != images.end(); ++it, ++i)
+	{
+	  if (!ImageCodec::Write(&stream, **it, codec, ext, quality, compression, i)) {
+	    std::cerr << "Error writing output file, image " << i << std::endl;
+	    return false;
+	  }
+	}
+    }
   
-  int quality = 75;
-  if (arg_quality.Size())
-    quality = arg_quality.Get();
-  std::string compression = "";
-  if (arg_compression.Size())
-    compression = arg_compression.Get();
-  
-  if (!ImageCodec::Write(arg.Get(), image, quality, compression)) {
-    std::cerr << "Error writing output file." << std::endl;
-    return false;
-  }
   return true;
 }
 
 bool convert_split (const Argument<std::string>& arg)
 {
-  if (image.getRawData() == 0) {
+  // TODO: we could split the result into the iamge stack
+  if (images.empty() || (*images.begin())->getRawData() == 0) {
     std::cerr << "No image available." << std::endl;
     return false;
   }
   
-  Image split_image (image);
+  Image& image = **images.begin();
   
-  // this is a bit ugly hacked for now
+  Image split_image;
+  split_image.copyMeta(**images.begin());
+  
   split_image.h /= arg.count;
   if (split_image.h == 0) {
     std::cerr << "Resulting image size too small." << std::endl
@@ -194,135 +233,136 @@ bool convert_split (const Argument<std::string>& arg)
 	std::cerr << "Error writing output file." << std::endl;
       }
     }
-  split_image.setRawDataWithoutDelete (0); // not deallocate in dtor
+  split_image.setRawDataWithoutDelete(0); // not deallocate in dtor
   
   return err == 0;
 }
 
 bool convert_colorspace (const Argument<std::string>& arg)
 {
-  return colorspace_by_name (image, arg.Get().c_str());
+  FOR_ALL_IMAGES(colorspace_by_name, arg.Get().c_str());
+  return true; // TODO return value
 }
 
 bool convert_normalize (const Argument<bool>& arg)
 {
-  normalize (image);
+  FOR_ALL_IMAGES(normalize);
   return true;
 }
 
 bool convert_brightness (const Argument<double>& arg)
 {
   double f = arg.Get();
-  brightness_contrast_gamma (image, f, .0, 1.0);
+  FOR_ALL_IMAGES(brightness_contrast_gamma, f, .0, 1.0);
   return true;
 }
 
 bool convert_contrast (const Argument<double>& arg)
 {
   double f = arg.Get();
-  brightness_contrast_gamma (image, .0, f, 1.0);
+  FOR_ALL_IMAGES(brightness_contrast_gamma, .0, f, 1.0);
   return true;
 }
 
 bool convert_gamma (const Argument<double>& arg)
 {
   double f = arg.Get();
-  brightness_contrast_gamma (image, .0, .0, f);
+  FOR_ALL_IMAGES(brightness_contrast_gamma, .0, .0, f);
   return true;
 }
 
 bool convert_blur (const Argument<double>& arg)
 {
   double standard_deviation = arg.Get();
-  GaussianBlur(image, standard_deviation);
+  FOR_ALL_IMAGES(GaussianBlur, standard_deviation);
   return true;
 }
 
 bool convert_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  scale (image, f, f);
+  FOR_ALL_IMAGES(scale, f, f);
   return true;
 }
 
 bool convert_thumbnail_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  thumbnail_scale (image, f, f);
+  FOR_ALL_IMAGES(thumbnail_scale, f, f);
   return true;
 }
 
 bool convert_hue (const Argument<double>& arg)
 {
   double f = arg.Get();
-  hue_saturation_lightness (image, f, 0, 0);
+  FOR_ALL_IMAGES(hue_saturation_lightness, f, 0, 0);
   return true;
 }
 
 bool convert_saturation (const Argument<double>& arg)
 {
   double f = arg.Get();
-  hue_saturation_lightness (image, 0, f, 0);
+  FOR_ALL_IMAGES(hue_saturation_lightness, 0, f, 0);
   return true;
 }
 
 bool convert_lightness (const Argument<double>& arg)
 {
   double f = arg.Get();
-  hue_saturation_lightness (image, 0, 0, f);
+  FOR_ALL_IMAGES(hue_saturation_lightness, 0, 0, f);
   return true;
 }
 
 bool convert_nearest_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  nearest_scale (image, f, f);
+  FOR_ALL_IMAGES(nearest_scale, f, f);
   return true;
 }
 
 bool convert_bilinear_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  bilinear_scale (image, f, f);
+  FOR_ALL_IMAGES(bilinear_scale, f, f);
   return true;
 }
 
 bool convert_bicubic_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  bicubic_scale (image, f, f);
+  FOR_ALL_IMAGES(bicubic_scale, f, f);
   return true;
 }
 
 bool convert_box_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  box_scale (image, f, f);
+  FOR_ALL_IMAGES(box_scale, f, f);
   return true;
 }
 
 bool convert_ddt_scale (const Argument<double>& arg)
 {
   double f = arg.Get();
-  ddt_scale (image, f, f);
+  FOR_ALL_IMAGES(ddt_scale, f, f);
   return true;
 }
 
 bool convert_flip (const Argument<bool>& arg)
 {
-  flipY (image);
+  FOR_ALL_IMAGES(flipY);
   return true;
 }
 
 bool convert_flop (const Argument<bool>& arg)
 {
-  flipX (image);
+  FOR_ALL_IMAGES(flipX);
   return true;
 }
 
 bool convert_rotate (const Argument<double>& arg)
 {
-  rotate (image, arg.Get(), background_color);
+  FOR_ALL_IMAGES(rotate, arg.Get(), background_color);
   return true;
 }
 
@@ -338,28 +378,38 @@ bool convert_convolve (const Argument<double>& arg)
   if (divisor == 0)
     divisor = 1;
   
-  convolution_matrix (image, &v[0], n, n, divisor);
+  FOR_ALL_IMAGES(convolution_matrix, &v[0], n, n, divisor);
   return true;
 }
 
 bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 {
-  if (image.bps != 8) {
-    std::cerr << "Can only dither 8 bit data right now." << std::endl;
-    return false;
-  }
-  FloydSteinberg (image.getRawData(), image.w, image.h, arg.Get(), image.spp);
-  return true;
+  bool ret = true;
+  for (images_iterator it = images.begin(); it != images.end(); ++it)
+    {
+      if ((*it)->bps != 8) {
+	std::cerr << "Can only dither 8 bit data right now." << std::endl;
+	ret = false;
+      }
+      else
+	FloydSteinberg((*it)->getRawData(), (*it)->w, (*it)->h, arg.Get(), (*it)->spp);
+    }
+  return ret;
 }
 
 bool convert_dither_riemersma (const Argument<int>& arg)
 {
-  if (image.bps != 8) {
-    std::cerr << "Can only dither 8 bit data right now." << std::endl;
-    return false;
-  }
-  Riemersma (image.getRawData(), image.w, image.h, arg.Get(), image.spp);
-  return true;
+  bool ret = true;
+  for (images_iterator it = images.begin(); it != images.end(); ++it)
+    {
+      if ((*it)->bps != 8) {
+	std::cerr << "Can only dither 8 bit data right now." << std::endl;
+	ret = false;
+      }
+      else
+	Riemersma ((*it)->getRawData(), (*it)->w, (*it)->h, arg.Get(), (*it)->spp);
+    }
+  return ret;
 }
 
 bool convert_edge (const Argument<bool>& arg)
@@ -368,7 +418,7 @@ bool convert_edge (const Argument<bool>& arg)
                            -2.0, 0.0,  2.0,
                            -1.0, 0.0, -1.0 };
 
-  convolution_matrix (image, matrix, 3, 3, (matrix_type)3.0);
+  FOR_ALL_IMAGES(convolution_matrix, matrix, 3, 3, (matrix_type)3.0);
   return true;
 }
 
@@ -382,7 +432,8 @@ bool convert_resolution (const Argument<std::string>& arg)
     {
       if (n < 2)
 	yres = xres;
-      image.setResolution(xres, yres);
+      for (images_iterator it = images.begin(); it != images.end(); ++it)
+	(*it)->setResolution(xres, yres);
       return true;
     }
   std::cerr << "Resolution '" << arg.Get() << "' could not be parsed." << std::endl;
@@ -397,9 +448,18 @@ bool convert_size (const Argument<std::string>& arg)
   // TODO: pretty C++ parser
   if ((n = sscanf(arg.Get().c_str(), "%dx%d", &w, &h)) == 2)
     {
-      image.w = w;
-      image.h = h;
-      image.setRawData (0);
+      // this is mostly used to set the size for raw data loads
+      // so we need to haev at least one (empty) image
+      if (images.empty())
+	images.push_back(new Image);
+      
+      for (images_iterator it = images.begin(); it != images.end(); ++it)
+	{
+	  (*it)->w = w;
+	  (*it)->h = h;
+	  (*it)->setRawData(0);
+	}
+      
       return true;
     }
   std::cerr << "Size '" << arg.Get() << "' could not be parsed." << std::endl;
@@ -414,7 +474,7 @@ bool convert_crop (const Argument<std::string>& arg)
   // TODO: pretty C++ parser
   if ((n = sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x, &y, &w, &h)) == 4)
     {
-      crop (image, x, y, w, h);
+      FOR_ALL_IMAGES(crop, x, y, w, h);
       return true;
     }
   std::cerr << "Crop '" << arg.Get() << "' could not be parsed." << std::endl;
@@ -423,19 +483,20 @@ bool convert_crop (const Argument<std::string>& arg)
 
 bool convert_fast_auto_crop (const Argument<bool>& arg)
 {
-  fastAutoCrop (image);
+  FOR_ALL_IMAGES(fastAutoCrop);
   return true;
 }
 
 bool convert_invert (const Argument<bool>& arg)
 {
-  invert (image);
+  FOR_ALL_IMAGES(invert);
   return true;
 }
 
 bool convert_deinterlace (const Argument<bool>& arg)
 {
-  deinterlace (image);
+  // TODO: if this does what I think change to yield 2 images?
+  FOR_ALL_IMAGES(deinterlace);
   return true;
 }
 
@@ -572,7 +633,7 @@ bool convert_line (const Argument<std::string>& arg)
       path.setFillColor (r, g, b);
       if (arg_stroke_width.Size())
 	path.setLineWidth(arg_stroke_width.Get());
-      path.draw (image);
+      FOR_ALL_IMAGES(path.draw);
       return true; 
     }
   
@@ -600,86 +661,89 @@ bool convert_text (const Argument<std::string>& arg)
   double r = 0, g = 0, b = 0;
   foreground_color.getRGB (r, g, b);
   path.setFillColor (r, g, b);
-
+  
   agg::trans_affine mtx;
-  mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ? arg_text_rotation.Get() / 180 * M_PI : 0);
+  mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ?
+				    arg_text_rotation.Get() / 180 * M_PI : 0);
   
   if (arg_stroke_width.Size())
     path.setLineWidth(arg_stroke_width.Get());
   
-  if (gravity) {
-    std::string c(gravity);
-    std::transform (c.begin(), c.end(), c.begin(), tolower);
-    
-    enum align {A, B, C};
-    align x_align = A, y_align = A;
-    
-    if (c == "northwest") {
-      x_align = A; y_align = A;
-    }
-    else if (c == "north" || c == "top") {
-      x_align = B; y_align = A;
-    }
-    else if (c == "northeast") {
-      x_align = C; y_align = A;
-    }
-    else if (c == "west" || c == "left") {
-      x_align = A; y_align = B;
-    }
-    else if (c == "center") {
-      x_align = B; y_align = B;
-    }
-    else if (c == "east" || c == "right") {
-      x_align = C; y_align = B;
-    }
-    else if (c == "southwest") {
-      x_align = A; y_align = C;
-    }
-    else if (c == "south" || c == "bottom") {
-      x_align = B; y_align = C;
-    }
-    else if (c == "southeast") {
-      x_align = C; y_align = C;
+  for (images_iterator it = images.begin(); it != images.end(); ++it) {
+    if (gravity) {
+      std::string c(gravity);
+      std::transform (c.begin(), c.end(), c.begin(), tolower);
+      
+      enum align {A, B, C};
+      align x_align = A, y_align = A;
+      
+      if (c == "northwest") {
+	x_align = A; y_align = A;
+      }
+      else if (c == "north" || c == "top") {
+	x_align = B; y_align = A;
+      }
+      else if (c == "northeast") {
+	x_align = C; y_align = A;
+      }
+      else if (c == "west" || c == "left") {
+	x_align = A; y_align = B;
+      }
+      else if (c == "center") {
+	x_align = B; y_align = B;
+      }
+      else if (c == "east" || c == "right") {
+	x_align = C; y_align = B;
+      }
+      else if (c == "southwest") {
+	x_align = A; y_align = C;
+      }
+      else if (c == "south" || c == "bottom") {
+	x_align = B; y_align = C;
+      }
+      else if (c == "southeast") {
+	x_align = C; y_align = C;
+      }
+      else {
+	std::cerr << "Unknown gravity: " << gravity << std::endl;
+	return false;
+      }
+      
+      double w = 0, h = 0, dx = 0, dy = 0;
+      path.drawText(**it, text, height,
+		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero,
+		    &w, &h, &dx, &dy);
+      
+      switch (x_align) {
+      case A: x = 0;
+	break;
+      case B: x = ((*it)->w - w) / 2;
+	break;
+      case C: x = (*it)->w - w;
+	break;
+      }
+      
+      switch (y_align) {
+      case A: y = 0;
+	break;
+      case B: y = ((*it)->h - h) / 2;
+	break;
+      case C: y = (*it)->h - h;
+	break;
+      }
+      
+      mtx *= agg::trans_affine_translation(dx + x, dy + y);
+      path.drawText(**it, text, height,
+		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
     }
     else {
-      std::cerr << "Unknown gravity: " << gravity << std::endl;
-      return false;
+      mtx *= agg::trans_affine_translation(x, y);
+      path.drawText(**it, text, height,
+		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
+		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
     }
-    
-    double w = 0, h = 0, dx = 0, dy = 0;
-    path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero,
-		  &w, &h, &dx, &dy);
-    
-    switch (x_align) {
-    case A: x = 0;
-      break;
-    case B: x = (image.w - w) / 2;
-      break;
-    case C: x = image.w - w;
-      break;
-    }
-    
-    switch (y_align) {
-    case A: y = 0;
-      break;
-    case B: y = (image.h - h) / 2;
-      break;
-    case C: y = image.h - h;
-      break;
-    }
-    
-    mtx *= agg::trans_affine_translation(dx + x, dy + y);
-    path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
-  }
-  else {
-    mtx *= agg::trans_affine_translation(x, y);
-    path.drawText(image, text, height,
-		  arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		  arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
   }
   
   free(text); free(gravity);
@@ -704,17 +768,18 @@ int main (int argc, char* argv[])
   Argument<std::string> arg_input ("i", "input",
 				   "input file or '-' for stdin, optionally prefixed with format:"
 				   "\n\t\te.g: jpg:- or raw:rgb8-dump",
-                                   0, 1, true, true);
+                                   0, std::numeric_limits<int>::max(), true, true);
   arg_input.Bind (convert_input);
   arglist.Add (&arg_input);
   
   Argument<std::string> arg_output ("o", "output",
 				    "output file or '-' for stdout, optinally prefix with format:"
 				    "\n\t\te.g. jpg:- or raw:rgb8-dump",
-				    0, 1, true, true);
+				    0, std::numeric_limits<int>::max(), true, true);
   arg_output.Bind (convert_output);
   arglist.Add (&arg_output);
 
+  // TODO: more args for the stack?
   Argument<std::string> arg_append ("a", "append",
 				   "append file or '-' for stdin, optionally prefixed with format:"
 				   "\n\t\te.g: jpg:- or raw:rgb8-dump",
@@ -729,8 +794,8 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_decompression);
   
   Argument<std::string> arg_split ("", "split",
-				   "filenames to save the images split in Y-direction into n parts",
-				   0, 999, true, true);
+			   "filenames to save the images split in Y-direction into n parts",
+			   0, 1, true, true);
   arg_split.Bind (convert_split);
   arglist.Add (&arg_split);
   
@@ -941,22 +1006,27 @@ int main (int argc, char* argv[])
 #endif
   
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv))
+  if (!arglist.Read (argc, argv)) {
+    freeImages();
     return 1;
-
+  }
+  
   // print the usage if no argument was given or help requested
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2009 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005 - 2010 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
+      freeImages();
       return 1;
     }
   
+  // stack: insert, append, delete, swap, clone
   
   // all is done inside the argument callback functions
+  freeImages();
   return 0;
 }

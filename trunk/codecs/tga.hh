@@ -30,6 +30,6 @@ public:
   
   virtual std::string getID () { return "TARGA"; };
 
-  virtual bool readImage (std::istream* stream, Image& image, const std::string& decompress);
+  virtual int readImage (std::istream* stream, Image& image, const std::string& decompress);
   virtual bool writeImage (std::ostream* stream, Image& image, int quality, const std::string& compress);
 };

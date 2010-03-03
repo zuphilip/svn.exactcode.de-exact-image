@@ -21,7 +21,7 @@
 #include "eps.hh"
 #include "ps.hh"
 
-bool EPSCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int EPSCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
     return false;
 }

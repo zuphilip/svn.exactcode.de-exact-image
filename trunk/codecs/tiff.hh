@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 René Rebe
+ * Copyright (C) 2005 - 2010 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,9 +28,9 @@ public:
   
   virtual std::string getID () { return "TIFF"; };
   
-  virtual bool readImage (std::istream* stream, Image& image, const std::string& decompres);
+  virtual int readImage (std::istream* stream, Image& image, const std::string& decompres, int index);
   virtual bool writeImage (std::ostream* stream, Image& image,
-			   int quality, const std::string& compress);
+			   int quality, const std::string& compress, int index);
   
 //private:
   

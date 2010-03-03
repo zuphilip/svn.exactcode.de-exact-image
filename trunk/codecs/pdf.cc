@@ -775,7 +775,7 @@ std::ostream& operator<< (std::ostream& s, PDFTrailer& obj)
 }
 
 
-bool PDFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int PDFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
     return false;
 }

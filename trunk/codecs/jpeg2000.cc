@@ -123,7 +123,7 @@ static void jas_stream_initbuf (jas_stream_t* stream)
   stream->bufmode_ |= JAS_STREAM_BUFMODEMASK;
 }
 
-bool JPEG2000Codec::readImage (std::istream* stream, Image& im, const std::string& decompres)
+int JPEG2000Codec::readImage (std::istream* stream, Image& im, const std::string& decompres)
 {
   {
     // quick magic check

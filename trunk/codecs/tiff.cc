@@ -16,14 +16,12 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <tiffconf.h>
 #include <tiffio.h>
-#include <tiffio.hxx>
 
 #include "tiff.hh"
 
@@ -32,10 +30,311 @@
 #include <algorithm>
 #include <iostream>
 
-bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+/* Well, sadly our own c++ glue, the libtiff native one does not provide
+   readble out streams it requires for multi-page files, ... */
+
+static const bool trace = false;
+
+extern "C" {
+  
+  struct tiffis_data
+  {
+    std::istream* IS;
+    long streamStartPos;
+  };
+
+  struct tiffos_data
+  {
+    std::ostream* OS;
+    long streamStartPos;
+  };
+
+  static tsize_t _tiffisReadProc(thandle_t fd, tdata_t buf, tsize_t size)
+  {
+    tiffis_data* data = (tiffis_data*)fd;
+
+    data->IS->read((char*)buf, (int)size);
+
+    return data->IS->gcount();
+  }
+
+  static tsize_t _tiffosReadProc(thandle_t fd, tdata_t buf, tsize_t size)
+  {
+    if (trace)
+      std::cerr << __FUNCTION__ << " " << size << std::endl;
+
+    tiffos_data* data = (tiffos_data*)fd;
+    std::istream* is = dynamic_cast<std::istream*>(data->OS);
+    if (is)
+      {
+	is->sync();
+	if (trace)
+	  std::cerr << is->tellg() << std::endl;
+	is->read((char*)buf, (int)size);
+	long c = is->gcount();
+	if (trace)
+	  std::cerr << is->tellg() << std::endl;;
+	if (trace)
+	  std::cerr << c << std::endl;
+	return c;
+      }
+    else
+      return 0;
+  }
+
+  static tsize_t _tiffosWriteProc(thandle_t fd, tdata_t buf, tsize_t size)
+  {
+    tiffos_data* data = (tiffos_data*)fd;
+    std::ostream* os = data->OS;
+    int pos = os->tellp();
+
+    if (trace)
+      std::cerr << __FUNCTION__ << " " << size << " " << os->fail() << std::endl;
+
+    os->write((const char*)buf, size);
+
+    int c = ((int)os->tellp()) - pos;
+    if (trace)
+      std::cerr << c << std::endl;
+    return c;
+  }
+
+  static tsize_t _tiffisWriteProc(thandle_t, tdata_t, tsize_t)
+  {
+    return 0;
+  }
+
+  static toff_t _tiffosSeekProc(thandle_t fd, toff_t off, int whence)
+  {
+    if (trace)
+      std::cerr << __FUNCTION__ << " " << off << std::endl;
+
+    tiffos_data* data = (tiffos_data*)fd;
+    std::ostream* os = data->OS;
+  
+    // according to my tests g and p pointer are changed in-sync
+  
+    // if the stream has already failed, don't do anything
+    if (os->fail())
+      os->clear();
+  
+    if (trace)
+      std::cerr << "failed: " << os->fail() << std::endl;
+  
+    switch (whence) {
+    case SEEK_SET:
+      if (trace)
+	std::cerr << "SET " << data->streamStartPos << " " <<  off << std::endl;
+      os->seekp(data->streamStartPos + off, std::ios::beg);
+      break;
+    case SEEK_CUR:
+      os->seekp(off, std::ios::cur);
+      break;
+    case SEEK_END:
+      os->seekp(off, std::ios::end);
+      break;
+    }
+
+    if (trace)
+      std::cerr << "failed: " << os->fail() << std::endl;
+  
+    // Attempt to workaround problems with seeking past the end of the
+    // stream.  ofstream doesn't have a problem with this but
+    // ostrstream/ostringstream does. In that situation, add intermediate
+    // '\0' characters.
+    if (os->fail()) {
+      std::ios::iostate old_state;
+      toff_t origin = 0;
+
+      old_state = os->rdstate();
+      // reset the fail bit or else tellp() won't work below
+      os->clear(os->rdstate() & ~std::ios::failbit);
+      switch (whence) {
+      case SEEK_SET:
+	origin = data->streamStartPos;
+	break;
+      case SEEK_CUR:
+	origin = os->tellp();
+	break;
+      case SEEK_END:
+	os->seekp(0, std::ios::end);
+	origin = os->tellp();
+	break;
+      }
+      // restore original stream state
+      os->clear(old_state);	
+
+      // only do something if desired seek position is valid
+      if (origin + off > data->streamStartPos) {
+	toff_t num_fill;
+      
+	// clear the fail bit 
+	os->clear(os->rdstate() & ~std::ios::failbit);
+
+	// extend the stream to the expected size
+	os->seekp(0, std::ios::end);
+	num_fill = origin + off - (toff_t)os->tellp();
+	for (toff_t i = 0; i < num_fill; i++)
+	  os->put('\0');
+
+	// retry the seek
+	os->seekp(origin + off, std::ios::beg);
+      }
+    }
+
+    int c = os->tellp();
+    if (trace)
+      std::cerr << c << " failed: " << os->fail() << std::endl;
+    return c;
+  }
+
+  static toff_t _tiffisSeekProc(thandle_t fd, toff_t off, int whence)
+  {
+    tiffis_data* data = (tiffis_data*)fd;
+
+    switch (whence) {
+    case SEEK_SET:
+      data->IS->seekg(data->streamStartPos + off, std::ios::beg);
+      break;
+    case SEEK_CUR:
+      data->IS->seekg(off, std::ios::cur);
+      break;
+    case SEEK_END:
+      data->IS->seekg(off, std::ios::end);
+      break;
+    }
+
+    return ((long)data->IS->tellg()) - data->streamStartPos;
+  }
+
+  static toff_t _tiffosSizeProc(thandle_t fd)
+  {
+    if (trace)
+      std::cerr << __FUNCTION__ << std::endl;
+
+    tiffos_data	*data = (tiffos_data*)fd;
+    std::ostream		*os = data->OS;
+    toff_t		pos = os->tellp();
+    toff_t		len;
+
+    os->seekp(0, std::ios::end);
+    len = os->tellp();
+    os->seekp(pos);
+
+    return len;
+  }
+
+  static toff_t _tiffisSizeProc(thandle_t fd)
+  {
+    tiffis_data	*data = (tiffis_data*)fd;
+    int		pos = data->IS->tellg();
+    int		len;
+
+    data->IS->seekg(0, std::ios::end);
+    len = data->IS->tellg();
+    data->IS->seekg(pos);
+
+    return len;
+  }
+
+  static int _tiffosCloseProc(thandle_t fd)
+  {
+    if (trace)
+      std::cerr << __FUNCTION__ << std::endl;
+
+    delete (tiffos_data*)fd;
+    return 0;
+  }
+
+  static int _tiffisCloseProc(thandle_t fd)
+  {
+    delete (tiffis_data*)fd;
+    return 0;
+  }
+
+  static int _tiffDummyMapProc(thandle_t , tdata_t* , toff_t*)
+  {
+    if (trace)
+      std::cerr << __FUNCTION__ << std::endl;
+
+    return (0);
+  }
+
+  static void _tiffDummyUnmapProc(thandle_t , tdata_t , toff_t)
+  {
+  }
+
+} // end. extern "C"
+
+static TIFF* _tiffStreamOpen(const char* name, const char* mode, void* fd)
+{
+  TIFF*	tif;
+
+  if (strchr(mode, 'w')) {
+    tiffos_data* data = new tiffos_data;
+    data->OS = (std::ostream*)fd;
+    data->streamStartPos = data->OS->tellp();
+    if (data->streamStartPos < 0)
+      data->streamStartPos = 0;
+    tif = TIFFClientOpen(name, mode,
+			 (thandle_t) data,
+			 _tiffosReadProc, _tiffosWriteProc,
+			 _tiffosSeekProc, _tiffosCloseProc,
+			 _tiffosSizeProc,
+			 _tiffDummyMapProc, _tiffDummyUnmapProc);
+  } else {
+    tiffis_data* data = new tiffis_data;
+    data->IS = (std::istream*)fd;
+    data->streamStartPos = data->IS->tellg();
+    if (data->streamStartPos < 0)
+      data->streamStartPos = 0;
+    // Open for reading.
+    tif = TIFFClientOpen(name, mode,
+			 (thandle_t) data,
+			 _tiffisReadProc, _tiffisWriteProc,
+			 _tiffisSeekProc, _tiffisCloseProc,
+			 _tiffisSizeProc,
+			 _tiffDummyMapProc, _tiffDummyUnmapProc);
+  }
+  
+  if (trace)
+    std::cerr << tif << std::endl;
+  return tif;
+}
+
+static TIFF* TIFFStreamOpen(const char* name, std::ostream* os)
+{
+  // If os is either a ostrstream or ostringstream, and has no data
+  // written to it yet, then tellp() will return -1 which will break us.
+  // We workaround this by writing out a dummy character and
+  // then seek back to the beginning.
+  if (trace)
+    std::cerr << "test: " << os->tellp() << std::endl;
+  if (!os->fail() && (int)os->tellp() < 0) {
+    *os << '\0';
+    os->seekp(1);
+    
+    if (trace)
+      std::cerr << "test: " << os->tellp() << std::endl;
+    if (trace)
+      std::cerr << "wrote a dummy" << std::endl;
+  }
+  
+  return _tiffStreamOpen(name, "wm", os); // m for no mmap
+}
+
+static TIFF* TIFFStreamOpen(const char* name, std::istream* is)
+{
+  // NB: We don't support mapped files with streams so add 'm'
+  return _tiffStreamOpen(name, "rm", is); // m for no mmap
+}
+
+/* back to our codec */
+
+int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres, int index)
 {
   TIFF* in;
-  
+
   // quick magic check
   {
     char a, b;
@@ -52,6 +351,13 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
   in = TIFFStreamOpen ("", stream);
   if (!in)
     return false;
+
+  int n_images = TIFFNumberOfDirectories(in);
+  if (index > 0 || index != TIFFCurrentDirectory(in))
+    if (!TIFFSetDirectory(in, index)) {
+      TIFFClose(in);
+      return false;
+    }
   
   uint16 photometric = 0;
   TIFFGetField(in, TIFFTAG_PHOTOMETRIC, &photometric);
@@ -147,27 +453,24 @@ bool TIFCodec::readImage (std::istream* stream, Image& image, const std::string&
   
   if (photometric == PHOTOMETRIC_PALETTE) {
     colorspace_de_palette (image, 1 << image.bps, rmap, gmap, bmap);
-    /* free'd by TIFFClose; free (rmap); free (gmap); free (bmap); */
+    /* free'd by TIFFClose; free(rmap); free(gmap); free(bmap); */
   }
-
+  
   TIFFClose (in);
-  return true;
+  return n_images;
 }
 
 bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
-			   const std::string& compress)
+			   const std::string& compress, int index)
 {
-  TIFF* out;
-  
-  out = TIFFStreamOpen ("", stream);
+  TIFF* out = TIFFStreamOpen ("", stream);
   if (out == NULL)
     return false;
   
-  writeImageImpl (out, image, compress, 0);
-
+  bool ret = writeImageImpl (out, image, compress, index);
   TIFFClose (out);
   
-  return true;
+  return ret;
 }
 
 bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress,
@@ -269,9 +572,7 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   }
   if (scanline) free (scanline);  
   
-  TIFFWriteDirectory (out);
-  
-  return true;
+  return TIFFWriteDirectory(out);
 }
 
 TIFCodec tif_loader;

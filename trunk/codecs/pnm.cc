@@ -63,7 +63,7 @@ int getNextHeaderNumber (std::istream* stream)
   return i;
 }
 
-bool PNMCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int PNMCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   // check signature
   if (stream->peek () != 'P')

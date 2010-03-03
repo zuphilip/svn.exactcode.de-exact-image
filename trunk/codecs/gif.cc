@@ -44,7 +44,7 @@ static int GIFOutputFunc (GifFileType* t, const GifByteType* mem, int len)
   return len;
 }
 
-bool GIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   { // quick magic check
     char buf [3];

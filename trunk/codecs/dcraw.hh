@@ -40,6 +40,6 @@ public:
   virtual std::string getID () { return "DCRAW"; };
   
   
-  virtual bool readImage (std::istream* stream, Image& image, const std::string& decompres);
+  virtual int readImage (std::istream* stream, Image& image, const std::string& decompres);
   virtual bool writeImage (std::ostream* stream, Image& image, int quality, const std::string& compress);
 };
