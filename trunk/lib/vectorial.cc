@@ -1,6 +1,6 @@
 /*
  * Agg vector rasterization interface
- * Copyright (C) 2007 - 2009 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 - 2010 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  *
  * based on GSMP/plugins-gtk/GUI-gtk/Pixmap.cc:
@@ -275,7 +275,7 @@ void Path::drawText (Image& image, const char* text, double height,
   font_engine_type m_feng;
   font_manager_type m_fman (m_feng);
  
-  mtx.translate(path.last_x(), path.last_y());
+  mtx *= agg::trans_affine_translation(path.last_x(), path.last_y());
   
   // Pipeline to process the vectors glyph paths
   agg::conv_curve<font_manager_type::path_adaptor_type>
