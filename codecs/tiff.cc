@@ -20,9 +20,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <tiffconf.h>
-#include <tiffio.h>
-
 #include "tiff.hh"
 
 #include "Colorspace.hh"
@@ -331,6 +328,12 @@ static TIFF* TIFFStreamOpen(const char* name, std::istream* is)
 
 /* back to our codec */
 
+TIFCodec::~TIFCodec()
+{
+  if (tiffCtx)
+    TIFFClose(tiffCtx);
+}
+
 int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& decompres, int index)
 {
   TIFF* in;
@@ -460,14 +463,33 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
   return n_images;
 }
 
+// for multi-page writing
+ImageCodec* TIFCodec::instanciateForWrite (std::ostream* stream)
+{
+  std::cerr << "instanceiate" << std::endl;
+  TIFF* out = TIFFStreamOpen ("", stream);
+  std::cerr << "instanceiate: "<< out << std::endl;
+  if (out == NULL)
+    return 0;
+
+  return new TIFCodec(out);
+}
+
+bool TIFCodec::Write (Image& image,
+		      int quality, const std::string& compress, int index)
+{
+  std::cerr << "Write " << index << std::endl;
+  return writeImageImpl (tiffCtx, image, compress, index);
+}
+
 bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
-			   const std::string& compress, int index)
+			   const std::string& compress)
 {
   TIFF* out = TIFFStreamOpen ("", stream);
   if (out == NULL)
     return false;
   
-  bool ret = writeImageImpl (out, image, compress, index);
+  bool ret = writeImageImpl (out, image, compress, 0);
   TIFFClose (out);
   
   return ret;
