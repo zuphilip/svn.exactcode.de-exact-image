@@ -1,6 +1,6 @@
 /*
  * Convolution Matrix.
- * Copyright (C) 2006, 2007 René Rebe
+ * Copyright (C) 2006, 2010 René Rebe
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
