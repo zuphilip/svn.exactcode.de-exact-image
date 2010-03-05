@@ -1,6 +1,6 @@
 /*
  * Convolution Matrix.
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH Germany
  * Copyright (C) 2006 Archivista
@@ -221,7 +221,8 @@ void decomposable_sym_convolution_matrix (Image& image, const matrix_type* h_mat
 
   }
 
-
+  free(tmp_data);
+  free(line_data);
 }
 
 
