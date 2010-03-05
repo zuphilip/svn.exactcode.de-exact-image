@@ -64,8 +64,7 @@ int main (int argc, char* argv[])
        file != filenames.end ();
        ++file)
     {
-      int n = 1;
-      for (int i = 0; i < n; ++i)
+      for (int i = 0, n = 1; i < n; ++i)
       {
         int ret = ImageCodec::Read (*file, image, "", i);
 	if (ret == 0) {
