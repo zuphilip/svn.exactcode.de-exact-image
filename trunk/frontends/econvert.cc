@@ -24,6 +24,7 @@
 #include <iomanip>
 
 #include <algorithm>
+#include <iterator>
 
 #include <limits>
 
@@ -163,32 +164,39 @@ bool convert_append (const Argument<std::string>& arg)
 
 bool convert_output (const Argument<std::string>& arg)
 {
-  // TODO: use mulitple output files when not multi-page file
-  for (int j = 0; j < arg.Size(); ++j)
+  int quality = 75;
+  if (arg_quality.Size())
+    quality = arg_quality.Get();
+  std::string compression = "";
+  if (arg_compression.Size())
+    compression = arg_compression.Get();
+  
+  int i = 0, f = 0;
+  images_iterator it = images.begin();
+  for (; it != images.end() && f < arg.Size(); ++it)
     {
-      std::string file = arg.Get(j);
+      std::string file = arg.Get(f);
       std::string codec = ImageCodec::getCodec(file);
       std::string ext = ImageCodec::getExtension(file);
       
       std::fstream stream(file.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
       
-      // TODO:
-      int quality = 75;
-      if (arg_quality.Size())
-	quality = arg_quality.Get();
-      std::string compression = "";
-      if (arg_compression.Size())
-	compression = arg_compression.Get();
+      if (!ImageCodec::Write(&stream, **it, codec, ext, quality, compression, i)) {
+	std::cerr << "Error writing output file, image " << i << std::endl;
+	return false;
+      }
       
-      int i = 0;
-      for (images_iterator it = images.begin(); it != images.end(); ++it, ++i)
-	{
-	  if (!ImageCodec::Write(&stream, **it, codec, ext, quality, compression, i)) {
-	    std::cerr << "Error writing output file, image " << i << std::endl;
-	    return false;
-	  }
-	}
+      // TODO: only increment when not writing to a multi-page file
+      ++f;
+      // ++i;
     }
+  
+  if (it != images.end())
+    std::cerr << "Error: " << std::distance(it, images.end())
+	      << " image(s) left for writing" << std::endl;
+  if (f < arg.Size())
+    std::cerr << "Error: " << arg.Size() - f
+	      << " filename(s) left for writing" << std::endl;
   
   return true;
 }
