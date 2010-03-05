@@ -111,8 +111,7 @@ int ImageCodec::Read (std::istream* stream, Image& image,
 
 bool ImageCodec::Write (std::ostream* stream, Image& image,
 			std::string codec, std::string ext,
-			int quality, const std::string& compress,
-			int index)
+			int quality, const std::string& compress)
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
@@ -140,9 +139,40 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
  do_write:
   // reuse attached codec (if any and the image is unmodified)
   if (image.getCodec() && !image.isModified() && image.getCodec()->getID() == it->loader->getID())
-    return (image.getCodec()->writeImage (stream, image, quality, compress, index));
+    return (image.getCodec()->writeImage (stream, image, quality, compress));
   else
-    return (it->loader->writeImage (stream, image, quality, compress, index));
+    return (it->loader->writeImage (stream, image, quality, compress));
+}
+
+ImageCodec* ImageCodec::MultiWrite (std::ostream* stream,
+				    std::string codec, std::string ext)
+{
+  std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
+  std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
+  
+  std::vector<loader_ref>::iterator it;
+  if (loader)
+  for (it = loader->begin(); it != loader->end(); ++it)
+    {
+      if (codec.empty()) // match extension
+	{
+	  if (it->ext == ext)
+	    goto do_write;
+	}
+      else // manual codec spec
+	{
+	  if (it->primary_entry && it->ext == codec) {
+	    goto do_write;
+	  }
+	}
+    }
+  
+  //std::cerr << "No matching codec found." << std::endl;
+  return 0;
+  
+ do_write:
+  // TODO: reuse attached codec (if any and the image is unmodified)
+  return it->loader->instanciateForWrite(stream);
 }
 
 // OLD API
@@ -169,7 +199,7 @@ int ImageCodec::Read (std::string file, Image& image, const std::string& decompr
 }
   
 bool ImageCodec::Write (std::string file, Image& image,
-			int quality, const std::string& compress, int index)
+			int quality, const std::string& compress)
 {
   std::string codec = getCodec (file);
   std::string ext = getExtension (file);
@@ -185,7 +215,7 @@ bool ImageCodec::Write (std::string file, Image& image,
     return false;
   }
   
-  bool res = Write (s, image, codec, ext, quality, compress, index);
+  bool res = Write (s, image, codec, ext, quality, compress);
   if (s != &std::cout)
     delete s;
   return res;
@@ -239,19 +269,15 @@ int ImageCodec::readImage (std::istream* stream, Image& image,
     return 0;
 }
 
-bool ImageCodec::writeImage (std::ostream* stream, Image& image,
-			     int quality, const std::string& compress)
+ImageCodec* ImageCodec::instanciateForWrite (std::ostream* stream)
 {
-  return false;
+  return 0;
 }
 
-bool ImageCodec::writeImage (std::ostream* stream, Image& image,
-			     int quality, const std::string& compress, int index)
+bool ImageCodec::Write (Image& image,
+			int quality, const std::string& compress, int index)
 {
-  if (index == 0)
-    return writeImage(stream, image, quality, compress);
-  else
-    return false;
+  return false;
 }
 
 /*bool*/ void ImageCodec::decodeNow (Image* image)

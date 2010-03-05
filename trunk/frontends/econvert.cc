@@ -173,23 +173,48 @@ bool convert_output (const Argument<std::string>& arg)
   
   int i = 0, f = 0;
   images_iterator it = images.begin();
-  for (; it != images.end() && f < arg.Size(); ++it)
+  ImageCodec* codec = 0;
+  std::fstream* stream = 0;
+
+  for (; it != images.end(); ++it)
     {
-      std::string file = arg.Get(f);
-      std::string codec = ImageCodec::getCodec(file);
-      std::string ext = ImageCodec::getExtension(file);
+      if (!codec)
+	{
+	  if (f >= arg.Size())
+	    break;
+	  
+	  i = 0;
+	  // no multi-page codec, yet, try to create one
+	  std::string file = arg.Get(f);
+	  std::string cod = ImageCodec::getCodec(file);
+	  std::string ext = ImageCodec::getExtension(file);
+	  stream = new std::fstream(file.c_str(),
+				    std::ios::in | std::ios::out | std::ios::trunc);
+	  
+	  codec = ImageCodec::MultiWrite(stream, cod, ext);
+	  // if we got no codec, write a classic, single-page file
+	  if (!codec) {
+	    if (!ImageCodec::Write(stream, **it, cod, ext, quality, compression))
+	      std::cerr << "Error writing output file, image " << i << std::endl;
+	    delete stream; stream = 0;
+	  }
+	  ++f; // filename used, next
+	}
       
-      std::fstream stream(file.c_str(), std::ios::in | std::ios::out | std::ios::trunc);
-      
-      if (!ImageCodec::Write(&stream, **it, codec, ext, quality, compression, i)) {
-	std::cerr << "Error writing output file, image " << i << std::endl;
-	return false;
-      }
-      
-      // TODO: only increment when not writing to a multi-page file
-      ++f;
-      // ++i;
+      // do we (now) have a codec?, write multi-page image
+      if (codec)
+	{
+	  if (!codec->Write(**it, quality, compression, i))
+	    std::cerr << "Error writing output file, image " << i << std::endl;
+	  ++i;
+	}
     }
+  
+  // if we had a multi-page codec and stream free them now
+  if (codec)
+    delete codec;
+  if (stream)
+    delete stream;
   
   if (it != images.end())
     std::cerr << "Error: " << std::distance(it, images.end())

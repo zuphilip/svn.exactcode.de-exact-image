@@ -17,22 +17,35 @@
 
 #include "Codecs.hh"
 
+#include <tiffconf.h>
+#include <tiffio.h>
+
 // not TIFFCodec due the TIFFCodec in libtiff itself ...
 class TIFCodec : public ImageCodec {
 public:
   
-  TIFCodec () {
+  TIFCodec () : tiffCtx(0) {
     registerCodec ("tiff", this);
     registerCodec ("tif", this);
   };
-  
+  TIFCodec (TIFF* ctx) : tiffCtx(ctx) {
+  };
+  ~TIFCodec ();
   virtual std::string getID () { return "TIFF"; };
   
   virtual int readImage (std::istream* stream, Image& image, const std::string& decompres, int index);
   virtual bool writeImage (std::ostream* stream, Image& image,
-			   int quality, const std::string& compress, int index);
+			   int quality, const std::string& compress);
+
+  // for multi-page writing
+  virtual ImageCodec* instanciateForWrite (std::ostream* stream);
+  virtual bool Write (Image& image,
+		      int quality, const std::string& compress, int index);
   
 //private:
   
   static bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
+
+private:
+  TIFF* tiffCtx;
 };

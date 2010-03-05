@@ -57,21 +57,24 @@ public:
   static std::string getCodec (std::string& filename);
   static std::string getExtension (const std::string& filename);
 
-  // NEW API, allowing the use of any STL i/o stream derived source. The indexi
+  // NEW API, allowing the use of any STL i/o stream derived source. The index i
   // is the page, image, index number within the file (TIFF, GIF, ICO, etc.)
   static int Read (std::istream* stream, Image& image,
 		   std::string codec = "", const std::string& decompress = "", int index = 0);
   static bool Write (std::ostream* stream, Image& image,
 		     std::string codec, std::string ext = "",
-		     int quality = 75, const std::string& compress = "", int index = 0);
+		     int quality = 75, const std::string& compress = "");
+
+  static ImageCodec* MultiWrite (std::ostream* stream,
+				 std::string codec, std::string ext = "");
   
   // OLD API, only left for compatibility.
   // Not const string& because the filename is parsed and the copy is changed intern.
   // 
-  // Removed after 2000-01-01!
+  // Removed soon!
   static int Read (std::string file, Image& image, const std::string& decompress = "", int index = 0);
   static bool Write (std::string file, Image& image,
-		     int quality = 75, const std::string& compress = "", int index = 0);
+		     int quality = 75, const std::string& compress = "");
   
   // Per codec methods, only one set needs to be implemented, the one with
   // index invoke the one without by default (compatibility, ease of implemntation
@@ -82,9 +85,11 @@ public:
 			 const std::string& decompress, int index);
 
   virtual bool writeImage (std::ostream* stream, Image& image,
-			   int quality, const std::string& compress);
-  virtual bool writeImage (std::ostream* stream, Image& image,
-			   int quality, const std::string& compress, int index);
+			   int quality, const std::string& compress) = 0;
+  virtual ImageCodec* instanciateForWrite (std::ostream* stream);
+  // slightly named differently to match the public factory name
+  virtual bool Write (Image& image,
+		      int quality = 75, const std::string& compress = "", int index = 0);
   
   // not pure-virtual so not every codec needs a NOP
   virtual /*bool*/ void decodeNow (Image* image);
