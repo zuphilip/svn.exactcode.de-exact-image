@@ -88,9 +88,13 @@ int main (int argc, char* argv[])
       return 1;
     }
   
+  ImageCodec* codec = 0;
+  std::fstream* stream = 0;
   Image image;
-  for (int f = 0; f < arg_input.Size(); ++f)
+  
+  for (int f = 0, f2 = 0, i2 = 0; f < arg_input.Size(); ++f)
     {
+      std::cerr << "filename " << f << std::endl;
       for (int n = 1, i = 0; i < n; ++i)
 	{
 	  int ret = ImageCodec::Read(arg_input.Get(f), image, "", i);
@@ -99,6 +103,8 @@ int main (int argc, char* argv[])
 	    return 1;
 	  }
 	  if (i == 0) n = ret;
+	  
+	  std::cerr << "image " << i << " / " << n << std::endl;
 	  
 	  int low = 0;
 	  int high = 0;
@@ -185,11 +191,46 @@ int main (int argc, char* argv[])
 		colorspace_gray8_to_gray1 (image, threshold);
 	    }
 	  
-	  if (!ImageCodec::Write(arg_output.Get(f), image)) {
-	    std::cerr << "Error writing output file." << std::endl;
-	    return 1;
-	  }
+	  if (!codec)
+	    {
+	      if (f2 >= arg_output.Size())
+		break;
+	      
+	      i2 = 0;
+	      // no multi-page codec, yet, try to create one
+	      std::string file = arg_output.Get(f2);
+	      std::string cod = ImageCodec::getCodec(file);
+	      std::string ext = ImageCodec::getExtension(file);
+	      stream = new std::fstream(file.c_str(),
+					std::ios::in | std::ios::out | std::ios::trunc);
+	      
+	      codec = ImageCodec::MultiWrite(stream, cod, ext);
+	      // if we got no codec, write a classic, single-page file
+	      if (!codec) {
+		if (!ImageCodec::Write(stream, image, cod, ext, 75, ""))
+		  std::cerr << "Error writing output file, image " << i2 << std::endl;
+		delete stream; stream = 0;
+	      }
+	      ++f2; // filename used, next
+	    }
+	  
+	  // do we (now) have a codec?, write multi-page image
+	  if (codec)
+	    {
+	      if (!codec->Write(image, 75, "", i2)) {
+		std::cerr << "Error writing output file, image " << i2 << std::endl;
+		return 1;
+	      }
+	      ++i2;
+	    }
 	}
     }
+  
+  // if we had a multi-page codec and stream free them now
+  if (codec)
+    delete codec;
+  if (stream)
+    delete stream;
+  
   return 0;
 }
