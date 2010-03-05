@@ -88,23 +88,23 @@ int main (int argc, char* argv[])
       return 1;
     }
   
+  int errors = 0;
   ImageCodec* codec = 0;
   std::fstream* stream = 0;
   Image image;
   
-  for (int f = 0, f2 = 0, i2 = 0; f < arg_input.Size(); ++f)
+  int f2 = 0;
+  for (int f = 0, i2 = 0; f < arg_input.Size(); ++f)
     {
-      std::cerr << "filename " << f << std::endl;
       for (int n = 1, i = 0; i < n; ++i)
 	{
 	  int ret = ImageCodec::Read(arg_input.Get(f), image, "", i);
 	  if (!ret) {
 	    std::cerr << "Error reading input file." << std::endl;
-	    return 1;
+	    ++errors;
+	    break;
 	  }
 	  if (i == 0) n = ret;
-	  
-	  std::cerr << "image " << i << " / " << n << std::endl;
 	  
 	  int low = 0;
 	  int high = 0;
@@ -147,7 +147,8 @@ int main (int argc, char* argv[])
 	  
 	  if (scale != 0.0 && dpi != 0) {
 	    std::cerr << "DPI and scale argument must not be specified at once!" << std::endl;
-	    return 1;
+	    ++errors;
+	    break;
 	  }
 	  
 	  if (dpi != 0) {
@@ -156,7 +157,8 @@ int main (int argc, char* argv[])
 	    
 	    if (image.resolutionX() == 0) {
 	      std::cerr << "Image does not include DPI information!" << std::endl;
-	      return 1;
+	      ++errors;
+	      break;
 	    }
 	    
 	    scale = (double)(dpi) / image.resolutionX();
@@ -164,7 +166,8 @@ int main (int argc, char* argv[])
 	  
 	  if (scale < 0.0) {
 	    std::cerr << "Scale must not be negativ!" << std::endl;
-	    return 1;
+	    ++errors;
+	    break;
 	  }
 	  
 	  if (scale > 0.0)
@@ -194,7 +197,10 @@ int main (int argc, char* argv[])
 	  if (!codec)
 	    {
 	      if (f2 >= arg_output.Size())
-		break;
+		{
+		  std::cerr << "Error: no more output filename for image input" << std::endl;
+		  break;
+		}
 	      
 	      i2 = 0;
 	      // no multi-page codec, yet, try to create one
@@ -219,12 +225,16 @@ int main (int argc, char* argv[])
 	    {
 	      if (!codec->Write(image, 75, "", i2)) {
 		std::cerr << "Error writing output file, image " << i2 << std::endl;
-		return 1;
+		++errors;
 	      }
 	      ++i2;
 	    }
 	}
     }
+  
+  if (f2 < arg_output.Size())
+    std::cerr << "Error: " << arg_output.Size() - f2
+	      << " filename(s) left for writing" << std::endl;
   
   // if we had a multi-page codec and stream free them now
   if (codec)
@@ -232,5 +242,5 @@ int main (int argc, char* argv[])
   if (stream)
     delete stream;
   
-  return 0;
+  return errors;
 }
