@@ -466,9 +466,7 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
 // for multi-page writing
 ImageCodec* TIFCodec::instanciateForWrite (std::ostream* stream)
 {
-  std::cerr << "instanceiate" << std::endl;
   TIFF* out = TIFFStreamOpen ("", stream);
-  std::cerr << "instanceiate: "<< out << std::endl;
   if (out == NULL)
     return 0;
 
@@ -478,7 +476,6 @@ ImageCodec* TIFCodec::instanciateForWrite (std::ostream* stream)
 bool TIFCodec::Write (Image& image,
 		      int quality, const std::string& compress, int index)
 {
-  std::cerr << "Write " << index << std::endl;
   return writeImageImpl (tiffCtx, image, compress, index);
 }
 
