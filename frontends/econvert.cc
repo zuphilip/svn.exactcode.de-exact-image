@@ -689,20 +689,21 @@ bool convert_text (const Argument<std::string>& arg)
       return false;
     }
   
-  Path path;
-  path.moveTo (0, 0);
-  double r = 0, g = 0, b = 0;
-  foreground_color.getRGB (r, g, b);
-  path.setFillColor (r, g, b);
-  
-  agg::trans_affine mtx;
-  mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ?
-				    arg_text_rotation.Get() / 180 * M_PI : 0);
-  
-  if (arg_stroke_width.Size())
-    path.setLineWidth(arg_stroke_width.Get());
-  
-  for (images_iterator it = images.begin(); it != images.end(); ++it) {
+  for (images_iterator it = images.begin(); it != images.end(); ++it)
+  {
+    Path path;
+    path.moveTo (0, 0);
+    double r = 0, g = 0, b = 0;
+    foreground_color.getRGB (r, g, b);
+    path.setFillColor (r, g, b);
+
+    if (arg_stroke_width.Size())
+      path.setLineWidth(arg_stroke_width.Get());
+
+    agg::trans_affine mtx;
+    mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ?
+                                      arg_text_rotation.Get() / 180 * M_PI : 0);
+
     if (gravity) {
       std::string c(gravity);
       std::transform (c.begin(), c.end(), c.begin(), tolower);
