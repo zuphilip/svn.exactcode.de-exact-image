@@ -1,6 +1,6 @@
 /*
  * Agg to ExactImage bridge.
- * Copyright (C) 2007 - 2008  René Rebe
+ * Copyright (C) 2007 - 2010  René Rebe, ExactCODE GmbH, Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -11,6 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <agg_pixfmt_rgb.h>
