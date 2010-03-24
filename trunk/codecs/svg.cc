@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 René Rebe
+ * Copyright (C) 2008-2010 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,21 +49,29 @@ int SVGCodec::readImage (std::istream* stream, Image& image, const std::string& 
       return false;
     }
   
-  double m_min_x = 0;
-  double m_min_y = 0;
-  double m_max_x = 0;
-  double m_max_y = 0;
+  double min_x = 0;
+  double min_y = 0;
+  double max_x = 0;
+  double max_y = 0;
   
-  const double m_expand = 0;
-  const double m_gamma = 1;
-  const double m_scale = 1;
-  const double m_rotate = 0;
+  const double expand = 0;
+  const double gamma = 1;
   
-  m_path.arrange_orientations ();
-  m_path.bounding_rect (&m_min_x, &m_min_y, &m_max_x, &m_max_y);
-  
+  m_path.arrange_orientations();
+  m_path.bounding_rect (&min_x, &min_y, &max_x, &max_y);
+
+  // prevent crash for invalid constraints
+  if (min_x > max_x)
+    { double t = max_x; max_x = min_x; min_x = t; }
+  else if (min_x == max_x)
+    max_x += 1;
+  if (min_y > max_y)
+    { double t = max_y; max_y = min_y; min_y = t; }
+  else if (min_y == max_y)
+    max_y += 1;
+
   image.bps = 8; image.spp = 3;
-  image.resize ((int)(m_max_x - m_min_x), (int)(m_max_y - m_min_y));
+  image.resize ((int)(max_x - min_x), (int)(max_y - min_y));
   
   renderer_exact_image rb (image);
   typedef agg::renderer_scanline_aa_solid<renderer_base> renderer_solid;
@@ -75,21 +83,17 @@ int SVGCodec::readImage (std::istream* stream, Image& image, const std::string& 
   agg::scanline_p8 sl;
   agg::trans_affine mtx;
   
-  ras.gamma(agg::gamma_power(m_gamma));
-  mtx *= agg::trans_affine_translation ((m_min_x + m_max_x) * -0.5,
-					(m_min_y + m_max_y) * -0.5);
-  mtx *= agg::trans_affine_scaling (m_scale);
-  mtx *= agg::trans_affine_rotation (agg::deg2rad(m_rotate));
-  mtx *= agg::trans_affine_translation ((m_min_x + m_max_x) * 0.5,
-					(m_min_y + m_max_y) * 0.5);
+  ras.gamma(agg::gamma_power(gamma));
+  mtx *= agg::trans_affine_translation ((min_x + max_x) * -0.5,
+					(min_y + max_y) * -0.5);
+  //mtx *= agg::trans_affine_scaling (scale);
+  mtx *= agg::trans_affine_translation ((min_x + max_x) * 0.5,
+					(min_y + max_y) * 0.5);
   
-  m_path.expand(m_expand);
-  //start_timer();
+  m_path.expand(expand);
   m_path.render(ras, sl, ren, mtx, rb.clip_box(), 1.0);
-  //double tm = elapsed_time();
-  unsigned vertex_count = m_path.vertex_count();
   
-  //std::cerr << "Vertices=" << vertex_count << " Time=" << tm " ms" std::endl;
+  //std::cerr << "Vertices=" << m_path.vertex_count() << " Time=" << tm << " ms" std::endl;
   
   return true;
 }
