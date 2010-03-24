@@ -1,6 +1,5 @@
-
 /*
- * Copyright (C) 2005 René Rebe
+ * Copyright (C) 2005-2010 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -13,6 +12,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <iostream>
@@ -26,12 +27,22 @@
 
 using namespace Utility;
 
+ArgumentList arglist;
+
+bool usage(const Argument<bool>& arg)
+{
+  std::cerr << "Empty page detector"
+            <<  " - Copyright 2005-2010 by René Rebe" << std::endl
+            << "Usage:" << std::endl;
+  
+  arglist.Usage(std::cerr);
+  exit(1);
+}
+
 int main (int argc, char* argv[])
 {
-  ArgumentList arglist;
-  
   // setup the argument list
-  Argument<bool> arg_help ("", "help",
+  Argument<bool> arg_help ("h", "help",
 			   "display this help text and exit");
   Argument<std::string> arg_input ("i", "input", "input file",
                                    1, 1);
@@ -40,20 +51,17 @@ int main (int argc, char* argv[])
   Argument<float> arg_percent ("p", "percentage",
 			       "coverate for non-empty page", 0.05, 0, 1);
   
+  arg_help.Bind (usage);
+  
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
   arglist.Add (&arg_margin);
   arglist.Add (&arg_percent);
   
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+  if (!arglist.Read (argc, argv))
     {
-      std::cerr << "Empty page detector"
-                <<  " - Copyright 2005 by René Rebe" << std::endl
-                << "Usage:" << std::endl;
-      
-      arglist.Usage (std::cerr);
-      return 1;
+      usage(arg_help);
     }
   
   const int margin = arg_margin.Get();
