@@ -12,6 +12,8 @@
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
  * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -33,10 +35,20 @@
 
 using namespace Utility;
 
+ArgumentList arglist;
+
+bool usage(const Argument<bool>& arg)
+{
+  std::cerr << "Color, gray image to bi-level optimizer"
+            <<  " - Copyright 2005 - 2010 by René Rebe" << std::endl
+            << "Usage:" << std::endl;
+  
+  arglist.Usage (std::cerr);
+  exit(1);
+}
+
 int main (int argc, char* argv[])
 {
-  ArgumentList arglist;
-  
   // setup the argument list
   Argument<bool> arg_help ("", "help",
 			   "display this help text and exit");
@@ -64,6 +76,8 @@ int main (int argc, char* argv[])
   
   Argument<double> arg_sd ("sd", "standard-deviation",
 			   "standard deviation for Gaussian distribution", 0.0, 0, 1);
+
+  arg_help.Bind (usage);
   
   arglist.Add (&arg_help);
   arglist.Add (&arg_input);
@@ -78,14 +92,9 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_denoise);
 
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true)
+  if (!arglist.Read (argc, argv))
     {
-      std::cerr << "Color / Gray image to Bi-level optimizer"
-                <<  " - Copyright 2005 - 2010 by René Rebe" << std::endl
-                << "Usage:" << std::endl;
-      
-      arglist.Usage (std::cerr);
-      return 1;
+      usage(arg_help);
     }
   
   int errors = 0;
