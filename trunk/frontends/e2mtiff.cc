@@ -11,6 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 #include <math.h>
@@ -23,13 +26,25 @@
 
 using namespace Utility;
 
+ArgumentList arglist(true); // enable residual gathering
+
+bool usage(const Argument<bool>& arg)
+{
+  std::cerr << "any to multi-page TIFF convert" << std::endl
+            <<  "    - Copyright 2008-2010 by René Rebe, ExactCODE" << std::endl
+            << "Usage:" << std::endl;
+      
+  arglist.Usage(std::cerr);
+  std::cerr << "  ...\n\t\tinput file(s)" << std::endl;
+  exit(1);
+}
+
 int main (int argc, char* argv[])
 {
-  ArgumentList arglist (true); // enable residual gathering
-  
   // setup the argument list
-  Argument<bool> arg_help ("", "help",
+  Argument<bool> arg_help ("h", "help",
 			   "display this help text and exit");
+  arg_help.Bind (usage);
   arglist.Add (&arg_help);
   
   Argument<std::string> arg_output ("o", "output",
@@ -38,15 +53,11 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_output);
   
   // parse the specified argument list - and maybe output the Usage
-  if (!arglist.Read (argc, argv) || arg_help.Get() == true ||
-      arglist.Residuals().empty())
+  if (!arglist.Read(argc, argv) || arglist.Residuals().empty())
     {
-      std::cerr << "any to multi-page TIFF convert" << std::endl
-                <<  "    - Copyright 2008 - 2010 by René Rebe, ExactCODE" << std::endl
-                << "Usage:" << std::endl;
-      
-      arglist.Usage (std::cerr);
-      return 1;
+      if (arglist.Residuals().empty())
+	std::cerr << "Error: No arguments as input!" << std::endl;
+      usage(arg_help);
     }
   
   int errors = 0;
