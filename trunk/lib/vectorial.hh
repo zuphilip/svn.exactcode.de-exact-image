@@ -1,6 +1,6 @@
 /*
  * Vector element rasterization, via Agg.
- * Copyright (C) 2007 - 2009 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 - 2010 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
