@@ -104,7 +104,7 @@ Argument<std::string> arg_decompression ("", "decompress",
 
 
 Argument<double> arg_stroke_width ("", "stroke-width",
-				   "the stroke with for vector primitives",
+				   "the stroke width for vector primitives",
 				   0, 1, true, true);
 
 #if WITHFREETYPE == 1
@@ -913,7 +913,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_bicubic_scale);
 
   Argument<double> arg_ddt_scale ("", "ddt-scale",
-				      "scale image data with data dependant triangulation",
+				      "scale image data with data dependent triangulation",
 				      0.0, 0, 1, true, true);
   arg_ddt_scale.Bind (convert_ddt_scale);
   arglist.Add (&arg_ddt_scale);
@@ -1004,7 +1004,7 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_invert);
 
   Argument<bool> arg_deinterlace ("", "deinterlace",
-				  "shuffleg every 2nd line",
+				  "shuffle every 2nd line",
 				  0, 0, true, true);
   arg_deinterlace.Bind (convert_deinterlace);
   arglist.Add (&arg_deinterlace);
