@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2010 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -242,7 +242,11 @@ int Viewer::Run (bool opengl)
       einfo = (Evas_Engine_Info_Software_X11*) evas->EngineInfo ();
       
       /* the following is specific to the engine */
+#ifdef WITHEVAS_X11_CONNECTION
+      einfo->info.connection = dpy;
+#else
       einfo->info.display = dpy;
+#endif
       einfo->info.visual = visual;
       einfo->info.colormap = attr.colormap;
       einfo->info.drawable = win;
@@ -795,7 +799,7 @@ int main (int argc, char** argv)
     {
       cerr << "Exact image viewer (edisplay)."
 	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 - 2009 by René Rebe" << std::endl
+	   <<  " - Copyright (C) 2006 - 2010 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
