@@ -21,4 +21,4 @@ all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
 	$(Q)echo "INSTALL PYTHON module $^"
 	$(Q)mkdir -p $(DESTDIR)$(libdir)/python2.5/site-packages/
-	$(Q)install $(dir $^)/ExactImage.py $^ $(DESTDIR)$(libdir)/python2.5/site-packages/
+	$(Q)install $(dir $^)/ExactImage.py $^ $(DESTDIR)$(shell python -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')/
