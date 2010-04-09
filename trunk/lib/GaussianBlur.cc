@@ -30,8 +30,6 @@ void GaussianBlur(Image& image, double standard_deviation, int radius)
       factor=exp (-((float)radius*radius) / (2.*sd*sd));
       divisor+=(radius==0) ? factor : 2.0*factor;
     } while (factor/(divisor*divisor) > thresh);
-
-    std::cerr << "radius: " << radius << std::endl;
   }
 
   // compute kernel (convolution matrix to move over the iamge)
