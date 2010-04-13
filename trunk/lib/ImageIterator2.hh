@@ -117,7 +117,7 @@ public:
     }
     
     void getL (vtype& l) {
-      l = v1;
+      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
@@ -268,7 +268,7 @@ public:
     }
     
     void getL (vtype& l) {
-      l = v1;
+      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
@@ -414,7 +414,7 @@ public:
     }
     
     void getL (vtype& l) {
-      l = v1;
+      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
@@ -546,7 +546,7 @@ public:
     }
     
     void setRGB (vtype& r, vtype& g, vtype& b) {
-      v1 = (21 * r + 71 * g + 8 * b) / 100;
+      v1 = (11 * r + 16 * g + 5 * b) / 32;
     }
   };
     
@@ -669,7 +669,7 @@ public:
     }
     
     void setRGB (vtype& r, vtype& g, vtype& b) {
-      v1 = (21 * r + 71 * g + 8 * b) / 100;
+      v1 = (11 * r + 16 * g + 5 * b) / 32;
     }
     
   };
