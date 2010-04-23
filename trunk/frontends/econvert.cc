@@ -678,16 +678,26 @@ bool convert_line (const Argument<std::string>& arg)
 
 bool convert_text (const Argument<std::string>& arg)
 {
-  int x = 0, y = 0;
-  double height;
+  double x = 0, y = 0, xoff = 0, yoff = 0, height = 0;
   char* text = 0; char* gravity = 0;
-  if (sscanf(arg.Get().c_str(), "%d,%d,%lf,%a[^\r]",
+  if (sscanf(arg.Get().c_str(), "%lf,%lf,%lf,%a[^\r]",
 	     &x, &y, &height, &text) != 4)
     if (sscanf(arg.Get().c_str(), "%a[^,],%lf,%a[^\r]",
 	       &gravity, &height, &text) != 3) {
       std::cerr << "Error parsing text: '" << arg.Get() << "'" << std::endl;
       return false;
     }
+
+  // parse gravity offset
+  if (gravity)
+  {
+    char* gravity2 = 0;
+    if (sscanf(gravity, "%a[^+-]%lf%lf",
+	       &gravity2, &xoff, &yoff) == 3) {
+      free(gravity);
+      gravity = gravity2;
+    }
+  }
   
   for (images_iterator it = images.begin(); it != images.end(); ++it)
   {
@@ -767,14 +777,14 @@ bool convert_text (const Argument<std::string>& arg)
       case C: y = (*it)->h - h;
 	break;
       }
-      
-      mtx *= agg::trans_affine_translation(dx + x, dy + y);
+
+      mtx *= agg::trans_affine_translation(dx + x + xoff, dy + y + yoff);
       path.drawText(**it, text, height,
 		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
 		    strokeWidth > 0 ? Path::fill_none : Path::fill_non_zero);
     }
     else {
-      mtx *= agg::trans_affine_translation(x, y);
+      mtx *= agg::trans_affine_translation(x + xoff, y + yoff);
       path.drawText(**it, text, height,
 		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
 		    strokeWidth > 0 ? Path::fill_none : Path::fill_non_zero);
