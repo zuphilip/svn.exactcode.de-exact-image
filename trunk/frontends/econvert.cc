@@ -697,8 +697,9 @@ bool convert_text (const Argument<std::string>& arg)
     foreground_color.getRGB (r, g, b);
     path.setFillColor (r, g, b);
 
-    if (arg_stroke_width.Size())
-      path.setLineWidth(arg_stroke_width.Get());
+    const double strokeWidth = arg_stroke_width.Size() ? arg_stroke_width.Get() : 0;
+    if (strokeWidth > 0)
+      path.setLineWidth(strokeWidth);
 
     agg::trans_affine mtx;
     mtx *= agg::trans_affine_rotation(arg_text_rotation.Size() ?
@@ -746,7 +747,7 @@ bool convert_text (const Argument<std::string>& arg)
       double w = 0, h = 0, dx = 0, dy = 0;
       path.drawText(**it, text, height,
 		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero,
+		    strokeWidth > 0 ? Path::fill_none : Path::fill_non_zero,
 		    &w, &h, &dx, &dy);
       
       switch (x_align) {
@@ -770,13 +771,13 @@ bool convert_text (const Argument<std::string>& arg)
       mtx *= agg::trans_affine_translation(dx + x, dy + y);
       path.drawText(**it, text, height,
 		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
+		    strokeWidth > 0 ? Path::fill_none : Path::fill_non_zero);
     }
     else {
       mtx *= agg::trans_affine_translation(x, y);
       path.drawText(**it, text, height,
 		    arg_font.Size() ? arg_font.Get().c_str() : NULL, mtx,
-		    arg_stroke_width.Size() ? Path::fill_none : Path::fill_non_zero);
+		    strokeWidth > 0 ? Path::fill_none : Path::fill_non_zero);
     }
   }
   
