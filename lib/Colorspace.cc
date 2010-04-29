@@ -187,13 +187,12 @@ void colorspace_gray8_threshold (Image& image, uint8_t threshold)
 
 void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 {
-  // we need some pixels to compare, also avoids conditionals
-  // below
-  if (image.w < 3 ||
-      image.h < 3)
+  if (image.bps != 8 || image.spp != 1)
     return;
   
   uint8_t* it = image.getRawData();
+  uint8_t* ndata = (uint8_t*)malloc(image.stride() * image.h);
+  uint8_t* it2 = ndata;
   
   struct compare_and_set
   {
@@ -206,7 +205,7 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
     
     // without the inner(area) compiler guidance the conditionals are
     // not optimized away well enough
-    void operator() (const int x, const int y, uint8_t* it,
+    void operator() (const int x, const int y, uint8_t* it, uint8_t* it2,
 		     const bool inner, const bool gross = false)
     {
       int n = 0, sum = 0;
@@ -224,32 +223,36 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 
       // x
       if (gross) {
-	if (y > 0) {
+	if (inner || y > 0) {
 	  if (inner || x > 0)
-	    sum += it[-1 -stride], ++n;
+	    sum += it[-stride - 1], ++n;
 	  if (inner || x < image.w-1)
-	    sum += it[1 -stride], ++n;
+	    sum += it[-stride + 1], ++n;
 	}
 	
-	if (y < image.h-1) {
+	if (inner || y < image.h-1) {
 	  if (inner || x > 0)
-	    sum += it[-1 +stride], ++n;
+	    sum += it[stride - 1], ++n;
 	  if (inner || x < image.w-1)
-	    sum += it[1 +stride], ++n;
+	    sum += it[stride + 1], ++n;
 	}
       }
       
       // if all direct neighbours are black or white, fill it
       if (gross) {
         if (sum <= 1 * 0xff)
-	  *it = 0;
+	  *it2 = 0;
         else if (sum >= (n - 1) * 0xff)
-	  *it = 0xff;
+	  *it2 = 0xff;
+	else
+	  *it2 = *it;
       } else {
         if (sum == 0)
-	  *it = 0;
+	  *it2 = 0;
         else if (sum == n * 0xff)
-	  *it = 0xff;
+	  *it2 = 0xff;
+	else
+	  *it2 = *it;
       }
     }
   } compare_and_set (image);
@@ -259,17 +262,17 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
       // optimize conditionals away for the inner area
       if (y > 0 && y < image.h-1)
 	{
-	  compare_and_set (0, y, it++, false, gross);
-	  for (int x = 1; x < image.w-1; ++x, ++it)
-	    compare_and_set (x, y, it, true, gross);
-	  compare_and_set (image.w-1, y, it++, false, gross);
+	  compare_and_set (0, y, it++, it2++, false, gross);
+	  for (int x = 1; x < image.w-1; ++x)
+	    compare_and_set (x, y, it++, it2++, true, gross);
+	  compare_and_set (image.w-1, y, it++, it2++, false, gross);
 	}
       else // quite some out of bounds conditions to check
-	for (int x = 0; x < image.w; ++x, ++it) 
-	  compare_and_set (x, y, it, false, gross);
+	for (int x = 0; x < image.w; ++x) 
+	  compare_and_set (x, y, it++, it2++, false, gross);
     }
     
-  image.setRawData();
+  image.setRawData(ndata);
 }
 
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
