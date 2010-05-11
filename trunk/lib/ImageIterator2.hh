@@ -17,6 +17,8 @@
 
 #include "Image.hh"
 
+#include <algorithm>
+
 class rgb_iterator
 {
 public:
@@ -37,6 +39,13 @@ public:
       accu a;
       a.v1 = a.v2 = a.v3 = 0xff;
       return a;
+    }
+
+    accu& abs() {
+      v1 = std::abs(v1);
+      v2 = std::abs(v2);
+      v3 = std::abs(v3);
+      return *this;
     }
     
     void saturate () {
@@ -183,6 +192,14 @@ public:
       return a;
     }
     
+    accu& abs() {
+      v1 = std::abs(v1);
+      v2 = std::abs(v2);
+      v3 = std::abs(v3);
+      v4 = std::abs(v4);
+      return *this;
+    }
+
     void saturate () {
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
       v2 = std::min (std::max (v2, (vtype)0), (vtype)0xff);
@@ -337,6 +354,13 @@ public:
       return a;
     }
     
+    accu& abs() {
+      v1 = std::abs(v1);
+      v2 = std::abs(v2);
+      v3 = std::abs(v3);
+      return *this;
+    }
+
     void saturate () {
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
       v2 = std::min (std::max (v2, (vtype)0), (vtype)0xffff);
@@ -481,6 +505,11 @@ public:
       return a;
     }
 
+    accu& abs() {
+      v1 = std::abs(v1);
+      return *this;
+    }
+
     void saturate () {
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
     }
@@ -604,6 +633,11 @@ public:
       return a;
     }
     
+    accu& abs() {
+      v1 = std::abs(v1);
+      return *this;
+    }
+
     void saturate () {
       v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
     }
