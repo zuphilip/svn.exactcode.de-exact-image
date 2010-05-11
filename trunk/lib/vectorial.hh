@@ -37,6 +37,7 @@ public:
   ~Path ();
 
   void moveTo (double x, double y);
+  void addLine (double x, double y);
   void addLineTo (double x, double y);
   void addRect (double x, double y, double x2, double y2);
   

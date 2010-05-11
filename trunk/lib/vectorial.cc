@@ -60,6 +60,11 @@ void Path::moveTo (double x, double y)
   path.move_to (x, y);
 }
 
+void Path::addLine (double x, double y)
+{
+  path.line_rel (x, y);
+}
+
 void Path::addLineTo (double x, double y)
 {
   path.line_to (x, y);
