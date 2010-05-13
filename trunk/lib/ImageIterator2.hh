@@ -574,7 +574,7 @@ public:
       l = v1;
     }
     
-    void setRGB (vtype& r, vtype& g, vtype& b) {
+    void setRGB (vtype r, vtype g, vtype b) {
       v1 = (11 * r + 16 * g + 5 * b) / 32;
     }
   };
@@ -702,7 +702,7 @@ public:
       l = v1;
     }
     
-    void setRGB (vtype& r, vtype& g, vtype& b) {
+    void setRGB (vtype r, vtype g, vtype b) {
       v1 = (11 * r + 16 * g + 5 * b) / 32;
     }
     
