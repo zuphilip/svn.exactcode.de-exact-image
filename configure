@@ -93,7 +93,7 @@ pkgcheck swig shell SWIG 'swig -version 2>/dev/null | sed -n "s/SWIG Version \(.
 
 pkgcheck lua pkg-config LUA atleast 5.1
 
-pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl, v\(.*\) built.*/\1/p"' atleast 5.8.0 &&
+pkgcheck perl shell PERL 'perl -version 2>/dev/null | sed -n "s/This is perl.*v\([0-9.]*\).*built.*/\1/p"' atleast 5.8.0 &&
 	PERLINCS="`perl -MExtUtils::Embed -e ccopts`"
 
 pkgcheck php -config PHP atleast 5.2.0 &&
