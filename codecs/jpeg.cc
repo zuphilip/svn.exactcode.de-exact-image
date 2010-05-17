@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2010 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -426,7 +426,7 @@ void JPEGCodec::parseExif (Image& image)
     return;
 
   // Get the marker parameter length count
-  unsigned length = readExif<uint32_t>(exif_data + 4, true); // always big-endian
+  unsigned length = readExif<uint16_t>(exif_data + 4, true); // always big-endian
   
   // length includes itself, so must be at least 2 + Exif data length must be at least 6
   if (length < 8)
