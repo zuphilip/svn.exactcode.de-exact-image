@@ -16,9 +16,11 @@ X_BUILD_IMPLICIT := 0
 include build/bottom.make
 X_BUILD_IMPLICIT := $(_X_BUILD_IMPLICIT)
 
+PYTHON_LIBDIR := $(shell python -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')
+
 # install
 all:: $($(X_MODULE)_BINARY)
 install:: $($(X_MODULE)_BINARY)
 	$(Q)echo "INSTALL PYTHON module $^"
-	$(Q)mkdir -p $(DESTDIR)$(libdir)/python2.5/site-packages/
-	$(Q)install $(dir $^)/ExactImage.py $^ $(DESTDIR)$(shell python -c 'from distutils.sysconfig import get_python_lib; print get_python_lib()')/
+	$(Q)mkdir -p $(DESTDIR)$(PYTHON_LIBDIR)
+	$(Q)install $(dir $^)/ExactImage.py $^ $(DESTDIR)$(PYTHON_LIBDIR)/
