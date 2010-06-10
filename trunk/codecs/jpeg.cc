@@ -420,34 +420,39 @@ void JPEGCodec::parseExif (Image& image)
   
   // check for JPEG SOI + Exif APP1
   if (exif_data[0] != 0xFF ||
-      exif_data[1] != 0xD8 ||
-      exif_data[2] != 0xFF ||
-      exif_data[3] != 0xE1)
+      exif_data[1] != 0xD8)
     return;
 
+  // check "Exif" header
+  for (int offset = 2; offset <= 20; offset = 20) {
+    if (exif_data[offset+0] == 0xFF &&
+        exif_data[offset+1] == 0xE1 &&
+        exif_data[offset+4] == 'E' &&
+        exif_data[offset+5] == 'x' &&
+        exif_data[offset+6] == 'i' &&
+        exif_data[offset+7] == 'f' &&
+        exif_data[offset+8] == 0 &&
+        exif_data[offset+9] == 0)
+    {
+      exif_data += offset;
+      break;
+    }
+
+    if (offset == 20)
+      return;
+  }
+
   // Get the marker parameter length count
-  unsigned length = readExif<uint16_t>(exif_data + 4, true); // always big-endian
+  unsigned length = readExif<uint16_t>(exif_data + 2, true); // always big-endian
   
   // length includes itself, so must be at least 2 + Exif data length must be at least 6
   if (length < 8)
     return;
   length -= 8;
-
   if (length < 12)
     return; // length of an IFD entry
   
-  exif_data += 6;
-
-  // check "Exif" header
-  if (exif_data[0] != 'E' ||
-      exif_data[1] != 'x' ||
-      exif_data[2] != 'i' ||
-      exif_data[3] != 'f' ||
-      exif_data[4] != 0 ||
-      exif_data[5] != 0)
-    return;
-  
-  exif_data += 6;
+  exif_data += 10;
 
   // honor byte order
   bool big_endian;
