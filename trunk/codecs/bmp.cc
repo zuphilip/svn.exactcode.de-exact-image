@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
