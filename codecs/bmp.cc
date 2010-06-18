@@ -104,6 +104,10 @@ enum BMPLCSType                 /* Type of logical color space. */
     BMPLT_DEVICE_CMYK = 2
   };
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
+
 typedef struct
 {
   int32_t   iCIEX;
@@ -118,10 +122,6 @@ typedef struct                  /* This structure contains the x, y, and z */
   BMPCIEXYZ   iCIEGreen;      /* a specified logical color space. */
   BMPCIEXYZ   iCIEBlue;
 } BMPCIEXYZTriple;
-
-#ifdef _MSC_VER
-#pragma pack(push, 1)
-#endif
 
 typedef struct
 {
@@ -139,9 +139,6 @@ __attribute__((packed))
 #endif
 BMPFileHeader;
 
-#ifdef _MSC_VER
-#pragma pack(pop)
-#endif
 
 /* File header size in bytes: */
 const int       BFH_SIZE = 14;
@@ -220,6 +217,10 @@ typedef struct
   char       bRed;
   char       bReserved;      /* Must be 0 */
 } BMPColorEntry;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 /*
  * Image data in BMP file stored in BGR (or ABGR) format. We rearrange
