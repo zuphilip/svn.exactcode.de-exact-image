@@ -1,6 +1,6 @@
 /*
  * C++ PCX library.
- * Copyright (C) 2008 - 2009 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2010 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,10 @@
 using Exact::EndianessConverter;
 using Exact::LittleEndianTraits;
 
+#ifdef _MSC_VER
+#pragma pack(push, 1)
+#endif
+
 typedef struct
 {
   uint8_t Manufacturer;
@@ -60,7 +64,15 @@ typedef struct
   EndianessConverter<uint16_t,LittleEndianTraits> VScreenSize;
 
   uint8_t Filler[54];
-} __attribute__((packed)) PCXHeader;
+}
+#ifdef __GNUC__
+__attribute__((packed))
+#endif
+PCXHeader;
+
+#ifdef _MSC_VER
+#pragma pack(pop)
+#endif
 
 int PCXCodec::readImage(std::istream* stream,
 			 Image& image, const std::string& decompres)
@@ -229,7 +241,7 @@ int PCXCodec::readImage(std::istream* stream,
       
       colorspace_de_palette (image, 256, rmap, gmap, bmap);
     }
-    else if (header.PaletteInfo == 1 or header.PaletteInfo == 2)
+    else if (header.PaletteInfo == 1 || header.PaletteInfo == 2)
       {
 	const int ncolors = 1 << image.bps;
 	for (int i = 0; i < ncolors; ++i)
