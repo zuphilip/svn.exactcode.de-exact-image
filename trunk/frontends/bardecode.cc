@@ -99,7 +99,7 @@ int main (int argc, char* argv[])
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "barcode recognition module of the exact-image library" << std::endl
-                <<  "    - Copyright 2007-2010y by René Rebe, ExactCODE" << std::endl
+                <<  "    - Copyright 2007-2010 by René Rebe, ExactCODE" << std::endl
                 <<  "    - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
                 << "Usage:" << std::endl;
       
