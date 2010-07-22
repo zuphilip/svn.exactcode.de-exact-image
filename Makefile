@@ -51,6 +51,10 @@ CXXFLAGS += $(call cc-option,-ftree-vectorize,)
 # we have some unimplemented colorspaces in the Image::iterator :-(
 CXXFLAGS += $(call cc-option,-Wno-switch -Wno-switch-enum,)
 
+ifeq "$(STATIC)" "1"
+X_EXEFLAGS += -static
+endif
+
 MODULES = lib codecs bardecode frontends ContourMatching
 include $(addsuffix /Makefile,$(MODULES))
 

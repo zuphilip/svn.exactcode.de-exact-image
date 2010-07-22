@@ -4,7 +4,7 @@
 
 with_options="x11 freetype evas libjpeg libtiff libpng libungif jasper openexr expat lcms bardecode lua swig perl python php ruby"
 
-feature_options="evasgl tga pcx"
+feature_options="evasgl tga pcx static"
 TGA=1 # default to yes
 PCX=1
 
