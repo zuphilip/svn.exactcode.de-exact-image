@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2009 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -160,6 +160,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   }
 
   // Convolution Matrix (unsharp mask a-like)
+  if (radius > 0)
   {
     // compute kernel (convolution matrix to move over the iamge)
     // Utility::AutoTimer<Utility::Timer> timer ("convolution");
