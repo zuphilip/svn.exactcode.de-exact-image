@@ -248,10 +248,11 @@ struct rotate_template
     const double cached_sin = sin (angle);
     const double cached_cos = cos (angle);
   
-    T it (image);
-    T orig_it (orig_image);
-  
+    #pragma omp parallel for schedule (dynamic, 16)
     for (int y = 0; y < image.h; ++y)
+    {
+      T it (image);
+      it.at(0, y);
       for (int x = 0; x < image.w; ++x)
 	{
 	  double ox =   (x - xcent) * cached_cos + (y - ycent) * cached_sin;
@@ -261,7 +262,6 @@ struct rotate_template
 	  oy += ycent;
 	  
 	  typename T::accu a;
-	  
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h)
 	    {
@@ -273,7 +273,8 @@ struct rotate_template
 	      
 	      int xdist = (int) ((ox - oxx) * 256);
 	      int ydist = (int) ((oy - oyy) * 256);
-	      
+
+	      T orig_it (orig_image);
 	      a  = (*orig_it.at(oxx,  oyy))  * ((256 - xdist) * (256 - ydist));
 	      a += (*orig_it.at(oxx2, oyy))  * (xdist         * (256 - ydist));
 	      a += (*orig_it.at(oxx,  oyy2)) * ((256 - xdist) * ydist);
@@ -286,6 +287,7 @@ struct rotate_template
 	  it.set (a);
 	  ++it;
 	}
+    }
     image.setRawData ();
   }
 };
