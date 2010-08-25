@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -59,10 +59,13 @@ struct nearest_scale_template
     new_image.setResolution (scalex * image.resolutionX(),
 			     scaley * image.resolutionY());
     
-    T dst (new_image);
-    T src (image);
-    
-    for (int y = 0; y < new_image.h; ++y) {
+    #pragma omp parallel for schedule (dynamic, 16)
+    for (int y = 0; y < new_image.h; ++y)
+    {
+      T dst (new_image);
+      dst.at(0, y);
+
+      T src (image);
       for (int x = 0; x < new_image.w; ++x) {
 	const int bx = (int) (((double) x) / scalex);
 	const int by = (int) (((double) y) / scaley);
@@ -96,15 +99,18 @@ struct bilinear_scale_template
     new_image.setResolution (scalex * image.resolutionX(),
 			     scaley * image.resolutionY());
     
-    T dst (new_image);
-    T src (image);
-    
-    for (int y = 0; y < new_image.h; ++y) {
+    #pragma omp parallel for schedule (dynamic, 16)
+    for (int y = 0; y < new_image.h; ++y)
+    {
+      T dst (new_image);
+      dst.at(0, y);
+
       const double by = (-1.0+image.h) * y / new_image.h;
       const int sy = (int)floor(by);
       const int ydist = (int) ((by - sy) * 256);
       const int syy = sy+1;
 
+      T src (image);
       for (int x = 0; x < new_image.w; ++x) {
 	const double bx = (-1.0+image.w) * x / new_image.w;
 	const int sx = (int)floor(bx);
