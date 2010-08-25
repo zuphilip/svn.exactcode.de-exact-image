@@ -373,20 +373,22 @@ struct copy_crop_rotate_template
     new_image->copyMeta (image);
     new_image->resize (w, h);
     
-    T it (*new_image);
-    T orig_it (image);
-    
     const double cached_sin = sin (angle);
     const double cached_cos = cos (angle);
-    
+
+    #pragma omp parallel for schedule (dynamic, 16)
     for (unsigned int y = 0; y < h; ++y)
+    {
+      T it (*new_image);
+      it.at(0, y);
       for (unsigned int x = 0; x < w; ++x)
 	{
 	  const double ox = ( (double)x * cached_cos + (double)y * cached_sin) + x_start;
 	  const double oy = (-(double)x * cached_sin + (double)y * cached_cos) + y_start;
-	  
+
+	  T orig_it (image);
 	  typename T::accu a;
-	  
+ 
 	  if (ox >= 0 && oy >= 0 &&
 	      ox < image.w && oy < image.h) {
 	    
@@ -411,6 +413,7 @@ struct copy_crop_rotate_template
 	  it.set (a);
 	  ++it;
 	}
+    }
     return new_image;
   }
 };
