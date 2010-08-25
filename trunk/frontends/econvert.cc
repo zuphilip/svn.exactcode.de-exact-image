@@ -135,8 +135,8 @@ bool convert_input (const Argument<std::string>& arg)
 	  Image* image = new Image;
 	  
 	  int ret = ImageCodec::Read(&stream, *image, "", decompression, i);
-	  if (n <= 0) {
-	    std::cerr << "Error reading input file, image: " << i << std::endl;
+	  if (ret <= 0) {
+	    std::cerr << "Error reading input file " << arg.Get(j) << ", image: " << i << std::endl;
 	    delete image;
 	    return false;
 	  }
