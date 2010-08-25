@@ -219,7 +219,7 @@ void differential_optimize2bw (Image& image,
 	      std::abs ( (int)it[+image.w] - ref ) +
 	      
 	      (
-	       std::abs ( (int)it[-1-image.w] - ref ) +
+	      std::abs ( (int)it[-1-image.w] - ref ) +
 	      std::abs ( (int)it[+1-image.w] - ref ) +
 	      std::abs ( (int)it[-1+image.w] - ref ) +
 	      std::abs ( (int)it[+1+image.w] - ref )
