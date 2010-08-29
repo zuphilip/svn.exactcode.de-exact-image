@@ -127,16 +127,16 @@ void colorspace_rgba8_to_rgb8 (Image& image)
   image.setRawData();
 }
 
-void colorspace_rgb8_to_gray8 (Image& image)
+
+void colorspace_rgb8_to_gray8 (Image& image, const int bytes)
 {
   uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h;)
+  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h; it += bytes)
     {
       // R G B order and associated weighting
-      int c = (int)*it++ * 28;
-      c += (int)*it++ * 59;
-      c += (int)*it++ * 11;
-      
+      int c = (int)it[0] * 28;
+      c += (int)it[1] * 59;
+      c += (int)it[2] * 11;
       *output++ = (uint8_t)(c / 100);
     }
   image.spp = 1; // converted data right now
@@ -769,9 +769,13 @@ bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
   if (image.bps == 16 && bps < 16)
     colorspace_16_to_8 (image);
   
-  if (image.spp == 4 && spp < 4 && image.bps == 8) // TODO: might be RGB16
-    colorspace_rgba8_to_rgb8 (image);
- 
+  if (image.spp == 4 && spp < 4 && image.bps == 8) { // TODO: might be RGB16
+    if (spp < 3)
+      colorspace_rgb8_to_gray8 (image, 4);
+    else
+      colorspace_rgba8_to_rgb8 (image);
+  }
+  
   if (image.spp == 3 && spp == 1) {
     if (image.bps == 8) 
       colorspace_rgb8_to_gray8 (image);
