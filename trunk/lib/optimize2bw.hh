@@ -32,15 +32,4 @@ void optimize2bw (Image& image, int low = 0, int high = 0, int threshold = 0,
 		  int radius = 3,
 		  double standard_deviation = 2.1);
 
-// (just - for now -) perform move a differential operator over the
-// image to get the contour, we'll expans this later to a real
-// alternative, and faster bw  optimization - for now mostly intended
-// to speedup the contour matching - parameters are unused, just kept
-// as drop in replacement for the optimize2bw
-void differential_optimize2bw (Image& image,
-			       int low = 0, int high = 0, int threshold = 0,
-			       int sloppy_threshold = 0,
-			       int radius = 3,
-			       double standard_deviation = 2.1);
-
 #endif // OPTIMIZE2BW_HH
