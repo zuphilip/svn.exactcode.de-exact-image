@@ -343,7 +343,7 @@ void exif_rotate(Image& image, unsigned exif_orientation)
   case 5: // left side, top
     rotate(image, -90, bgrd); break; // tested
   case 6: // right side, top
-    rotate(image, 90, bgrd); break;
+    rotate(image, 90, bgrd); break; // tested
   case 7: // right side, bottom
     rotate(image, 90, bgrd); flipX(image); break;
   case 8: // left side, bottom
