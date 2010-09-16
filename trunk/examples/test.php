@@ -2,7 +2,7 @@
 <?php
 
 # ExactImage PHP Example
-# Copyright (C) 2008 Rene Rebe, ExactCODE GmbH
+# Copyright (C) 2008 - 2010 Rene Rebe, ExactCODE GmbH
 
 ini_set("include_path", "./objdir/api/php/");
 //ini_set("extension_dir", "./objdir/api/php/"); // does not work here
@@ -43,7 +43,7 @@ if (decodeImage ($image, $image_bits))
 # image properties
 
 print "Width: " . imageWidth ($image) . "\n";
-print "Height: " . imageWidth ($image) . "\n";
+print "Height: " . imageHeight ($image) . "\n";
 print "Xres: " . imageXres ($image) . "\n";
 print "Yres: " . imageYres ($image) . "\n";
 
