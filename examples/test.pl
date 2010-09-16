@@ -1,5 +1,5 @@
 # ExactImage Perl Example
-# Copyright (C) 2006 - 2008 Rene Rebe, ExactCODE GmbH
+# Copyright (C) 2006 - 2010 Rene Rebe, ExactCODE GmbH
 
 use strict;
 
@@ -43,7 +43,7 @@ if (ExactImage::decodeImage ($image, $image_bits))
 # image properties
 
 print "Width: " . ExactImage::imageWidth ($image) . "\n";
-print "Height: " . ExactImage::imageWidth ($image) . "\n";
+print "Height: " . ExactImage::imageHeight ($image) . "\n";
 print "Xres: " . ExactImage::imageXres ($image) . "\n";
 print "Yres: " . ExactImage::imageYres ($image) . "\n";
 

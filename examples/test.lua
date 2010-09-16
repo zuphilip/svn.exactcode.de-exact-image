@@ -1,7 +1,7 @@
 #!/usr/bin/lua
 
 -- ExactImage Lua Example
--- Copyright (C) 2008 Rene Rebe, ExactCODE GmbH
+-- Copyright (C) 2008 - 2010 Rene Rebe, ExactCODE GmbH
 
 
 package.cpath = "./objdir/api/lua/?.so;" .. package.cpath
@@ -44,7 +44,7 @@ f:close()
 -- image properties
 
 print ("Width: " .. ExactImage.imageWidth (image))
-print ("Height: " .. ExactImage.imageWidth (image))
+print ("Height: " .. ExactImage.imageHeight (image))
 print ("Xres: " .. ExactImage.imageXres (image))
 print ("Yres: " .. ExactImage.imageYres (image))
 
