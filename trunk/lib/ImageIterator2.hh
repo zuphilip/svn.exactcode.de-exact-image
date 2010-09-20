@@ -31,7 +31,8 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v[3];
+    static const int samples = 3;
+    vtype v[samples];
     
     accu () { v[0] = v[1] = v[2] = 0; }
     
@@ -182,7 +183,8 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v[4];
+    static const int samples = 4;
+    vtype v[samples];
     
     accu () { v[0] = v[1] = v[2] = v[3] = 0; }
     
@@ -344,7 +346,8 @@ public:
   {
   public:
     typedef int64_t vtype;
-    vtype v[3];
+    static const int samples = 3;
+    vtype v[samples];
     
     accu () { v[0] = v[1] = v[2] = 0; }
     
@@ -495,7 +498,8 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v[1];
+    static const int samples = 1;
+    vtype v[samples];
     
     accu () { v[0] = 0; }
     
@@ -623,7 +627,8 @@ public:
   {
   public:
     typedef int64_t vtype;
-    vtype v[1];
+    static const int samples = 1;
+    vtype v[samples];
     
     accu () { v[0] = 0; }
     
