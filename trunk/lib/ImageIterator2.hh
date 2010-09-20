@@ -31,33 +31,33 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v1, v2, v3;
+    vtype v[3];
     
-    accu () { v1 = v2 = v3 = 0; }
+    accu () { v[0] = v[1] = v[2] = 0; }
     
     static accu one () {
       accu a;
-      a.v1 = a.v2 = a.v3 = 0xff;
+      a.v[0] = a.v[1] = a.v[2] = 0xff;
       return a;
     }
 
     accu& abs() {
-      v1 = std::abs(v1);
-      v2 = std::abs(v2);
-      v3 = std::abs(v3);
+      v[0] = std::abs(v[0]);
+      v[1] = std::abs(v[1]);
+      v[2] = std::abs(v[2]);
       return *this;
     }
     
     void saturate () {
-      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
-      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xff);
-      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xff);
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xff);
+      v[1] = std::min (std::max (v[1], (vtype)0), (vtype)0xff);
+      v[2] = std::min (std::max (v[2], (vtype)0), (vtype)0xff);
     }
     
     accu& operator*= (vtype f) {
-      v1 *= f;
-      v2 *= f;
-      v3 *= f;
+      v[0] *= f;
+      v[1] *= f;
+      v[2] *= f;
       return *this;
     }
 
@@ -67,9 +67,9 @@ public:
     }
     
     accu& operator+= (vtype f) {
-      v1 += f;
-      v2 += f;
-      v3 += f;
+      v[0] += f;
+      v[1] += f;
+      v[2] += f;
       return *this;
     }
 
@@ -79,9 +79,9 @@ public:
     }
       
     accu& operator/= (vtype f) {
-      v1 /= f;
-      v2 /= f;
-      v3 /= f;
+      v[0] /= f;
+      v[1] /= f;
+      v[2] /= f;
       return *this;
     }
 
@@ -92,9 +92,9 @@ public:
     }
     
     accu& operator+= (const accu& other) {
-      v1 += other.v1;
-      v2 += other.v2;
-      v3 += other.v3;
+      v[0] += other.v[0];
+      v[1] += other.v[1];
+      v[2] += other.v[2];
       return *this;
     }
     
@@ -105,9 +105,9 @@ public:
     }
 
     accu& operator-= (const accu& other) {
-      v1 -= other.v1;
-      v2 -= other.v2;
-      v3 -= other.v3;
+      v[0] -= other.v[0];
+      v[1] -= other.v[1];
+      v[2] -= other.v[2];
       return *this;
     }
     
@@ -115,22 +115,22 @@ public:
     {
       double r = 0, g = 0, b = 0;
       background.getRGB(r, g, b);
-      v1 = (vtype)(r * 0xff);
-      v2 = (vtype)(g * 0xff);
-      v3 = (vtype)(b * 0xff);
+      v[0] = (vtype)(r * 0xff);
+      v[1] = (vtype)(g * 0xff);
+      v[2] = (vtype)(b * 0xff);
       return *this;
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = v1; g = v2; b = v3;
+      r = v[0]; g = v[1]; b = v[2];
     }
     
     void getL (vtype& l) {
-      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
+      l = (11 * v[0] + 16 * v[1] + 5 * v[2]) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = r; v2 = g; v3 = b;
+      v[0] = r; v[1] = g; v[2] = b;
     }
   };
     
@@ -156,16 +156,16 @@ public:
     
   accu operator* () {
     accu a;
-    a.v1 = ptr[0];
-    a.v2 = ptr[1];
-    a.v3 = ptr[2];
+    a.v[0] = ptr[0];
+    a.v[1] = ptr[1];
+    a.v[2] = ptr[2];
     return a;
   }
     
   rgb_iterator& set (const accu& a) {
-    ptr[0] = a.v1;
-    ptr[1] = a.v2;
-    ptr[2] = a.v3;
+    ptr[0] = a.v[0];
+    ptr[1] = a.v[1];
+    ptr[2] = a.v[2];
     return *this;
   }  
 };
@@ -182,36 +182,36 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v1, v2, v3, v4;
+    vtype v[4];
     
-    accu () { v1 = v2 = v3 = v4 = 0; }
+    accu () { v[0] = v[1] = v[2] = v[3] = 0; }
     
     static accu one () {
       accu a;
-      a.v1 = a.v2 = a.v3 = a.v4 = 0xff;
+      a.v[0] = a.v[1] = a.v[2] = a.v[3] = 0xff;
       return a;
     }
     
     accu& abs() {
-      v1 = std::abs(v1);
-      v2 = std::abs(v2);
-      v3 = std::abs(v3);
-      v4 = std::abs(v4);
+      v[0] = std::abs(v[0]);
+      v[1] = std::abs(v[1]);
+      v[2] = std::abs(v[2]);
+      v[3] = std::abs(v[3]);
       return *this;
     }
 
     void saturate () {
-      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
-      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xff);
-      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xff);
-      v4 = std::min (std::max (v4, (vtype)0), (vtype)0xff);
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xff);
+      v[1] = std::min (std::max (v[1], (vtype)0), (vtype)0xff);
+      v[2] = std::min (std::max (v[2], (vtype)0), (vtype)0xff);
+      v[3] = std::min (std::max (v[3], (vtype)0), (vtype)0xff);
     }
     
     accu& operator*= (vtype f) {
-      v1 *= f;
-      v2 *= f;
-      v3 *= f;
-      v4 *= f;
+      v[0] *= f;
+      v[1] *= f;
+      v[2] *= f;
+      v[3] *= f;
       return *this;
     }
 
@@ -221,10 +221,10 @@ public:
     }
     
     accu& operator+= (vtype f) {
-      v1 += f;
-      v2 += f;
-      v3 += f;
-      v4 += f;
+      v[0] += f;
+      v[1] += f;
+      v[2] += f;
+      v[3] += f;
       return *this;
     }
     
@@ -234,10 +234,10 @@ public:
     }
       
     accu& operator/= (vtype f) {
-      v1 /= f;
-      v2 /= f;
-      v3 /= f;
-      v4 /= f;
+      v[0] /= f;
+      v[1] /= f;
+      v[2] /= f;
+      v[3] /= f;
       return *this;
     }
     
@@ -248,10 +248,10 @@ public:
     }
     
     accu& operator+= (const accu& other) {
-      v1 += other.v1;
-      v2 += other.v2;
-      v3 += other.v3;
-      v4 += other.v4;
+      v[0] += other.v[0];
+      v[1] += other.v[1];
+      v[2] += other.v[2];
+      v[3] += other.v[3];
       return *this;
     }
     
@@ -262,10 +262,10 @@ public:
     }
 
     accu& operator-= (const accu& other) {
-      v1 -= other.v1;
-      v2 -= other.v2;
-      v3 -= other.v3;
-      v4 -= other.v4;
+      v[0] -= other.v[0];
+      v[1] -= other.v[1];
+      v[2] -= other.v[2];
+      v[3] -= other.v[3];
       return *this;
     }
     
@@ -273,23 +273,23 @@ public:
     {
       double r = 0, g = 0, b = 0, a = 0;
       background.getRGBA(r, g, b, a);
-      v1 = (vtype)(r * 0xff);
-      v2 = (vtype)(g * 0xff);
-      v3 = (vtype)(b * 0xff);
-      v4 = (vtype)(a * 0xff);
+      v[0] = (vtype)(r * 0xff);
+      v[1] = (vtype)(g * 0xff);
+      v[2] = (vtype)(b * 0xff);
+      v[3] = (vtype)(a * 0xff);
       return *this;
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = v1; g = v2; b = v3;
+      r = v[0]; g = v[1]; b = v[2];
     }
     
     void getL (vtype& l) {
-      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
+      l = (11 * v[0] + 16 * v[1] + 5 * v[2]) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = r; v2 = g; v3 = b; v3 = 0xff;
+      v[0] = r; v[1] = g; v[2] = b; v[2] = 0xff;
     }
   };
   
@@ -315,18 +315,18 @@ public:
   
   accu operator* () {
     accu a;
-    a.v1 = ptr[0];
-    a.v2 = ptr[1];
-    a.v3 = ptr[2];
-    a.v4 = ptr[3];
+    a.v[0] = ptr[0];
+    a.v[1] = ptr[1];
+    a.v[2] = ptr[2];
+    a.v[3] = ptr[3];
     return a;
   }
     
   rgba_iterator& set (const accu& a) {
-    ptr[0] = a.v1;
-    ptr[1] = a.v2;
-    ptr[2] = a.v3;
-    ptr[3] = a.v4;
+    ptr[0] = a.v[0];
+    ptr[1] = a.v[1];
+    ptr[2] = a.v[2];
+    ptr[3] = a.v[3];
     return *this;
   }
 };
@@ -344,33 +344,33 @@ public:
   {
   public:
     typedef int64_t vtype;
-    vtype v1, v2, v3;
+    vtype v[3];
     
-    accu () { v1 = v2 = v3 = 0; }
+    accu () { v[0] = v[1] = v[2] = 0; }
     
     static accu one () {
       accu a;
-      a.v1 = a.v2 = a.v3 = 0xffff;
+      a.v[0] = a.v[1] = a.v[2] = 0xffff;
       return a;
     }
     
     accu& abs() {
-      v1 = std::abs(v1);
-      v2 = std::abs(v2);
-      v3 = std::abs(v3);
+      v[0] = std::abs(v[0]);
+      v[1] = std::abs(v[1]);
+      v[2] = std::abs(v[2]);
       return *this;
     }
 
     void saturate () {
-      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
-      v2 = std::min (std::max (v2, (vtype)0), (vtype)0xffff);
-      v3 = std::min (std::max (v3, (vtype)0), (vtype)0xffff);
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xffff);
+      v[1] = std::min (std::max (v[1], (vtype)0), (vtype)0xffff);
+      v[2] = std::min (std::max (v[2], (vtype)0), (vtype)0xffff);
     }
     
     accu& operator*= (vtype f) {
-      v1 *= f;
-      v2 *= f;
-      v3 *= f;
+      v[0] *= f;
+      v[1] *= f;
+      v[2] *= f;
       return *this;
     }
 
@@ -380,9 +380,9 @@ public:
     }
     
     accu& operator+= (vtype f) {
-      v1 += f;
-      v2 += f;
-      v3 += f;
+      v[0] += f;
+      v[1] += f;
+      v[2] += f;
       return *this;
     }
 
@@ -392,9 +392,9 @@ public:
     }
     
     accu& operator/= (vtype f) {
-      v1 /= f;
-      v2 /= f;
-      v3 /= f;
+      v[0] /= f;
+      v[1] /= f;
+      v[2] /= f;
       return *this;
     }
     
@@ -405,9 +405,9 @@ public:
     }
     
     accu& operator+= (const accu& other) {
-      v1 += other.v1;
-      v2 += other.v2;
-      v3 += other.v3;
+      v[0] += other.v[0];
+      v[1] += other.v[1];
+      v[2] += other.v[2];
       return *this;
     }
     
@@ -418,31 +418,31 @@ public:
     }
 
     accu& operator-= (const accu& other) {
-      v1 -= other.v1;
-      v2 -= other.v2;
-      v3 -= other.v3;
+      v[0] -= other.v[0];
+      v[1] -= other.v[1];
+      v[2] -= other.v[2];
       return *this;
     }
     
     accu& operator= (const Image::iterator& background) {
       double r = 0, g = 0, b = 0;
       background.getRGB(r, g, b);
-      v1 = (vtype)(r * 0xffff);
-      v2 = (vtype)(g * 0xffff);
-      v3 = (vtype)(b * 0xffff);
+      v[0] = (vtype)(r * 0xffff);
+      v[1] = (vtype)(g * 0xffff);
+      v[2] = (vtype)(b * 0xffff);
       return *this;
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = v1; g = v2; b = v3;
+      r = v[0]; g = v[1]; b = v[2];
     }
     
     void getL (vtype& l) {
-      l = (11 * v1 + 16 * v2 + 5 * v3) / 32;
+      l = (11 * v[0] + 16 * v[1] + 5 * v[2]) / 32;
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = r; v2 = g; v3 = b;
+      v[0] = r; v[1] = g; v[2] = b;
     }
   };
   
@@ -469,16 +469,16 @@ public:
     
   accu operator* () {
     accu a;
-    a.v1 = ptr[0];
-    a.v2 = ptr[1];
-    a.v3 = ptr[2];
+    a.v[0] = ptr[0];
+    a.v[1] = ptr[1];
+    a.v[2] = ptr[2];
     return a;
   }
     
   rgb16_iterator& set (const accu& a) {
-    ptr[0] = a.v1;
-    ptr[1] = a.v2;
-    ptr[2] = a.v3;
+    ptr[0] = a.v[0];
+    ptr[1] = a.v[1];
+    ptr[2] = a.v[2];
     return *this;
   }
 };
@@ -495,27 +495,27 @@ public:
   {
   public:
     typedef int32_t vtype;
-    vtype v1;
+    vtype v[1];
     
-    accu () { v1 = 0; }
+    accu () { v[0] = 0; }
     
     static accu one () {
       accu a;
-      a.v1 = 0xff;
+      a.v[0] = 0xff;
       return a;
     }
 
     accu& abs() {
-      v1 = std::abs(v1);
+      v[0] = std::abs(v[0]);
       return *this;
     }
 
     void saturate () {
-      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xff);
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xff);
     }
 
     accu& operator*= (vtype f) {
-      v1 *= f;
+      v[0] *= f;
       return *this;
     }
 
@@ -525,7 +525,7 @@ public:
     }
 
     accu& operator+= (vtype f) {
-      v1 += f;
+      v[0] += f;
       return *this;
     }
 
@@ -535,7 +535,7 @@ public:
     }
       
     accu& operator/= (vtype f) {
-      v1 /= f;
+      v[0] /= f;
       return *this;
     }
 
@@ -546,7 +546,7 @@ public:
     }
     
     accu& operator+= (const accu& other) {
-      v1 += other.v1;
+      v[0] += other.v[0];
       return *this;
     }
 
@@ -557,25 +557,25 @@ public:
     }
     
     accu& operator-= (const accu& other) {
-      v1 -= other.v1;
+      v[0] -= other.v[0];
       return *this;
     }
       
     accu& operator= (const Image::iterator& background) {
-      v1 = background.getL();
+      v[0] = background.getL();
       return *this;
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = g = b = v1;
+      r = g = b = v[0];
     }
     
     void getL (vtype& l) {
-      l = v1;
+      l = v[0];
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = (11 * r + 16 * g + 5 * b) / 32;
+      v[0] = (11 * r + 16 * g + 5 * b) / 32;
     }
   };
     
@@ -601,12 +601,12 @@ public:
     
   accu operator* () {
     accu a;
-    a.v1 = ptr[0];
+    a.v[0] = ptr[0];
     return a;
   }
     
   gray_iterator& set (const accu& a) {
-    ptr[0] = a.v1;
+    ptr[0] = a.v[0];
     return *this;
   }
 };
@@ -623,27 +623,27 @@ public:
   {
   public:
     typedef int64_t vtype;
-    vtype v1;
+    vtype v[1];
     
-    accu () { v1 = 0; }
+    accu () { v[0] = 0; }
     
     static accu one () {
       accu a;
-      a.v1 = 0xffff;
+      a.v[0] = 0xffff;
       return a;
     }
     
     accu& abs() {
-      v1 = std::abs(v1);
+      v[0] = std::abs(v[0]);
       return *this;
     }
 
     void saturate () {
-      v1 = std::min (std::max (v1, (vtype)0), (vtype)0xffff);
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xffff);
     }
 
     accu& operator*= (vtype f) {
-      v1 *= f;
+      v[0] *= f;
       return *this;
     }
 
@@ -653,7 +653,7 @@ public:
     }
     
     accu& operator+= (vtype f) {
-      v1 += f;
+      v[0] += f;
       return *this;
     }
 
@@ -663,7 +663,7 @@ public:
     }
     
     accu& operator/= (vtype f) {
-      v1 /= f;
+      v[0] /= f;
       return *this;
     }
     
@@ -674,7 +674,7 @@ public:
     }
     
     accu& operator+= (const accu& other) {
-      v1 += other.v1;
+      v[0] += other.v[0];
       return *this;
     }
     
@@ -685,25 +685,25 @@ public:
     }
     
     accu& operator-= (const accu& other) {
-      v1 -= other.v1;
+      v[0] -= other.v[0];
       return *this;
     }
     
     accu& operator= (const Image::iterator& background) {
-      v1 = background.getL();
+      v[0] = background.getL();
       return *this;
     }
     
     void getRGB (vtype& r, vtype& g, vtype& b) {
-      r = g = b = v1;
+      r = g = b = v[0];
     }
     
     void getL (vtype& l) {
-      l = v1;
+      l = v[0];
     }
     
     void setRGB (vtype r, vtype g, vtype b) {
-      v1 = (11 * r + 16 * g + 5 * b) / 32;
+      v[0] = (11 * r + 16 * g + 5 * b) / 32;
     }
     
   };
@@ -731,12 +731,12 @@ public:
     
   accu operator* () {
     accu a;
-    a.v1 = ptr[0];
+    a.v[0] = ptr[0];
     return a;
   }
     
   gray16_iterator& set (const accu& a) {
-    ptr[0] = a.v1;
+    ptr[0] = a.v[0];
     return *this;
   }
 };
@@ -796,13 +796,13 @@ public:
   
   accu operator* () {
     accu a;
-    a.v1 = ((*ptr >> (bitpos - (bitdepth - 1))) & mask) * 0xff / mask;
+    a.v[0] = ((*ptr >> (bitpos - (bitdepth - 1))) & mask) * 0xff / mask;
     return a;
   }
   
   bit_iterator& set (const accu& a) {
     *ptr &= ~(mask << (bitpos - (bitdepth - 1)));
-    *ptr |= (a.v1 >> (8 - bitdepth)) << (bitpos - (bitdepth - 1));
+    *ptr |= (a.v[0] >> (8 - bitdepth)) << (bitpos - (bitdepth - 1));
     
     return *this;
   }

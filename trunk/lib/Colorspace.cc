@@ -874,17 +874,17 @@ struct brightness_contrast_gamma_template
 	
 	a.getRGB (_r, _g, _b);
 	r = _r, g = _g, b = _b;
-	r /= T::accu::one().v1;
-	g /= T::accu::one().v1;
-	b /= T::accu::one().v1;
+	r /= T::accu::one().v[0];
+	g /= T::accu::one().v[0];
+	b /= T::accu::one().v[0];
 	
 	r = convert (r, brightness, contrast, gamma);
 	g = convert (g, brightness, contrast, gamma);
 	b = convert (b, brightness, contrast, gamma);
 	
-	_r = (typename T::accu::vtype)(r * T::accu::one().v1);
-	_g = (typename T::accu::vtype)(g * T::accu::one().v1);
-	_b = (typename T::accu::vtype)(b * T::accu::one().v1);
+	_r = (typename T::accu::vtype)(r * T::accu::one().v[0]);
+	_g = (typename T::accu::vtype)(g * T::accu::one().v[0]);
+	_b = (typename T::accu::vtype)(b * T::accu::one().v[0]);
 	a.setRGB (_r, _g, _b);
 	it.set(a);
 	++it;
@@ -905,7 +905,7 @@ struct hue_saturation_lightness_template {
     T it (image);
 
     // optimized ONE2 in divisions imprecise shifts if not an FP type
-    const typename T::accu::vtype ONE = T::accu::one().v1,
+    const typename T::accu::vtype ONE = T::accu::one().v[0],
                                   ONE2 = ONE > 1 ? ONE + 1 : ONE;
 
     // H in degree, S and L [-1, 1], latér scaled to the integer range
