@@ -42,7 +42,7 @@ public:
   virtual bool Write (Image& image,
 		      int quality, const std::string& compress, int index);
   
-//private:
+private:
   
   static bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
 
