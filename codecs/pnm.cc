@@ -128,7 +128,7 @@ int PNMCodec::readImage (std::istream* stream, Image& image, const std::string& 
 		i = i * (255 / maxval);
 
 		// only mode 1 is defined with 1 == black, ...
-		if (mode == 1) i = 255 - i;
+		if (mode == '1') i = 255 - i;
 
 		it.setL (i);
 	      }
@@ -227,7 +227,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		int i = it.getL();
 
 		// only mode 1 is defined with 1 == black, ...
-                if (mode == 1) i = 255 - i;
+                if (format == 1) i = 255 - i;
 
 		*stream << i / (255 / maxval);
 	      }
