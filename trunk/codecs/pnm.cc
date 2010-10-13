@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2010 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -126,6 +126,10 @@ int PNMCodec::readImage (std::istream* stream, Image& image, const std::string& 
 		*stream >> i;
 		
 		i = i * (255 / maxval);
+
+		// only mode 1 is defined with 1 == black, ...
+		if (mode == 1) i = 255 - i;
+
 		it.setL (i);
 	      }
 	      else {
@@ -220,7 +224,12 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 		*stream << " ";
 	      
 	      if (image.spp == 1) {
-		*stream << it.getL() / (255 / maxval);
+		int i = it.getL();
+
+		// only mode 1 is defined with 1 == black, ...
+                if (mode == 1) i = 255 - i;
+
+		*stream << i / (255 / maxval);
 	      }
 	      else {
 		uint16_t r = 0, g = 0, b = 0;
