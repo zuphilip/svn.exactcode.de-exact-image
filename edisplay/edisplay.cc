@@ -269,12 +269,14 @@ int Viewer::Run (bool opengl)
       
       /* the following is specific to the engine */
       einfo->info.display = dpy;
-      einfo->info.visual =
-	einfo->func.best_visual_get (dpy, DefaultScreen(dpy));
-      einfo->info.colormap =
-	einfo->func.best_colormap_get(dpy,DefaultScreen(dpy));
-
+#ifdef WITHEVAS_X11_SCREEN
+      einfo->info.screen = DefaultScreen(dpy);
+      einfo->info.visual = einfo->func.best_visual_get(einfo);
+      einfo->info.colormap = einfo->func.best_colormap_get(einfo);
+#else
+      einfo->info.visual = einfo->func.best_visual_get(dpy, DefaultScreen(dpy));
       einfo->info.colormap = einfo->func.best_colormap_get(dpy, DefaultScreen(dpy));
+#endif
       einfo->info.drawable = win;
       einfo->info.depth = depth;
       
