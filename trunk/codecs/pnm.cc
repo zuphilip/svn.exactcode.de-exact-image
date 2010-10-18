@@ -201,7 +201,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     format += 3;
   
   *stream << "P" << format << std::endl;
-  *stream << "# written by ExactImage - report bugs to: <rene@exactcode.de>" << std::endl;
+  *stream << "# http://exactcode.com/oss/exactimage/" << std::endl;
 
   *stream << image.w << " " << image.h << std::endl;
   
