@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 - 2008 Lars Kuhtz, ExactCODE GmbH Germany.
- * Copyright (C) 2009 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2009 - 2010 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 
 #ifndef _PIXEL_ITERATOR_HH_
 #define _PIXEL_ITERATOR_HH_
-
-#define NDEBUG
 
 #include "Image.hh"
 
