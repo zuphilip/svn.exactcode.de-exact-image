@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2007 - 2008 Lars Kuhtz, ExactCODE GmbH Germany.
+ * Copyright (C) 2010 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +18,6 @@
 
 #ifndef _EAN_HH_
 #define _EAN_HH_
-
-#define NDEBUG
 
 #include "scanner_utils.hh"
 
@@ -149,12 +148,6 @@ namespace BarDecode
         std::string code = "";
         if (result != normal_guard) return scanner_result_t();
 
-#ifdef SCANNER_DEBUG
-        std::cerr << "##### ean: (" << std::dec << x << ", " << y << "), unit=" 
-            << u << ", quiet_psize =" << quiet_psize << " : " 
-            << std::hex << mw << " --> " << (int) result << std::endl;
-#endif
-
         // Ok, we found an ean start sequence, let's try to read the code:
 
         uint bps = 4; // (bars per symbol) a symbol has 4 bars
@@ -190,9 +183,6 @@ namespace BarDecode
                 parities |= get_parity(mw);
             }
             code += result;
-#ifdef SCANNER_DEBUG
-            std::cerr << "symbol: '" << result << "'" << std::endl;
-#endif
         } while ( true ); // only way to leave is a failure return or the center_guard break above
 
         // check if we found a symbol at all
@@ -225,10 +215,6 @@ namespace BarDecode
                 parities >>= 1;
                 parities |= (! get_parity(0x3f & ~mw) << 5);
             }
-
-#ifdef SCANNER_DEBUG
-                std::cerr << "symbol: '" << result << "'" << std::endl;
-#endif
         }
 
         // expect normal guard
