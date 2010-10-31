@@ -21,15 +21,11 @@
 #include <iostream>
 #include <iomanip>
 
-#include "ArgumentList.hh"
-
 #include "Image.hh"
 #include "ImageIterator2.hh"
 #include "Codecs.hh"
 
 #include "rotate.hh"
-
-using namespace Utility;
 
 void flipX (Image& image)
 {
