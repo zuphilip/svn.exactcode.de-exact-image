@@ -747,8 +747,9 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	  memcpy (payload, image.getRawData() + stride*row, stride);
 	  rearrangePixels (payload, image.w, info_hdr.iBitCount);
 	  
-	  if (!stream->write ((char*)payload, file_stride) ) {
+	  if (!stream->write ((char*)payload, file_stride)) {
 	    std::cerr << "scanline " << row << " write error" << std::endl;
+	    return false;
 	  }
 	}
     }
