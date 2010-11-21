@@ -288,7 +288,7 @@ namespace BarDecode
 
             key = get_key(b);
             if (! key ) return scanner_result_t();
-            const char c = table[key];
+            const uint8_t c = table[key];
             switch(c) {
             case (uint8_t) no_entry: return scanner_result_t();
             case (uint8_t) DELIMITER: at_end = true; break;
@@ -337,7 +337,7 @@ namespace BarDecode
 
             key = reverse_get_key(b);
             if (! key ) return scanner_result_t();
-            const char c = table[key];
+            const uint8_t c = table[key];
             switch(c) {
             case (uint8_t) no_entry: return scanner_result_t();
             case (uint8_t) DELIMITER: at_end = true; break;
