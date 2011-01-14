@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2011 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,6 +25,11 @@
 
 int RAWCodec::readImage(std::istream* stream, Image& image, const std::string& decompres)
 {
+  if (image.w <= 0 || image.bps == 0 || image.spp == 0) {
+    std::cerr << "RAWCodec: image parameters not sufficently defined!" << std::endl;
+    return false;
+  }
+
   int h = image.h;
   if (h > 0) // if we know the height up-front
     image.resize(image.w, image.h);
