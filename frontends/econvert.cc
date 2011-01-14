@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2011 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -120,11 +120,22 @@ Argument<std::string> arg_font ("", "font",
 
 bool convert_input (const Argument<std::string>& arg)
 {
+  Image* image = 0;
+
+  // save an empty template if we got one (for loading RAW images)
+  if (!images.empty() && images.front()->getRawData() == 0) {
+    image = images.front();
+    images.pop_front();
+  }
   freeImages();
   
   for (int j = 0; j < arg.Size(); ++j)
     {
-      std::ifstream stream(arg.Get(j).c_str(), std::ios::in | std::ios::binary);
+      std::string file = arg.Get(j);
+      std::string cod = ImageCodec::getCodec(file);
+      std::string ext = ImageCodec::getExtension(file);
+
+      std::ifstream stream(file.c_str(), std::ios::in | std::ios::binary);
       
       std::string decompression = "";
       if (arg_decompression.Size())
@@ -132,9 +143,10 @@ bool convert_input (const Argument<std::string>& arg)
       
       for (int i = 0, n = 1; i < n; ++i)
 	{
-	  Image* image = new Image;
-	  
-	  int ret = ImageCodec::Read(&stream, *image, "", decompression, i);
+	  if (!image)
+	    image = new Image;
+
+	  int ret = ImageCodec::Read(&stream, *image, cod, decompression, i);
 	  if (ret <= 0) {
 	    std::cerr << "Error reading input file " << arg.Get(j) << ", image: " << i << std::endl;
 	    delete image;
@@ -144,8 +156,11 @@ bool convert_input (const Argument<std::string>& arg)
 	    n = ret;
 	  
 	  images.push_back(image);
+	  image = 0;
 	}
     }
+
+  if (image) delete image;
   
   return true;
 }
@@ -482,7 +497,7 @@ bool convert_size (const Argument<std::string>& arg)
   if ((n = sscanf(arg.Get().c_str(), "%dx%d", &w, &h)) == 2)
     {
       // this is mostly used to set the size for raw data loads
-      // so we need to haev at least one (empty) image
+      // so we need to have at least one (empty) image
       if (images.empty())
 	images.push_back(new Image);
       
@@ -1060,7 +1075,7 @@ int main (int argc, char* argv[])
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2010 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005 - 2011 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
