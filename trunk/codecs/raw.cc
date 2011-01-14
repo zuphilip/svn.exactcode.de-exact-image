@@ -35,7 +35,7 @@ int RAWCodec::readImage(std::istream* stream, Image& image, const std::string& d
     image.resize(image.w, image.h);
   
   int y = 0;
-  for (y = 0; h == 0 || y < h; ++y)
+  for (y = 0; h <= 0 || y < h; ++y)
     {
       if (h <= 0) // height not known up-front, resize line by line
 	image.resize (image.w, y + 1);
