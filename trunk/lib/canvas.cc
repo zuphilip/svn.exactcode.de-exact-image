@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2009-2011 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,30 +39,4 @@ void append (Image& image, Image& other)
   memcpy(image.getRawData() + image.stride() * old_height,
 	 other.getRawData(),
 	 other.stride() * other.h);
-}
-
-void copy (Image& image, int x,	int y, int w, int h, Image& other, int sx, int sy)
-{
-  //const int rx = sx - x;
-  //const int ry = sy - y;
-
-  // TODO: clip
-
-  // must be in the same colorspace
-  colorspace_by_name(other, colorspace_name(image));
-  
-  const int bpp = (image.bps * image.spp + 7) / 8;
-  uint8_t* dst = image.getRawData() + image.stride() * y + bpp * x;
-  uint8_t* src = other.getRawData() + other.stride() * sy + bpp *sx;
-  
-  if (y <= sy) {
-    for (; h > 0; --h, dst += image.stride(), src += other.stride())
-      memmove(dst, src, bpp * w);
-  } else {
-    dst += image.stride() * (h-1);
-    src += other.stride() * (h-1);
-    
-    for (; h > 0; --h, dst -= image.stride(), src -= other.stride())
-      memmove(dst, src, bpp * w);
-  }
 }
