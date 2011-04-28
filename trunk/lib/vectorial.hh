@@ -1,6 +1,6 @@
 /*
  * Vector element rasterization, via Agg.
- * Copyright (C) 2007 - 2010 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 - 2011 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,6 @@ public:
   // kerning, hinting, transform, etc.
   // void addText (char* text, double height);
  
-#if WITHFREETYPE == 1
   // temp. simple text draw method
   void drawText (Image& image, const char* text, double height,
 		 const char* fontfile = 0, agg::trans_affine mtx = agg::trans_affine(),
@@ -97,7 +96,6 @@ public:
 		 double* w = 0, double* h = 0, double* dx = 0, double* dy = 0);
   void drawTextOnPath (Image& image, const char* text, double height,
 		       const char* fontfile = 0); // TODO: , filling_rule_t fill = fill_non_zero);
-#endif
   
 protected:
   agg::path_storage path;
