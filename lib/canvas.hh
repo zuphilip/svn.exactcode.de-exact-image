@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2009-2011 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,4 +18,3 @@
 #include "Image.hh"
 
 void append (Image& image, Image& other);
-void copy (Image& image, int x, int y, int w, int h, Image& other, int sx, int sy);
