@@ -124,9 +124,6 @@ struct BMPCIEXYZTriple          /* This structure contains the x, y, and z */
 };
 
 
-/* File header size in bytes: */
-const int       BFH_SIZE = 14;
-
 struct BMPFileHeader
 {
   char	bType[2];       /* Signature "BM" */
@@ -290,7 +287,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   BMPFileHeader file_header; // only used if no file_hdr is supplied
   BMPInfoHeader info_hdr;
   enum BMPType bmp_type;
-  int offset = file_hdr ? BFH_SIZE : 0;
+  int offset = file_hdr ? sizeof(*file_hdr) : 0;
 
   uint32_t clr_tbl_size = 0, n_clr_elems = 3;
   uint8_t* clr_tbl = 0;
@@ -721,11 +718,11 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   // BMP image payload needs to be 4 byte aligned :-(
   int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
   
-  file_hdr.iOffBits = BFH_SIZE + hdr_size + info_hdr.iClrUsed * n_clr_elems;
+  file_hdr.iOffBits = sizeof(file_hdr) + hdr_size + info_hdr.iClrUsed * n_clr_elems;
   file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
   
   // write header meta info
-  stream->write ((char*)&file_hdr, BFH_SIZE);
+  stream->write ((char*)&file_hdr, sizeof(file_hdr));
   stream->write ((char*)&info_hdr, hdr_size);
   
   // write color table
