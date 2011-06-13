@@ -403,7 +403,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       clr_tbl = (uint8_t *) malloc (n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
 	std::cerr << "BMPCodec:: Can't allocate space for color table" << std::endl;
-	goto bad;
+	return false;
       }
       
       stream->seekg (offset + info_hdr.iSize);
@@ -668,9 +668,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     free(clr_tbl);
   clr_tbl = NULL;
   
-  return false;
-  
- bad:
   return false;
 }
 
