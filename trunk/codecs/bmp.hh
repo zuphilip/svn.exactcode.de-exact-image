@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2011 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 #include "Codecs.hh"
 
+struct BMPFileHeader; // just fwd.
+
 class BMPCodec : public ImageCodec {
 public:
   
@@ -26,4 +28,6 @@ public:
 
   virtual int readImage (std::istream* stream, Image& image, const std::string& decompress);
   virtual bool writeImage (std::ostream* stream, Image& image, int quality, const std::string& compress);
+
+  static int readImageWithoutFileHeader (std::istream* stream, Image& image, const std::string& decompress = "", BMPFileHeader* header = 0);
 };
