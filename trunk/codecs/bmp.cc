@@ -381,6 +381,9 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	      << " bit files." << std::endl;
     return false;
   }
+
+  image.w = info_hdr.iWidth;
+  image.h = std::abs(info_hdr.iHeight); // negative when upside-down
   
   switch (info_hdr.iBitCount)
     {
@@ -433,8 +436,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       break;
     }
   
-  image.resize(info_hdr.iWidth, std::abs(info_hdr.iHeight)); // negative for upside-down
-
   uint32_t stride = image.stride ();
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
@@ -469,7 +470,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
                 << ", green mask: " << info_hdr.iGreenMask
                 << ", blue mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
-      
+
+      image.resize(image.w, image.h);
       data = image.getRawData();
       uint8_t* row_data = (uint8_t*) malloc (file_stride);
       if (!row_data) {
@@ -618,6 +620,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       }
       
       free(comprbuf);
+      data = (uint8_t *) malloc( uncompr_size );
       if (!data) {
 	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
 	goto bad1;
@@ -632,6 +635,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       free(uncomprbuf);
       image.bps = 8;
     }
+    image.setRawData(data);
     break;
   } /* switch */
   
