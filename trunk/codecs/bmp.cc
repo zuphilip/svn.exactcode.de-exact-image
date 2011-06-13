@@ -292,8 +292,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   enum BMPType bmp_type;
   int offset = file_hdr ? BFH_SIZE : 0;
 
-  uint32_t row, stride;
-  
   uint32_t clr_tbl_size = 0, n_clr_elems = 3;
   uint8_t* clr_tbl = 0;
   uint8_t* data = 0;
@@ -384,9 +382,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     return false;
   }
   
-  image.w = info_hdr.iWidth;
-  image.h = (info_hdr.iHeight > 0) ? info_hdr.iHeight : -info_hdr.iHeight;
-  
   switch (info_hdr.iBitCount)
     {
     case 1:
@@ -438,7 +433,9 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       break;
     }
   
-  stride = image.stride ();
+  image.resize(info_hdr.iWidth, std::abs(info_hdr.iHeight)); // negative for upside-down
+
+  uint32_t stride = image.stride ();
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
   
@@ -473,9 +470,9 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
                 << ", green mask: " << info_hdr.iGreenMask
                 << ", blue mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
       
-      data = (uint8_t*) malloc (stride*image.h);
+      data = image.getRawData();
       uint8_t* row_data = (uint8_t*) malloc (file_stride);
-      if (!data || !row_data) {
+      if (!row_data) {
 	std::cerr << "Can't allocate space for image buffer\n";
 	goto bad1;
       }
@@ -484,7 +481,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
       const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
       
-      for (row = 0; row < (uint32_t)image.h; ++row)
+      for (uint32_t row = 0; row < (uint32_t)image.h; ++row)
       {
 	std::istream::pos_type offset = file_hdr->iOffBits + row * file_stride;
 	stream->seekg (offset);
@@ -621,14 +618,13 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       }
       
       free(comprbuf);
-      data = (uint8_t *) malloc( uncompr_size );
       if (!data) {
 	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
 	goto bad1;
       }
       
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
-      for (row = 0; row < (uint32_t)image.h; ++row) {
+      for (uint32_t row = 0; row < (uint32_t)image.h; ++row) {
 	memcpy (data + row * image.w, uncomprbuf + (image.h - 1 - row) * image.w, image.w);
 	rearrangePixels(data + row * image.w, image.w, info_hdr.iBitCount);
       }
@@ -638,8 +634,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     }
     break;
   } /* switch */
-  
-  image.setRawData (data);
   
   // convert to RGB color-space - we do not handle palete images internally
   
