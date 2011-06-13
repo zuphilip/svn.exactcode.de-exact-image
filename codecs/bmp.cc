@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2011 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,22 +108,26 @@ enum BMPLCSType                 /* Type of logical color space. */
 #pragma pack(push, 1)
 #endif
 
-typedef struct
+struct BMPCIEXYZ
 {
   int32_t   iCIEX;
   int32_t   iCIEY;
   int32_t   iCIEZ;
-} BMPCIEXYZ;
+};
 
-typedef struct                  /* This structure contains the x, y, and z */
+struct BMPCIEXYZTriple          /* This structure contains the x, y, and z */
 {				/* coordinates of the three colors that */
 				/* correspond */
   BMPCIEXYZ   iCIERed;        /* to the red, green, and blue endpoints for */
   BMPCIEXYZ   iCIEGreen;      /* a specified logical color space. */
   BMPCIEXYZ   iCIEBlue;
-} BMPCIEXYZTriple;
+};
 
-typedef struct
+
+/* File header size in bytes: */
+const int       BFH_SIZE = 14;
+
+struct BMPFileHeader
 {
   char	bType[2];       /* Signature "BM" */
   EndianessConverter<uint32_t,LittleEndianTraits> iSize; /* Size in bytes of the bitmap file. Should
@@ -137,13 +141,10 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-BMPFileHeader;
+;
 
 
-/* File header size in bytes: */
-const int       BFH_SIZE = 14;
-
-typedef struct
+struct BMPInfoHeader
 {
   EndianessConverter<uint32_t,LittleEndianTraits> iSize; /* Size of BMPInfoHeader structure in bytes.
 				 * Should be used to determine start of the
@@ -196,7 +197,7 @@ typedef struct
 #ifdef __GNUC__
 __attribute__((packed))
 #endif
-BMPInfoHeader;
+;
 
 /*
  * Info header size in bytes:
@@ -210,13 +211,13 @@ static const unsigned int BIH_OS22SIZE = 64; /* for BMPT_OS22 */
  * We will use plain byte array instead of this structure, but declaration
  * provided for reference
  */
-typedef struct
+struct BMPColorEntry
 {
   char       bBlue;
   char       bGreen;
   char       bRed;
   char       bReserved;      /* Must be 0 */
-} BMPColorEntry;
+};
 
 #ifdef _MSC_VER
 #pragma pack(pop)
@@ -226,8 +227,7 @@ typedef struct
  * Image data in BMP file stored in BGR (or ABGR) format. We rearrange
  * pixels to RGB (RGBA) format.
  */
-static void
-rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
+static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 {
   char tmp;
   
@@ -264,14 +264,6 @@ rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
   BMPFileHeader file_hdr;
-  BMPInfoHeader info_hdr;
-  enum BMPType bmp_type;
-
-  uint32_t row, stride;
-  
-  uint32_t clr_tbl_size = 0, n_clr_elems = 3;
-  uint8_t* clr_tbl = 0;
-  uint8_t* data = 0;
   
   stream->read ((char*)&file_hdr.bType, 2);
   if (file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
@@ -287,14 +279,41 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
   
   // fix the iSize, in early BMP file this is pure garbage
   stream->seekg (0, std::ios::end);
-  file_hdr.iSize = stream->tellg ();
+  file_hdr.iSize = stream->tellg (); // TODO: minus the header?
+
+  int i = readImageWithoutFileHeader(stream, image, decompres, &file_hdr);
+  return i;
+}
+
+int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, const std::string& decompres, BMPFileHeader* file_hdr)
+{
+  BMPFileHeader file_header; // only used if no file_hdr is supplied
+  BMPInfoHeader info_hdr;
+  enum BMPType bmp_type;
+  int offset = file_hdr ? BFH_SIZE : 0;
+
+  uint32_t row, stride;
   
+  uint32_t clr_tbl_size = 0, n_clr_elems = 3;
+  uint8_t* clr_tbl = 0;
+  uint8_t* data = 0;
+
   /* -------------------------------------------------------------------- */
   /*      Read the BMPInfoHeader.                                         */
   /* -------------------------------------------------------------------- */
   
-  stream->seekg (BFH_SIZE);
+  stream->seekg (offset);
   stream->read ((char*)&info_hdr.iSize, 4);
+  
+   if (!file_hdr) {
+    offset = 0;
+    file_hdr = &file_header;
+    stream->seekg (0, std::ios::end);
+    file_hdr->iSize = stream->tellg ();
+    file_hdr->iOffBits = info_hdr.iSize; // assumed to follow after info header
+
+    stream->seekg (offset + 4);
+  }
   
   if (info_hdr.iSize == BIH_WIN4SIZE)
     bmp_type = BMPT_WIN4;
@@ -392,7 +411,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	goto bad;
       }
       
-      stream->seekg (BFH_SIZE + info_hdr.iSize);
+      stream->seekg (offset + info_hdr.iSize);
       stream->read ((char*)clr_tbl, n_clr_elems * clr_tbl_size);
       
       /*for(clr = 0; clr < clr_tbl_size; ++clr) {
@@ -467,7 +486,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
       
       for (row = 0; row < (uint32_t)image.h; ++row)
       {
-	std::istream::pos_type offset = file_hdr.iOffBits + row * file_stride;
+	std::istream::pos_type offset = file_hdr->iOffBits + row * file_stride;
 	stream->seekg (offset);
 	
 	if (stream->tellg () != offset) {
@@ -528,7 +547,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
       //std::cerr << "RLE" << (info_hdr.iCompression == BMPC_RLE4 ? "4" : "8")
       //	<< " compressed\n";
       
-      compr_size = file_hdr.iSize - file_hdr.iOffBits;
+      compr_size = file_hdr->iSize - file_hdr->iOffBits;
       uncompr_size = image.w * image.h;
       
       comprbuf = (uint8_t *) malloc( compr_size );
@@ -542,7 +561,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	goto bad1;
       }
       
-      stream->seekg (*file_hdr.iOffBits);
+      stream->seekg (*file_hdr->iOffBits);
       stream->read ((char*)comprbuf, compr_size);
       i = j = x = 0;
       
