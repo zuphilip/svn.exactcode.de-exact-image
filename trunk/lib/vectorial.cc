@@ -233,7 +233,6 @@ typedef agg::font_engine_freetype_int32 font_engine_type;
 typedef agg::font_cache_manager<font_engine_type> font_manager_type;
 static agg::glyph_rendering gren = agg::glyph_ren_outline;
 
-
 static const char* fonts[] = {
  "/usr/X11/share/fonts/TTF/DejaVuSans.ttf",
  "/usr/X11/share/fonts/TTF/Vera.ttf",
@@ -260,12 +259,12 @@ static bool load_font(font_engine_type& m_feng, const char* fontfile)
   return false;
 }
 
-void Path::drawText (Image& image, const char* text, double height,
+bool Path::drawText (Image& image, const char* text, double height,
 		     const char* fontfile, agg::trans_affine mtx,
 		     filling_rule_t fill,
 		     double* w, double* h, double* dx, double* dy)
 {
-  if (!text) return;
+  if (!text) return false;
   renderer_exact_image ren_base (image);
   
   rasterizer_scanline ras;
@@ -294,8 +293,9 @@ void Path::drawText (Image& image, const char* text, double height,
   agg::conv_transform<agg::conv_stroke<agg::conv_curve<font_manager_type::path_adaptor_type> > >
     m_stroke_mtx(m_stroke, mtx);
  
+  m_feng.height (height);
   if (!load_font(m_feng, fontfile))
-    return;
+    return false;
   
   m_feng.hinting (hinting);
   m_feng.height (height);
@@ -395,7 +395,7 @@ void Path::drawText (Image& image, const char* text, double height,
     *dx -= bbox.x1;
     *dy -= bbox.y1;
     
-    return;
+    return true;
   }
   
   agg::render_scanlines(ras, sl, ren_solid);
@@ -403,12 +403,14 @@ void Path::drawText (Image& image, const char* text, double height,
   
   mtx.transform(&x, &y);
   path.move_to(x, y); // save last point for further drawing
+
+  return true;
 }
 
-void Path::drawTextOnPath (Image& image, const char* text, double height,
+bool Path::drawTextOnPath (Image& image, const char* text, double height,
 			   const char* fontfile) // TODO: , filling_rule_t fill)
 {
-  if (!text) return;
+  if (!text) return false;
   renderer_exact_image ren_base (image);
   
   renderer_aa ren_solid (ren_base);
@@ -428,8 +430,9 @@ void Path::drawTextOnPath (Image& image, const char* text, double height,
   // Pipeline to process the vectors glyph paths
   agg::conv_curve<font_manager_type::path_adaptor_type> m_curves (m_fman.path_adaptor());
   
+  m_feng.height (height);
   if (!load_font(m_feng, fontfile))
-      return;
+      return false;
   
   // Transform pipeline
   typedef agg::conv_curve<font_manager_type::path_adaptor_type> conv_font_curve_type;
@@ -495,6 +498,7 @@ void Path::drawTextOnPath (Image& image, const char* text, double height,
   image.setRawData(); // invalidate cache
 
   path.move_to(x, y); // save last point for further drawing
+  return true;
 }
 
 #endif
