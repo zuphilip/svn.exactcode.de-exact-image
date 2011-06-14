@@ -90,11 +90,11 @@ public:
   // void addText (char* text, double height);
  
   // temp. simple text draw method
-  void drawText (Image& image, const char* text, double height,
+  bool drawText (Image& image, const char* text, double height,
 		 const char* fontfile = 0, agg::trans_affine mtx = agg::trans_affine(),
 		 filling_rule_t fill = fill_non_zero,
 		 double* w = 0, double* h = 0, double* dx = 0, double* dy = 0);
-  void drawTextOnPath (Image& image, const char* text, double height,
+  bool drawTextOnPath (Image& image, const char* text, double height,
 		       const char* fontfile = 0); // TODO: , filling_rule_t fill = fill_non_zero);
   
 protected:
