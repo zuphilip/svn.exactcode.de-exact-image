@@ -197,7 +197,7 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   struct compare_and_set
   {
     const Image& image;
-    const unsigned int stride;
+    const long stride;
     compare_and_set (const Image& _image)
       : image(_image), stride (image.stride())
     {
