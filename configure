@@ -62,7 +62,7 @@ else EVASGL=0
 fi
 
 pkgcheck libjpeg header LIBJPEG cc jconfig.h
-pkgcheck libtiff header LIBTIFF c++ tiffconf.h tiffio.h tiffio.hxx
+pkgcheck libtiff header LIBTIFF c++ tiffconf.h tiffio.h # tiffio.hxx
 pkgcheck libpng pkg-config LIBPNG atleast 1.2
 pkgcheck libungif header LIBUNGIF c++ gif_lib.h
 pkgcheck jasper header JASPER c++ jasper/jasper.h
