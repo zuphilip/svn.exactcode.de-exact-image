@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2010 René Rebe
+ * Copyright (C) 2005 - 2011 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,8 @@
 class TIFCodec : public ImageCodec {
 public:
   
-  TIFCodec () : tiffCtx(0) {
-    registerCodec ("tiff", this);
-    registerCodec ("tif", this);
-  };
-  TIFCodec (TIFF* ctx) : tiffCtx(ctx) {
-  };
+  TIFCodec ();
+  TIFCodec (TIFF* ctx);
   ~TIFCodec ();
   virtual std::string getID () { return "TIFF"; };
   

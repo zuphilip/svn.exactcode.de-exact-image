@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 - 2011 René Rebe, ExactCODE GmbH, Berlin
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -328,6 +328,14 @@ static TIFF* TIFFStreamOpen(const char* name, std::istream* is)
 
 /* back to our codec */
 
+TIFCodec::TIFCodec () : tiffCtx(0) {
+  registerCodec ("tiff", this);
+  registerCodec ("tif", this);
+}
+
+TIFCodec::TIFCodec (TIFF* ctx) : tiffCtx(ctx) {
+}
+
 TIFCodec::~TIFCodec()
 {
   if (tiffCtx)
@@ -495,7 +503,7 @@ bool TIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string& compress,
 			       int page)
 {
-  uint32 rowsperstrip = (uint32) - 1;
+  uint32 rowsperstrip = (uint32)-1;
   
   uint16 compression = image.bps == 1 ? COMPRESSION_CCITTFAX4 :
                                         COMPRESSION_DEFLATE;
@@ -563,8 +571,8 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
     TIFFSetField (out, TIFFTAG_SOFTWARE, "ExactImage");
   }
   //TIFFSetField (out, TIFFTAG_IMAGEDESCRIPTION, "");
-  TIFFSetField (out, TIFFTAG_ROWSPERSTRIP,
-                TIFFDefaultStripSize (out, rowsperstrip));
+  rowsperstrip = TIFFDefaultStripSize (out, rowsperstrip); 
+  TIFFSetField (out, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
   
   const int stride = image.stride();
   /* Note: we on-the-fly invert 1-bit data to please some historic apps */
