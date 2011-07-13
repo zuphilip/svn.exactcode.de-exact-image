@@ -521,6 +521,8 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
       compression = COMPRESSION_LZW;
     else if (c == "deflate" || c == "zip")
       compression = COMPRESSION_DEFLATE;
+    else if (c == "packbits")
+      compression = COMPRESSION_PACKBITS;
     else if (c == "none")
       compression = COMPRESSION_NONE;
     else
