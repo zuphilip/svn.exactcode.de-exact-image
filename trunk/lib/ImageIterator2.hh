@@ -1259,7 +1259,7 @@ template <class T0, template <typename T> class ALGO,
 	  class T1, class T2, class T3, class T4,
 	  class T5, class T6, class T7, class T8>
 T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
-		   T5& a5, T6& a6, T7& a7, T7& a8)
+		   T5& a5, T6& a6, T7& a7, T8& a8)
 {
   if (a1.spp == 3) {
     if (a1.bps == 8) {
