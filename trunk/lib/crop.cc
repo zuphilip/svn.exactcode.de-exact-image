@@ -1,6 +1,6 @@
 /*
- * Colorspace conversions..
- * Copyright (C) 2006 - 2008 René Rebe, ExactCODE
+ * Canvas cropping.
+ * Copyright (C) 2006 - 2011 René Rebe, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,12 +27,13 @@
 
 #include "crop.hh"
 
-void crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h)
+void crop (Image& image, int x, int y, unsigned int w, unsigned int h)
 {
   // limit to valid boundaries
-  x = std::min (x, (unsigned)image.w-1);
-  y = std::min (y, (unsigned)image.h-1);
-  
+  if (x < 0) { w += x; x = 0; };
+  if (y < 0) { h += y; y = 0; };
+  x = std::min (x, image.w-1);
+  y = std::min (y, image.h-1);
   w = std::min (w, (unsigned)image.w-x);
   h = std::min (h, (unsigned)image.h-y);
 
