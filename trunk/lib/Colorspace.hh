@@ -24,6 +24,9 @@
 
 void normalize (Image& image, unsigned char low = 0, unsigned char high = 0);
 
+void colorspace_rgba8_to_rgb8 (Image& image);
+void colorspace_argb8_to_rgb8 (Image& image);
+
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes = 3);
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha=0xff);
 
