@@ -127,6 +127,19 @@ void colorspace_rgba8_to_rgb8 (Image& image)
   image.setRawData();
 }
 
+void colorspace_argb8_to_rgb8 (Image& image)
+{
+  uint8_t* output = image.getRawData();
+  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+    {
+      it++; // skip over a
+      *output++ = *it++;
+      *output++ = *it++;
+      *output++ = *it++;
+    }
+  image.spp = 3; // converted data right now
+  image.setRawData();
+}
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes)
 {
