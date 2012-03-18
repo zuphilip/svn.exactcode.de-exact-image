@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2011 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 
 #include "Image.hh"
 
-void normalize (Image& image, unsigned char low = 0, unsigned char high = 0);
+void normalize (Image& image, uint8_t low = 0, uint8_t high = 0);
 
 void colorspace_rgba8_to_rgb8 (Image& image);
 void colorspace_argb8_to_rgb8 (Image& image);
