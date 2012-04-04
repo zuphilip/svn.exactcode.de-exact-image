@@ -16,6 +16,8 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
+#include <vector>
+
 #include "Codecs.hh"
 
 struct PDFContext; // fwd
