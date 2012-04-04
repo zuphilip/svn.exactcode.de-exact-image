@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <map>
+#include <vector>
 
 #include "Image.hh"
 #include "ImageIterator2.hh"
