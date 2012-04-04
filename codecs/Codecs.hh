@@ -18,7 +18,7 @@
 /* The Image decoder and coder collection.
  *
  * The class itself has static methods to perform the de- and
- * encoding. These methods search thru a loader vector to match the
+ * encoding. These methods search thru a loader list to match the
  * file magick (on decoding) or the specified codec / file extension
  * on encoding.
  *
@@ -36,7 +36,7 @@
 
 #include <stdio.h>
 
-#include <vector>
+#include <list>
 #include <algorithm>
 #include <iosfwd>
 
@@ -111,11 +111,12 @@ protected:
     bool via_codec_only;
   };
   
-  static std::vector<loader_ref>* loader;
+  static std::list<loader_ref>* loader;
   
   static void registerCodec (const char* _ext,
 			     ImageCodec* _loader,
-			     bool _via_codec_only = false);
+			     bool _via_codec_only = false,
+			     bool push_back = false);
   static void unregisterCodec (ImageCodec* _loader);
   
   // freestanding instance, attached to an image

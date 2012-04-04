@@ -21,11 +21,11 @@ class TGACodec : public ImageCodec {
 public:
   
   TGACodec () {
-    registerCodec ("tga", this);
-    registerCodec ("tpic", this);
-    registerCodec ("vda", this);
-    registerCodec ("icb", this);
-    registerCodec ("vst", this);
+    registerCodec ("tga", this, false, true);
+    registerCodec ("tpic", this, false, true);
+    registerCodec ("vda", this, false, true);
+    registerCodec ("icb", this, false, true);
+    registerCodec ("vst", this, false, true);
   };
   
   virtual std::string getID () { return "TARGA"; };

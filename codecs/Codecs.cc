@@ -22,7 +22,7 @@
 #include <iostream>
 #include <fstream>
 
-std::vector<ImageCodec::loader_ref>* ImageCodec::loader = 0;
+std::list<ImageCodec::loader_ref>* ImageCodec::loader = 0;
 
 ImageCodec::ImageCodec ()
   : _image (0)
@@ -78,7 +78,7 @@ int ImageCodec::Read (std::istream* stream, Image& image,
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   
-  std::vector<loader_ref>::iterator it;
+  std::list<loader_ref>::iterator it;
   if (loader)
   for (it = loader->begin(); it != loader->end(); ++it)
     {
@@ -116,7 +116,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
   
-  std::vector<loader_ref>::iterator it;
+  std::list<loader_ref>::iterator it;
   if (loader)
   for (it = loader->begin(); it != loader->end(); ++it)
     {
@@ -150,7 +150,7 @@ ImageCodec* ImageCodec::MultiWrite (std::ostream* stream,
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
   
-  std::vector<loader_ref>::iterator it;
+  std::list<loader_ref>::iterator it;
   if (loader)
   for (it = loader->begin(); it != loader->end(); ++it)
     {
@@ -222,14 +222,17 @@ bool ImageCodec::Write (std::string file, Image& image,
 }
 
 void ImageCodec::registerCodec (const char* _ext, ImageCodec* _loader,
-				bool _via_codec_only)
+				bool _via_codec_only, bool push_back)
 {
   static ImageCodec* last_loader = 0;
   if (!loader)
-    loader = new std::vector<loader_ref>;
+    loader = new std::list<loader_ref>;
   
   loader_ref ref = {_ext, _loader, _loader != last_loader, _via_codec_only};
-  loader->push_back(ref);
+  if (push_back)
+    loader->push_back(ref);
+  else
+    loader->push_front(ref);
   last_loader = _loader;
 }
 
@@ -241,7 +244,7 @@ void ImageCodec::unregisterCodec (ImageCodec* _loader)
   }
   
   // remove from array
-  std::vector<loader_ref>::iterator it;
+  std::list<loader_ref>::iterator it;
   for (it = loader->begin(); it != loader->end();)
     if (it->loader == _loader)
       it = loader->erase (it);
