@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -241,8 +241,8 @@ struct rotate_template
     Image orig_image; orig_image.copyTransferOwnership(image);
     image.resize (image.w, image.h);
 
-    const double cached_sin = sin (angle);
-    const double cached_cos = cos (angle);
+    const float cached_sin = sin (angle);
+    const float cached_cos = cos (angle);
   
     #pragma omp parallel for schedule (dynamic, 16)
     for (int y = 0; y < image.h; ++y)
@@ -251,8 +251,8 @@ struct rotate_template
       it.at(0, y);
       for (int x = 0; x < image.w; ++x)
 	{
-	  double ox =   (x - xcent) * cached_cos + (y - ycent) * cached_sin;
-	  double oy = - (x - xcent) * cached_sin + (y - ycent) * cached_cos;
+	  float ox =   (x - xcent) * cached_cos + (y - ycent) * cached_sin;
+	  float oy = - (x - xcent) * cached_sin + (y - ycent) * cached_cos;
 	  
 	  ox += xcent;
 	  oy += ycent;
@@ -369,8 +369,8 @@ struct copy_crop_rotate_template
     new_image->copyMeta (image);
     new_image->resize (w, h);
     
-    const double cached_sin = sin (angle);
-    const double cached_cos = cos (angle);
+    const float cached_sin = sin (angle);
+    const float cached_cos = cos (angle);
 
     #pragma omp parallel for schedule (dynamic, 16)
     for (unsigned int y = 0; y < h; ++y)
@@ -379,8 +379,8 @@ struct copy_crop_rotate_template
       it.at(0, y);
       for (unsigned int x = 0; x < w; ++x)
 	{
-	  const double ox = ( (double)x * cached_cos + (double)y * cached_sin) + x_start;
-	  const double oy = (-(double)x * cached_sin + (double)y * cached_cos) + y_start;
+	  const float ox = ( (float)x * cached_cos + (float)y * cached_sin) + x_start;
+	  const float oy = (-(float)x * cached_sin + (float)y * cached_cos) + y_start;
 
 	  T orig_it (image);
 	  typename T::accu a;
