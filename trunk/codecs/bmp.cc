@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2011 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -582,7 +582,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  i++;
 	  if ( comprbuf[i] == 0 ) {         /* Next scanline */
 	    i++;
-	    x = 0;;
+	    x = 0;
 	  }
 	  else if ( comprbuf[i] == 1 )    /* End of image */
 	    break;
