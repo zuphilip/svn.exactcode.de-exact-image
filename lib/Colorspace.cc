@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2011 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -125,7 +125,7 @@ void colorspace_rgba8_to_rgb8 (Image& image)
       it++; // skip over a
     }
   image.spp = 3; // converted data right now
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_argb8_to_rgb8 (Image& image)
@@ -139,7 +139,7 @@ void colorspace_argb8_to_rgb8 (Image& image)
       *output++ = *it++;
     }
   image.spp = 3; // converted data right now
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes)
@@ -154,7 +154,7 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes)
       *output++ = (uint8_t)(c / 100);
     }
   image.spp = 1; // converted data right now
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_rgb16_to_gray16 (Image& image)
@@ -171,7 +171,7 @@ void colorspace_rgb16_to_gray16 (Image& image)
       *output++ = (uint16_t)(c / 100);
     }
   image.spp = 1; // converted data right now
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
@@ -318,7 +318,7 @@ void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 	}
     }
   image.bps = 1;
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_gray8_to_gray4 (Image& image)
@@ -349,7 +349,7 @@ void colorspace_gray8_to_gray4 (Image& image)
 	}
     }
   image.bps = 4;
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 void colorspace_gray8_to_gray2 (Image& image)
 {
@@ -379,7 +379,7 @@ void colorspace_gray8_to_gray2 (Image& image)
 	}
     }
   image.bps = 2;
-  image.setRawData();
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_gray8_to_rgb8 (Image& image)
@@ -581,10 +581,7 @@ void colorspace_16_to_8 (Image& image)
 	*output++ = it[1];
     }
   image.bps = 8; // converted 8bit data
-
-  // reallocate, to free half of the memory
-  image.setRawDataWithoutDelete	((uint8_t*)realloc(image.getRawData(),
-		    		  image.stride() * image.h));
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_8_to_16 (Image& image)
