@@ -1,6 +1,6 @@
 /*
  * The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2009 René Rebe
+ * Copyright (C) 2005 - 2012 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,12 +120,21 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h) {
+void Image::resize (int _w, int _h, bool force) {
   w = _w;
   h = _h;
   
   // reuse:
   setRawDataWithoutDelete ((uint8_t*) realloc (data, stride() * h));
+
+  // the OS allocator may not shrink the buffer, though that may be important for the application, ...
+  if (force) {
+    uint8_t* newdata = (uint8_t*)malloc (stride() * h);
+    if (!newdata) return;
+    
+    memcpy(newdata, data, stride() * h);
+    setRawData(newdata);
+  }
 }
 
 void Image::setDecoderID (const std::string& id) {
