@@ -1,5 +1,6 @@
-/* The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2009 René Rebe
+/*
+ * The Plain Old Data encapsulation of pixel, raster data.
+ * Copyright (C) 2005 - 2012 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -10,6 +11,9 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
  * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details.
+ * 
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
  */
 
 /* Only minimal abstraction is done here to allow all sorts of
@@ -110,7 +114,7 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   
-  void resize (int _w, int _h);
+  void resize (int _w, int _h, bool force_realloc = false);
   void New (int _w, int _h) DEPRECATED { resize (_w, _h); }
   
   void setDecoderID (const std::string& id);
