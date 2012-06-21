@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 Rene Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -28,3 +28,7 @@ void exif_rotate(Image& image, unsigned exif_orientation);
 Image* copy_crop_rotate (Image& image, int x_start, int y_start,
 			 unsigned int w, unsigned int h,
 			 double angle, const Image::iterator& background);
+
+Image* copy_crop_rotate_nn (Image& image, int x_start, int y_start,
+			   unsigned int w, unsigned int h,
+			   double angle, const Image::iterator& background);
