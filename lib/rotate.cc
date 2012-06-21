@@ -421,3 +421,62 @@ Image* copy_crop_rotate (Image& image, int x_start, int y_start,
   return codegen_return<Image*, copy_crop_rotate_template> (image, x_start, y_start,
 							    w, h, angle, background);
 }
+
+template <typename T>
+struct copy_crop_rotate_nn_template
+{
+  Image* operator() (Image& image, int x_start, int y_start,
+		     unsigned int w, unsigned int h,
+		     double angle, const Image::iterator& background)
+  {
+    angle = fmod (angle, 360);
+    if (angle < 0)
+      angle += 360;
+    
+    // trivial code just for testing, to be optimized
+    
+    angle = angle / 180 * M_PI;
+    
+    Image* new_image = new Image;
+    new_image->copyMeta (image);
+    new_image->resize (w, h);
+    
+    const float cached_sin = sin (angle);
+    const float cached_cos = cos (angle);
+
+    #pragma omp parallel for schedule (dynamic, 16)
+    for (unsigned int y = 0; y < h; ++y)
+    {
+      T it (*new_image);
+      it.at(0, y);
+      for (unsigned int x = 0; x < w; ++x)
+	{
+	  const int ox = ( (float)x * cached_cos + (float)y * cached_sin) + x_start;
+	  const int oy = (-(float)x * cached_sin + (float)y * cached_cos) + y_start;
+
+	  T orig_it (image);
+	  typename T::accu a;
+ 
+	  if (ox >= 0 && oy >= 0 &&
+	      ox < image.w && oy < image.h) {
+	    
+	    a  = *orig_it.at(ox,  oy);
+	  }
+	  else
+	    a = (background);
+	  
+	  it.set (a);
+	  ++it;
+	}
+    }
+    return new_image;
+  }
+};
+
+Image* copy_crop_rotate_nn (Image& image, int x_start, int y_start,
+			    unsigned int w, unsigned int h,
+			    double angle, const Image::iterator& background)
+{
+  return codegen_return<Image*, copy_crop_rotate_nn_template> (image, x_start, y_start,
+							       w, h, angle, background);
+}
