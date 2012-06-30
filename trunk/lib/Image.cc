@@ -120,21 +120,29 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h, bool force) {
+void Image::resize (int _w, int _h) {
   w = _w;
   h = _h;
   
-  // reuse:
-  setRawDataWithoutDelete ((uint8_t*) realloc (data, stride() * h));
+  setRawDataWithoutDelete((uint8_t*)::realloc(data, stride() * h));
+}
 
+void Image::realloc () {
+  if (!data)
+     return; // not yet loaded, delayed, no-op
+  
+#ifdef __GLIBC__
+  resize(w, h); // realloc, supposed to shrink
+#else
   // the OS allocator may not shrink the buffer, though that may be important for the application, ...
-  if (force) {
-    uint8_t* newdata = (uint8_t*)malloc (stride() * h);
-    if (!newdata) return;
-    
+  uint8_t* newdata = (uint8_t*)malloc(stride() * h);
+  if (newdata) {
     memcpy(newdata, data, stride() * h);
     setRawData(newdata);
+  } else {
+    resize(w, h); // at least try realloc, ...
   }
+#endif
 }
 
 void Image::setDecoderID (const std::string& id) {
