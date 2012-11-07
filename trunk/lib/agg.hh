@@ -1,6 +1,6 @@
 /*
  * Agg to ExactImage bridge.
- * Copyright (C) 2007 - 2010  René Rebe, ExactCODE GmbH, Germany
+ * Copyright (C) 2007 - 2012 René Rebe, ExactCODE GmbH, Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ public:
 				 unsigned alpha, 
 				 unsigned cover=0)
     {
-      u_int16_t r = 0, g = 0, b = 0, a = 0;
+      uint16_t r = 0, g = 0, b = 0, a = 0;
       *it; it.getRGBA (&r, &g, &b, &a);
       
       r = (value_type)(((cr - r) * alpha + (r << base_shift)) >> base_shift);
