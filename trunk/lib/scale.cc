@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -157,7 +157,7 @@ struct box_scale_template
 #ifdef _MSC_VER
     std::vector<typename T::accu> boxes(new_image.w);
     std::vector<int> count(new_image.w);
-    std::vector<int> bindex(new_image.w);
+    std::vector<int> bindex(image.w);
 #else
     typename T::accu boxes [new_image.w];
     int count [new_image.w];
