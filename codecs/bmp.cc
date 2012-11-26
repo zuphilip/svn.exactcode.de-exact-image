@@ -32,6 +32,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <vector>
 
 #include <Endianess.hh>
 #include <inttypes.h>
@@ -282,8 +283,9 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
   return i;
 }
 
-int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, const std::string& decompres, BMPFileHeader* file_hdr)
+int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, const std::string& decompres, BMPFileHeader* _file_hdr)
 {
+  BMPFileHeader* file_hdr = _file_hdr;
   BMPFileHeader file_header; // only used if no file_hdr is supplied
   BMPInfoHeader info_hdr;
   enum BMPType bmp_type;
@@ -300,7 +302,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   stream->seekg (offset);
   stream->read ((char*)&info_hdr.iSize, 4);
   
-   if (!file_hdr) {
+   if (!_file_hdr) {
     offset = 0;
     file_hdr = &file_header;
     stream->seekg (0, std::ios::end);
@@ -399,6 +401,11 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	clr_tbl_size = 1 << image.bps;
 
       //std::cerr << "n_clr_elems: " << n_clr_elems << ", clr_tbl_size: " << clr_tbl_size << std::endl;
+
+      // if we had no file_hdr, update offset to compensate for color table
+      if (!_file_hdr) {
+        file_hdr->iOffBits = file_hdr->iOffBits + n_clr_elems * clr_tbl_size;
+      }
 
       clr_tbl = (uint8_t *) malloc (n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
