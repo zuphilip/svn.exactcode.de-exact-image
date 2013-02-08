@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -86,6 +86,7 @@ void nearest_scale (Image& image, double scalex, double scaley)
   codegen<nearest_scale_template> (image, scalex, scaley);
 }
 
+
 template <typename T>
 struct bilinear_scale_template
 {
@@ -99,31 +100,48 @@ struct bilinear_scale_template
     new_image.setResolution (scalex * image.resolutionX(),
 			     scaley * image.resolutionY());
     
+    // cache x offsets, 2x speedup
+    float bxmap[new_image.w];
+    int sxmap[new_image.w];
+    int sxxmap[new_image.w];
+    for (int x = 0; x < new_image.w; ++x) {
+      bxmap[x] = (float)x / (new_image.w - 1) * (image.w - 1);
+      sxmap[x] = (int)floor(bxmap[x]);
+      sxxmap[x] = sxmap[x] == (image.w - 1) ? sxmap[x] : sxmap[x] + 1;
+    }
+    
     #pragma omp parallel for schedule (dynamic, 16)
     for (int y = 0; y < new_image.h; ++y)
     {
       T dst (new_image);
       dst.at(0, y);
 
-      const double by = (-1.0+image.h) * y / new_image.h;
+      const float by = (float)y / (new_image.h - 1) * (image.h - 1);
+      
       const int sy = (int)floor(by);
       const int ydist = (int) ((by - sy) * 256);
-      const int syy = sy+1;
+      const int syy = sy == (image.h - 1) ? sy : sy + 1;
 
       T src (image);
       for (int x = 0; x < new_image.w; ++x) {
-	const double bx = (-1.0+image.w) * x / new_image.w;
-	const int sx = (int)floor(bx);
+	const float bx = bxmap[x];
+	const int sx = sxmap[x];;
 	const int xdist = (int) ((bx - sx) * 256);
-	const int sxx = sx+1;
+	const int sxx = sxxmap[x];;
 
-	typename T::accu a;
-	a  = (*src.at (sx,  sy )) * ((256-xdist) * (256-ydist));
-	a += (*src.at (sxx, sy )) * (xdist       * (256-ydist));
-	a += (*src.at (sx,  syy)) * ((256-xdist) * ydist);
-	a += (*src.at (sxx, syy)) * (xdist       * ydist);
-	a /= (256 * 256);
-	dst.set (a);
+	typename T::accu a1, a2;
+	a1  = (*src.at (sx,  sy )) * ((256-xdist));
+	a1 += (*src.at (sxx, sy )) * (xdist      );
+	a1 /= 256;
+	
+	a2  = (*src.at (sx,  syy)) * ((256-xdist));
+	a2 += (*src.at (sxx, syy)) * (xdist      );
+	a2 /= 256;
+	
+	a1 = a1 * (256-ydist) + a2 * ydist;
+	a1 /= 256;
+	
+	dst.set(a1);
 	++dst;
       }
     }
