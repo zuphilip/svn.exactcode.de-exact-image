@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -376,37 +376,42 @@ struct copy_crop_rotate_template
     for (unsigned int y = 0; y < h; ++y)
     {
       T it (*new_image);
+      T src (image);
       it.at(0, y);
       for (unsigned int x = 0; x < w; ++x)
 	{
 	  const float ox = ( (float)x * cached_cos + (float)y * cached_sin) + x_start;
 	  const float oy = (-(float)x * cached_sin + (float)y * cached_cos) + y_start;
 
-	  T orig_it (image);
-	  typename T::accu a;
- 
+	  typename T::accu a1;
 	  if (ox >= 0 && oy >= 0 &&
-	      ox < image.w && oy < image.h) {
+	      ox < image.w && oy < image.h)
+	  {
+	    const int sx = (int)floor(ox);
+	    const int sy = (int)floor(oy);
 	    
-	    int oxx = (int)floor(ox);
-	    int oyy = (int)floor(oy);
+	    const int sxx = std::min (sx+1, image.w-1);
+	    const int syy = std::min (sy+1, image.h-1);
 	    
-	    int oxx2 = std::min (oxx+1, image.w-1);
-	    int oyy2 = std::min (oyy+1, image.h-1);
+	    const int xdist = (int) ((ox - sx) * 256);
+	    const int ydist = (int) ((oy - sy) * 256);
 	    
-	    int xdist = (int) ((ox - oxx) * 256);
-	    int ydist = (int) ((oy - oyy) * 256);
+	    a1  = (*src.at (sx,  sy )) * ((256-xdist));
+	    a1 += (*src.at (sxx, sy )) * (xdist      );
+	    a1 /= 256;
 	    
-	    a  = (*orig_it.at(oxx,  oyy))  * ((256 - xdist) * (256 - ydist));
-	    a += (*orig_it.at(oxx2, oyy))  * (xdist         * (256 - ydist));
-	    a += (*orig_it.at(oxx,  oyy2)) * ((256 - xdist) * ydist);
-	    a += (*orig_it.at(oxx2, oyy2)) * (xdist         * ydist);
-	    a /= (256 * 256);
+	    typename T::accu a2;
+	    a2  = (*src.at (sx,  syy)) * ((256-xdist));
+	    a2 += (*src.at (sxx, syy)) * (xdist      );
+	    a2 /= 256;
+	    
+	    a1 = a1 * (256-ydist) + a2 * ydist;
+	    a1 /= 256;
 	  }
 	  else
-	    a = (background);
+	    a1 = (background);
 	  
-	  it.set (a);
+	  it.set(a1);
 	  ++it;
 	}
     }
