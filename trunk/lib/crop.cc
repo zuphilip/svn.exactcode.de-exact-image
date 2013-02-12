@@ -1,6 +1,6 @@
 /*
  * Canvas cropping.
- * Copyright (C) 2006 - 2011 René Rebe, ExactCODE
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,9 @@
 #include <string.h> // memmove
 #include <iostream>
 #include <algorithm>
+#ifndef _MSC_VER
+#include <vector>
+#endif
 
 #include "Image.hh"
 #include "Codecs.hh"
@@ -108,8 +111,12 @@ void fastAutoCrop (Image& image)
   uint8_t* data = image.getRawData() + stride * h;
   
   // which value to compare against, first pixel of the last line
+#ifndef _MSC_VER
   uint8_t v[bytes];
-  memcpy(v, data, bytes);
+#else
+  std::vector<uint8_t> v(bytes);
+#endif
+  memcpy(&v[0], data, bytes);
   
   for (; h >= 0; --h, data -= stride) {
     // data row
