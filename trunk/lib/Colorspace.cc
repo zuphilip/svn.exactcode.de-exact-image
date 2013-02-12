@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2012 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ struct normalize_template
       typedef std::vector<typename T::accu::vtype> histogram_type;
       typename T::accu::vtype hsize;
       T::accu::one().getL(hsize);
-      histogram_type histogram(hsize);
+      histogram_type histogram(hsize + 1);
       
       T it (image);
       typename T::accu::vtype l;

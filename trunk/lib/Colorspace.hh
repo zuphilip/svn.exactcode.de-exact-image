@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2012 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
