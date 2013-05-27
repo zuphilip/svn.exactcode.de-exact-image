@@ -30,6 +30,48 @@
 #include "Endianess.hh"
 
 template <typename T>
+struct histogram_template
+{
+  std::vector<std::vector<unsigned int> > operator() (Image& image, int bins = 256)
+  {
+    std::vector<std::vector<unsigned int> > hist;
+    hist.resize(image.spp);
+
+    typename T::accu a;
+    
+      typename T::accu::vtype hsize;
+      
+      for (int i = 0; i < image.spp; ++i)
+	  hist[i].resize(bins, 0);
+      
+      typename T::accu one = T::accu::one();
+
+      T it (image);
+      for (int y = 0; y < image.h; ++y) {
+	for (int x = 0; x < image.w; ++x, ++it)
+	  {
+	    a = *it;
+            for (int i = 0; i < image.spp; ++i) {
+		typename T::accu::vtype v = a.v[i];
+    		int j = (int)(v * (bins-1) / one.v[i]);
+		if (j < 0) j = 0;
+		else if (j >= bins) j = bins - 1;
+		hist[i][j]++;
+	    }
+	  }
+      }
+
+      return hist;
+    }
+};
+
+std::vector<std::vector<unsigned int> > histogram(Image& image, int bins)
+{
+    return codegen_return<std::vector<std::vector<unsigned int> >,
+	histogram_template> (image, bins);
+}
+
+template <typename T>
 struct normalize_template
 {
   void operator() (Image& image, uint8_t l, uint8_t h)
