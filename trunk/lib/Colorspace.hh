@@ -21,8 +21,11 @@
 #define COLORSPACE_HH
 
 #include "Image.hh"
+#include <vector>
 
 void normalize (Image& image, uint8_t low = 0, uint8_t high = 0);
+
+std::vector<std::vector<unsigned int> > histogram(Image& image, int bins);
 
 void colorspace_rgba8_to_rgb8 (Image& image);
 void colorspace_argb8_to_rgb8 (Image& image);
