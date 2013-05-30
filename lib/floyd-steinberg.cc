@@ -1,7 +1,7 @@
 /*
  * Floyd Steinberg dithering based on web publications.
  *
- * Copyright (C) 2006 - 2008 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
- *
  */
 
 #include <stdlib.h>	// malloc / free
@@ -25,8 +24,12 @@
 #include "floyd-steinberg.h"
 
 void
-FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
+FloydSteinberg (Image& image, int shades)
 {
+  uint8_t* src_row = image.getRawData();
+  const int height = image.h, width = image.w;
+  const int bytes = image.spp;
+  
   int direction = 1;
   
   const float factor = (float) (shades - 1) / (float) 255;
@@ -36,8 +39,8 @@ FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
   float* nexterror = (float*) malloc (width * bytes * sizeof (float));
   
   /*  initialize the error buffers  */
-  for (int row = 0; row < width * bytes; row++)
-    error[row] = nexterror[row] = 0;
+  for (int col = 0; col < width * bytes; col++)
+    error[col] = nexterror[col] = 0;
 
   for (int row = 0; row < height; row++)
     {
@@ -100,10 +103,10 @@ FloydSteinberg (uint8_t* src_row, int width, int height, int shades, int bytes)
 
       src_row += width*bytes;
 
-      /* next row in the opposite direction */
+      // next row in the opposite direction
       direction *= -1;
 
-      /* swap error/nexterror */
+      // swap error/nexterror
       float* tmp = error;
       error = nexterror;
       nexterror = tmp;
