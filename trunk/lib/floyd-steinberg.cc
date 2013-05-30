@@ -17,41 +17,46 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
-#include <stdlib.h>	// malloc / free
-#include <math.h>	// floor
-#include <inttypes.h>	// uint8_t
+#include <math.h> // floor
 
 #include "floyd-steinberg.h"
+#include "ImageIterator2.hh"	
 
-void
-FloydSteinberg (Image& image, int shades)
+template <typename T>
+struct FloydSteinberg_template
 {
-  uint8_t* src_row = image.getRawData();
-  const int height = image.h, width = image.w;
-  const int bytes = image.spp;
-  
-  int direction = 1;
-  
-  const float factor = (float) (shades - 1) / (float) 255;
-  
-  /*  allocate row/error buffers  */
-  float* error = (float*) malloc (width * bytes * sizeof (float));
-  float* nexterror = (float*) malloc (width * bytes * sizeof (float));
-  
-  /*  initialize the error buffers  */
-  for (int col = 0; col < width * bytes; col++)
-    error[col] = nexterror[col] = 0;
-
-  for (int row = 0; row < height; row++)
+  void operator() (Image& image, int shades)
+  {
+    T it(image);
+    typename T::accu a, a2;
+    typename T::accu one = a.one();
+    
+    const int height = image.h, width = image.w;
+    
+    int direction = 1;
+    
+    const float factor = (float) (shades - 1) / (float) one.v[0];
+    
+    // row/error buffers
+    float _error [width * image.spp];
+    float* error = _error;
+    float _nexterror [width  * image.spp];
+    float* nexterror = _nexterror;
+    
+    // initialize the error buffers
+    for (int x = 0; x < width * image.spp; ++x)
+      error[x] = nexterror[x] = 0;
+    
+    for (int y = 0; y < height; ++y)
     {
       int start, end;
-
-      for (int col = 0; col < width * bytes; col++)
-	nexterror[col] = 0;
-
+      
+      for (int x = 0; x < width * image.spp; ++x)
+	nexterror[x] = 0;
+      
       if (direction == 1) {
-	  start = 0;
-	  end = width;
+	start = 0;
+	end = width;
       }
       else {
 	direction = -1;
@@ -59,59 +64,63 @@ FloydSteinberg (Image& image, int shades)
 	end = -1;
       }
       
-      for (int col = start; col != end; col += direction)
+      it.at(start, y);      
+      for (int x = start; x != end; x += direction)
+      {
+	a = *it;
+	for (int channel = 0; channel < image.spp; ++channel)
 	{
-	  for (int channel = 0; channel < bytes; channel++)
-	    {
-     
-	  float newval =
-	    src_row[col * bytes + channel] + error[col * bytes + channel];
-
-          newval = floor (newval*factor + 0.5) / factor;
-	  if (newval > 255)
-	    newval = 255;
+	  float newval = a.v[channel] + error[x * image.spp + channel];
+	  
+	  newval = floor (newval * factor + 0.5) / factor;
+	  if (newval > one.v[0])
+	    newval = one.v[0];
 	  else if (newval < 0)
 	    newval = 0;
-
-	  uint8_t newvali = (uint8_t)(newval+0.5);
 	  
-	  float cerror = src_row[col * bytes + channel] + error[col * bytes +
-							  channel] - newvali;
-	  src_row[col * bytes + channel] = newvali;
+	  a2.v[channel] = newval + 0.5;
 	  
+	  float cerror = a.v[channel] + error[x * image.spp + channel] - a2.v[channel];
+	  	  
 	  // limit color bleeding, limit to /4 of the sample range
 	  // TODO: make optional
-	  if (fabs(cerror) > 255 / 4) {
+	  if (fabs(cerror) > one.v[0] / 4) {
 	    if (cerror < 0)
-	      cerror = -255 / 4;
+	      cerror = -one.v[0] / 4;
 	    else
-	      cerror = 255 / 4;
+	      cerror = one.v[0] / 4;
 	  }
 	  
-	  nexterror[col * bytes + channel] += cerror * 5 / 16;
-	  if (col + direction >= 0 && col + direction < width)
-	    {
-	      error[(col + direction) * bytes + channel] += cerror * 7 / 16;
-	      nexterror[(col + direction) * bytes + channel] +=
-		cerror * 1 / 16;
-	    }
-	  if (col - direction >= 0 && col - direction < width)
-	    nexterror[(col - direction) * bytes + channel] += cerror * 3 / 16;
-
-	    }
+	  nexterror[x * image.spp + channel] += cerror * 5 / 16;
+	  if (x + direction >= 0 && x + direction < width)
+	  {
+	    error[(x + direction) * image.spp + channel] += cerror * 7 / 16;
+	    nexterror[(x + direction) * image.spp + channel] += cerror * 1 / 16;
+	  }
+	  if (x - direction >= 0 && x - direction < width)
+	    nexterror[(x - direction) * image.spp + channel] += cerror * 3 / 16;
+	  
 	}
+	it.set(a2);
+	if (direction > 0)
+	  ++it;
+	else
+	  --it;
 
-      src_row += width*bytes;
-
+      }
+      
       // next row in the opposite direction
       direction *= -1;
-
+      
       // swap error/nexterror
       float* tmp = error;
       error = nexterror;
       nexterror = tmp;
     }
+  }
+};
 
-  free (error);
-  free (nexterror);
+void FloydSteinberg (Image& image, int shades)
+{
+    codegen<FloydSteinberg_template> (image, shades);
 }
