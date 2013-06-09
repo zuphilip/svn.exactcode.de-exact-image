@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2013 René Rebe, ExactCODE GmbH
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -65,28 +65,19 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   // color normalize on background color
   // search for background color
   {
-    int histogram[256][3] = { {0}, {0} };
+    std::vector<std::vector<unsigned int> > hist = histogram(image);
     
     colorspace_by_name (image, "rgb8");
-    
-    uint8_t* it = image.getRawData ();
-    uint8_t* end = image.getRawDataEnd ();
-    
-    while (it != end) {
-      uint8_t r = *it++;
-      uint8_t g = *it++;
-      uint8_t b = *it++;
-      histogram[r][0]++;
-      histogram[g][1]++;
-      histogram[b][2]++;
-    }
     
     int lowest = 255, highest = 0, bg_r = 0, bg_g = 0, bg_b = 0;
     for (int i = 0; i <= 255; i++)
       {
-	int r = histogram[i][0];
-	int g = histogram[i][1];
-	int b = histogram[i][2];
+	int r, g, b;
+	r = g = b = hist[0][i];
+	if (hist.size() > 1) {
+	    g = hist[1][i];
+	    b = hist[2][i];
+	}
 	
 	if (debug)
 	  std::cout << i << ": "<< r << " " << g << " " << b << std::endl;
@@ -99,12 +90,18 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	      highest = i;
 	  }
 	
-	if (histogram[i][0] > histogram[bg_r][0])
+	if (hist[0][i] > hist[0][bg_r])
 	  bg_r = i;
-	if (histogram[i][1] > histogram[bg_g][1])
-	  bg_g = i;
-	if (histogram[i][2] > histogram[bg_b][2])
-	  bg_b = i;
+
+	if (hist.size() > 1) {
+	  if (hist[1][i] > hist[1][bg_r])
+	    bg_g = i;
+	  if (hist[2][i] > hist[2][bg_r])
+	    bg_b = i;
+	} else {
+	    bg_g = bg_b = i;
+	}
+
       }
     highest = (int) (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
     
@@ -133,9 +130,9 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
 
-    it = image.getRawData ();
-    end = image.getRawDataEnd ();
-    uint8_t*it2 = it;
+    uint8_t* it = image.getRawData();
+    uint8_t* end = image.getRawDataEnd();
+    uint8_t* it2 = it;
     
     while (it != end) {
       int _r = *it++;
