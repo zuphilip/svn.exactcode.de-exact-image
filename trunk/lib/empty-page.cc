@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2008 René Rebe
+ * Copyright (C) 2005 - 2013 René Rebe
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -30,12 +30,12 @@
 /* TODO: for more accurance one could introduce a hot-spot area that
    has a higher weight than the other (outer) region to more reliably
    detect crossed but otherwise empty pages */
-bool detect_empty_page (Image& im, double percent, int margin,
+bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
 			int* set_pixels)
 {
-  // sanitize margin
-  if (margin % 8 != 0)
-    margin -= margin % 8;
+  // sanitize margins
+  if (marginH % 8 != 0)
+    marginH -= marginH % 8;
   
   // TODO: optimize not to copy the pixel data on colorspace conversion
   Image image;
@@ -74,8 +74,8 @@ bool detect_empty_page (Image& im, double percent, int margin,
   // count pixels by table lookup
   int pixels = 0;
   uint8_t* data = image.getRawData();
-  for (int row = margin; row < image.h-margin; row++) {
-    for (int x = margin/8; x < stride - margin/8; x++) {
+  for (int row = marginV; row < image.h - marginV; ++row) {
+    for (int x = marginH/8; x < stride - marginH/8; ++x) {
       int b = bits_set [ data[stride*row + x] ];
       // it is a bits_set table - and we want the zeros ...
       pixels += 8-b;
