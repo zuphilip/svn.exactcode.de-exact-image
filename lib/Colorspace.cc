@@ -39,8 +39,6 @@ struct histogram_template
 
     typename T::accu a;
     
-      typename T::accu::vtype hsize;
-      
       for (int i = 0; i < image.spp; ++i)
 	  hist[i].resize(bins, 0);
       
