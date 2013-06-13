@@ -1,6 +1,6 @@
 /*
- * Colorspace conversions..
- * Copyright (C) 2006 - 2008 René Rebe, ExactCOD GmbH Germany
+ * A Balanced Dithering Technique
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,13 +16,16 @@
  * copyright holder ExactCODE GmbH Germany.
  *
  * Based uppon:
- *   C/C++ Users Journal, December 1998: A Balanced Dithering Technique
- *                                       Thiadmer Riemersma
+ *   C/C++ Users Journal, December 1998: Thiadmer Riemersma
  */
 
 #include <math.h>
-#include <string.h>
-#include <inttypes.h>	// int8_t
+#include "riemersma.h"
+
+// substitutes "log2(n)", which is apparently not available on BSD, OS X
+static inline double priv_log2(double n) {
+    return log(n) / log(2);
+}
 
 enum direction_t {
   NONE,
@@ -173,21 +176,18 @@ void hilbert_level(int level, direction_t direction)
   }
 }
 
-// substitutes "log2(n)", which is apparently not available on BSD, OS X
-inline double priv_log2(double n) {
-  return log(n) / log(2);
-}
 
-void Riemersma(uint8_t* image, int width, int height, int shades, int bytes)
+void Riemersma(Image& image, int shades)
 {
-  img_width = width;
-  img_height = height;
-  img_bytes = bytes;
+  uint8_t* raw = image.getRawData();
+  img_width = image.w;
+  img_height = image.h;
+  img_bytes = image.spp;
   
   // determine the required order of the Hilbert curve
-  const int size = width > height ? width : height;
+  const int size = img_width > img_height ? img_width : img_height;
   
-  for (int ch = 0; ch < bytes; ++ch) {
+  for (int ch = 0; ch < img_bytes; ++ch) {
     int level = (int) priv_log2 (size);
     if ((1L << level) < size)
       ++level;
@@ -198,7 +198,7 @@ void Riemersma(uint8_t* image, int width, int height, int shades, int bytes)
     cur_x = 0;
     cur_y = 0;
     
-    img_ptr = image + ch;
+    img_ptr = raw + ch;
     
     if (level > 0)
       hilbert_level(level, UP);
