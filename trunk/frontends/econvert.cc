@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2011 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2013 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -432,32 +432,14 @@ bool convert_convolve (const Argument<double>& arg)
 
 bool convert_dither_floyd_steinberg (const Argument<int>& arg)
 {
-  bool ret = true;
-  for (images_iterator it = images.begin(); it != images.end(); ++it)
-    {
-      if ((*it)->bps != 8) {
-	std::cerr << "Can only dither 8 bit data right now." << std::endl;
-	ret = false;
-      }
-      else
-	FloydSteinberg((*it)->getRawData(), (*it)->w, (*it)->h, arg.Get(), (*it)->spp);
-    }
-  return ret;
+  FOR_ALL_IMAGES(FloydSteinberg, arg.Get());
+  return true; 
 }
 
 bool convert_dither_riemersma (const Argument<int>& arg)
 {
-  bool ret = true;
-  for (images_iterator it = images.begin(); it != images.end(); ++it)
-    {
-      if ((*it)->bps != 8) {
-	std::cerr << "Can only dither 8 bit data right now." << std::endl;
-	ret = false;
-      }
-      else
-	Riemersma ((*it)->getRawData(), (*it)->w, (*it)->h, arg.Get(), (*it)->spp);
-    }
-  return ret;
+  FOR_ALL_IMAGES(Riemersma, arg.Get());
+  return true;
 }
 
 bool convert_edge (const Argument<bool>& arg)
