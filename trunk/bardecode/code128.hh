@@ -429,7 +429,7 @@ namespace BarDecode
                                 break;
                     case FNC2:
                     case FNC3:
-                    case FNC4: std::cerr << "WARNING: Function charaters for code128 are not yet supported." << std::endl;
+                    case FNC4: std::cerr << "WARNING: Function characters for code128 are not yet supported." << std::endl;
                                 break;
                     default: code += result;
                     }
