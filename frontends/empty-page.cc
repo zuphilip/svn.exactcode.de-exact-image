@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2010 René Rebe
+ * Copyright (C) 2005-2013 René Rebe
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -79,7 +79,7 @@ int main (int argc, char* argv[])
   
   int set_pixels;
   const double percent = arg_percent.Get();
-  bool is_empty = detect_empty_page (image, percent, margin, &set_pixels);
+  bool is_empty = detect_empty_page (image, percent, margin, margin, &set_pixels);
   
   double image_percent = (float) set_pixels / (image.w * image.h) * 100;
   std::cerr << "The image has " << set_pixels
