@@ -19,8 +19,10 @@
  *   C/C++ Users Journal, December 1998: Thiadmer Riemersma
  */
 
-#include <math.h>
 #include "riemersma.h"
+
+#include <math.h>
+#include <string.h>
 
 // substitutes "log2(n)", which is apparently not available on BSD, OS X
 static inline double priv_log2(double n) {
