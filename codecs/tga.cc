@@ -213,7 +213,7 @@ bool TGACodec::writeImage(std::ostream* stream, Image& image, int quality,
   footer.ExtensionOffset = 0;
   footer.DeveloperOffset = 0;
   
-  strcpy(footer.Signature, "TRUEVISION-XFILE");
+  memcpy(footer.Signature, "TRUEVISION-XFILE", sizeof(footer.Signature));
   footer.ReservedCharacter = '.';
   footer.ZeroTerminator = 0;
   stream->write((char*)&footer, sizeof(footer));
