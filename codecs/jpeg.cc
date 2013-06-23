@@ -142,7 +142,7 @@ boolean fill_input_buffer (j_decompress_ptr cinfo)
   src->pub.bytes_in_buffer = nbytes;
   src->start_of_file = FALSE;
   
-  return TRUE;
+  return (boolean)TRUE;
 }
 
 
@@ -231,7 +231,7 @@ boolean empty_output_buffer (j_compress_ptr cinfo)
   dest->pub.next_output_byte = dest->buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
 
-  return TRUE;
+  return (boolean)TRUE;
 }
 
 
@@ -377,10 +377,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   jpeg_compress_set_density (&cinfo, image);
 
-  jpeg_set_quality(&cinfo, quality, FALSE); /* do not limit to baseline-JPEG values */
+  jpeg_set_quality(&cinfo, quality, (boolean)FALSE); /* do not limit to baseline-JPEG values */
 
   /* Start compressor */
-  jpeg_start_compress(&cinfo, TRUE);
+  jpeg_start_compress(&cinfo, (boolean)TRUE);
 
   /* Process data */
   while (cinfo.next_scanline < cinfo.image_height) {
@@ -535,11 +535,11 @@ void JPEGCodec::parseExif (Image& image)
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
-  jpeg_read_header(cinfo, TRUE);
+  jpeg_read_header(cinfo, (boolean)TRUE);
   
   /* Step 4: set parameters for decompression */
   
-  cinfo->buffered_image = TRUE; /* select buffered-image mode */
+  cinfo->buffered_image = (boolean)TRUE; /* select buffered-image mode */
 
   // TODO: set scaling
   if (factor != 1) {
@@ -700,11 +700,11 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
 
   /* Step 3: read file parameters with jpeg_read_header() */
 
-  jpeg_read_header(cinfo, TRUE);
+  jpeg_read_header(cinfo, (boolean)TRUE);
   
   /* Step 4: set parameters for decompression */
   
-  cinfo->buffered_image = TRUE; /* select buffered-image mode */
+  cinfo->buffered_image = (boolean)TRUE; /* select buffered-image mode */
   
   /* Step 5: Start decompressor */
   
@@ -768,14 +768,14 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   cpp_stream_src (&srcinfo, &private_copy);
   
   /* Read file header */
-  jpeg_read_header(&srcinfo, TRUE);
+  jpeg_read_header(&srcinfo, (boolean)TRUE);
   
   transformoption.transform = code;
-  transformoption.trim = TRUE;
-  transformoption.perfect = FALSE;
-  transformoption.force_grayscale = to_gray ? TRUE : FALSE;
+  transformoption.trim = (boolean)TRUE;
+  transformoption.perfect = (boolean)FALSE;
+  transformoption.force_grayscale = (boolean)(to_gray ? TRUE : FALSE);
   
-  transformoption.crop = crop ? TRUE : FALSE;
+  transformoption.crop = (boolean)(crop ? TRUE : FALSE);
   if (crop) {
     transformoption.crop_xoffset = x;
     transformoption.crop_xoffset_set = JCROP_POS;
