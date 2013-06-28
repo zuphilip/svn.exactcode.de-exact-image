@@ -182,16 +182,17 @@ void colorspace_argb8_to_rgb8 (Image& image)
   image.resize(image.w, image.h); // realloc
 }
 
-void colorspace_rgb8_to_gray8 (Image& image, const int bytes)
+void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, const int wG, const int wB)
 {
+  const int sum = wR + wG + wB;
   uint8_t* output = image.getRawData();
   for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h; it += bytes)
     {
       // R G B order and associated weighting
-      int c = (int)it[0] * 28;
-      c += (int)it[1] * 59;
-      c += (int)it[2] * 11;
-      *output++ = (uint8_t)(c / 100);
+      int c = (int)it[0] * wR;
+      c += (int)it[1] * wG;
+      c += (int)it[2] * wB;
+      *output++ = (uint8_t)(c / sum);
     }
   image.spp = 1; // converted data right now
   image.resize(image.w, image.h); // realloc
