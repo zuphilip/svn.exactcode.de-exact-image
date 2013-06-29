@@ -189,9 +189,9 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, cons
   for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h; it += bytes)
     {
       // R G B order and associated weighting
-      int c = (int)it[0] * wR;
-      c += (int)it[1] * wG;
-      c += (int)it[2] * wB;
+      int c  = (int)it[0] * wR;
+          c += (int)it[1] * wG;
+          c += (int)it[2] * wB;
       *output++ = (uint8_t)(c / sum);
     }
   image.spp = 1; // converted data right now
