@@ -172,15 +172,18 @@ struct box_scale_template
     T dst (new_image);
   
     // prepare boxes
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__clang__)
     std::vector<typename T::accu> boxes(new_image.w);
-    std::vector<int> count(new_image.w);
-    std::vector<int> bindex(image.w);
 #else
-    typename T::accu boxes [new_image.w];
+    typename T::accu boxes [new_image.w]; 
+#endif
+
+#if defined(_MSC_VER)
+    std::vector<int> count(new_image.w);
+    std::vector<int> bindex(image.w); // pre-computed box-indexes
+#else
     int count [new_image.w];
-    // pre-compute box indexes
-    int bindex [image.w];
+    int bindex [image.w]; // pre-computed box indexes
 #endif
     for (int sx = 0; sx < image.w; ++sx)
       bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
