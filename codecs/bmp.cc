@@ -227,7 +227,8 @@ struct BMPColorEntry
  */
 static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 {
-  char tmp;
+  uint16_t tmp;
+  uint16_t* buf16 = (uint16_t*)buf;
   
   switch (bit_count) {
     
@@ -241,7 +242,15 @@ static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
       *(buf + 2) = tmp;
     }
     break;
-  
+
+  case 48:
+    for (uint32_t i = 0; i < width; i++, buf16 += 3) {
+      tmp = *buf16;
+      *buf16 = *(buf16 + 2);
+      *(buf16 + 2) = tmp;
+    }
+    break;
+
   case 32:
     {
       uint8_t* buf1 = buf;
@@ -374,6 +383,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   case 16:
   case 24:
   case 32:
+  case 48:
     break;
   default:
     std::cerr << "BMPCodec:: Cannot read " << info_hdr.iBitCount
@@ -435,7 +445,12 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       image.spp = 3;
       image.bps = 8;
       break;
-    
+
+    case 48:
+      image.spp = 3;
+      image.bps = 16;
+      break;
+
     default:
       break;
     }
@@ -643,7 +658,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     break;
   } /* switch */
   
-  // convert to RGB color-space - we do not handle palete images internally
+  // convert to RGB color-space - we do not handle palette images internally
   
   // no color table anyway or RGB* ?
   if (clr_tbl && image.spp < 3)
@@ -682,7 +697,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  if (image.bps > 8 || image.bps == 2 || image.spp > 3) {
+  if (image.bps > 16 || image.bps == 2 || image.spp > 3) {
     std::cerr << "BMPCodec: " << image.bps << " bits and "
 	      << image.spp << " samples not supported." << std::endl;
     return false;
