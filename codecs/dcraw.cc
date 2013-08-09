@@ -1,5 +1,22 @@
+/*
+ * Copyright (C) 2006 - 2013 René Rebe
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ * 
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
 
 #include <istream>
+#include <fstream>
 #include <sstream>
 
 #include <ctype.h>
@@ -96,16 +113,17 @@ static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
 #define fgetc(stream) stream->get ()
 #undef getc
 #define getc(stream) stream->get ()
-#define fgets(mem,n,stream) stream->get ((char*)mem, n);
+#define fgets(mem,n,stream) stream->get ((char*)mem, n)
 #undef putc
 #define putc(c,stream) stream->put (c)
 #define fputc(c,stream) stream->put (c)
 
 #define tmpfile new std::stringstream
+#define fopen(name, mode) new std::fstream(name)
 #define fclose(stream) delete (stream);
 
 #define feof(stream) stream->eof()
-#define ftello(stream) stream->tellg()
+#define ftello(stream) ((off_t)stream->tellg())
 
 #define fseek(stream,pos,kind) (stream->clear(), stream->seekg(pos, kind))
 #define ftell(stream) (int) stream->tellg ()
@@ -120,7 +138,7 @@ static inline int wrapped_fscanf (std::istream* stream, const char* buf, ...)
 int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& decompress)
 {
   // dcraw namespace, to not tinker with the missign static linkage of the
-  // upstream C source on any updatey
+  // upstream C source on every update
   using namespace dcraw;
   
 #ifndef NO_LCMS
@@ -164,7 +182,9 @@ int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& d
       write_fun = write_thumb;
       
       std::stringstream thumbnail;
-      (*write_fun)(&thumbnail);
+      ofp = &thumbnail;
+      
+      (*write_fun)();
       
       // we can have a jpeg or pnm dump here
       bool ret = ImageCodec::Read(&thumbnail, im, "", decompress);
@@ -195,11 +215,17 @@ int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& d
     raw_color = 0;
   }
   
-  image = (ushort (*)[4]) calloc (iheight*iwidth, sizeof *image);
-  
   if (meta_length) {
     meta_data = (char *) malloc (meta_length);
     merror (meta_data, "main()");
+  }
+  
+  if (filters || colors == 1) {
+    raw_image = (ushort *) calloc ((raw_height+7), raw_width*2);
+    merror (raw_image, "main()");
+  } else {
+    image = (ushort (*)[4]) calloc (iheight, iwidth*sizeof *image);
+    merror (image, "main()");
   }
   
   if (shot_select >= is_raw)
@@ -207,22 +233,44 @@ int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& d
 	     ifname, shot_select);
   fseeko (ifp, data_offset, SEEK_SET);
   (*load_raw)();
-  // bad_pixels();
+
+  if (document_mode == 3) {
+    top_margin = left_margin = fuji_width = 0;
+    height = raw_height;
+    width  = raw_width;
+  }
+  iheight = (height + shrink) >> shrink;
+  iwidth  = (width  + shrink) >> shrink;
+  if (raw_image) {
+    image = (ushort (*)[4]) calloc (iheight, iwidth*sizeof *image);
+    merror (image, "main()");
+    crop_masked_pixels();
+    free (raw_image);
+  }
   if (zero_is_bad) remove_zeroes();
+  // bad_pixels();
   
   quality = 2 + !fuji_width;
   
-  if (is_foveon && !document_mode) foveon_interpolate();
-  if (!is_foveon && document_mode < 2) scale_colors();
+  if (is_foveon) {
+    if (document_mode || load_raw == &CLASS foveon_dp_load_raw) {
+      for (i=0; i < height*width*4; i++)
+	if ((short) image[0][i] < 0) image[0][i] = 0;
+    } else foveon_interpolate();
+  } else if (document_mode < 2)
+    scale_colors();
   pre_interpolate();
   if (filters && !document_mode) {
     if (quality == 0)
       lin_interpolate();
     else if (quality == 1 || colors > 3)
       vng_interpolate();
-    else if (quality == 2)
+    else if (quality == 2 && filters > 1000)
       ppg_interpolate();
-    else ahd_interpolate();
+    else if (filters == 9)
+      xtrans_interpolate (quality*2-3);
+    else
+      ahd_interpolate();
   }
   if (mix_green)
     for (colors=3, i=0; i < height*width; i++)
@@ -237,13 +285,15 @@ int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& d
   convert_to_rgb();
   if (use_fuji_rotate) stretch();
   
+  convert_to_rgb();
+  
   im.bps = 16;
   im.spp = 3;
   im.resize(width, height);
   
   // the non-linear gamma by default
   uint16_t lut [0x10000];
-  const double gamma = 1.8;
+  const double gamma = 2.2;
   const double one_over_gamma = 1. / gamma;
   for (int i = 0; i < 0x10000; ++i)
     lut [i] = pow( (double) i / 0xFFFF, one_over_gamma) * 0xFFFF;

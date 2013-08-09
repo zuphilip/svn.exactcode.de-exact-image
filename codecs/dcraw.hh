@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2013 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ public:
   
   DCRAWCodec () {
     registerCodec ("dcraw", this); // primary entry
+    registerCodec ("arw", this); // Sony RAW
     registerCodec ("crw", this); // Canon
     registerCodec ("cr2", this);
     registerCodec ("mrw", this); // Mniolta
@@ -32,9 +33,10 @@ public:
     registerCodec ("x3f", this); // Sigma
     registerCodec ("dcr", this); // Kodak
     registerCodec ("kdc", this); 
-    registerCodec ("srf", this); // Sony
     registerCodec ("raw", this); // Panasonic, Casio, Leica
     registerCodec ("rw2", this); // Panasonic
+    registerCodec ("srf", this); // Sony
+    registerCodec ("sr2", this); // Sony2
   };
   
   virtual std::string getID () { return "DCRAW"; };
