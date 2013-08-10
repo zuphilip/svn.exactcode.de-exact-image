@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's identify compatible command line frontend.
- * Copyright (C) 2006 - 2010 René Rebe
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -61,6 +61,12 @@ int main (int argc, char* argv[])
 				    "user defined format string",
 				    0, 1);
   arglist.Add (&arg_format);
+
+  Argument<std::string> arg_decompression ("d", "decompress",
+                                         "decompression method for reading images e.g. thumb\n\t\t"
+                                         "depending on the input format, allowing to read partial data",
+                                         0, 1);
+  arglist.Add (&arg_decompression);
   
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv))
@@ -70,7 +76,7 @@ int main (int argc, char* argv[])
     {
       std::cerr << "Exact image identification (edentify)."
 		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2006 - 2007 by ExactCODE and Archivista" << std::endl
+                <<  " - Copyright (C) 2006 - 2013 by ExactCODE and Archivista" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -84,7 +90,8 @@ int main (int argc, char* argv[])
        file != list.end(); ++file) {
     for (int i = 0, n = 1; i < n; ++i)
     {
-      int ret = ImageCodec::Read(*file, image, "", i);
+      int ret = ImageCodec::Read(*file, image,
+	                         arg_decompression.Size() > 0 ? arg_decompression.Get() : "", i);
       if (ret < 1) {
 	std::cout << "edentify: unable to open image '" << *file << "'." << std::endl;
 	continue;
