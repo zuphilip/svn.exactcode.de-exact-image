@@ -32,6 +32,8 @@
 #include <time.h>
 #include <stdarg.h> // for wrapped printf/scanf
 
+#include <arpa/inet.h>
+
 #include "dcraw.hh"
 
 #include "rotate.hh"

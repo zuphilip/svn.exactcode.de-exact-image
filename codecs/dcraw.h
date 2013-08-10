@@ -27,8 +27,6 @@
 
 #define NODEPS
 
-#if 0
-
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -46,6 +44,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/types.h>
+
+#if 0
 
 #if defined(DJGPP) || defined(__MINGW32__)
 #define fseeko fseek
