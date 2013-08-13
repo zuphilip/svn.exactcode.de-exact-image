@@ -45,13 +45,12 @@
 #include <time.h>
 #include <sys/types.h>
 
-#if 0
 
 #if defined(DJGPP) || defined(__MINGW32__)
 #define fseeko fseek
 #define ftello ftell
 #else
-#define fgetc getc_unlocked
+//#define fgetc getc_unlocked
 #endif
 #ifdef __CYGWIN__
 #include <io.h>
@@ -69,7 +68,6 @@ typedef unsigned __int64 UINT64;
 #include <unistd.h>
 #include <utime.h>
 #include <netinet/in.h>
-#endif
 #endif
 
 typedef long long INT64;
