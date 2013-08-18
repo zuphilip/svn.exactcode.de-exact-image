@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -348,8 +348,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     stream->read((char*)&info_hdr.iAlphaMask, 4);
     
     n_clr_elems = 4;
-    image.setResolution((2.54 * info_hdr.iXPelsPerMeter + .05) / 100,
-                        (2.54 * info_hdr.iYPelsPerMeter + .05) / 100);
+    image.setResolution((2.54 * info_hdr.iXPelsPerMeter) / 100 + .5,
+                        (2.54 * info_hdr.iYPelsPerMeter) / 100 + .5);
   }
   
   if (bmp_type == BMPT_OS22) {
@@ -728,8 +728,8 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   info_hdr.iBitCount = image.spp * image.bps;
   info_hdr.iCompression = BMPC_RGB;
   info_hdr.iSizeImage  = image.stride()*image.h; // TODO: compressed size
-  info_hdr.iXPelsPerMeter = (int32_t) (image.resolutionX() * 100 / 2.54);
-  info_hdr.iYPelsPerMeter = (int32_t) (image.resolutionY() * 100 / 2.54);
+  info_hdr.iXPelsPerMeter = (int32_t) (100. * image.resolutionX() / 2.54 + .5);
+  info_hdr.iYPelsPerMeter = (int32_t) (100. * image.resolutionY() / 2.54 + .5);
   info_hdr.iClrUsed = image.spp == 1 ? 1 << image.bps : 0;
   info_hdr.iClrImportant = 0;
   info_hdr.iRedMask = 0;
