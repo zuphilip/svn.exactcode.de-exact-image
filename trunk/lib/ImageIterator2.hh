@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 - 2012 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2008 - 2013 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,6 +14,9 @@
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
  */
+
+#ifndef IMAGE_ITERATOR2_HH
+#define IMAGE_ITERATOR2_HH
 
 #include "Image.hh"
 
@@ -1342,3 +1345,5 @@ T0 codegen_return (T1& a1, T2& a2, T3& a3, T4& a4,
   T0 t;
   return t;
 }
+
+#endif
