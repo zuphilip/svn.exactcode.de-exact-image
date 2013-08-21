@@ -19,7 +19,6 @@
 #include <iostream>
 
 #include "Image.hh"
-#include "Codecs.hh"
 
 #include "Colorspace.hh"
 #include "Matrix.hh"

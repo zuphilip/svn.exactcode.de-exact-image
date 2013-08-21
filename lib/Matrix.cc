@@ -1,6 +1,6 @@
 /*
  * Convolution Matrix.
- * Copyright (C) 2006 - 2012 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2007 Valentin Ziegler, ExactCODE GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH Germany
  * Copyright (C) 2006 Archivista
@@ -20,7 +20,6 @@
  */
 
 #include "Matrix.hh"
-#include "Codecs.hh"
 
 #include "ImageIterator2.hh"
 
