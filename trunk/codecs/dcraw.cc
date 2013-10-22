@@ -161,7 +161,11 @@ int DCRAWCodec::readImage (std::istream* stream, Image& im, const std::string& d
 
   if (use_camera_matrix < 0)
       use_camera_matrix = use_camera_wb;
-  
+
+  // TODO: cleanup on failure
+  if (setjmp (failure))
+    return false;
+
   identify();
   
   if (!is_raw)
