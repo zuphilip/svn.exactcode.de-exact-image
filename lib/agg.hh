@@ -44,6 +44,7 @@ public:
   
   typedef agg::pixfmt_rgb24 pixfmt_type;
   typedef pixfmt_type::color_type color_type;
+  typedef color_type::calc_type calc_type;
   typedef pixfmt_type::row_data row_data;
   
   class blender_exact_image {
@@ -334,7 +335,42 @@ public:
   void blend_color_hspan(int x, int y, int len, 
 			 const color_type* colors, 
 			 const cover_type* covers,
-			 cover_type cover = agg::cover_full);
+			 cover_type cover = agg::cover_full)
+  {
+    Image::iterator it = m_img->begin();
+    it = it.at (x, y);
+    
+    if (covers)
+      {
+	do 
+	  {
+	    copy_or_blend_pix(it, *colors++, *covers++);
+	    ++it;
+	  }
+	while(--len);
+      }
+    else
+      {
+	if (cover == 255)
+	  {
+	    do 
+	      {
+		copy_or_blend_pix(it, *colors++, 255);
+		++it;
+	      }
+	    while(--len);
+	  }
+	else
+	  {
+	    do 
+	      {
+		copy_or_blend_pix(it, *colors++, cover);
+		++it;
+	      }
+	    while(--len);
+	  }
+      }
+  }
   
   //--------------------------------------------------------------------
   void blend_color_vspan(int x, int y, int len, 
@@ -380,6 +416,25 @@ public:
 
 private:
   
+  inline void copy_or_blend_pix(Image::iterator& it,
+				const color_type& c, 
+				unsigned cover)
+  {
+    if (c.a)
+      {
+	calc_type alpha = (calc_type(c.a) * (cover + 1)) >> 8;
+	if(alpha == color_type::base_mask)
+	  {
+	    it.setRGBA ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b, color_type::base_mask);
+	    it.set(it);
+	  }
+	else
+	  {
+	    //m_blender.blend_pix(p, c.r, c.g, c.b, alpha, cover);
+	  }
+      }
+  }
+
   Image* m_img;
   rect_i m_clip_box;
 };
