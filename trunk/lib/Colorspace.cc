@@ -827,6 +827,10 @@ bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
     else
       colorspace_rgba8_to_rgb8 (image);
   }
+
+  if (image.spp == 3 && spp == 4 && image.bps == 8) { // TODO: might be RGB16
+      colorspace_rgb8_to_rgb8a (image);
+  }
   
   if (image.spp == 3 && spp == 1) {
     if (image.bps == 8) 
