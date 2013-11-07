@@ -75,7 +75,7 @@ struct normalize_template
   void operator() (Image& image, uint8_t l, uint8_t h)
   {
     typename T::accu a;
-    typename T::accu::vtype black, white;
+    typename T::accu::vtype black(0), white(0);
     
     // darkest 1%, lightest .5%
     const int white_point = image.w * image.h / 100;

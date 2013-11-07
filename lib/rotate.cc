@@ -81,7 +81,7 @@ void flipX (Image& image)
 	    uint8_t* ptr2 = ptr1 + stride - bytes;
 	    
 	    for (; ptr1 < ptr2; ptr2 -= 2 * bytes) {
-	      for (int b = 0; b < bytes; b++) {
+	      for (unsigned b = 0; b < bytes; b++) {
 		uint8_t v = *ptr1;
 		*ptr1++ = *ptr2;
 		*ptr2++ = v;
@@ -113,7 +113,7 @@ void flipY (Image& image)
       uint8_t* row1 = &data[y * bytes];
       uint8_t* row2 = &data[y2 * bytes];
 
-      for (int x = 0; x < bytes; ++x)
+      for (unsigned x = 0; x < bytes; ++x)
 	{
 	  uint8_t v = *row1;
 	  *row1++ = *row2;
