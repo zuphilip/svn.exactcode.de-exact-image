@@ -120,18 +120,26 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h) {
-  w = _w;
-  h = _h;
-  
-  setRawDataWithoutDelete((uint8_t*)::realloc(data, stride() * h));
+bool Image::resize (int _w, int _h) {
+  std::swap(w, _w);
+  std::swap(h, _h);
+  uint8_t* ptr = (uint8_t*)::realloc(data, stride() * h);
+  if (ptr) {
+    setRawDataWithoutDelete(ptr);
+  } else {
+    // restore
+    w = _w;
+    h = _h;
+  }
+
+  return ptr != 0;
 }
 
 void Image::realloc () {
   if (!data)
      return; // not yet loaded, delayed, no-op
   
-#ifdef __GLIBC__
+#if !defined(__APPLE__)
   resize(w, h); // realloc, supposed to shrink
 #else
   // the OS allocator may not shrink the buffer, though that may be important for the application, ...
