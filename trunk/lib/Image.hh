@@ -114,7 +114,7 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   
-  void resize (int _w, int _h);
+  bool resize (int _w, int _h);
   void realloc ();
   void New (int _w, int _h) DEPRECATED { resize (_w, _h); }
   
