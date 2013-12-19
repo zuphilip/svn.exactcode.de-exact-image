@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe
+ * Copyright (C) 2006 - 2013 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -178,7 +178,7 @@ void cpp_stream_src (j_decompress_ptr cinfo, std::istream* stream)
   if (cinfo->src == NULL) {	/* first time for this JPEG object? */
     cinfo->src = (jpeg_source_mgr*) malloc (sizeof(cpp_src_mgr));
     src = (cpp_src_mgr*) cinfo->src;
-    src->buffer = (JOCTET *) malloc (INPUT_BUF_SIZE * sizeof(JOCTET));
+    src->buffer = (JOCTET*) malloc (INPUT_BUF_SIZE * sizeof(JOCTET));
   }
 
   src = (cpp_src_mgr*) cinfo->src;
@@ -212,7 +212,7 @@ void init_destination (j_compress_ptr cinfo)
   cpp_dest_mgr* dest = (cpp_dest_mgr*) cinfo->dest;
 
   /* Allocate the output buffer --- it will be released when done with image */
-  dest->buffer = (JOCTET *)
+  dest->buffer = (JOCTET*)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
 				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
@@ -343,9 +343,9 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
 
-  JSAMPROW buffer[1];	/* pointer to JSAMPLE row[s] */
+  JSAMPROW buffer[1]; // pointer to JSAMPLE row[s]
 
-  /* Initialize the JPEG compression object with default error handling. */
+  // Initialize the JPEG compression object with default error handling.
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
   cpp_stream_dest (&cinfo, stream);
@@ -372,24 +372,24 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   cinfo.input_components = image.spp;
   cinfo.data_precision = image.bps; 
   
-  /* defaults depending on in_color_space */
+  // defaults depending on in_color_space
   jpeg_set_defaults(&cinfo);
   
   jpeg_compress_set_density (&cinfo, image);
 
-  jpeg_set_quality(&cinfo, quality, (boolean)FALSE); /* do not limit to baseline-JPEG values */
+  jpeg_set_quality(&cinfo, quality, (boolean)FALSE); // do not limit to baseline-JPEG values
 
-  /* Start compressor */
+  // Start compressor
   jpeg_start_compress(&cinfo, (boolean)TRUE);
 
-  /* Process data */
+  // Process data
   while (cinfo.next_scanline < cinfo.image_height) {
     buffer[0] = (JSAMPLE*) image.getRawData() +
       cinfo.next_scanline*image.stride();
     (void) jpeg_write_scanlines(&cinfo, buffer, 1);
   }
 
-  /* Finish compression and release memory */
+  // Finish compression and release memory
   jpeg_finish_compress(&cinfo);
   jpeg_destroy_compress(&cinfo);
 
@@ -512,34 +512,32 @@ void JPEGCodec::parseExif (Image& image)
   struct jpeg_decompress_struct* cinfo = new jpeg_decompress_struct;
   struct my_error_mgr jerr;
   
-  /* Step 1: allocate and initialize JPEG decompression object */
+  // Step 1: allocate and initialize JPEG decompression object
 
-  /* We set up the normal JPEG error routines, then override error_exit. */
+  // We set up the normal JPEG error routines, then override error_exit.
   cinfo->err = jpeg_std_error(&jerr.pub);
   jerr.pub.error_exit = my_error_exit;
-  /* Establish the setjmp return context for my_error_exit to use. */
+  
+  // Establish the setjmp return context for my_error_exit to use.
   if (setjmp(jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error.
-     * We need to clean up the JPEG object, close the input file, and return.
-     */
+    // If we get here, the JPEG code has signaled an error.
+    // We need to clean up the JPEG object, close the input file, and return.
     jpeg_destroy_decompress (cinfo);
     return;
   }
   
   jpeg_create_decompress (cinfo);
   
-  /* Step 2: specify data source (eg, a file) */
-  
+  // Step 2: specify data source (eg, a file)
   private_copy.seekg (0);
   cpp_stream_src (cinfo, &private_copy);
 
-  /* Step 3: read file parameters with jpeg_read_header() */
-
+  // Step 3: read file parameters with jpeg_read_header()
   jpeg_read_header(cinfo, (boolean)TRUE);
   
-  /* Step 4: set parameters for decompression */
+  // Step 4: set parameters for decompression
   
-  cinfo->buffered_image = (boolean)TRUE; /* select buffered-image mode */
+  cinfo->buffered_image = (boolean)TRUE; // select buffered-image mode
 
   // TODO: set scaling
   if (factor != 1) {
@@ -548,29 +546,28 @@ void JPEGCodec::parseExif (Image& image)
     cinfo->dct_method = JDCT_IFAST;
   }
   
-  /* Step 5: Start decompressor */
+  // Step 5: Start decompressor
   jpeg_start_decompress (cinfo);
   
   image->w = cinfo->output_width;
   image->h = cinfo->output_height;
   
-  /* JSAMPLEs per row in output buffer */
+  // JSAMPLEs per row in output buffer
   int row_stride = cinfo->output_width * cinfo->output_components;
 
   image->resize (image->w, image->h);
   
-  /* Step 6: jpeg_read_scanlines(...); */
+  // Step 6: jpeg_read_scanlines(...)
   
   uint8_t* data = image->getRawData ();
-  JSAMPROW buffer[1];		/* pointer to JSAMPLE row[s] */
+  JSAMPROW buffer[1]; // pointer to JSAMPLE row[s]
   
   while (! jpeg_input_complete(cinfo)) {
     jpeg_start_output(cinfo, cinfo->input_scan_number);
     while (cinfo->output_scanline < cinfo->output_height) {
-      /* jpeg_read_scanlines expects an array of pointers to scanlines.
-       * Here the array is only one element long, but you could ask for
-       * more than one scanline at a time if that's more convenient.
-       */
+      // jpeg_read_scanlines expects an array of pointers to scanlines.
+      // Here the array is only one element long, but you could ask for
+      // more than one scanline at a time if that's more convenient.
       buffer[0] = (JSAMPLE*) data+ (cinfo->output_scanline*row_stride);
       jpeg_read_scanlines(cinfo, buffer, 1);
     }
@@ -677,16 +674,15 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   
   struct my_error_mgr jerr;
   
-  /* Step 1: allocate and initialize JPEG decompression object */
+  // Step 1: allocate and initialize JPEG decompression object
 
-  /* We set up the normal JPEG error routines, then override error_exit. */
+  // We set up the normal JPEG error routines, then override error_exit.
   cinfo->err = jpeg_std_error(&jerr.pub);
   jerr.pub.error_exit = my_error_exit;
-  /* Establish the setjmp return context for my_error_exit to use. */
+  // Establish the setjmp return context for my_error_exit to use.
   if (setjmp(jerr.setjmp_buffer)) {
-    /* If we get here, the JPEG code has signaled an error.
-     * We need to clean up the JPEG object, close the input file, and return.
-     */
+    // If we get here, the JPEG code has signaled an error.
+    // We need to clean up the JPEG object, close the input file, and return.
     jpeg_destroy_decompress (cinfo);
     free (cinfo);
     return false;
@@ -694,20 +690,16 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   
   jpeg_create_decompress (cinfo);
   
-  /* Step 2: specify data source (eg, a file) */
-  
+  // Step 2: specify data source (eg, a file)
   cpp_stream_src (cinfo, stream);
 
-  /* Step 3: read file parameters with jpeg_read_header() */
-
+  // Step 3: read file parameters with jpeg_read_header()
   jpeg_read_header(cinfo, (boolean)TRUE);
   
-  /* Step 4: set parameters for decompression */
-  
+  // Step 4: set parameters for decompression
   cinfo->buffered_image = (boolean)TRUE; /* select buffered-image mode */
   
-  /* Step 5: Start decompressor */
-  
+  // Step 5: Start decompressor
   jpeg_start_decompress (cinfo);
   
   image.w = cinfo->output_width;
@@ -715,22 +707,22 @@ bool JPEGCodec::readMeta (std::istream* stream, Image& image)
   image.spp = cinfo->output_components;
   image.bps = 8;
   
-  /* These three values are not used by the JPEG code, merely copied */
-  /* into the JFIF APP0 marker. JFIF code for pixel size units. */
+  // These three values are not used by the JPEG code, merely copied
+  // into the JFIF APP0 marker. JFIF code for pixel size units.
   switch (cinfo->density_unit)
     {
-    case 1: /* dots/inch */
+    case 1: // dots/inch
       image.setResolution(cinfo->X_density, cinfo->Y_density);
       break;
-    case 2: /* dots/cm */
+    case 2: // dots/cm
       image.setResolution(cinfo->X_density * 254 / 100,
 			  cinfo->Y_density * 254 / 100);
       break;
-    default: /* 0 for unknown, ratio may still be defined */
+    default: // 0 for unknown, ratio may still be defined
       image.setResolution(0, 0);
     }
   
-  /* This is an important step since it will release a good deal of memory. */
+  // This is an important step since it will release a good deal of memory.
   jpeg_finish_decompress(cinfo);
   jpeg_destroy_decompress(cinfo);
   delete (cinfo);
@@ -743,7 +735,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
 			     unsigned int x, unsigned int y,
 			     unsigned int w, unsigned int h)
 {
-  jpeg_transform_info transformoption; /* image transformation options */
+  jpeg_transform_info transformoption; // image transformation options
   
   jpeg_decompress_struct srcinfo;
   jpeg_compress_struct dstinfo;
@@ -751,15 +743,15 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   
   std::cerr << "Transforming DCT coefficients." << std::endl;
   
-  jvirt_barray_ptr * src_coef_arrays;
-  jvirt_barray_ptr * dst_coef_arrays;
+  jvirt_barray_ptr* src_coef_arrays;
+  jvirt_barray_ptr* dst_coef_arrays;
   
-  /* Initialize the JPEG decompression object with default error handling. */
+  // Initialize the JPEG decompression object with default error handling.
   srcinfo.err = jpeg_std_error(&jsrcerr);
   jpeg_create_decompress(&srcinfo);
-  /* Initialize the JPEG compression object with default error handling. */
+  // Initialize the JPEG compression object with default error handling.
   dstinfo.err = jpeg_std_error(&jdsterr);
-  /* Initialize the JPEG compression object with default error handling. */
+  // Initialize the JPEG compression object with default error handling.
   jpeg_create_compress(&dstinfo);
   
   srcinfo.mem->max_memory_to_use = dstinfo.mem->max_memory_to_use;
@@ -767,7 +759,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   private_copy.seekg (0);
   cpp_stream_src (&srcinfo, &private_copy);
   
-  /* Read file header */
+  // Read file header
   jpeg_read_header(&srcinfo, (boolean)TRUE);
   
   transformoption.transform = code;
@@ -787,20 +779,18 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     transformoption.crop_height_set = JCROP_POS;
   }
   
-  /* Any space needed by a transform option must be requested before
-   * jpeg_read_coefficients so that memory allocation will be done right.
-   */
+  // Any space needed by a transform option must be requested before
+  // jpeg_read_coefficients so that memory allocation will be done right.
   jtransform_request_workspace(&srcinfo, &transformoption);
   
-  /* Read source file as DCT coefficients */
+  // Read source file as DCT coefficients
   src_coef_arrays = jpeg_read_coefficients(&srcinfo);
   
-  /* Initialize destination compression parameters from source values */
+  // Initialize destination compression parameters from source values
   jpeg_copy_critical_parameters(&srcinfo, &dstinfo);
 
-  /* Adjust destination parameters if required by transform options;
-   * also find out which set of coefficient arrays will hold the output.
-   */
+  // Adjust destination parameters if required by transform options;
+  // also find out which set of coefficient arrays will hold the output.
   if (transformoption.transform != JXFORM_NONE ||
       transformoption.force_grayscale ||
       transformoption.crop)
@@ -810,7 +800,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   else
     dst_coef_arrays = src_coef_arrays;
   
-  /* Specify data destination for compression */
+  // Specify data destination for compression
   std::stringstream stream;
   if (!s)
     stream.str().reserve(private_copy.str().size());
@@ -818,15 +808,15 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
   
   jpeg_compress_set_density (&dstinfo, image);
   
-  /* Start compressor (note no image data is actually written here) */
+  // Start compressor (note no image data is actually written here)
   jpeg_write_coefficients(&dstinfo, dst_coef_arrays);
   
-  /* Execute image transformation, if any */
+  // Execute image transformation, if any
   jtransform_execute_transformation(&srcinfo, &dstinfo,
 				    src_coef_arrays,
 				    &transformoption);
   
-  /* Finish compression and release memory */
+  // Finish compression and release memory
   jpeg_finish_compress(&dstinfo);
   jpeg_destroy_compress(&dstinfo);
   jpeg_finish_decompress(&srcinfo);
