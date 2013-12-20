@@ -811,7 +811,7 @@ bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
   if (image.bps < 8 && image.bps > bps)
     colorspace_grayX_to_gray8 (image);
   
-  if (image.bps == 8 && image.spp == 1 && spp == 3)
+  if (image.bps == 8 && image.spp == 1 && spp >= 3)
     colorspace_gray8_to_rgb8 (image);
 
   if (image.bps == 8 && bps == 16)
