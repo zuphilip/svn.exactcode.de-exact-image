@@ -182,6 +182,22 @@ void colorspace_argb8_to_rgb8 (Image& image)
   image.resize(image.w, image.h); // realloc
 }
 
+void colorspace_cmyk_to_rgb8 (Image& image)
+{
+  uint8_t* output = image.getRawData();
+  for (uint8_t* it = image.getRawData();
+       it < image.getRawData() + image.w*image.h*image.spp;
+       it += 4)
+    {
+      uint16_t c = it[0], m = it[1], y = it[2], k = it[3]; 
+      *output++ = ((0xff - c) * (0xff - k)) >> 8;
+      *output++ = ((0xff - m) * (0xff - k)) >> 8;
+      *output++ = ((0xff - y) * (0xff - k)) >> 8;
+    }
+  image.spp = 3; // converted data right now
+  image.resize(image.w, image.h); // realloc
+}
+
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, const int wG, const int wB)
 {
   const int sum = wR + wG + wB;
