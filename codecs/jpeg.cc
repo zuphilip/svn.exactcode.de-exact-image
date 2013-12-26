@@ -596,7 +596,7 @@ bool JPEGCodec::flipY (Image& image)
 
 bool JPEGCodec::rotate (Image& image, double angle)
 {
-  // so roate if the first fraction is zero
+  // so rotate if the first fraction is zero
   switch ((int)(angle * 10)) {
   case 900:  return doTransform (JXFORM_ROT_90, image);
   case 1800: return doTransform (JXFORM_ROT_180, image);
@@ -872,7 +872,6 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     
     // We re-read the header because we do not want to re-hardcode the
     // trimming required for all the other corner cases.
-    // Tail call as micro optimization to already free tmp objects.
     std::cerr << "Re-reading meta data." << std::endl;
     readMeta (&private_copy, image);
     image.setCodec(this);
