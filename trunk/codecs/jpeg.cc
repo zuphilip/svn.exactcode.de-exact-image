@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2013 René Rebe
+ * Copyright (C) 2006 - 2014 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -309,6 +309,7 @@ int JPEGCodec::readImage (std::istream* stream, Image& image, const std::string&
   
   // private copy for deferred decoding
   //private_copy.str().resize(stream->tellg());
+  stream->clear ();
   stream->seekg (0);
   *stream >> codec->private_copy.rdbuf();
   
