@@ -166,6 +166,10 @@ ImageCodec* Image::getCodec() {
 }
 
 void Image::setCodec (ImageCodec* _codec) {
+  // do not reset, nor free when the same codec is re-sety
+  if (codec == _codec)
+    return;
+  
   // release attached codec
   if (codec) {
     delete (codec);
