@@ -56,16 +56,13 @@ void Image::copyMeta (const Image& other)
 
 Image& Image::operator= (const Image& other)
 {
-  copyMeta (other);
-  
   uint8_t* d = other.getRawData();
-  if (d) {
-    resize (w, h);
+  copyMeta (other);
+  ret = resize (w, h); // allocate
+  if (d && data) {
     memcpy (data, d, stride() * h);
   }
-  else {
-    setRawData();
-  }
+  setRawData();
   
   return *this;
 }
