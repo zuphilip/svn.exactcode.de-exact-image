@@ -736,7 +736,7 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
 			     unsigned int x, unsigned int y,
 			     unsigned int w, unsigned int h)
 {
-  jpeg_transform_info transformoption; // image transformation options
+  jpeg_transform_info transformoption = {}; // image transformation options
   
   jpeg_decompress_struct srcinfo;
   jpeg_compress_struct dstinfo;
@@ -833,49 +833,33 @@ bool JPEGCodec::doTransform (JXFORM_CODE code, Image& image,
     image.setCodec(this);
     
     // Update meta: w, h, spp might have changed.
-    
+    image.w = transformoption.output_width;
+    image.h = transformoption.output_height;
+
     // avoid the expensive readMeta for some cases
     switch (code) {
     case JXFORM_ROT_90:
     case JXFORM_ROT_270:
-      if (image.w % 8 == 0 && image.h % 8 == 0) {
 	image.setResolution(image.resolutionX(), image.resolutionY());
 	image.setCodec(this);
-	{ int t = image.w; image.w = image.h; image.h = t; }
-	return true;
-      }
-      break;
-      
+
     case JXFORM_ROT_180:
     case JXFORM_FLIP_H:
     case JXFORM_FLIP_V:
-      if (image.w % 8 == 0 && image.h % 8 == 0)
-	return true;
       
     default:
       ; // silence compiler
     }
     
-    if (crop) {
-      if (x % 8 == 0 && y % 8 == 0 &&
-	  w % 8 == 0 && h % 8 == 0)
-	{
-	  image.w = w;
-	  image.h = h;
-	  return true;
-	}
-    }
-    
     if (to_gray) {
       image.spp = 1;
-      return true;
     }
     
     // We re-read the header because we do not want to re-hardcode the
     // trimming required for all the other corner cases.
-    std::cerr << "Re-reading meta data." << std::endl;
-    readMeta (&private_copy, image);
-    image.setCodec(this);
+    //std::cerr << "Re-reading meta data." << std::endl;
+    //readMeta (&private_copy, image);
+    //image.setCodec(this);
   }
   
   return true;
