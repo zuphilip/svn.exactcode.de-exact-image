@@ -58,7 +58,7 @@ Image& Image::operator= (const Image& other)
 {
   uint8_t* d = other.getRawData();
   copyMeta (other);
-  ret = resize (w, h); // allocate
+  resize (w, h); // allocate
   if (d && data) {
     memcpy (data, d, stride() * h);
   }
