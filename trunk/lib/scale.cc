@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2014 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ struct nearest_scale_template
 {
   void operator() (Image& new_image, double scalex, double scaley)
   {
+    
     Image image;
     image.copyTransferOwnership (new_image);
     
@@ -90,15 +91,19 @@ void nearest_scale (Image& image, double scalex, double scaley)
 template <typename T>
 struct bilinear_scale_template
 {
-  void operator() (Image& new_image, double scalex, double scaley)
+  void operator() (Image& new_image, double scalex, double scaley, bool fixed)
   {
+    if (!fixed) {
+      scalex = (int)(scalex * new_image.w);
+      scaley = (int)(scaley * new_image.h);
+    }
+      
     Image image;
     image.copyTransferOwnership (new_image);
 
-    new_image.resize ((int)(scalex * (double) image.w),
-		      (int)(scaley * (double) image.h));
-    new_image.setResolution (scalex * image.resolutionX(),
-			     scaley * image.resolutionY());
+    new_image.resize (scalex, scaley);
+    new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			     new_image.h * image.resolutionY() / image.h);
     
     // cache x offsets, 2x speedup
     float bxmap[new_image.w];
@@ -148,11 +153,11 @@ struct bilinear_scale_template
   }
 };
 
-void bilinear_scale (Image& image, double scalex, double scaley)
+void bilinear_scale (Image& image, double scalex, double scaley, bool fixed)
 {
   if (scalex == 1.0 && scaley == 1.0)
     return;
-  codegen<bilinear_scale_template> (image, scalex, scaley);
+  codegen<bilinear_scale_template> (image, scalex, scaley, fixed);
 }
 
 template <typename T>
