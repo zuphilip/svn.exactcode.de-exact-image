@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2014 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -67,6 +67,6 @@ void invert (Image& image);
 // "internal" helper (for image loading)
 
 void colorspace_de_palette (Image& image, int table_entries,
-			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap);
+			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap, uint16_t* amap = 0);
 
 #endif

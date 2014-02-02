@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2014 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -658,10 +658,10 @@ void colorspace_8_to_16 (Image& image)
 }
 
 void colorspace_de_palette (Image& image, int table_entries,
-			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap)
+			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap, uint16_t* amap)
 {
   // detect 1bps b/w tables
-  if (image.bps == 1 && table_entries >= 2) {
+  if (image.bps == 1 && table_entries >= 2 && !amap) {
     if (rmap[0] == 0 &&
 	gmap[0] == 0 &&
 	bmap[0] == 0 &&
@@ -691,7 +691,7 @@ void colorspace_de_palette (Image& image, int table_entries,
   
   // detect gray tables
   bool is_gray = false;
-  if (table_entries > 1) {
+  if (table_entries > 1 && !amap) {
     bool is_ordered_gray = (image.bps == 8 || image.bps == 4 ||
 			    image.bps == 2) && (1 << image.bps == table_entries);
     is_gray = true;
@@ -721,7 +721,9 @@ void colorspace_de_palette (Image& image, int table_entries,
   }
   
   int new_size = image.w * image.h;
-  if (!is_gray) // RGB
+  if (amap)
+    new_size *= 4; // RGBA, CMYK
+  else if (!is_gray) // RGB
     new_size *= 3;
   
   uint8_t* orig_data = image.getRawData();
@@ -751,6 +753,7 @@ void colorspace_de_palette (Image& image, int table_entries,
 	*dst++ = rmap[z >> bitshift] >> 8;
 	*dst++ = gmap[z >> bitshift] >> 8;
 	*dst++ = bmap[z >> bitshift] >> 8;
+	if (amap) *dst++ = amap[z >> bitshift] >> 8;
       }
 
       z <<= image.bps;
@@ -761,6 +764,8 @@ void colorspace_de_palette (Image& image, int table_entries,
   image.bps = 8;
   if (is_gray)
     image.spp = 1;
+  else if (amap)
+    image.spp = 4;
   else
     image.spp = 3;
 
