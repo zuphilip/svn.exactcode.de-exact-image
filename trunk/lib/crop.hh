@@ -1,6 +1,6 @@
 /*
  * Canvas cropping.
- * Copyright (C) 2006 - 2011 Ren\xc3\xa9 Rebe, ExactCODE
+ * Copyright (C) 2006 - 2011 René Rebe, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
