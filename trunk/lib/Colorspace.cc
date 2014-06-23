@@ -874,6 +874,10 @@ bool colorspace_convert(Image& image, int spp, int bps, uint8_t threshold)
               << spp << ", bps: " << bps
               << " - now at spp: " << image.spp << ", bps: " << image.bps
               << std::endl;
+    image.spp = spp;
+    image.bps = bps;
+    image.resize(image.w, image.h);
+    
     return false;
   }
   return true;
