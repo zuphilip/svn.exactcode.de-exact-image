@@ -1,6 +1,6 @@
 /*
  * Agg to ExactImage bridge.
- * Copyright (C) 2007 - 2013 René Rebe, ExactCODE GmbH, Germany
+ * Copyright (C) 2007 - 2014 René Rebe, ExactCODE GmbH, Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,6 @@
 #include <agg_rasterizer_outline_aa.h>
 #include <agg_rasterizer_scanline_aa.h>
 #include <agg_renderer_outline_aa.h>
-
-#include <agg_gsv_text.h>
 
 #include "Image.hh"
 
