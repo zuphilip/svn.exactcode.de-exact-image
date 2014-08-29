@@ -16,6 +16,9 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
+#ifndef SCALE_HH
+#define SCALE_HH
+
 // pick the best
 void scale (Image& image, double xscale, double yscale);
 
@@ -29,3 +32,5 @@ void bicubic_scale (Image& image, double xscale, double yscale);
 void ddt_scale (Image& image, double xscale, double yscale);
 
 void thumbnail_scale (Image& image, double xscale, double yscale);
+
+#endif
