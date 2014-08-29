@@ -68,8 +68,8 @@ struct nearest_scale_template
 
       T src (image);
       for (int x = 0; x < new_image.w; ++x) {
-	const int bx = (int) (((double) x) / scalex);
-	const int by = (int) (((double) y) / scaley);
+	const int bx = (int) (((double) x) / scalex) + 1;
+	const int by = (int) (((double) y) / scaley) + 1;
 	
 	typename T::accu a;
 	a  = *src.at (bx, by);
@@ -329,11 +329,12 @@ struct ddt_scale_template
     char dir_map [image.h][image.w];
     
     T src_a(image), src_b(image), src_c(image), src_d(image);
-    src_a.at(0, 1);
-    src_b.at(1, 0);
-    src_c.at(1, 1);
-    
     for (int y = 0; y < image.h-1; ++y) {
+      src_a.at(0, 0);
+      src_b.at(0, y+1);
+      src_c.at(1, y+1);
+      src_d.at(1, y+0);
+      
       for (int x = 0; x < image.w-1; ++x) {
 	typename T::accu::vtype a, b, c, d;
 	(*src_a).getL(a); ++src_a;
