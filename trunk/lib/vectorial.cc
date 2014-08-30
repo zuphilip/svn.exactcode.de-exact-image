@@ -1,6 +1,6 @@
 /*
  * Agg vector rasterization interface
- * Copyright (C) 2007 - 2010 Rene Rebe, ExactCODE GmbH
+ * Copyright (C) 2007 - 2014 Rene Rebe, ExactCODE GmbH
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH
  *
  * based on GSMP/plugins-gtk/GUI-gtk/Pixmap.cc:
@@ -36,6 +36,7 @@
 #include "agg_conv_segmentator.h"
 #include "agg_conv_smooth_poly1.h"
 #include "agg_path_storage.h"
+#include "agg_path_stroke.h"
 #include "agg_trans_single_path.h"
 #include "agg_bounding_rect.h"
 
