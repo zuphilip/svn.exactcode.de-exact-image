@@ -36,7 +36,7 @@
 #include "agg_conv_segmentator.h"
 #include "agg_conv_smooth_poly1.h"
 #include "agg_path_storage.h"
-#include "agg_path_stroke.h"
+#include "agg_conv_stroke.h"
 #include "agg_trans_single_path.h"
 #include "agg_bounding_rect.h"
 
