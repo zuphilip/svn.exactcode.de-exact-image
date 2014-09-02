@@ -68,8 +68,8 @@ struct nearest_scale_template
 
       T src (image);
       for (int x = 0; x < new_image.w; ++x) {
-	const int bx = (int) (((double) x) / scalex) + 1;
-	const int by = (int) (((double) y) / scaley) + 1;
+	const int bx = (int) (((double) x) / scalex);
+	const int by = (int) (((double) y) / scaley);
 	
 	typename T::accu a;
 	a  = *src.at (bx, by);
@@ -313,6 +313,23 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
 #ifndef _MSC_VER
 
 template <typename T>
+T interp(float x, float y, const T&a,  const T& b, const T& c, const T& d)
+{
+  // x, y: [0 .. 1] // we use 256-scale for fix-point int images
+  if (x >= y) {
+    float b1 = -(x - 1);
+    float b2 = (x - 1) - (y - 1);
+    float b3 = 1 - b1 - b2;
+    return (a * (256 * b1) + d * (256 * b2) + c * (256 * b3)) / 256;
+  } else {
+    float b1 = -(y - 1);
+    float b2 = -((x - 1) - (y - 1));
+    float b3 = 1 - b1 - b2;
+    return (a * (256 * b1) + b * (256 * b2) + c * (256 * b3)) / 256;
+  }
+}
+
+template <typename T>
 struct ddt_scale_template
 {
   void operator() (Image& new_image, double scalex, double scaley)
@@ -326,14 +343,18 @@ struct ddt_scale_template
 			     scaley * image.resolutionY());
     
     // first scan the source image and build a direction map
-    char dir_map [image.h][image.w];
+    // TODO: we could do the check on-the-fly, ...
+    char dir_map [image.h - 1][image.w - 1];
     
+    // A - D
+    // |   |
+    // B - C
     T src_a(image), src_b(image), src_c(image), src_d(image);
     for (int y = 0; y < image.h-1; ++y) {
-      src_a.at(0, 0);
+      src_a.at(0, y);
       src_b.at(0, y+1);
       src_c.at(1, y+1);
-      src_d.at(1, y+0);
+      src_d.at(1, y);
       
       for (int x = 0; x < image.w-1; ++x) {
 	typename T::accu::vtype a, b, c, d;
@@ -384,12 +405,12 @@ struct ddt_scale_template
     for (int y = 0; y < new_image.h; ++y) {
       const double by = (-1.0 + image.h) * y / new_image.h;
       const int sy = (int)floor(by);
-      const int ydist = (int)((by - sy) * 256);
+      const float ydist = by - sy;
       
       for (int x = 0; x < new_image.w; ++x) {
 	const double bx = (-1.0+image.w) * x / new_image.w;
 	const int sx = (int)floor(bx);
-	const int xdist = (int)((bx - sx) * 256);
+	const float xdist = bx - sx;
 	
 	/*
 	  std::cout << "bx: " << bx << ", by: " << by
@@ -398,56 +419,43 @@ struct ddt_scale_template
 	*/
 	
 	typename T::accu v;
+	const typename T::accu a = *src.at(sx, sy);
+	const typename T::accu b = *src.at(sx, sy + 1);
+	const typename T::accu c = *src.at(sx + 1, sy + 1);
+	const typename T::accu d = *src.at(sx + 1, sy);
 	
 	// which triangle does the point fall into?
-	if (dir_map[sy][sx] == '/') {
-	  const typename T::accu b = *src.at(sx, sy + 1);
-	  const typename T::accu d = *src.at(sx + 1, sy);
-	  
-	  if (xdist <= 256 - ydist) // left side triangle
-	    {
-	      const typename T::accu a = *src.at(sx, sy);
-	      // std::cout << "/-left" << std::endl;
-	      v =  a       * (256 - xdist) * (256 - ydist);
-	      v += b       * (256 - xdist) * ydist;
-	      v += d       * xdist         * (256 - ydist);
-	      v += (b+d)/2 * xdist         * ydist;
-	    }
-	  else // right side triangle
-	    {
-	      const typename T::accu c = *src.at(sx + 1, sy + 1);
-	      //std::cout << "/-right" << std::endl;
-	      v =  b       * (256 - xdist) * ydist;
-	      v += c       * xdist         * ydist;
-	      v += d       * xdist         * (256 - ydist);
-	      v += (b+d)/2 * (256 - xdist) * (256 - ydist);
-	    }
+	if (dir_map[sy][sx] == '\\') {
+	  v = interp(xdist, ydist, a, b, c, d);
+	  //v = a;
 	}
 	else {
-	  const typename T::accu a = *src.at(sx, sy);
-	  const typename T::accu c = *src.at(sx + 1, sy + 1);
-	  if (xdist <= ydist) // left side triangle
-	    {
-	      const typename T::accu b = *src.at(sx, sy + 1);
-	      //std::cout << "\\-left" << std::endl;
-	      v =  a       * (256 - xdist) * (256 - ydist);
-	      v += b       * (256 - xdist) * ydist;
-	      v += c       * xdist         * ydist;
-	      v += (a+c)/2 * xdist         * (256 - ydist);
-	    }
-	  else // right side triangle
-	    {
-	      const typename T::accu d = *src.at(sx + 1, sy);
-	      //std::cout << "\\-right" << std::endl;
-	      v =  a       * (256 - xdist) * (256 - ydist);
-	      v += c       * xdist         * ydist;
-	      v += d       * xdist         * (256 - ydist);
-	      v += (a+c)/2 * (256 - xdist) * ydist;
-	    }
+	  // rotate triangles by 90
+	  v = interp(ydist, 1. - xdist, d, a, b, c);
 	}
-	v /= (256 * 256);
+	
 	dst.set(v);
 	++dst;
+      }
+    }
+
+    // syntetic test
+    if (false) {
+      dst.at(0, 0);
+      for (int y = 0; y < new_image.h; ++y) {
+	for (int x = 0; x < new_image.w; ++x) {
+	  typename T::accu v, a, b, c, d;
+	  a.setRGB(0, 0, 0);
+	  b.setRGB(33, 33, 33);
+	  c.setRGB(255, 255, 255);
+	  d.setRGB(128, 128, 128);
+	  
+	  v = interp(float(x) / new_image.w, (float)y / new_image.h, a, b, c, d);
+	  //v = interp((float)y / new_image.h, 1. - float(x) / new_image.w, d, a, b, c);
+	  
+	  dst.set(v);
+	  ++dst;
+	}
       }
     }
   }
