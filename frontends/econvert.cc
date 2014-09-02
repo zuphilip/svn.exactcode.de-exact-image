@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2013 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2014 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -480,15 +480,15 @@ bool convert_size (const Argument<std::string>& arg)
     {
       // this is mostly used to set the size for raw data loads
       // so we need to have at least one (empty) image
-      if (images.empty())
-	images.push_back(new Image);
+      if (images.empty()) {
+	Image* image = new Image;
+	image->spp = image->bps = 1;
+	images.push_back(image);
+      }
       
-      for (images_iterator it = images.begin(); it != images.end(); ++it)
-	{
-	  (*it)->w = w;
-	  (*it)->h = h;
-	  (*it)->setRawData(0);
-	}
+      for (images_iterator it = images.begin(); it != images.end(); ++it) {
+	(*it)->resize(w, h);
+      }
       
       return true;
     }
@@ -1057,7 +1057,7 @@ int main (int argc, char* argv[])
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2011 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005 - 2014 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
