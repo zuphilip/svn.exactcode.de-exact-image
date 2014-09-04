@@ -332,7 +332,7 @@ T interp(float x, float y, const T&a,  const T& b, const T& c, const T& d)
 template <typename T>
 struct ddt_scale_template
 {
-  void operator() (Image& new_image, double scalex, double scaley)
+  void operator() (Image& new_image, double scalex, double scaley, bool extended)
   {
     Image image;
     image.copyTransferOwnership (new_image);
@@ -373,6 +373,34 @@ struct ddt_scale_template
 	  dir_map[y][x] = '/';
 	}
     }
+    
+    if (extended)
+      {
+	char dir_map2 [image.h - 1][image.w - 1];
+	
+	for (int y = 1; y < image.h-2; ++y) {
+	  for (int x = 1; x < image.w-2; ++x)
+	    {
+	      uint8_t n1 = 0, n2 = 0;
+	      for (int i = 0; i < 3; ++i) {
+		for (int j = 0; j < 3; ++j) {
+		  n1 += dir_map[y+i][x+j] == '/';
+		  n2 += dir_map[y+i][x+j] == '\\';
+		}
+	      }
+	      if (n1 >= 6)
+		dir_map2[y][x] = '/';
+	      else if (n2 >= 6)
+		dir_map2[y][x] = '\\';
+	      else 
+		dir_map2[y][x] = dir_map[y][x];
+	    }
+	}
+
+	for (int y = 1; y < image.h-2; ++y)
+	  for (int x = 1; x < image.w-2; ++x)
+	    dir_map[y][x] = dir_map2[y][x];
+      }
     
     if (false)
       {
@@ -458,11 +486,11 @@ struct ddt_scale_template
   }
 };
   
-void ddt_scale (Image& image, double scalex, double scaley)
+void ddt_scale (Image& image, double scalex, double scaley, bool extended)
 {
   if (scalex == 1.0 && scaley == 1.0)
     return;
-  codegen<ddt_scale_template> (image, scalex, scaley);
+  codegen<ddt_scale_template> (image, scalex, scaley, extended);
 }
 
 #endif
