@@ -29,7 +29,7 @@ void box_scale (Image& image, double xscale, double yscale);
 void bilinear_scale (Image& image, double xscale, double yscale, bool fixed = false);
 void bicubic_scale (Image& image, double xscale, double yscale);
 
-void ddt_scale (Image& image, double xscale, double yscale);
+void ddt_scale (Image& image, double xscale, double yscale, bool extended = true);
 
 void thumbnail_scale (Image& image, double xscale, double yscale);
 
