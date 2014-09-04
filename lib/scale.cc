@@ -371,8 +371,7 @@ struct ddt_scale_template
 	  dir_map[y][x] = '\\';
 	else
 	  dir_map[y][x] = '/';
-      }
-      ++src_a; ++src_b; ++src_c; ++src_d;
+	}
     }
     
     if (false)
@@ -403,20 +402,19 @@ struct ddt_scale_template
     T dst(new_image);
     T src(image);
     for (int y = 0; y < new_image.h; ++y) {
-      const double by = (-1.0 + image.h) * y / new_image.h;
-      const int sy = (int)floor(by);
+      const float by = (float)y / (new_image.h - 1) * (image.h - 1);
+      const int sy = std::min((int)floor(by), image.h - 2);
       const float ydist = by - sy;
       
       for (int x = 0; x < new_image.w; ++x) {
-	const double bx = (-1.0+image.w) * x / new_image.w;
-	const int sx = (int)floor(bx);
+	const float bx = (float)x / (new_image.w - 1) * (image.w - 1);
+	const int sx = std::min((int)floor(bx), image.w - 2);
 	const float xdist = bx - sx;
 	
-	/*
-	  std::cout << "bx: " << bx << ", by: " << by
-	  << ", x: " << x << ", y: " << y
-	  << ", sx: " << sx << ", sy: " << sy << std::endl;
-	*/
+	if (false)
+	  std::cout << "x: " << x << ", y: " << y << " <- "
+		    << "bx: " << bx << ", by: " << by
+		    << ", sx: " << sx << ", sy: " << sy << " dist: " << xdist <<", " << ydist << std::endl;
 	
 	typename T::accu v;
 	const typename T::accu a = *src.at(sx, sy);
@@ -427,10 +425,9 @@ struct ddt_scale_template
 	// which triangle does the point fall into?
 	if (dir_map[sy][sx] == '\\') {
 	  v = interp(xdist, ydist, a, b, c, d);
-	  //v = a;
 	}
-	else {
-	  // rotate triangles by 90
+	else { // '/'
+	  // virtually rotate triangles by 90
 	  v = interp(ydist, 1. - xdist, d, a, b, c);
 	}
 	
