@@ -13,5 +13,6 @@ BINARY_EXT = $(X_EXEEXT)
 DEPS = $(lib_BINARY) $(codecs_BINARY) $(bardecode_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(X_OUTARCH)/utility/File$(X_OBJEXT)
 
 CPPFLAGS += -I utility
+LDFLAGS += -lGL -lGLU -lglut -L/usr/X11/lib64
 
 include build/bottom.make
