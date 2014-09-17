@@ -650,9 +650,9 @@ bool convert_foreground (const Argument<std::string>& arg)
 
 bool convert_line (const Argument<std::string>& arg)
 {
-  unsigned int x1, y1, x2, y2;
+  float x1, y1, x2, y2;
   
-  if (sscanf(arg.Get().c_str(), "%d,%d,%d,%d", &x1, &y1, &x2, &y2) == 4)
+  if (sscanf(arg.Get().c_str(), "%f,%f,%f,%f", &x1, &y1, &x2, &y2) == 4)
     {
       Path path;
       path.moveTo (x1, y1);
