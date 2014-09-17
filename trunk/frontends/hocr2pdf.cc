@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's hOCR to PDF command line frontend
- * Copyright (C) 2008 - 2009 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2014 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2008 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -77,11 +77,24 @@ int main(int argc, char* argv[])
 				 0, 1, true, true);
   arglist.Add(&arg_text);
   
+  Argument<int> arg_quality ("", "quality",
+			     "quality setting used for writing compressed images\n\t\t"
+			     "integer range 0-100, the default is 75",
+			     0, 1, true, true);
+  arglist.Add(&arg_quality);
+  
+  Argument<std::string> arg_compression ("", "compress",
+					 "compression method for writing images e.g. G3, G4, Zip, ...\n\t\t"
+					 "depending on the output format, a reasonable setting by default",
+					 0, 1, true, true);
+  arglist.Add(&arg_compression);
+  
+
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "hOCR to PDF converter, version " VERSION << std::endl
-		<< "Copyright (C) 2008-2009 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2008-2014 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
@@ -121,9 +134,16 @@ int main(int argc, char* argv[])
   pdfContext->setFillColor(0, 0, 0);
   
   hocr2pdf(std::cin, pdfContext, res, sloppy, txtStream);
+
+  int quality = 75;
+  if (arg_quality.Size())
+    quality = arg_quality.Get();
+  std::string compression = "";
+  if (arg_compression.Size())
+    compression = arg_compression.Get();
   
   if (!arg_no_image.Get())
-    pdfContext->showImage(image, 0, 0, 72. * image.w / res, 72. * image.h / res);
+    pdfContext->showImage(image, 0, 0, 72. * image.w / res, 72. * image.h / res, quality, compression);
   
   delete pdfContext;
   if (txtStream) {
