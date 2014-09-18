@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
   arglist.Add(&arg_quality);
   
   Argument<std::string> arg_compression ("", "compress",
-"compression method for writing images e.g. ascii85, hex, flate,\n"
+					 "compression method for writing images e.g. ascii85, hex, flate,\n"
 					 "\t\tjpeg, jpeg2000 ... auto default based on bit-depth",
 					 0, 1, true, true);
   arglist.Add(&arg_compression);
