@@ -511,14 +511,14 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  std::cerr << "scanline " << row << " Seek error: " << stream->tellg() << " vs " << offset << std::endl;
 	}
 	
-	if (stream->read ((char*)row_data, file_stride) < 0) {
-	  std::cerr << "scanline " << row << ": Read error\n";
-	}
-	
-	// convert to RGB
-	uint8_t* rgb_ptr = data + stride * (info_hdr.iHeight < 0 ? row : image.h - row - 1);
+	stream->read((char*)row_data, file_stride);
+	if (!stream->good()) {
+	  std::cerr << "bmp read error: scanline " << row << "\n";
+	} else {
+	  // convert to RGB
+	  uint8_t* rgb_ptr = data + stride * (info_hdr.iHeight < 0 ? row : image.h - row - 1);
 
-	if (info_hdr.iCompression == BMPC_BITFIELDS)
+	  if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
 	    uint8_t* bf_ptr = row_data;
 	    
@@ -541,10 +541,10 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 		else
 		  rgb_ptr[2] = (val & info_hdr.iBlueMask) << -b_shift;
 	      }
+	  } else {
+	    rearrangePixels (row_data, image.w, info_hdr.iBitCount);
+	    memcpy (rgb_ptr, row_data, stride);
 	  }
-	else {
-	  rearrangePixels (row_data, image.w, info_hdr.iBitCount);
-	  memcpy (rgb_ptr, row_data, stride);
 	}
       }
       free(row_data);
