@@ -1,6 +1,6 @@
 /*
  * C++ PCX library.
- * Copyright (C) 2008 - 2010 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2014 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -122,17 +122,16 @@ int PCXCodec::readImage(std::istream* stream,
   
   image.resize(header.WindowXmax - header.WindowXmin + 1,
 	       header.WindowYmax - header.WindowYmin + 1);
-  std::cerr << image.w << "x" << image.h << std::endl;
-  std::cerr << "Version: " << (int)header.Version
-	    << ", PaletteInfo: " << header.PaletteInfo << std::endl;
-  std::cerr << "BitsPerPixel: " << (int)header.BitsPerPixel
-	    << ", NPlanes: " << (int)header.NPlanes << std::endl;
-  std::cerr << "BytesPerLine: " << (int)header.BytesPerLine << std::endl;
-  std::cerr << "Encoding: " << (int)header.Encoding << std::endl;
   
-  // TODO: more buffer checks, palette handling
+  //std::cerr << image.w << "x" << image.h << std::endl;
+  //std::cerr << "BytesPerLine: " << (int)header.BytesPerLine << std::endl;
+  /*std::cerr << "Version: " << (int)header.Version
+	    << ", PaletteInfo: " << header.PaletteInfo
+	    << ", BitsPerPixel: " << (int)header.BitsPerPixel
+	    << ", NPlanes: " << (int)header.NPlanes
+	    << ", Encoding: " << (int)header.Encoding << std::endl;*/
   
-  
+  // TODO: more buffer checks
   {
     const bool plane_packing = header.NPlanes > 1;
     uint8_t* scanline = (plane_packing ?
@@ -156,10 +155,11 @@ int PCXCodec::readImage(std::istream* stream,
 	
 	if (plane_packing) // re-pack planes
 	  {
-            const unsigned int bits = header.BitsPerPixel;
-	    const unsigned int planes = header.NPlanes;
+            const unsigned bits = header.BitsPerPixel;
+	    const unsigned planes = header.NPlanes;
 	    uint8_t* dst = image.getRawData() + image.stride() * y;
 	    
+	    // TODO: share all bit packers in common code
 	    struct BitPacker {
 	      uint8_t* ptr;
 	      int p;
@@ -192,8 +192,8 @@ int PCXCodec::readImage(std::istream* stream,
 	    for (int i = 0; i < image.w; ++i)
 	      {
 		uint8_t v = 0, mask = (1 << bits) - 1;
-		int b = 0;
-		for (int p = 0; p < planes; ++p)
+		unsigned b = 0;
+		for (unsigned p = 0; p < planes; ++p)
 		  {
 		    uint8_t* src = scanline + p * header.BytesPerLine;
 		    int idx = i * bits / 8;
@@ -219,13 +219,11 @@ int PCXCodec::readImage(std::istream* stream,
 
   if (image.spp == 1)
   {
-    uint16_t rmap[256];
-    uint16_t gmap[256];
-    uint16_t bmap[256];
+    uint16_t rmap[256], gmap[256], bmap[256];
     
-    int colormap_magic = stream->get();
+    const uint8_t colormap_magic = stream->get();
     if (colormap_magic == 0x0c) {
-      std::cerr << "reading colormap" << std::endl;
+      //std::cerr << "reading colormap" << std::endl;
       for (int i = 0; i < 256; ++i)
 	{
 	  uint8_t entry[3];
