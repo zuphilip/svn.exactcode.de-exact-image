@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2014 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -296,7 +296,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 {
   BMPFileHeader* file_hdr = _file_hdr;
   BMPFileHeader file_header; // only used if no file_hdr is supplied
-  BMPInfoHeader info_hdr;
+  BMPInfoHeader info_hdr = {};
   enum BMPType bmp_type;
   int offset = file_hdr ? sizeof(*file_hdr) : 0;
 
@@ -362,7 +362,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 
   if (bmp_type == BMPT_OS21) {
     int16_t  iShort;
-    
     stream->read ((char*)&iShort, 2);
     info_hdr.iWidth = iShort;
     stream->read ((char*)&iShort, 2);
@@ -498,10 +497,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	goto bad1;
       }
       
-      const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
-      const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
-      const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
-      
       for (uint32_t row = 0; row < (uint32_t)image.h; ++row)
       {
 	std::istream::pos_type offset = file_hdr->iOffBits + row * file_stride;
@@ -521,6 +516,10 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
 	    uint8_t* bf_ptr = row_data;
+
+	    const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
+	    const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
+	    const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
 	    
 	    for (int i = 0; i < image.w; ++i, rgb_ptr += 3)
 	      {
