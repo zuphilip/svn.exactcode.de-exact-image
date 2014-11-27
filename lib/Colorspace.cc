@@ -189,12 +189,13 @@ void colorspace_cmyk_to_rgb8 (Image& image)
        it < image.getRawData() + image.w*image.h*image.spp;
        it += 4)
     {
-      uint16_t c = it[0], m = it[1], y = it[2], k = it[3]; 
-      *output++ = ((0xff - c) * (0xff - k)) >> 8;
-      *output++ = ((0xff - m) * (0xff - k)) >> 8;
-      *output++ = ((0xff - y) * (0xff - k)) >> 8;
+      uint8_t c = it[0], m = it[1], y = it[2], k = it[3]; 
+      *output++ = 0xff - std::min(c+k, 0xff); // ((0xff-c)*(0xff-k)) >> 8;
+      *output++ = 0xff - std::min(m+k, 0xff); // ((0xff-m)*(0xff-k)) >> 8;
+      *output++ = 0xff - std::min(y+k, 0xff); // ((0xff-y)*(0xff-k)) >> 8;
     }
   image.spp = 3; // converted data right now
+  image.setRawData();
   image.resize(image.w, image.h); // realloc
 }
 
