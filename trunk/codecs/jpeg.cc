@@ -444,7 +444,11 @@ void JPEGCodec::parseExif (Image& image)
   }
 
   // Get the marker parameter length count
-  unsigned length = readExif<uint16_t>(exif_data + 2, true); // always big-endian
+  uint16_t length = readExif<uint16_t>(exif_data + 2, true); // always big-endian
+  if (length > exif_data_p.size()) {
+    std::cerr << "Exif header length limitted" << std::endl;
+    length = exif_data_p.size();
+  }
   
   // length includes itself, so must be at least 2 + Exif data length must be at least 6
   if (length < 8)
@@ -466,11 +470,9 @@ void JPEGCodec::parseExif (Image& image)
   
   // Check tag mark
   if (big_endian) {
-    if (exif_data[2] != 0) return;
-    if (exif_data[3] != 0x2A) return;
+    if (exif_data[2] != 0 || exif_data[3] != 0x2A) return;
   } else {
-    if (exif_data[3] != 0) return;
-    if (exif_data[2] != 0x2A) return;
+    if (exif_data[3] != 0 || exif_data[2] != 0x2A) return;
   }
 
   // get first IFD offset (offset to IFD0)
@@ -483,18 +485,84 @@ void JPEGCodec::parseExif (Image& image)
   offset += 2;
 
   // search for orientation tag in IFD0
-  for (;;) {
-    if (offset > length - 12) return; // check end of data segment
+  uint16_t orientation = 0, unit = 0;
+  uint32_t xres = 0, yres = 0;
+  
+  for (; number_of_tags > 0; --number_of_tags, offset += 12) {
+    if (offset > length - 12) break; // check end of data segment
+    
     // get tag number
-    unsigned tagnum = readExif<uint16_t>(exif_data + offset, big_endian);
-    if (tagnum == 0x0112) break; // orientation tag
-    if (--number_of_tags == 0) return;
-    offset += 12;
+    uint16_t tag = readExif<uint16_t>(exif_data + offset, big_endian);
+    uint16_t type = readExif<uint16_t>(exif_data + offset + 2, big_endian);
+    uint32_t count = readExif<uint32_t>(exif_data + offset + 4, big_endian);
+    uint32_t value = readExif<uint32_t>(exif_data + offset + 8, big_endian);
+    
+    std::cerr << std::hex << tag << std::dec << " " << type << " " << count << " " << value << std::endl;
+    
+    // global range check
+    if ((type == 5 || type == 10) && (value + 4 >= length) || // RATIONAL
+        (type == 2 && count > 4 && value + count >= length)) // ASCII, could be short
+    {
+	std::cerr << "Exif tag index out of range, skipped." << std::endl;
+	continue;
+    }
+    
+    if (tag == 0x011a) // xres
+    {
+      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian);
+	//y = readExif<uint32_t>(exif_data + value + 4, big_endian);
+      xres = x;
+    } else if (tag == 0x011b) // yres
+    {
+      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian);
+        //y = readExif<uint32_t>(exif_data + value + 4, big_endian);
+      yres = x;
+    } else if (tag == 0x0128) // unit
+    {
+      uint16_t u = readExif<uint16_t>(exif_data + offset + 8, big_endian);
+      if (unit != 0)
+	std::cerr << "Exif unit already set?" << std::endl;
+
+      if (u == 2 || u == 3) // inch, cm
+	unit = u;
+      else
+	std::cerr << "Exif unit invalid: " << u << std::endl;
+    }
+    
+    if (tag == 0x0112) // orientation tag
+    {
+      uint16_t o = readExif<uint16_t>(exif_data + offset + 8, big_endian);
+      if (orientation != 0)
+        std::cerr << "Exif orientation already set?" << std::endl;
+     
+      if (o <= 8)
+	orientation = o;
+      else
+	std::cerr << "Exif orientation invalid: " << o << std::endl;
+    }
   }
 
-  // get the orientation value
-  unsigned orientation = readExif<uint16_t>(exif_data + offset + 8, big_endian);
-  if (orientation > 8) return;
+  if (xres || yres)
+  {
+    if (unit == 0) unit = 2; // inches
+    if (xres == 0) xres = yres; // if one is zero, set it, too
+    else if (yres == 0) yres = xres;
+    
+    if (unit == 3) { // scale cm to inch
+      xres = xres * 254 / 100;
+      yres = yres * 254 / 100;
+    }
+    
+    // was already set?
+    if (image.resolutionX() == 0 && image.resolutionY() == 0) {
+      image.setResolution(xres, yres);
+    } else {
+      if (image.resolutionX() != xres || image.resolutionY() != yres)
+	std::cerr << "Exif resolution differs from codec: "
+		  << xres << "x" << yres << " vs. "
+		  << image.resolutionX() << "x" << image.resolutionY() << std::endl;
+    }
+  }
   
   exif_rotate(image, orientation);
 }
