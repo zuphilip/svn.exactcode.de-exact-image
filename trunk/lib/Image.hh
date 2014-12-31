@@ -1,6 +1,6 @@
 /*
  * The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2012 René Rebe
+ * Copyright (C) 2005 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   
-  bool resize (int _w, int _h);
+  void resize (int _w, int _h);
   void realloc ();
   void New (int _w, int _h) DEPRECATED { resize (_w, _h); }
   

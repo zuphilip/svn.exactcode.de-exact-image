@@ -1,6 +1,6 @@
 /*
  * The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2014 René Rebe
+ * Copyright (C) 2005 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -117,19 +117,21 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-bool Image::resize (int _w, int _h) {
+void Image::resize (int _w, int _h) {
   std::swap(w, _w);
   std::swap(h, _h);
   uint8_t* ptr = (uint8_t*)::realloc(data, stride() * h);
   if (ptr) {
     setRawDataWithoutDelete(ptr);
   } else {
-    // restore
-    w = _w;
-    h = _h;
+    // if non-zero size
+    if (w * h != 0) {
+      // restore
+      w = _w;
+      h = _h;
+      throw std::bad_alloc();
+    }
   }
-
-  return ptr != 0;
 }
 
 void Image::realloc () {
