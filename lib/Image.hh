@@ -16,12 +16,12 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
-/* Only minimal abstraction is done here to allow all sorts of
- * hand optimized low-level optimizations.
+/* Only minimal abstraction is done here, to allow all sorts of
+ * hand optimized low-level operations.
  *
- * On loading a codec might be attached. The codec might be querried
+ * On load a codec might be attached. The codec might be querried
  * to decode the image data later on (decode on access) to allow
- * avoiding image decoding if the data is not accessed at all.
+ * avoiding image decoding if the data is never accessed at all.
  *
  * Equivalently writing can be optimized by keeping the codec
  * around and saving the original data without recompression
@@ -114,7 +114,7 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   
-  void resize (int _w, int _h);
+  void resize (int _w, int _h, unsigned stride = 0);
   void realloc ();
   
   void setDecoderID (const std::string& id);
@@ -204,8 +204,8 @@ public:
   int width () const { return w; }
   int height () const { return h; }
   
-  int stride () const {
-    return (w * spp * bps + 7) / 8;
+  unsigned stride () const {
+    return rowstride ? rowstride : (w * spp * bps + 7) / 8;
   }
   
   int bitsPerSample () const { return bps; }
@@ -231,7 +231,9 @@ public:
   void setResolutionY (int _yres) { setResolution(xres, _yres); }
 
   /* TODO: should be unsigned */
-  int w DEPRECATED, h DEPRECATED, bps DEPRECATED, spp DEPRECATED;
+  int w DEPRECATED, h DEPRECATED;
+  unsigned char bps DEPRECATED, spp DEPRECATED;
+  unsigned rowstride DEPRECATED;
   
 public:
   
