@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 - 2013 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2008 - 2015 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1007,7 +1007,7 @@ template <template <typename T> class ALGO, class T1, class T2, class T3, class 
 void codegen (T1& a1, T2& a2, T3& a3, T4& a4, T5& a5, T6& a6)
 {
   if (a1.spp == 3) {
-    if (a1.spp == 8) {
+    if (a1.bps == 8) {
       ALGO <rgb_iterator> a;
       a (a1, a2, a3, a4, a5, a6);
     } else {
