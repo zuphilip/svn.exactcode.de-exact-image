@@ -24,12 +24,12 @@
 #include "Codecs.hh"
 
 Image::Image ()
-  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0)
+  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0), rowstride(0)
 {
 }
 
 Image::Image (Image& other)
-  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0)
+  : modified(false), meta_modified(false), xres(0), yres(0), codec(0), data(0), w(0), h(0), bps(0), spp(0), rowstride(0)
 {
   operator= (other);
 }
@@ -50,6 +50,7 @@ void Image::copyMeta (const Image& other)
   h = other.h;
   bps = other.bps;
   spp = other.spp;
+  rowstride = other.rowstride;
   xres = other.xres;
   yres = other.yres;
 }
@@ -58,7 +59,7 @@ Image& Image::operator= (const Image& other)
 {
   uint8_t* d = other.getRawData();
   copyMeta (other);
-  resize (w, h); // allocate
+  resize (w, h, rowstride); // allocate
   if (d && data) {
     memcpy (data, d, stride() * h);
   }
@@ -117,9 +118,10 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h) {
+void Image::resize (int _w, int _h, unsigned _stride) {
   std::swap(w, _w);
   std::swap(h, _h);
+  std::swap(rowstride, _stride);
   uint8_t* ptr = (uint8_t*)::realloc(data, stride() * h);
   if (ptr) {
     setRawDataWithoutDelete(ptr);
@@ -129,6 +131,7 @@ void Image::resize (int _w, int _h) {
       // restore
       w = _w;
       h = _h;
+      rowstride = _stride;
       throw std::bad_alloc();
     }
   }
