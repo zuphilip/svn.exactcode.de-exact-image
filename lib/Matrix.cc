@@ -124,34 +124,32 @@ struct decomposable_sym_convolution_matrix_template
 		   const matrix_type* h_matrix, const matrix_type* v_matrix,
 		   int xw, int yw, matrix_type src_add)
   {
-    T src_it (image);
+    T img_it (image);
+    typename T::accu a;
+
+    const int width = image.width();
+    const int height = image.height();
+    const int spp = image.samplesPerPixel();
+    const int stride = width * spp; // our stride
     
-    int spp = image.samplesPerPixel();
-    int stride = image.stride();
-    int height = image.height();
-    
-    uint8_t* data = image.getRawData();
-    
-    matrix_type tmp_data[stride * (1 + (2 * yw))];
-    matrix_type line_data[std::max(stride, height)];
-    
-    uint8_t* src_ptr;
+    matrix_type line_data [std::max(stride, height)];
+    matrix_type tmp_data [stride * (1 + 2 * yw)];
     matrix_type* tmp_ptr;
-    matrix_type val;
     
     // main transform loop
     for (int y = 0; y < height + yw; ++y) {
-      
       // horizontal transform
       if (y < height) {
-	src_ptr = &data[(y * stride)];
-	tmp_ptr = &tmp_data[(y % (1 + (2 * yw))) * stride];
+	img_it.at(0, y);
+	tmp_ptr = &tmp_data[(y % (1 + 2 * yw)) * stride];
         
-	val = h_matrix[0];
-	for (int x = 0; x < stride; ++x) {
-	  matrix_type v = (matrix_type)src_ptr[x];
-	  tmp_ptr[x] = val * v;
-	  line_data[x] = v;
+	matrix_type val = h_matrix[0];
+	for (int x = 0, _ = 0; x < width; ++x, ++img_it) {
+	  a = *img_it;
+	  for (int i = 0; i < spp; ++i, ++_) {
+	    line_data[_] = a.v[i];
+	    tmp_ptr[_] = val * a.v[i];
+	  }
 	}
 	
 	for (int i = 1; i <= xw; ++i) {
@@ -178,46 +176,52 @@ struct decomposable_sym_convolution_matrix_template
       }
       
       // now do the vertical transform of a block of lines and write back to src
-      int dsty = y - yw;
+      const int dsty = y - yw;
       if (dsty >= 0) {
-	src_ptr = &data[dsty * stride];
-	val = (matrix_type)src_add;
+	img_it.at(0, dsty);
+	matrix_type val = (matrix_type)src_add;
 	if (val != (matrix_type)0) {
-	  for (int x = 0; x < stride; ++x) {
-	    matrix_type v = (matrix_type)src_ptr[x];
-	    line_data[x] = val * v;
+	  for (int x = 0, _ = 0; x < width; ++x, ++img_it) {
+	    a = *img_it;
+	    for (int i = 0; i < spp; ++i, ++_) {
+	      line_data[_] = val * a.v[i];
+	    }
 	  }
 	} else {
 	  for (int x = 0; x < stride; ++x)
-	    line_data[x] = 0.0;
+	    line_data[x] = 0;
 	}
 	
 	for (int i = 0; i <= yw; i++) {
 	  val = v_matrix[i];
 	  if (i == 0 || (dsty - i < 0) || (dsty + i >= height) ) {
 	    int tmpy = (dsty - i < 0) ? dsty + i : dsty - i;
-	    tmp_ptr = &tmp_data[(tmpy % (1 + (2 * yw))) * stride];
+	    tmp_ptr = &tmp_data[(tmpy % (1 + 2 * yw)) * stride];
 	    for (int x = 0; x < stride; ++x)
 	      line_data[x] += val * tmp_ptr[x];
 	    
 	  } else {
-	    tmp_ptr = &tmp_data[((dsty - i) % (1 + (2 * yw))) * stride];
-	    matrix_type* tmp_ptr2 = &tmp_data[((dsty + i) % (1 +(2 * yw))) * stride];
+	    tmp_ptr = &tmp_data[((dsty - i) % (1 + 2 * yw)) * stride];
+	    matrix_type* tmp_ptr2 = &tmp_data[((dsty + i) % (1 + 2 * yw)) * stride];
 	    for (int x = 0; x < stride; ++x)
 	      line_data[x] += val * (tmp_ptr[x] + tmp_ptr2[x]);
 	  }
 	}
 	
-	for  (int x = 0; x < stride; ++x) {
-	  uint8_t z = (uint8_t)(line_data[x] > 255 ? 255 : line_data[x] < 0 ? 0 : line_data[x]);
-	  src_ptr[x] = z;
+	img_it.at(0, dsty);
+	for (int x = 0, _ = 0; x < width; ++x, ++img_it) {
+	  for (int i = 0; i < spp; ++i, ++_)
+	    a.v[i] = line_data[_];
+	  
+	  a.saturate();
+	  img_it.set(a);
 	}
       }
     }
     
     image.setRawData(); // invalidate as altered
   }
-};
+  };
 
 // h_matrix contains entrys m[0]...m[xw]. It is assumed, that m[-i]=m[i]. Same for v_matrix.
 void decomposable_sym_convolution_matrix (Image& image,
