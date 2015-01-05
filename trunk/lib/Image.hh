@@ -116,7 +116,6 @@ public:
   
   void resize (int _w, int _h);
   void realloc ();
-  void New (int _w, int _h) DEPRECATED { resize (_w, _h); }
   
   void setDecoderID (const std::string& id);
   const std::string& getDecoderID ();
@@ -207,10 +206,6 @@ public:
   
   int stride () const {
     return (w * spp * bps + 7) / 8;
-  }
-  
-  int Stride () const DEPRECATED {
-    return stride ();
   }
   
   int bitsPerSample () const { return bps; }
