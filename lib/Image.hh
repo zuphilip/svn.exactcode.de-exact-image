@@ -230,9 +230,8 @@ public:
   void setResolutionX (int _xres) { setResolution(_xres, yres); }
   void setResolutionY (int _yres) { setResolution(xres, _yres); }
 
-  /* TODO: should be unsigned */
-  int w DEPRECATED, h DEPRECATED;
-  unsigned char bps DEPRECATED, spp DEPRECATED;
+  int w DEPRECATED, h DEPRECATED; // TODO: unsigned?
+  unsigned short bps DEPRECATED, spp DEPRECATED;
   unsigned rowstride DEPRECATED;
   
 public:
