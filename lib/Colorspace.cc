@@ -156,54 +156,70 @@ void normalize (Image& image, uint8_t l, uint8_t h)
 
 void colorspace_rgba8_to_rgb8 (Image& image)
 {
-  uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+  for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* output = image.getRawData() + y * image.stride();
+    uint8_t* it = image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
     {
       *output++ = *it++;
       *output++ = *it++;
       *output++ = *it++;
       it++; // skip over a
     }
+  }
+
   image.spp = 3; // converted data right now
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_argb8_to_rgb8 (Image& image)
 {
-  uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.w*image.h*image.spp;)
+  for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* output = image.getRawData() + y * image.stride();
+    uint8_t* it = image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
     {
       it++; // skip over a
       *output++ = *it++;
       *output++ = *it++;
       *output++ = *it++;
     }
+  }
+
   image.spp = 3; // converted data right now
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_cmyk_to_rgb8 (Image& image)
 {
-  uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData();
-       it < image.getRawData() + image.w*image.h*image.spp;
-       it += 4)
+  for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* output = image.getRawData() + y * image.stride();
+    uint8_t* it = image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
     {
       uint8_t c = it[0], m = it[1], y = it[2], k = it[3]; 
       *output++ = 0xff - std::min(c+k, 0xff); // ((0xff-c)*(0xff-k)) >> 8;
       *output++ = 0xff - std::min(m+k, 0xff); // ((0xff-m)*(0xff-k)) >> 8;
       *output++ = 0xff - std::min(y+k, 0xff); // ((0xff-y)*(0xff-k)) >> 8;
     }
+  }
+
   image.spp = 3; // converted data right now
   image.setRawData();
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, const int wG, const int wB)
 {
   const int sum = wR + wG + wB;
-  uint8_t* output = image.getRawData();
-  for (uint8_t* it = image.getRawData(); it < image.getRawData() + image.stride() * image.h; it += bytes)
+  for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* output = image.getRawData() + y * image.stride();
+    uint8_t* it = image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
     {
       // R G B order and associated weighting
       int c  = (int)it[0] * wR;
@@ -211,15 +227,18 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, cons
           c += (int)it[2] * wB;
       *output++ = (uint8_t)(c / sum);
     }
+  }
   image.spp = 1; // converted data right now
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_rgb16_to_gray16 (Image& image)
 {
-  uint16_t* output = (uint16_t*)image.getRawData();
-  for (uint16_t* it = output;
-       it < (uint16_t*)(image.getRawData() + image.stride() * image.h);)
+  for (int y = 0; y < image.h; ++y)
+  {
+    uint16_t* output = (uint16_t*)(image.getRawData() + y * image.stride());
+    uint16_t* it = (uint16_t*)image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
     {
       // R G B order and associated weighting
       int c = (int)*it++ * 28;
@@ -228,8 +247,9 @@ void colorspace_rgb16_to_gray16 (Image& image)
       
       *output++ = (uint16_t)(c / 100);
     }
+  }
   image.spp = 1; // converted data right now
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
@@ -251,9 +271,13 @@ void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
 
 void colorspace_gray8_threshold (Image& image, uint8_t threshold)
 {
-  for (uint8_t* it = image.getRawData(); it < image.getRawDataEnd(); ++it)
-    *it = *it > threshold ? 0xFF : 0x00;
-  
+   for (int y = 0; y < image.h; ++y)
+  {
+    uint8_t* it = image.getRawData() + y * image.stride();
+    for (int x = 0; x < image.w; ++x)
+     *it = *it > threshold ? 0xFF : 0x00;
+  }
+
   image.setRawData();
 }
 
@@ -262,14 +286,12 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   if (image.bps != 8 || image.spp != 1)
     return;
   
-  uint8_t* it = image.getRawData();
   uint8_t* ndata = (uint8_t*)malloc(image.stride() * image.h);
-  uint8_t* it2 = ndata;
   
   struct compare_and_set
   {
     const Image& image;
-    const long stride;
+    const unsigned stride;
     compare_and_set (const Image& _image)
       : image(_image), stride (image.stride())
     {
@@ -331,6 +353,9 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   
   for (int y = 0; y < image.h; ++y)
     {
+      uint8_t* it = image.getRawData() + y * image.stride();
+      uint8_t* it2 = ndata + y * image.stride();
+
       // optimize conditionals away for the inner area
       if (y > 0 && y < image.h-1)
 	{
@@ -349,11 +374,11 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
 
 void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 {
-  uint8_t *output = image.getRawData();
-  uint8_t *input = image.getRawData();
-  
   for (int row = 0; row < image.h; row++)
     {
+      uint8_t *output = image.getRawData() + row * image.stride();
+      uint8_t *input = image.getRawData() + row * image.stride();;
+
       uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
@@ -375,17 +400,17 @@ void colorspace_gray8_to_gray1 (Image& image, uint8_t threshold)
 	  *output++ = z;
 	}
     }
+  image.resize(image.w, image.h, image.stride()); // realloc
   image.bps = 1;
-  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_gray8_to_gray4 (Image& image)
 {
-  uint8_t *output = image.getRawData();
-  uint8_t *input = image.getRawData();
-  
   for (int row = 0; row < image.h; row++)
     {
+      uint8_t *output = image.getRawData() + row * image.stride();
+      uint8_t *input = image.getRawData() + row * image.stride();
+  
       uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
@@ -407,15 +432,16 @@ void colorspace_gray8_to_gray4 (Image& image)
 	}
     }
   image.bps = 4;
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
+
 void colorspace_gray8_to_gray2 (Image& image)
 {
-  uint8_t *output = image.getRawData();
-  uint8_t *input = image.getRawData();
-  
   for (int row = 0; row < image.h; ++row)
     {
+      uint8_t *output = image.getRawData() + row * image.stride();
+      uint8_t *input = image.getRawData() + row * image.stride();
+
       uint8_t z = 0;
       int x = 0;
       for (; x < image.w; x++)
@@ -437,7 +463,7 @@ void colorspace_gray8_to_gray2 (Image& image)
 	}
     }
   image.bps = 2;
-  image.resize(image.w, image.h); // realloc
+  image.resize(image.w, image.h, image.stride()); // realloc
 }
 
 void colorspace_gray8_to_rgb8 (Image& image)
