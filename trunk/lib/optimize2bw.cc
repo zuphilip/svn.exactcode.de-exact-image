@@ -36,9 +36,11 @@
 
 #include <cstdlib>
 #include <cmath>
-
 #include <iostream>
 #include <iomanip>
+#ifdef _MSC_VER
+#include <vector>
+#endif
 
 #include "Image.hh"
 
@@ -164,10 +166,14 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     
     matrix_type divisor = 0;
     float sd = standard_deviation;
-    
+
+#ifdef _MSC_VER
+    std::vector<matrix_type> matrix(radius+1);
+    std::vector<matrix_type> matrix_2(radius+1);
+#else
     matrix_type matrix[radius+1];
     matrix_type matrix_2[radius+1];
-
+#endif
     for (int d = 0; d <= radius; ++d) {
       matrix_type v = (matrix_type) (exp (-((float)d*d) / (2. * sd * sd)) );
       matrix[d] = v;
@@ -183,6 +189,6 @@ void optimize2bw (Image& image, int low, int high, int threshold,
       matrix_2[i]=-matrix[i];
     }
     
-    decomposable_sym_convolution_matrix (image, matrix, matrix_2, radius, radius, 2.0);
+    decomposable_sym_convolution_matrix (image, &matrix[0], &matrix_2[0], radius, radius, 2.0);
   }
 }
