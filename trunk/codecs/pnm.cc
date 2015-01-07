@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -196,7 +196,6 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (c == "plain")
     c = "ascii";
 
-  
   if (c != "ascii")
     format += 3;
   
@@ -206,7 +205,8 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
   *stream << image.w << " " << image.h << std::endl;
   
   // maxval
-  int maxval = (1 << image.bps) - 1;
+  const int maxval = (1 << image.bps) - 1;
+  const int divval = image.bps < 8 ? 255 / maxval : 1;
   
   if (image.bps > 1)
     *stream << maxval << std::endl;
@@ -216,37 +216,34 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     {
       for (int y = 0; y < image.h; ++y)
 	{
-	  for (int x = 0; x < image.w; ++x)
+	  for (int x = 0; x < image.w; ++x, ++it)
 	    {
-	      *it;
-	      
 	      if (x != 0)
 		*stream << " ";
 	      
+	      *it;
 	      if (image.spp == 1) {
-		int i = it.getL();
+		unsigned i = it.getL();
 
 		// only mode 1 is defined with 1 == black, ...
-                if (format == 1) i = 255 - i;
-
-		*stream << i / (255 / maxval);
+		if (format == 1) i = 255 - i;
+		*stream << i / divval;
 	      }
 	      else {
 		uint16_t r = 0, g = 0, b = 0;
 		it.getRGB (&r, &g, &b);
 		*stream << (int)r << " " << (int)g << " " << (int)b;
 	      }
-	      ++it;
 	    }
 	  *stream << std::endl;
 	}
     }
   else
     {
-      const int stride = image.stride ();
+      const int stride = image.stride();
       const int bps = image.bps;
       
-      uint8_t* ptr = (uint8_t*) malloc (stride);
+      uint8_t ptr[stride];
       
       for (int y = 0; y < image.h; ++y)
 	{
@@ -267,7 +264,6 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	  
 	  stream->write ((char*)ptr, stride);
 	}
-      free (ptr);
     }
   
   stream->flush ();
