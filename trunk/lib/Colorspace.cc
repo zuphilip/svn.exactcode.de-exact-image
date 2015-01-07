@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2014 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -442,17 +442,26 @@ void colorspace_gray8_to_gray2 (Image& image)
 
 void colorspace_gray8_to_rgb8 (Image& image)
 {
-  uint8_t* data = (uint8_t*)malloc (image.w*image.h*3);
-  uint8_t* output = data;
-  for (uint8_t* it = image.getRawData ();
-       it < image.getRawData() + image.w*image.h*image.spp; ++it)
+  const int stride = image.stride();
+  const int nstride = image.w * 3;
+  image.setRawDataWithoutDelete((uint8_t*)realloc(image.getRawData(),
+						  std::max(stride, nstride) * image.h));
+  
+  uint8_t* data = image.getRawData();
+  uint8_t* output = data + image.w * nstride - 1;
+  for (int y = image.h - 1; y >= 0; --y)
     {
-      *output++ = *it;
-      *output++ = *it;
-      *output++ = *it;
+      uint8_t* it = data + y * stride;
+      for (int x = image.w - 1; x >= 0; --x)
+	{
+	  *output-- = it[x];
+	  *output-- = it[x];
+	  *output-- = it[x];
+	}
     }
+  
   image.spp = 3; // converted data right now
-  image.setRawData(data);
+  image.resize(image.w, image.h, 0); // update stride
 }
 
 void colorspace_grayX_to_gray8 (Image& image)
