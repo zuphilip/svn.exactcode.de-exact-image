@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2014 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -29,6 +29,10 @@
 #include "Colorspace.hh"
 
 #include "scale.hh"
+
+#ifdef _MSC_VER
+#include <vector>
+#endif
 
 void scale (Image& image, double scalex, double scaley)
 {
@@ -106,9 +110,15 @@ struct bilinear_scale_template
 			     new_image.h * image.resolutionY() / image.h);
     
     // cache x offsets, 2x speedup
+#ifndef _MSC_VER
     float bxmap[new_image.w];
     int sxmap[new_image.w];
     int sxxmap[new_image.w];
+#else
+    std::vector<float> bxmap(new_image.w);
+    std::vector<int> sxmap(new_image.w);
+    std::vector<int> sxxmap(new_image.w);
+#endif
     for (int x = 0; x < new_image.w; ++x) {
       bxmap[x] = (float)x / (new_image.w - 1) * (image.w - 1);
       sxmap[x] = (int)floor(bxmap[x]);
