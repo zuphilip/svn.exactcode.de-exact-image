@@ -1,7 +1,7 @@
 /*
  * Floyd Steinberg dithering based on web publications.
  *
- * Copyright (C) 2006 - 2013 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCOD GmbH Germany
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,13 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
-#include <math.h> // floor
-
 #include "floyd-steinberg.h"
 #include "ImageIterator2.hh"	
+
+#include <cmath> // floor
+#ifdef _MSC_VER
+#include <vector>
+#endif
 
 template <typename T>
 struct FloydSteinberg_template
@@ -38,10 +41,15 @@ struct FloydSteinberg_template
     const float factor = (float) (shades - 1) / (float) one.v[0];
     
     // row/error buffers
-    float _error [width * image.spp];
-    float* error = _error;
-    float _nexterror [width  * image.spp];
-    float* nexterror = _nexterror;
+#ifndef _MSC_VER
+    float _error[width * image.spp];
+    float _nexterror[width  * image.spp];
+#else
+    std::vector<float> _error(width * image.spp);
+    std::vector<float> _nexterror(width  * image.spp);
+#endif
+    float* error = &_error[0];
+    float* nexterror = &_nexterror[0];
     
     // initialize the error buffers
     for (int x = 0; x < width * image.spp; ++x)
