@@ -20,8 +20,10 @@
  */
 
 #include "Matrix.hh"
-
 #include "ImageIterator2.hh"
+#ifdef _MSC_VER
+#include <vector>
+#endif
 
 template <typename T>
 struct convolution_matrix_template
@@ -132,8 +134,13 @@ struct decomposable_sym_convolution_matrix_template
     const int spp = image.samplesPerPixel();
     const int stride = width * spp; // our stride
     
-    matrix_type line_data [std::max(stride, height)];
-    matrix_type tmp_data [stride * (1 + 2 * yw)];
+#ifndef _MSC_VER
+    matrix_type line_data[std::max(stride, height)];
+    matrix_type tmp_data[stride * (1 + 2 * yw)];
+#else
+    std::vector<matrix_type> line_data(std::max(stride, height));
+    std::vector<matrix_type> tmp_data(stride * (1 + 2 * yw));
+#endif
     matrix_type* tmp_ptr;
     
     // main transform loop
