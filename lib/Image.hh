@@ -19,6 +19,10 @@
 /* Only minimal abstraction is done here, to allow all sorts of
  * hand optimized low-level operations.
  *
+ * While historically we only supported packed, byte-aligned scanlines,
+ * since 2015 we also support abritrary strides. However, most algorithms
+ * resizing the data usually compact the image to byte-aligned scanlines.
+ *
  * On load a codec might be attached. The codec might be querried
  * to decode the image data later on (decode on access) to allow
  * avoiding image decoding if the data is never accessed at all.
