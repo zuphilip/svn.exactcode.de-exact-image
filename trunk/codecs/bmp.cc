@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2014 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ enum BMPType
     BMPT_WIN4,      /* BMP used in Windows 3.0/NT 3.51/95 */
     BMPT_WIN5,      /* BMP used in Windows NT 4.0/98/Me/2000/XP */
     BMPT_OS21,      /* BMP used in OS/2 PM 1.x */
-    BMPT_OS22       /* BMP used in OS/2 PM 2.x */
+    BMPT_OS22,      /* BMP used in OS/2 PM 2.x */
   };
 
 /*
@@ -84,16 +84,21 @@ enum BMPType
 
 enum BMPComprMethod
   {
-    BMPC_RGB = 0L,          /* Uncompressed */
-    BMPC_RLE8 = 1L,         /* RLE for 8 bpp images */
-    BMPC_RLE4 = 2L,         /* RLE for 4 bpp images */
-    BMPC_BITFIELDS = 3L,    /* Bitmap is not compressed and the colour table
+    BMPC_RGB = 0,          /* Uncompressed */
+    BMPC_RLE8 = 1,         /* RLE for 8 bpp images */
+    BMPC_RLE4 = 2,         /* RLE for 4 bpp images */
+    BMPC_BITFIELDS = 3,    /* Bitmap is not compressed and the colour table
 			     * consists of three DWORD color masks that specify
 			     * the red, green, and blue components of each
 			     * pixel. This is valid when used with
 			     * 16- and 32-bpp bitmaps. */
-    BMPC_JPEG = 4L,         /* Indicates that the image is a JPEG image. */
-    BMPC_PNG = 5L           /* Indicates that the image is a PNG image. */
+    BMPC_JPEG = 4,         /* Indicates that the image is a JPEG image. */
+    BMPC_PNG = 5,           /* Indicates that the image is a PNG image. */
+    BMPC_ALPHABITFIELDS = 6,
+    BMPC_CMYK = 11,
+    BMPC_CMYKRLE = 12,
+    BMPC_CMYRTLE = 13,
+    
   };
 
 enum BMPLCSType                 /* Type of logical color space. */
@@ -102,7 +107,7 @@ enum BMPLCSType                 /* Type of logical color space. */
 				 * gamma values are given in the appropriate
 				 * fields. */
     BMPLT_DEVICE_RGB = 1,
-    BMPLT_DEVICE_CMYK = 2
+    BMPLT_DEVICE_CMYK = 2,
   };
 
 #ifdef _MSC_VER
@@ -200,10 +205,12 @@ __attribute__((packed))
 /*
  * Info header size in bytes:
  */
-static const unsigned int BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
-static const unsigned int BIH_WIN5SIZE = 57; /* for BMPT_WIN5 */
 static const unsigned int BIH_OS21SIZE = 12; /* for BMPT_OS21 */
 static const unsigned int BIH_OS22SIZE = 64; /* for BMPT_OS22 */
+static const unsigned int BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
+static const unsigned int BIH_WIN5SIZE = 56; /* for BMPT_WIN5 */
+static const unsigned int BIH_V4 = 108;
+static const unsigned int BIH_V5 = 124;
 
 /*
  * We will use plain byte array instead of this structure, but declaration
@@ -323,14 +330,18 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   
   if (info_hdr.iSize == BIH_WIN4SIZE)
     bmp_type = BMPT_WIN4;
+  else if (info_hdr.iSize == BIH_WIN5SIZE)
+    bmp_type = BMPT_WIN5;
   else if (info_hdr.iSize == BIH_OS21SIZE)
     bmp_type = BMPT_OS21;
   else if (info_hdr.iSize == BIH_OS22SIZE || info_hdr.iSize == 16)
     bmp_type = BMPT_OS22;
-  else
+  else {
     bmp_type = BMPT_WIN5;
-  
-  if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
+    std::cerr << "Unknown header size: " << info_hdr.iSize << std::endl;
+  }
+
+if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       bmp_type == BMPT_OS22) {
     stream->read((char*)&info_hdr.iWidth, 4);
     stream->read((char*)&info_hdr.iHeight, 4);
@@ -520,6 +531,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	    const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
 	    const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
 	    const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
+	    const int a_shift = last_bit_set (info_hdr.iAlphaMask) - 7;
 	    
 	    for (int i = 0; i < image.w; ++i, rgb_ptr += 3)
 	      {
@@ -539,6 +551,10 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 		  rgb_ptr[2] = (val & info_hdr.iBlueMask) >> b_shift;
 		else
 		  rgb_ptr[2] = (val & info_hdr.iBlueMask) << -b_shift;
+		/*if (a_shift > 0)
+		  rgb_ptr[3] = (val & info_hdr.iAlphaMask) >> a_shift;
+		else
+		rgb_ptr[3] = (val & info_hdr.iAlphaMask) << -a_shift;*/
 	      }
 	  } else {
 	    rearrangePixels (row_data, image.w, info_hdr.iBitCount);
@@ -696,19 +712,18 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  if (image.bps > 16 || image.bps == 2 || image.spp > 3) {
+  const int hdr_size = image.spp == 4 ? BIH_WIN5SIZE : BIH_WIN4SIZE;
+  const unsigned stride = image.stride();
+  const int n_clr_elems = 4; // we write "modern" formats, not the vintage OS/2 flavour
+  
+  if (image.bps > 16 || image.bps == 2 || image.spp > 4) {
     std::cerr << "BMPCodec: " << image.bps << " bits and "
 	      << image.spp << " samples not supported." << std::endl;
     return false;
   }
   
-  const int n_clr_elems = 4; // we write "modern" formats, not the first OS2 flavours
-  
   BMPFileHeader file_hdr;
   BMPInfoHeader info_hdr;
-  
-  int hdr_size = BIH_WIN4SIZE;
-  int stride = image.stride ();
   
   memset (&file_hdr, 0, sizeof (file_hdr));
   memset (&info_hdr, 0, sizeof (info_hdr));
