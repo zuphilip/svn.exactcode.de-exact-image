@@ -493,7 +493,7 @@ void colorspace_gray8_to_rgb8 (Image& image)
   image.setRawDataWithoutDelete((uint8_t*)realloc(image.getRawData(),
 						  std::max(stride, nstride) * image.h));
   uint8_t* data = image.getRawData();
-  uint8_t* output = data + image.w * nstride - 1;
+  uint8_t* output = data + image.h * nstride - 1;
   for (int y = image.h - 1; y >= 0; --y)
     {
       uint8_t* it = data + y * stride;
