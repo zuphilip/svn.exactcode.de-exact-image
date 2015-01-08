@@ -297,12 +297,15 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   if (image.bps != 8 || image.spp != 1)
     return;
   
-  uint8_t* ndata = (uint8_t*)malloc(image.stride() * image.h);
+  unsigned stride = image.stride();
+  uint8_t* data = image.getRawData();
+  uint8_t* ndata = (uint8_t*)malloc(stride * image.h);
   
   struct compare_and_set
   {
     const Image& image;
-    const unsigned stride;
+    const int stride;
+    
     compare_and_set (const Image& _image)
       : image(_image), stride (image.stride())
     {
@@ -364,9 +367,9 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   
   for (int y = 0; y < image.h; ++y)
     {
-      uint8_t* it = image.getRawData() + y * image.stride();
-      uint8_t* it2 = ndata + y * image.stride();
-
+      uint8_t* it = data + y * stride;
+      uint8_t* it2 = ndata + y * stride;
+	  
       // optimize conditionals away for the inner area
       if (y > 0 && y < image.h-1)
 	{
