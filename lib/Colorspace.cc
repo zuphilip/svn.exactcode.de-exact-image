@@ -177,13 +177,14 @@ void colorspace_rgba8_to_rgb8 (Image& image)
 
 void colorspace_argb8_to_rgb8 (Image& image)
 {
+  uint8_t* data = image.getRawData();
   unsigned ostride = image.stride();
-  image.spp = 3; image.rowstride = 0;
   
+  image.spp = 3; image.rowstride = 0;
   for (int y = 0; y < image.h; ++y)
   {
-    uint8_t* output = image.getRawData() + y * image.stride();
-    uint8_t* it = image.getRawData() + y * ostride;
+    uint8_t* output = data + y * image.stride();
+    uint8_t* it = data + y * ostride;
     for (int x = 0; x < image.w; ++x)
     {
       it++; // skip over a
@@ -198,19 +199,20 @@ void colorspace_argb8_to_rgb8 (Image& image)
 
 void colorspace_cmyk_to_rgb8 (Image& image)
 {
+  uint8_t* data = image.getRawData();
   unsigned ostride = image.stride();
+  
   image.spp = 3; image.rowstride = 0;
-
   for (int y = 0; y < image.h; ++y)
   {
-    uint8_t* output = image.getRawData() + y * image.stride();
-    uint8_t* it = image.getRawData() + y * ostride;
-    for (int x = 0; x < image.w; ++x)
+    uint8_t* output = data + y * image.stride();
+    uint8_t* it = data + y * ostride;
+    for (int x = 0; x < image.w; ++x, it += 4, output += 3)
     {
       uint8_t c = it[0], m = it[1], y = it[2], k = it[3]; 
-      *output++ = 0xff - std::min(c+k, 0xff); // ((0xff-c)*(0xff-k)) >> 8;
-      *output++ = 0xff - std::min(m+k, 0xff); // ((0xff-m)*(0xff-k)) >> 8;
-      *output++ = 0xff - std::min(y+k, 0xff); // ((0xff-y)*(0xff-k)) >> 8;
+      output[0] = 0xff - std::min(c+k, 0xff); // ((0xff-c)*(0xff-k)) >> 8;
+      output[1] = 0xff - std::min(m+k, 0xff); // ((0xff-m)*(0xff-k)) >> 8;
+      output[2] = 0xff - std::min(y+k, 0xff); // ((0xff-y)*(0xff-k)) >> 8;
     }
   }
 
