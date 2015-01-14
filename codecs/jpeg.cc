@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2014 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -497,7 +497,7 @@ void JPEGCodec::parseExif (Image& image)
     uint32_t count = readExif<uint32_t>(exif_data + offset + 4, big_endian);
     uint32_t value = readExif<uint32_t>(exif_data + offset + 8, big_endian);
     
-    std::cerr << std::hex << tag << std::dec << " " << type << " " << count << " " << value << std::endl;
+    //std::cerr << std::hex << tag << std::dec << " " << type << " " << count << " " << value << std::endl;
     
     // global range check
     if ((type == 5 || type == 10) && (value + 4 >= length) || // RATIONAL
