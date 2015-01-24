@@ -26,10 +26,13 @@
  */
 
 #include <string.h> // memcpy
-
 #include <iostream>
 #include <string>
 #include <sstream>
+
+#ifdef _MSC_VER
+#include <vector>
+#endif
 
 #include "pnm.hh"
 #include "Endianess.hh"
@@ -242,27 +245,29 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     {
       const int stride = image.stride();
       const int bps = image.bps;
-      
+#ifndef _MSC_VER
       uint8_t ptr[stride];
-      
+#else
+      std::vector<uint8_t> ptr(stride);
+#endif
       for (int y = 0; y < image.h; ++y)
 	{
-	  memcpy (ptr, image.getRawData() + y * stride, stride);
+	  memcpy (&ptr[0], image.getRawData() + y * stride, stride);
 	  
 	  // is this publically defined somewhere???
 	  if (bps == 1) {
-	    uint8_t* xor_ptr = ptr;
+	    uint8_t* xor_ptr = &ptr[0];
 	    for (int x = 0; x < image.w; x += 8)
 	      *xor_ptr++ ^= 0xff;
 	  }
 	  
 	  if (bps == 16) {
-	    uint16_t* swap_ptr = (uint16_t*)ptr;
+	    uint16_t* swap_ptr = (uint16_t*)&ptr[0];
 	    for (int x = 0; x < stride/2; ++x, ++swap_ptr)
 	      *swap_ptr = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
 	  }
 	  
-	  stream->write ((char*)ptr, stride);
+	  stream->write ((char*)&ptr[0], stride);
 	}
     }
   
