@@ -229,12 +229,12 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, cons
   {
     uint8_t* output = image.getRawData() + y * image.stride();
     uint8_t* it = image.getRawData() + y * ostride;
-    for (int x = 0; x < image.w; ++x)
+    for (int x = 0; x < image.w; ++x, it += bytes)
     {
       // R G B order and associated weighting
-      int c  = (int)*it++ * wR;
-      c += (int)*it++ * wG;
-      c += (int)*it++ * wB;
+      int c  = (int)it[0] * wR;
+      c += (int)it[1] * wG;
+      c += (int)it[2] * wB;
       *output++ = (uint8_t)(c / sum);
     }
   }
