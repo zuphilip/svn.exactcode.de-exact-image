@@ -1,6 +1,6 @@
 /*
  * Canvas cropping.
- * Copyright (C) 2006 - 2013 René Rebe, ExactCODE
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,7 +132,6 @@ void fastAutoCrop (Image& image)
     if (i != stride)
       break; // non-solid line, break out
   }
-  ++h; // we are at the line that differs
   if (h == 0) // do not crop if the image is totally empty
     return;
   
