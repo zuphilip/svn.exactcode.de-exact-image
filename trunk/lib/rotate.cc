@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -34,7 +34,7 @@ void flipX (Image& image)
     if (image.getCodec()->flipX(image))
       return;
   
-  const int stride = image.stride();
+  const unsigned stride = image.stride();
   uint8_t* data = image.getRawData();
   switch (image.spp * image.bps)
     {
@@ -65,6 +65,9 @@ void flipX (Image& image)
 	      row[x] = reversed_bits [row[stride - 1 - x]];
 	      row[stride - 1 - x] = reversed_bits[v];
 	    }
+	    // TODO: this still needs to be fixed for stride < 1 byte!
+            if (stride & 1) // uneven? center-byte:
+	      row[stride/2] = reversed_bits[row[stride/2]];
 	  }
       }
       break;
