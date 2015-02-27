@@ -8,7 +8,6 @@ X_BUILD_IMPLICIT=1
 
 # -s silcently corrupts binaries on OS X, sigh -ReneR
 CFLAGS := -Wall -O2 # -O1 -ggdb # -fsanitize=address -fsanitize=undefined
-CXXFLAGS := $(CFLAGS) -Wno-sign-compare
 
 # for config.h
 CPPFLAGS += -I .
@@ -21,33 +20,35 @@ cc-option = $(shell if $(CC) $(1) -S -o /dev/null -xc /dev/null \
             > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
 
 ifeq "$(X_ARCH)" "i686"
-CXXFLAGS += -march=i686
-CXXFLAGS += $(call cc-option,-mtune=pentium4,)
+CFLAGS += -march=i686
+CFLAGS += $(call cc-option,-mtune=pentium4,)
+CFLAGS += $(call cc-option,-mfpmath=sse,)
 endif
 
 # TODO: improve to match i[3456]86
 ifneq  "$(X_ARCH)" "i686"
 CFLAGS += -fPIC
-CXXFLAGS += -fPIC
 endif
 
 ifeq "$(X_ARCH)" "sparc64"
-CXXFLAGS += -mcpu=ultrasparc
-CXXFLAGS += $(call cc-option,-mtune=niagara,)
+CFLAGS += -mcpu=ultrasparc
+CFLAGS += $(call cc-option,-mtune=niagara,)
 endif
 
-CXXFLAGS += -funroll-loops -fomit-frame-pointer
-CXXFLAGS += $(call cc-option,-funswitch-loops,)
-CXXFLAGS += $(call cc-option,-fpeel-loops,)
-CXXFLAGS += $(call cc-option,-ftracer,)
-CXXFLAGS += $(call cc-option,-funit-at-a-time,)
-CXXFLAGS += $(call cc-option,-frename-registers,)
-CXXFLAGS += $(call cc-option,-ftree-vectorize,)
+CFLAGS += $(call cc-option,-march=native)
 
-#CXXFLAGS += $(call cc-option,-mfpmath=sse,)
+CFLAGS += -funroll-loops -fomit-frame-pointer
+CFLAGS += $(call cc-option,-funswitch-loops,)
+CFLAGS += $(call cc-option,-fpeel-loops,)
+CFLAGS += $(call cc-option,-ftracer,)
+CFLAGS += $(call cc-option,-funit-at-a-time,)
+CFLAGS += $(call cc-option,-frename-registers,)
+CFLAGS += $(call cc-option,-ftree-vectorize,)
 
 # we have some unimplemented colorspaces in the Image::iterator :-(
-CXXFLAGS += $(call cc-option,-Wno-switch -Wno-switch-enum,)
+CFLAGS += $(call cc-option,-Wno-switch -Wno-switch-enum,)
+
+CXXFLAGS := $(CFLAGS) -Wno-sign-compare
 
 ifeq "$(STATIC)" "1"
 X_EXEFLAGS += -static
