@@ -7,8 +7,8 @@ include utility/Makefile
 X_BUILD_IMPLICIT=1
 
 # -s silcently corrupts binaries on OS X, sigh -ReneR
-CFLAGS ?= -Wall -O2 # -O1 -ggdb # -fsanitize=address -fsanitize=undefined
-CXXFLAGS = $(CFLAGS) -Wno-sign-compare
+CFLAGS := -Wall -O2 # -O1 -ggdb # -fsanitize=address -fsanitize=undefined
+CXXFLAGS := $(CFLAGS) -Wno-sign-compare
 
 # for config.h
 CPPFLAGS += -I .
