@@ -89,7 +89,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
     return false;
   }
   
-  // TODO: wirte a more sophisticated parser here
+  // TODO: write a more sophisticated "C" parser here
   
   // drop the C declaration
   std::getline (*stream, line);
@@ -167,8 +167,8 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
   // read in the pixel data
   uint8_t* dst = image.getRawData();
   
+  std::string last = ""; // to cache to avoid character index lookup
   int c = 0;
-  std::string last = "";
   for (int y = 0; y < image.h; ++y)
     {
       if (stream->peek() == '"')
@@ -179,7 +179,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	  for (int i = 0; i < cpp; ++i)
 	    str.append (1, (char)stream->get());
 	  
-	  if (str != last) {
+	  if (str != last) { // optimization: avoid re-search
 	    // TODO: make this a hash lookup ...
 	    std::vector<std::string>::iterator it =
 	      find (cmap.begin(), cmap.end(), str);
@@ -191,8 +191,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	      last = str;
 	    }
 	  }
-	  
-	  *++dst = c;
+	  *dst++ = c;
 	}
       std::getline (*stream, line);
     }
