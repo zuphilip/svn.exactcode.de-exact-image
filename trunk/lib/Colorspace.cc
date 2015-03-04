@@ -838,8 +838,22 @@ void colorspace_de_palette (Image& image, int table_entries,
     image.spp = 4;
   else
     image.spp = 3;
+ 
+  image.setRawData(new_data);
 
-  image.setRawData (new_data);  
+  // special case, e.g. for 1-bit XPM
+  if (is_gray && table_entries == 2) {
+    if (rmap[0] == 0 &&
+        gmap[0] == 0 &&
+        bmap[0] == 0 &&
+        rmap[1] >= 0xff00 &&
+        gmap[1] >= 0xff00 &&
+        bmap[1] >= 0xff00)
+      {
+       	//std::cerr << "b/w after all." << std::endl;
+        colorspace_by_name(image, "bw");
+      }
+  }
 }
 
 bool colorspace_by_name (Image& image, const std::string& target_colorspace,
