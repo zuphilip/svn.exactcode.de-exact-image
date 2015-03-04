@@ -19,6 +19,9 @@
  * Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
  */
 
+#include <limits.h>
+#include <stdlib.h>
+
 #include "agg_basics.h"
 #include "agg_rendering_buffer.h"
 #include "agg_rasterizer_scanline_aa.h"
