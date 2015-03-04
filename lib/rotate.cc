@@ -33,9 +33,9 @@ void flipX (Image& image)
   if (!image.isModified() && image.getCodec())
     if (image.getCodec()->flipX(image))
       return;
-  
-  const unsigned stride = image.stride();
+
   uint8_t* data = image.getRawData();
+  const int stride = image.stride();
   switch (image.spp * image.bps)
     {
     case 1:
@@ -106,9 +106,9 @@ void flipY (Image& image)
   if (!image.isModified() && image.getCodec())
     if (image.getCodec()->flipY(image))
       return;
-  
-  const unsigned int bytes = image.stride();
+
   uint8_t* data = image.getRawData();
+  const unsigned int bytes = image.stride();
   for (int y = 0; y < image.h / 2; ++y)
     {
       int y2 = image.h - y - 1;
@@ -131,10 +131,9 @@ void rot90 (Image& image, int angle)
   bool cw = false; // clock-wise
   if (angle == 90)
     cw = true; // else 270 or -90 or whatever and thus counter cw
-  
-  int rot_stride = (image.h * image.spp * image.bps + 7) / 8;
    
   uint8_t* data = image.getRawData();
+  int rot_stride = (image.h * image.spp * image.bps + 7) / 8;
   uint8_t* rot_data = (uint8_t*) malloc(rot_stride * image.w);
   
   switch (image.spp * image.bps)
