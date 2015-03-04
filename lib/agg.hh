@@ -16,6 +16,8 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
+#include <limits.h>
+
 #include <agg_pixfmt_rgb.h>
 
 #include <agg_rendering_buffer.h>
