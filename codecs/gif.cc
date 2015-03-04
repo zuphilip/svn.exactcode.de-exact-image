@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -232,7 +232,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
   free (OutputBuffer);
 
-  delete (RedBuffer); delete (GreenBuffer); delete (BlueBuffer);
+  delete[] RedBuffer; delete[] GreenBuffer; delete[] BlueBuffer;
 
   EGifCloseFile(GifFile);
   return true;
