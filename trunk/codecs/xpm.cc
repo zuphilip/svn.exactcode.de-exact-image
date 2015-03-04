@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 - 2009 René Rebe
+ * Copyright (C) 2007 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -198,7 +198,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
     }
   
   colorspace_de_palette (image, colors, rmap, gmap, bmap);
-  delete (rmap); delete (gmap); delete (bmap);
+  delete[] rmap; delete[] gmap; delete[] bmap;
   rmap = gmap = bmap = 0;
 
   return true;
