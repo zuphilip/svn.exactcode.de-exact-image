@@ -18,8 +18,8 @@ else
 NOT_SRCS += png.cc
 endif
 
-ifeq "$(WITHLIBUNGIF)" "1"
-LDFLAGS += -lungif
+ifeq "$(WITHLIBGIF)" "1"
+LDFLAGS += -lgif
 else
 NOT_SRCS += gif.cc
 endif
