@@ -158,7 +158,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
     }
   
   image.bps = 8; // for now, later this could be optimized
-  image.spp = 3; // for now, later this could be optimized
+  image.spp = 1; // for now, later this could be optimized
   image.resize (image.w, image.h);
   image.setResolution(0, 0);
   
