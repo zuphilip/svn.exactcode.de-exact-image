@@ -948,11 +948,11 @@ void CLASS lossless_jpeg_load_raw()
   struct jhead jh;
   ushort *rp;
 
-  if(jh.wide<1 || jh.high<1 || jh.clrs<1 || jh.bits <1)
-    longjmp (failure, 2);
-
   if (!ljpeg_start (&jh, 0)) return;
   jwide = jh.wide * jh.clrs;
+
+  if(jh.wide<1 || jh.high<1 || jh.clrs<1 || jh.bits <1)
+    longjmp (failure, 2);
 
   for (jrow=0; jrow < jh.high; jrow++) {
     rp = ljpeg_row (jrow, &jh);
