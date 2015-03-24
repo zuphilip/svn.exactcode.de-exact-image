@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's any to multi-page TIFF converted
- * Copyright (C) 2007 - 2010 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2007 - 2015 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2007 Lars Kuhtz, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,10 @@ int main (int argc, char* argv[])
   Argument<int> arg_line_skip ("s", "line-skip",
 			       "number of lines that are skipped", 8, 0, 1);
 
+  Argument<std::string> arg_format ("f", "format",
+				    "user defined format string",
+				    0, 1);
+
   Argument<int> arg_directions (
       "d", 
       "directions",
@@ -94,12 +98,13 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_directions);
   arglist.Add (&arg_concurrent_lines);
   arglist.Add (&arg_line_skip);
+  arglist.Add (&arg_format);
 
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
       std::cerr << "barcode recognition module of the exact-image library" << std::endl
-                <<  "    - Copyright 2007-2010 by René Rebe, ExactCODE" << std::endl
+                <<  "    - Copyright 2007-2015 by René Rebe, ExactCODE" << std::endl
                 <<  "    - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
                 << "Usage:" << std::endl;
       
@@ -110,7 +115,16 @@ int main (int argc, char* argv[])
   const std::vector<std::string>& filenames = arglist.Residuals();
   Image image;
   int errors = 0;
-  bool multiple_files = filenames.size () > 1;
+  
+  std::string format;
+
+  if (arg_format.Size() > 0) {
+    format = arg_format.Get();
+  } else {
+    if (filenames.size() > 1)
+      format = "%f: ";
+    format += "%c [type: %t at: (%x,%y)]";
+  }
   
   for (std::vector<std::string>::const_iterator file = filenames.begin();
        file != filenames.end ();
@@ -128,7 +142,7 @@ int main (int argc, char* argv[])
       int line_skip = arg_line_skip.Get();
 
       std::map<scanner_result_t,int,comp> codes;
-      if ( directions&(left_right|right_left) ) {
+      if (directions & (left_right | right_left)) {
           BarDecode::BarcodeIterator<> it(&image,threshold,ean|code128|gs1_128|code39|code25i,directions,concurrent_lines,line_skip);
           while (! it.end() ) {
               ++codes[*it];
@@ -136,8 +150,8 @@ int main (int argc, char* argv[])
           }
       }
 
-      if ( directions&(top_down|down_top) ) {
-          directions_t dir = (directions_t) ((directions&(top_down|down_top))>>1);
+      if (directions & (top_down | down_top)) {
+          directions_t dir = (directions_t)((directions & (top_down | down_top)) >> 1);
           BarDecode::BarcodeIterator<true> it(&image,threshold,ean|code128|gs1_128|code39|code25i,dir,concurrent_lines,line_skip);
           while (! it.end() ) {
               ++codes[*it];
@@ -145,15 +159,56 @@ int main (int argc, char* argv[])
           }
       }
       
-      for (std::map<scanner_result_t,int>::const_iterator it = codes.begin();
-	   it != codes.end();
-	   ++it) {
-	if (it->first.type&(ean|code128|gs1_128) || it->second > 1)
+      for (std::map<scanner_result_t,int>::const_iterator it2 = codes.begin();
+	   it2 != codes.end();
+	   ++it2) {
+	if (it2->first.type & (ean|code128|gs1_128) || it2->second > 1)
 	  {
-	    if (multiple_files) std::cout << *file << ": ";
-            std::cout << filter_non_printable(it->first.code) << " [type: " << it->first.type
-                << " at: (" << it->first.x << "," << it->first.y
-                << ")]" << std::endl;
+	    // output format sting with substitued escapes
+	    for (std::string::const_iterator it = format.begin(); it != format.end(); ++it)
+	    {
+	      if (*it == '%') {
+		if (++it == format.end())
+		  --it; // print the % if at the end
+		switch (*it) {
+		case 'f': // filename
+		  std::cout << *file; break;
+		case 't': // type
+		  std::cout << it2->first.type; break;
+		case 'c': // content
+		  std::cout << filter_non_printable(it2->first.code); break;
+		case 'x': // x pos
+		  std::cout << it2->first.x; break;
+		case 'y': // y pos
+		  std::cout << it2->first.y; break;
+		case '%':
+		  std::cout << *it; break;
+		default:
+		  if (it != format.begin())
+		    --it;
+		  std::cout << *it;
+		}
+	      }
+	      else if (*it == '\\')
+		{
+		  if (++it == format.end())
+		    --it; // print the \ if at the end
+		  switch (*it) {
+		  case 'n': std::cout << std::endl; break;
+		  case 't': std::cout << "\t"; break;
+		  case 'r': std::cout << "\r"; break;
+		  case '\\': std::cout << *it; break;
+		  default:
+		    if (it != format.begin())
+		      --it;
+		    std::cout << *it;
+		  }
+		}
+	      else
+		std::cout << *it;
+	    }
+	    
+	    std::cout << std::endl;
 	  }
       }
 #ifdef BARDECODE_DEBUG
