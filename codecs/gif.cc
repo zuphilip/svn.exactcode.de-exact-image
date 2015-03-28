@@ -57,12 +57,12 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
   GifFileType* GifFile;
   GifRecordType RecordType;
   GifByteType* Extension;
-  ColorMapObject *ColorMap = NULL;
-  int ExtCode;
+  ColorMapObject *ColorMap = 0;
+  int GifError, ExtCode;
   
-  if ((GifFile = DGifOpen (stream, &GIFInputFunc)) == NULL)
+  if ((GifFile = DGifOpen (stream, &GIFInputFunc, &GifError)) == 0)
     {
-      PrintGifError();
+      //PrintGifError();
       return false;
     }
   
@@ -74,7 +74,7 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
   /* Scan the content of the GIF file and load the image(s) in: */
   do {
     if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR) {
-      PrintGifError();
+      //PrintGifError();
       return false;
     }
     
@@ -83,7 +83,7 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
     switch (RecordType) {
     case IMAGE_DESC_RECORD_TYPE:
       if (DGifGetImageDesc(GifFile) == GIF_ERROR) {
-	PrintGifError();
+	//PrintGifError();
 	return false;
       }
       
@@ -104,7 +104,7 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	       j += InterlacedJumps[i]) {
 	    if (DGifGetLine(GifFile, &image.getRawData()[j*image.stride()+Col],
 			    Width) == GIF_ERROR) {
-	      PrintGifError();
+	      //PrintGifError();
 	      return false;
 	    }
 	  }
@@ -113,7 +113,7 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
 	for (int i = 0; i < Height; ++i) {
 	  if (DGifGetLine(GifFile, &image.getRawData()[Row++ * image.stride()+Col],
 			  Width) == GIF_ERROR) {
-	    PrintGifError();
+	    //PrintGifError();
 	    return false;
 	  }
 	}
@@ -122,12 +122,12 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
     case EXTENSION_RECORD_TYPE:
       /* Skip any extension blocks in file: */
       if (DGifGetExtension(GifFile, &ExtCode, &Extension) == GIF_ERROR) {
-	PrintGifError();
+	//PrintGifError();
 	return false;
       }
-      while (Extension != NULL) {
+      while (Extension != 0) {
 	if (DGifGetExtensionNext(GifFile, &Extension) == GIF_ERROR) {
-	  PrintGifError();
+	  //PrintGifError();
 	  return false;
 	}
       }
@@ -155,7 +155,7 @@ int GIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
   // convert colormap to our 16bit "TIFF"format
   colorspace_de_palette (image, ColorMap->ColorCount, rmap, gmap, bmap);
   
-  EGifCloseFile(GifFile);
+  EGifCloseFile(GifFile, &GifError);
 
   return true;
 }
@@ -165,8 +165,9 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 {
   GifFileType* GifFile;
   GifByteType* Ptr;
+  int GifError;
   
-  if ((GifFile = EGifOpen (stream, &GIFOutputFunc)) == NULL)
+  if ((GifFile = EGifOpen(stream, &GIFOutputFunc, &GifError)) == 0)
     {
       std::cerr << "Error preparing GIF file for writing." << std::endl;
       return false;
@@ -175,7 +176,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   int ColorMapSize = 256;
   
   // later use our own colormap generation
-  ColorMapObject* OutputColorMap = MakeMapObject(ColorMapSize, NULL);
+  ColorMapObject* OutputColorMap = GifMakeMapObject(ColorMapSize, 0);
   if (!OutputColorMap)
     return false;
   
@@ -203,7 +204,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
    
   
-  if (QuantizeBuffer(image.w, image.h, &ColorMapSize,
+  if (GifQuantizeBuffer(image.w, image.h, &ColorMapSize,
 		     RedBuffer, GreenBuffer, BlueBuffer,
 		     OutputBuffer, OutputColorMap->Colors) == GIF_ERROR) {
     return false;
@@ -215,7 +216,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (EGifPutScreenDesc(GifFile, image.w, image.h,
 			ColorMapSize, 0, OutputColorMap) == GIF_ERROR ||
       EGifPutImageDesc(GifFile, 0, 0, image.w, image.h,
-		       FALSE, NULL) == GIF_ERROR)
+		       false, 0) == GIF_ERROR)
     {
       std::cerr << "Error writing GIF header." << std::endl;
       return false;
@@ -234,7 +235,7 @@ bool GIFCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
   delete[] RedBuffer; delete[] GreenBuffer; delete[] BlueBuffer;
 
-  EGifCloseFile(GifFile);
+  EGifCloseFile(GifFile, &GifError);
   return true;
 }
 
