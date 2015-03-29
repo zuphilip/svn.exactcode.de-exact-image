@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2010 René Rebe
+ * Copyright (C) 2008-2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,8 +13,7 @@
  *
  * Alternatively, commercial licensing options are available from the
  * copyright holder ExactCODE GmbH Germany.
-
-/*
+ *
  * Based on the svg_test application window,
  * Copyright (C) 2002-2005 Maxim Shemanarev (http://www.antigrain.com)
  */
