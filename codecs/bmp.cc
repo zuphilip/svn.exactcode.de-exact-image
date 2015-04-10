@@ -722,11 +722,8 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return false;
   }
   
-  BMPFileHeader file_hdr;
-  BMPInfoHeader info_hdr;
-  
-  memset (&file_hdr, 0, sizeof (file_hdr));
-  memset (&info_hdr, 0, sizeof (info_hdr));
+  BMPFileHeader file_hdr = {};
+  BMPInfoHeader info_hdr = {};
 
   // BMPFileHeader
 
