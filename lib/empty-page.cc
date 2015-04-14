@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2013 René Rebe
+ * Copyright (C) 2005 - 2015 René Rebe
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -59,24 +59,24 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
   // count bits and decide based on that
   
   // create a fast bit count lookup table
-  int bits_set[256] = { 0 };
+  int bitsset[256];
   for (int i = 0; i < 256; i++) {
     int bits = 0;
     for (int j = i; j != 0; j >>= 1) {
-      bits += (j & 0x01);
+      bits += j & 1;
     }
-    bits_set[i] = bits;
+    bitsset[i] = bits;
   }
   
-  int stride = (image.w * image.bps * image.spp + 7) / 8;
+  const int stride = image.stride();
   
   // count pixels by table lookup
   int pixels = 0;
   uint8_t* data = image.getRawData();
   for (int row = marginV; row < image.h - marginV; ++row) {
     for (int x = marginH/8; x < stride - marginH/8; ++x) {
-      int b = bits_set [ data[stride*row + x] ];
-      // it is a bits_set table - and we want the zeros ...
+      int b = bitsset[data[stride*row + x]];
+      // it is a bitsset table - and we want the zeros ...
       pixels += 8-b;
     }
   }
