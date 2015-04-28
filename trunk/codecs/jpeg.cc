@@ -509,14 +509,14 @@ void JPEGCodec::parseExif (Image& image)
     
     if (tag == 0x011a) // xres
     {
-      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian);
-	//y = readExif<uint32_t>(exif_data + value + 4, big_endian);
-      xres = x;
+      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian),
+	y = readExif<uint32_t>(exif_data + value + 4, big_endian);
+      xres = (double)x/y;
     } else if (tag == 0x011b) // yres
     {
-      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian);
-        //y = readExif<uint32_t>(exif_data + value + 4, big_endian);
-      yres = x;
+      uint32_t x = readExif<uint32_t>(exif_data + value, big_endian),
+        y = readExif<uint32_t>(exif_data + value + 4, big_endian);
+      yres = (double)x/y;
     } else if (tag == 0x0128) // unit
     {
       uint16_t u = readExif<uint16_t>(exif_data + offset + 8, big_endian);
