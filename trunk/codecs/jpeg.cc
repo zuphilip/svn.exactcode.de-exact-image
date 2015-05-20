@@ -340,11 +340,14 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return true;
   }
   
+  if (image.w <= 0 || image.h <= 0) {
+    std::cerr << "Can not write image with 0 dimension" << std::endl;
+    return false;
+  }
+  
   // really encode
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
-
-  JSAMPROW buffer[1]; // pointer to JSAMPLE row[s]
 
   // Initialize the JPEG compression object with default error handling.
   cinfo.err = jpeg_std_error(&jerr);
@@ -375,9 +378,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // defaults depending on in_color_space
   jpeg_set_defaults(&cinfo);
-  
   jpeg_compress_set_density (&cinfo, image);
-
   jpeg_set_quality(&cinfo, quality, (boolean)FALSE); // do not limit to baseline-JPEG values
 
   // Start compressor
@@ -385,9 +386,14 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
   // Process data
   while (cinfo.next_scanline < cinfo.image_height) {
-    buffer[0] = (JSAMPLE*) image.getRawData() +
-      cinfo.next_scanline*image.stride();
-    (void) jpeg_write_scanlines(&cinfo, buffer, 1);
+    JSAMPROW buffer[1]; // pointer to JSAMPLE row[s]
+    buffer[0] = (JSAMPLE*)image.getRawData() + cinfo.next_scanline * image.stride();
+    if (jpeg_write_scanlines(&cinfo, buffer, 1) < 1) {
+      std::cerr << "Could not write scanline." << std::endl;
+      jpeg_finish_compress(&cinfo);
+      jpeg_destroy_compress(&cinfo);
+      return false;
+    }
   }
 
   // Finish compression and release memory
