@@ -118,7 +118,7 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
   setRawData ();
 }
 
-void Image::resize (int _w, int _h, unsigned _stride) {
+bool Image::resize (int _w, int _h, unsigned _stride) {
   std::swap(w, _w);
   std::swap(h, _h);
   std::swap(rowstride, _stride);
@@ -132,9 +132,14 @@ void Image::resize (int _w, int _h, unsigned _stride) {
       w = _w;
       h = _h;
       rowstride = _stride;
+#if defined(__GNUC__) && !defined(__EXCEPTIONS)
+#else
       throw std::bad_alloc();
+#endif
+      return false;
     }
   }
+  return true;
 }
 
 void Image::realloc () {
