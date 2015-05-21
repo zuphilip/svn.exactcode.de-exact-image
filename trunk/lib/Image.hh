@@ -118,7 +118,7 @@ public:
   void setRawData (uint8_t* _data);
   void setRawDataWithoutDelete (uint8_t* _data);
   
-  void resize (int _w, int _h, unsigned stride = 0);
+  bool resize (int _w, int _h, unsigned stride = 0);
   void realloc ();
   
   void setDecoderID (const std::string& id);
