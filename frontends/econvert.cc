@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's convert compatible command line frontend.
- * Copyright (C) 2005 - 2014 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH
  * Copyright (C) 2005, 2008 Archivista GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ static void freeImages()
   }
 }
 
-Argument<int> arg_quality ("", "quality",
+Argument<int> arg_quality ("q", "quality",
 			   "quality setting used for writing compressed images\n\t\t"
 			   "integer range 0-100, the default is 75",
 			   0, 1, true, true);
@@ -1057,7 +1057,7 @@ int main (int argc, char* argv[])
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2014 René Rebe, ExactCODE" << std::endl
+		<< "Copyright (C) 2005 - 2015 René Rebe, ExactCODE" << std::endl
 		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       
