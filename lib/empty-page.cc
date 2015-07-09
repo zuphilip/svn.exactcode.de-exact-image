@@ -36,24 +36,26 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
   if (marginH % 8 != 0)
     marginH -= marginH % 8;
   
-  // TODO: optimize not to copy the pixel data on colorspace conversion
-  Image image;
-  image = im;
+  Image* image, img;
   
+  if (im.spp == 1 && im.bps == 1) {
+    image = &im;
+  }
   // already in sub-byte domain? just count the black pixels
-  if (image.spp == 1 && (image.bps > 1 && image.bps < 8))
-    {
-      colorspace_by_name (image, "gray1");
-    }
+  else if (im.spp == 1 && im.bps < 8) {
+    img = im; image = &img;
+    colorspace_by_name (*image, "gray1");
+  }
   // if not 1-bit, yet: convert it down ...
-  else if (image.spp != 1 || image.bps != 1) {
+  else {
+    img = im; image = &img;
     // don't care about cmyk vs. rgb, just get gray8 pixels, quickly
-    colorspace_by_name (image, "gray8");
+    colorspace_by_name (*image, "gray8");
 
     // force quick pass, no color use, 1px radius
-    optimize2bw (image, 0, 0, 128, 0, 1);
+    optimize2bw (*image, 0, 0, 128, 0, 1);
     // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
-    colorspace_gray8_to_gray1 (image);
+    colorspace_gray8_to_gray1 (*image);
   }
   
   // count bits and decide based on that
@@ -68,12 +70,12 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
     bitsset[i] = bits;
   }
   
-  const int stride = image.stride();
+  const int stride = image->stride();
   
   // count pixels by table lookup
   int pixels = 0;
-  uint8_t* data = image.getRawData();
-  for (int row = marginV; row < image.h - marginV; ++row) {
+  uint8_t* data = image->getRawData();
+  for (int row = marginV; row < image->h - marginV; ++row) {
     for (int x = marginH/8; x < stride - marginH/8; ++x) {
       int b = bitsset[data[stride*row + x]];
       // it is a bitsset table - and we want the zeros ...
@@ -81,7 +83,7 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
     }
   }
 
-  float image_percent = (float)pixels/(image.w*image.h) * 100;
+  float image_percent = 100.0 * pixels / (image->w * image->h);
   
   if (set_pixels)
     *set_pixels = pixels;
