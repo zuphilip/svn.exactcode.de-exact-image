@@ -18,6 +18,7 @@
 
 #include <iostream>
 
+#include "Bits.hh"
 #include "Image.hh"
 
 #include "Colorspace.hh"
@@ -53,21 +54,9 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
     colorspace_by_name (*image, "gray8");
 
     // force quick pass, no color use, 1px radius
-    optimize2bw (*image, 0, 0, 128, 0, 1);
+    optimize2bw (*image, 0/*min*/, 0/*max*/, 128/*thr*/, 0/*sloppy*/, 1/*radius*/);
     // convert to 1-bit (threshold) - optimize2bw does not perform that step ...
     colorspace_gray8_to_gray1 (*image);
-  }
-  
-  // count bits and decide based on that
-  
-  // create a fast bit count lookup table
-  int bitsset[256];
-  for (int i = 0; i < 256; i++) {
-    int bits = 0;
-    for (int j = i; j != 0; j >>= 1) {
-      bits += j & 1;
-    }
-    bitsset[i] = bits;
   }
   
   const int stride = image->stride();
@@ -75,9 +64,11 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
   // count pixels by table lookup
   int pixels = 0;
   uint8_t* data = image->getRawData();
-  for (int row = marginV; row < image->h - marginV; ++row) {
+  for (int row = marginV; row < image->h - marginV; ++row)
+  {
+    uint8_t* rowptr = data + stride * row;
     for (int x = marginH/8; x < stride - marginH/8; ++x) {
-      int b = bitsset[data[stride*row + x]];
+      int b = Exact::popcount[rowptr[x]];
       // it is a bitsset table - and we want the zeros ...
       pixels += 8-b;
     }
