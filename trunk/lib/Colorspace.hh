@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2014 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -32,7 +32,7 @@ void colorspace_argb8_to_rgb8 (Image& image);
 void colorspace_cmyk_to_rgb8 (Image& image);
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes = 3,
-			       const int wR = 28, const int wG = 59, const int wB = 11);
+			       const int wR = 30, const int wG = 59, const int wB = 11);
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha=0xff);
 
 void colorspace_gray8_threshold (Image& image, uint8_t threshold = 127);
