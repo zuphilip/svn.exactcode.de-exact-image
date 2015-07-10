@@ -105,26 +105,17 @@ void fastAutoCrop (Image& image)
     return;
   
   const int stride = image.stride();
-  const unsigned int bytes = (image.spp * image.bps + 7) / 8;
   
   int h = image.h - 1;
   uint8_t* data = image.getRawData() + stride * h;
+  uint8_t* ref = data; // ref value to compare against
   
-  // which value to compare against, first pixel of the last line
-#ifndef _MSC_VER
-  uint8_t v[bytes];
-#else
-  std::vector<uint8_t> v(bytes);
-#endif
-  memcpy(&v[0], data, bytes);
-  
-  for (; h >= 0; --h, data -= stride) {
+  for (--h, data -= stride; h >= 0; --h, data -= stride) {
     // data row
     int i = 0;
-    for (; i < stride; i += bytes)
+    for (; i < stride; ++i)
       {
-	if (data[i] != v[0] ||
-	    (bytes > 1 && memcmp(&data[i+1], &v[1], bytes - 1) != 0)) {
+	if (data[i] != ref[i]) {
 	  break; // pixel differs, break out
 	}
       }
@@ -132,6 +123,7 @@ void fastAutoCrop (Image& image)
     if (i != stride)
       break; // non-solid line, break out
   }
+  ++h; // we are at the line that differs
   if (h == 0) // do not crop if the image is totally empty
     return;
   
