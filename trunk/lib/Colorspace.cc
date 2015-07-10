@@ -246,11 +246,13 @@ void colorspace_rgb16_to_gray16 (Image& image)
 {
   unsigned ostride = image.stride();
   image.spp = 1; image.rowstride = 0;
+  unsigned stride = image.stride();
 
+  uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h; ++y)
   {
-    uint16_t* output = (uint16_t*)(image.getRawData() + y * image.stride());
-    uint16_t* it = (uint16_t*)image.getRawData() + y * ostride;
+    uint16_t* output = (uint16_t*)(data + y * stride);
+    uint16_t* it = (uint16_t*)(data + y * ostride);
     for (int x = 0; x < image.w; ++x)
     {
       // R G B order and associated weighting
@@ -262,7 +264,7 @@ void colorspace_rgb16_to_gray16 (Image& image)
     }
   }
   
-  image.resize(image.w, image.h, image.stride()); // realloc
+  image.resize(image.w, image.h); // realloc
 }
 
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
@@ -707,23 +709,23 @@ void colorspace_16_to_8 (Image& image)
 
 void colorspace_8_to_16 (Image& image)
 {
+  unsigned stride = image.stride();
   image.setRawDataWithoutDelete((uint8_t*)realloc(image.getRawData(),
-						  image.stride() * 2 * image.h));
+						  stride * 2 * image.h));
   
   uint8_t* data = image.getRawData();
-  unsigned stride = image.stride();
   for (int y = image.h - 1; y >= 0; --y)
     {
       uint8_t* data8 = data + y * stride;
       uint16_t* data16 = (uint16_t*)(data + y * stride * 2);
       
-      for (int x = image.stride() - 1; x >= 0; --x)
+      for (int x = stride - 1; x >= 0; --x)
 	{
 	  data16[x] = data8[x] * 0xffff / 255;
 	}
     }
   
-  image.rowstride *= 2;
+  image.rowstride = stride * 2;
   image.bps = 16; // converted 16bit data
 }
 
