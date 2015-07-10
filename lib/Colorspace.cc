@@ -242,13 +242,14 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, cons
   image.resize(image.w, image.h); // realloc
 }
 
-void colorspace_rgb16_to_gray16 (Image& image)
+void colorspace_rgb16_to_gray16 (Image& image, const int wR = 30, const int wG = 59, const int wB = 11)
 {
   unsigned ostride = image.stride();
   image.spp = 1; image.rowstride = 0;
   unsigned stride = image.stride();
 
   uint8_t* data = image.getRawData();
+  const int sum = wR + wG + wB;
   for (int y = 0; y < image.h; ++y)
   {
     uint16_t* output = (uint16_t*)(data + y * stride);
@@ -256,11 +257,11 @@ void colorspace_rgb16_to_gray16 (Image& image)
     for (int x = 0; x < image.w; ++x)
     {
       // R G B order and associated weighting
-      int c = (int)*it++ * 28;
-      c += (int)*it++ * 59;
-      c += (int)*it++ * 11;
+      int c = (int)*it++ * wR;
+      c += (int)*it++ * wG;
+      c += (int)*it++ * wB;
       
-      *output++ = (uint16_t)(c / 100);
+      *output++ = (uint16_t)(c / sum);
     }
   }
   
