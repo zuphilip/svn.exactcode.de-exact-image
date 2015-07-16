@@ -707,8 +707,6 @@ void Viewer::ImageToEvas ()
 
 EvasImage* Viewer::ImageToEvas (Image* image, EvasImage* eimage)
 {
-  uint8_t* evas_data = 0;
-  
   if (!eimage) {
     eimage = new EvasImage (*evas);
     eimage->SmoothScale (false);
