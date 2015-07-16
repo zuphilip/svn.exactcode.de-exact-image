@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,6 +89,7 @@ private:
   EvasText* evas_osd_text2;
   Utility::Timer osd_timer;
   
+  float HiDPI;
   int zoom;
   int channel;
   
