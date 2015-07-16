@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's identify compatible command line frontend.
- * Copyright (C) 2006 - 2013 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
  * Copyright (C) 2006 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -74,9 +74,10 @@ int main (int argc, char* argv[])
 
   if (arg_help.Get() == true || arglist.Residuals().empty())
     {
-      std::cerr << "Exact image identification (edentify)."
-		<< std::endl << "Version " VERSION
-                <<  " - Copyright (C) 2006 - 2013 by ExactCODE and Archivista" << std::endl
+      std::cerr << "ExactImage identification (edentify), version " VERSION << std::endl
+                << "Copyright (C) 2006 - 2015 René Rebe, ExactCODE" << std::endl
+                << "Copyright (C) 2006 Archivista" << std::endl
+
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
@@ -204,8 +205,6 @@ int main (int argc, char* argv[])
 	int bits = image.bps * image.spp;
 	std::cout << " " << bits << " bit" << (bits>1 ? "s" : "") << ", "
 		  << image.spp << " channel" << (image.spp>1 ? "s" : "") << std::endl;
-	
-	std::cout << std::endl;
       }
     }
   }
