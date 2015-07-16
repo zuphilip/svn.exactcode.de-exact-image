@@ -135,8 +135,8 @@ void Viewer::UpdateOSD (const std::string& str1, const std::string& str2)
 {
   evas_osd_text1->Text (str1);
   evas_osd_text2->Text (str2);
-  evas_osd_rect->Resize (std::max(evas_osd_text1->Width(), evas_osd_text2->Width()) + 4,
-			 evas_osd_text1->Height() + evas_osd_text2->Height() + 8);
+  evas_osd_rect->Resize (std::max(evas_osd_text1->Width(), evas_osd_text2->Width()) + 8*HiDPI,
+			 evas_osd_text1->Height() + evas_osd_text2->Height() + 8*HiDPI);
   AlphaOSD (0xFF);
   osd_timer.Reset ();
 }
@@ -186,6 +186,13 @@ int Viewer::Run (bool opengl)
 
   Window root = RootWindow(dpy, scr);
 
+  int xres = 25.4 * XDisplayWidth(dpy, scr) / XDisplayWidthMM(dpy, scr) + .5;
+  int yres = 25.4 * XDisplayHeight(dpy, scr) / XDisplayHeightMM(dpy, scr) + .5;
+  if (xres >= 192 || yres >= 192)
+    HiDPI = 2;
+  else if (xres >= 144 || yres >= 144)
+    HiDPI = 1.5;
+  
   attr.backing_store = NotUseful;
   attr.border_pixel = 0;
   attr.background_pixmap = None;
@@ -318,14 +325,14 @@ int Viewer::Run (bool opengl)
   
   evas_osd_text1 = new EvasText (*evas);
   evas_osd_text1->Layer (10);
-  evas_osd_text1->Move (4,4);
-  evas_osd_text1->Font ("Vera", 10);
+  evas_osd_text1->Move (4*HiDPI, 4*HiDPI);
+  evas_osd_text1->Font ("Vera", 10*HiDPI);
   evas_osd_text1->Show ();
 
   evas_osd_text2 = new EvasText (*evas);
   evas_osd_text2->Layer (10);
-  evas_osd_text2->Move (4,8 + evas_osd_text1->Height());
-  evas_osd_text2->Font ("Vera", 10);
+  evas_osd_text2->Move (4*HiDPI, 8*HiDPI + evas_osd_text1->Height());
+  evas_osd_text2->Font ("Vera", 10*HiDPI);
   evas_osd_text2->Show ();
 
   evas_osd_rect = new EvasRectangle (*evas);
