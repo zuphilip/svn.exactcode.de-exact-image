@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2012 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -800,9 +800,8 @@ int main (int argc, char** argv)
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
     {
-      cerr << "Exact image viewer (edisplay)."
-	   << endl << "Version " VERSION
-	   <<  " - Copyright (C) 2006 - 2010 by René Rebe" << std::endl
+      cerr << "ExactImage viewer (edisplay), version " VERSION << std::endl
+	   << "Copyright (C) 2006 - 2015 by René Rebe" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
