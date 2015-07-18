@@ -202,9 +202,7 @@ __attribute__((packed))
 #endif
 ;
 
-/*
- * Info header size in bytes:
- */
+// Info header size in bytes:
 static const unsigned int BIH_OS21SIZE = 12; /* for BMPT_OS21 */
 static const unsigned int BIH_OS22SIZE = 64; /* for BMPT_OS22 */
 static const unsigned int BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
@@ -212,10 +210,7 @@ static const unsigned int BIH_WIN5SIZE = 56; /* for BMPT_WIN5 */
 static const unsigned int BIH_V4 = 108;
 static const unsigned int BIH_V5 = 124;
 
-/*
- * We will use plain byte array instead of this structure, but declaration
- * provided for reference
- */
+// We will use plain byte array instead of this structure, for reference:
 struct BMPColorEntry
 {
   char       bBlue;
@@ -228,10 +223,7 @@ struct BMPColorEntry
 #pragma pack(pop)
 #endif
 
-/*
- * Image data in BMP file stored in BGR (or ABGR) format. We rearrange
- * pixels to RGB (RGBA) format.
- */
+// Image data in BMP file stored in BGR (or ABGR) format:
 static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 {
   uint16_t tmp;
@@ -271,6 +263,7 @@ static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
     break;
     
   default:
+    // sub-byte color table rows remain unchanged
     break;
   }
 }
@@ -285,9 +278,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
     return false;
   }
   
-  /* -------------------------------------------------------------------- */
-  /*      Read the BMPFileHeader. We need iOffBits value only             */
-  /* -------------------------------------------------------------------- */
+  // Read the BMPFileHeader. We need iOffBits value only.
   stream->seekg (10);
   stream->read ((char*)&file_hdr.iOffBits, 4);
   
@@ -309,12 +300,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 
   uint32_t clr_tbl_size = 0, n_clr_elems = 3;
   uint8_t* clr_tbl = 0;
-  uint8_t* data = 0;
-
-  /* -------------------------------------------------------------------- */
-  /*      Read the BMPInfoHeader.                                         */
-  /* -------------------------------------------------------------------- */
   
+  // Read the BMPInfoHeader
   stream->seekg (offset);
   stream->read ((char*)&info_hdr.iSize, 4);
   
@@ -341,7 +328,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     std::cerr << "Unknown header size: " << info_hdr.iSize << std::endl;
   }
 
-if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
+  if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       bmp_type == BMPT_OS22) {
     stream->read((char*)&info_hdr.iWidth, 4);
     stream->read((char*)&info_hdr.iHeight, 4);
@@ -364,10 +351,7 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
   }
   
   if (bmp_type == BMPT_OS22) {
-    /* 
-     * FIXME: different info in different documents
-     * regarding this!
-     */
+    //FIXME: different info in different documents regarding this!
     n_clr_elems = 3;
   }
 
@@ -387,7 +371,7 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
   
   switch (info_hdr.iBitCount) {
   case 1:
-    //  case 2:
+    //case 2: // valid in Win CE?
   case 4:
   case 8:
   case 16:
@@ -413,10 +397,10 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       image.spp = 1;
       image.bps = info_hdr.iBitCount;
 
-      /* Allocate memory for colour table and read it. */
+      // Allocate memory for colour table and read it.
       if (info_hdr.iClrUsed)
-	clr_tbl_size = ((uint32_t)(1 << image.bps) < info_hdr.iClrUsed) ?
-	  1 << image.bps : info_hdr.iClrUsed;
+	clr_tbl_size =
+	  ((uint32_t)(1 << image.bps) < info_hdr.iClrUsed) ? 1 << image.bps : info_hdr.iClrUsed;
       else
 	clr_tbl_size = 1 << image.bps;
 
@@ -427,7 +411,7 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
         file_hdr->iOffBits = file_hdr->iOffBits + n_clr_elems * clr_tbl_size;
       }
 
-      clr_tbl = (uint8_t *) malloc (n_clr_elems * clr_tbl_size);
+      clr_tbl = (uint8_t*)malloc(n_clr_elems * clr_tbl_size);
       if (!clr_tbl) {
 	std::cerr << "BMPCodec:: Can't allocate space for color table" << std::endl;
 	return false;
@@ -465,7 +449,7 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       break;
     }
   
-  uint32_t stride = image.stride ();
+  uint32_t stride = image.stride();
   /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
    *w, *h, *spp, *bps, info_hdr.iCompression); */
   
@@ -479,15 +463,11 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       info_hdr.iRedMask = 0x1f << 10;
     }
   
-  /* -------------------------------------------------------------------- */
-  /*  Read uncompressed image data.                                       */
-  /* -------------------------------------------------------------------- */
-
+  // Read uncompressed image data.
   switch (info_hdr.iCompression) {
   case BMPC_BITFIELDS:
-    // we unpack bitfields to plain RGB
-    image.bps = 8;
-    stride = image.stride ();
+    image.bps = 8; // we unpack bitfields to plain RGB
+    stride = image.stride();
     
   case BMPC_RGB:
     {
@@ -495,109 +475,110 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       
       /*std::cerr << "bitcount: " << info_hdr.iBitCount << ", stride: " << stride
                 << ", file stride: " << file_stride << std::endl;
-     
-      std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
-                << ", green mask: " << info_hdr.iGreenMask
-                << ", blue mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
-
-      image.resize(image.w, image.h);
-      data = image.getRawData();
-      uint8_t* row_data = (uint8_t*) malloc (file_stride);
-      if (!row_data) {
-	std::cerr << "Can't allocate space for image buffer\n";
-	goto bad1;
-      }
+      if (info_hdr.iCompression == BMPC_BITFIELDS)
+	std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
+		  << ", green mask: " << info_hdr.iGreenMask
+		  << ", blue mask: " << info_hdr.iBlueMask
+		  << ", alpha mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
       
+      if (file_stride > stride)
+	stride = file_stride; // use the BMP's native stride
+      image.resize(image.w, image.h, stride);
+      
+      const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
+      const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
+      const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
+      const int a_shift = last_bit_set (info_hdr.iAlphaMask) - 7;
+      
+      uint8_t* data = image.getRawData();
       for (uint32_t row = 0; row < (uint32_t)image.h; ++row)
       {
 	std::istream::pos_type offset = file_hdr->iOffBits + row * file_stride;
-	stream->seekg (offset);
+	stream->seekg(offset);
 	
-	if (stream->tellg () != offset) {
+	if (stream->tellg() != offset) {
 	  std::cerr << "scanline " << row << " Seek error: " << stream->tellg() << " vs " << offset << std::endl;
 	}
 	
-	stream->read((char*)row_data, file_stride);
+	uint8_t* row_ptr = data +
+	  stride * (info_hdr.iHeight < 0 ? row : image.h - row - 1);
+	
+	stream->read((char*)row_ptr, file_stride);
 	if (!stream->good()) {
 	  std::cerr << "bmp read error: scanline " << row << "\n";
 	} else {
 	  // convert to RGB
-	  uint8_t* rgb_ptr = data + stride * (info_hdr.iHeight < 0 ? row : image.h - row - 1);
-
 	  if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
-	    uint8_t* bf_ptr = row_data;
-
-	    const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
-	    const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
-	    const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
-	    const int a_shift = last_bit_set (info_hdr.iAlphaMask) - 7;
+	    const int spp = 3; // image.spp
+	    int beg = 0, end = image.w; int8_t inc = 1;
+	    if (image.spp * image.bps > info_hdr.iBitCount) {
+	      // reverse, not to clobber in-line data
+	      beg = image.w - 1;
+	      end = -1;
+	      inc = -1;
+	    }
 	    
-	    for (int i = 0; i < image.w; ++i, rgb_ptr += 3)
+	    //if (row == 0) std::cerr << beg << " " << end << " " << (int)inc << std::endl;
+	    for (int i = beg; i != end; i += inc)
 	      {
-		int val = 0;
-		for (int bits = 0; bits < info_hdr.iBitCount; bits += 8)
+		uint8_t* bf_ptr = row_ptr + i * info_hdr.iBitCount / 8;
+		int val = *bf_ptr++; // 1st 8 bits
+		for (int bits = 8; bits < info_hdr.iBitCount; bits += 8)
 		  val |= (*bf_ptr++) << bits;
 		    
 		if (r_shift > 0)
-		  rgb_ptr[0] = (val & info_hdr.iRedMask) >> r_shift;
+		  row_ptr[i*spp + 0] = (val & info_hdr.iRedMask) >> r_shift;
 		else
-		  rgb_ptr[0] = (val & info_hdr.iRedMask) << -r_shift;
+		  row_ptr[i*spp + 0] = (val & info_hdr.iRedMask) << -r_shift;
 		if (g_shift > 0)
-		  rgb_ptr[1] = (val & info_hdr.iGreenMask) >> g_shift;
+		  row_ptr[i*spp + 1] = (val & info_hdr.iGreenMask) >> g_shift;
 		else
-		  rgb_ptr[1] = (val & info_hdr.iGreenMask) << -g_shift;
+		  row_ptr[i*spp + 1] = (val & info_hdr.iGreenMask) << -g_shift;
 		if (b_shift > 0)
-		  rgb_ptr[2] = (val & info_hdr.iBlueMask) >> b_shift;
+		  row_ptr[i*spp + 2] = (val & info_hdr.iBlueMask) >> b_shift;
 		else
-		  rgb_ptr[2] = (val & info_hdr.iBlueMask) << -b_shift;
+		  row_ptr[i*spp + 2] = (val & info_hdr.iBlueMask) << -b_shift;
 		/*if (a_shift > 0)
-		  rgb_ptr[3] = (val & info_hdr.iAlphaMask) >> a_shift;
+		  row_ptr[i*spp + 3] = (val & info_hdr.iAlphaMask) >> a_shift;
 		else
-		rgb_ptr[3] = (val & info_hdr.iAlphaMask) << -a_shift;*/
+		  row_ptr[i*spp + 3] = (val & info_hdr.iAlphaMask) << -a_shift;*/
 	      }
 	  } else {
-	    rearrangePixels (row_data, image.w, info_hdr.iBitCount);
-	    memcpy (rgb_ptr, row_data, stride);
+	    rearrangePixels (row_ptr, image.w, info_hdr.iBitCount);
 	  }
 	}
       }
-      free(row_data);
     }
     break;
     
-    /* -------------------------------------------------------------------- */
-    /*  Read compressed image data.                                         */
-    /* -------------------------------------------------------------------- */
+    // Read compressed image data
   case BMPC_RLE4:
   case BMPC_RLE8:
     {
-      uint32_t	i, j, k, runlength, x;
-      uint32_t	compr_size, uncompr_size;
-      uint8_t   *comprbuf;
-      uint8_t   *uncomprbuf;
-      
       //std::cerr << "RLE" << (info_hdr.iCompression == BMPC_RLE4 ? "4" : "8")
       //	<< " compressed\n";
       
-      compr_size = file_hdr->iSize - file_hdr->iOffBits;
-      uncompr_size = image.w * image.h;
+      uint32_t compr_size = file_hdr->iSize - file_hdr->iOffBits;
+      uint32_t uncompr_size = image.w * image.h;
       
-      comprbuf = (uint8_t *) malloc( compr_size );
+      uint8_t* comprbuf = (uint8_t*)malloc(compr_size);
       if (!comprbuf) {
 	std::cerr << "Can't allocate space for compressed scanline buffer\n";
 	goto bad1;
       }
-      uncomprbuf = (uint8_t *) malloc( uncompr_size );
+      uint8_t* uncomprbuf = (uint8_t*)malloc(uncompr_size);
       if (!uncomprbuf) {
 	std::cerr << "Can't allocate space for uncompressed scanline buffer\n";
+	free(comprbuf);
 	goto bad1;
       }
       
       stream->seekg (*file_hdr->iOffBits);
       stream->read ((char*)comprbuf, compr_size);
-      i = j = x = 0;
       
+      uint32_t	i, j, k, runlength, x;
+      i = j = x = 0;
       while( j < uncompr_size && i < compr_size ) {
 	if ( comprbuf[i] ) {
 	  runlength = comprbuf[i++];
@@ -654,7 +635,7 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       }
       
       free(comprbuf);
-      data = (uint8_t *) malloc( uncompr_size );
+      uint8_t* data = (uint8_t*)malloc(uncompr_size);
       if (!data) {
 	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
 	goto bad1;
@@ -667,11 +648,11 @@ if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
       }
       
       free(uncomprbuf);
+      image.setRawData(data);
       image.bps = 8;
     }
-    image.setRawData(data);
     break;
-  } /* switch */
+  }
   
   // convert to RGB color-space - we do not handle palette images internally
   
@@ -802,7 +783,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   default:
     std::cerr << "unsupported compression method writing bmp" << std::endl;
     return false;
-  } /* switch */
+  }
   
   return true;
 }
