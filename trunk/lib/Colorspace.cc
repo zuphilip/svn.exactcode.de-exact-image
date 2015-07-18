@@ -800,19 +800,19 @@ void colorspace_de_palette (Image& image, int table_entries,
     new_size *= 3;
   
   uint8_t* orig_data = image.getRawData();
-  uint8_t* new_data = (uint8_t*) malloc (new_size);
-  
-  uint8_t* src = orig_data;
+  uint32_t orig_stride = image.stride();
+  uint8_t* new_data = (uint8_t*)malloc(new_size);
   uint8_t* dst = new_data;
-
+  
   // TODO: allow 16bit output if the palette contains that much dynamic
-
+  
   const unsigned int bitshift = 8 - image.bps;
-  while (dst < new_data + new_size)
-  {
+  for (int y = 0; y < image.h; ++y) {
+    uint8_t* src = orig_data + y * orig_stride;
+
     uint8_t z = 0;
     unsigned int bits = 0;
-
+    
     for (int x = 0; x < image.w; ++x)
     {
       if (bits == 0) {
@@ -841,7 +841,8 @@ void colorspace_de_palette (Image& image, int table_entries,
     image.spp = 4;
   else
     image.spp = 3;
- 
+  
+  image.rowstride = 0;
   image.setRawData(new_data);
 
   // special case, e.g. for 1-bit XPM
