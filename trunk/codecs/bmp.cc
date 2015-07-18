@@ -371,7 +371,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   
   switch (info_hdr.iBitCount) {
   case 1:
-    //case 2: // valid in Win CE?
+  case 2: // valid in Win CE?
   case 4:
   case 8:
   case 16:
@@ -697,7 +697,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   const unsigned stride = image.stride();
   const int n_clr_elems = 4; // we write "modern" formats, not the vintage OS/2 flavour
   
-  if (image.bps > 16 || image.bps == 2 || image.spp > 4) {
+  if (image.bps > 16 || image.spp > 4) {
     std::cerr << "BMPCodec: " << image.bps << " bits and "
 	      << image.spp << " samples not supported." << std::endl;
     return false;
