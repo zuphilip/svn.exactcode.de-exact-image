@@ -697,7 +697,7 @@ void Viewer::ImageToEvas ()
     evas_image->SmoothScale (false);
     evas_image->Layer (1);
     evas_image->Move (0, 0);
-    evas_image->Resize (image->w,image->h);
+    evas_image->Resize (image->w, image->h);
     evas_content.push_back(evas_image);
   } else {
     evas_image->SetData (0);
@@ -719,65 +719,64 @@ EvasImage* Viewer::ImageToEvas (Image* image, EvasImage* eimage)
     eimage->SmoothScale (false);
     eimage->Layer (1);
     eimage->Move (0, 0);
-    eimage->Resize (image->w,image->h);
+    eimage->Resize (image->w, image->h);
   } else {
     eimage->SetData (0);
   }
   
-  evas_data = (uint8_t*) realloc (evas_data, image->w*image->h*4);
-  uint8_t* src_ptr = image->getRawData();
-  uint8_t* dest_ptr = evas_data;
-
+  evas_data = (uint8_t*)realloc(evas_data, image->w * image->h * 4);
+  uint8_t* src_data = image->getRawData();
+  const unsigned src_stride = image->stride();
+  const unsigned dst_stride = image->w * 4;
   const int spp = image->spp; 
   
-  if (channel == 0)
-    {
-      for (int y=0; y < image->h; ++y)
-        for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-          if (!Exact::NativeEndianTraits::IsBigendian) {
-            dest_ptr[0] = src_ptr[2];
-            dest_ptr[1] = src_ptr[1];
-            dest_ptr[2] = src_ptr[0];
-            if (spp == 4)
-              dest_ptr[3] = src_ptr[3]; // alpha
-          }
-          else {
-            dest_ptr[1] = src_ptr[0];
-            dest_ptr[2] = src_ptr[1];
-            dest_ptr[3] = src_ptr[2];
-            if (spp == 4)
-              dest_ptr[0] = src_ptr[3]; // alpha
-          }
-        }
+  for (int y = 0; y < image->h; ++y) {
+    uint8_t* src_ptr = src_data + y * src_stride;
+    uint8_t* dest_ptr = evas_data + y * dst_stride;
+    
+    if (channel == 0) {
+      for (int x = 0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+	if (!Exact::NativeEndianTraits::IsBigendian) {
+	  dest_ptr[0] = src_ptr[2];
+	  dest_ptr[1] = src_ptr[1];
+	  dest_ptr[2] = src_ptr[0];
+	  if (spp == 4)
+	    dest_ptr[3] = src_ptr[3]; // alpha
+	}
+	else {
+	  dest_ptr[1] = src_ptr[0];
+	  dest_ptr[2] = src_ptr[1];
+	  dest_ptr[3] = src_ptr[2];
+	  if (spp == 4)
+	    dest_ptr[0] = src_ptr[3]; // alpha
+	}
+      }
     }
-  else
-    {
+    else { // channel
       bool intensity = channel > 3;
       int ch = (channel-1) % 3;
       
-      for (int y=0; y < image->h; ++y)
-        for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
-          if (!Exact::NativeEndianTraits::IsBigendian) {
-            dest_ptr[0] = dest_ptr[1] = dest_ptr[2] =
-              intensity ? src_ptr[ch] : 0;
-            if (!intensity)
-	      dest_ptr[2-ch] = src_ptr[ch];
-          }
-          else {
-            dest_ptr[1] = dest_ptr[2] = dest_ptr[3] =
-              intensity ? src_ptr[ch] : 0;
-            if (!intensity)
-              dest_ptr[1+ch] = src_ptr[ch];
-          }
-        }
+      for (int x=0; x < image->w; ++x, dest_ptr +=4, src_ptr += spp) {
+	if (!Exact::NativeEndianTraits::IsBigendian) {
+	  dest_ptr[0] = dest_ptr[1] = dest_ptr[2] = intensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[2-ch] = src_ptr[ch];
+	}
+	else {
+	  dest_ptr[1] = dest_ptr[2] = dest_ptr[3] = intensity ? src_ptr[ch] : 0;
+	  if (!intensity)
+	    dest_ptr[1+ch] = src_ptr[ch];
+	}
+      }
     }
+  }
   
   eimage->Alpha (spp == 4);
   eimage->Resize (image->w, image->h);
   eimage->ImageSize (image->w, image->h);
-  eimage->ImageFill (0, 0, image->w,image->h);
+  eimage->ImageFill (0, 0, image->w, image->h);
   eimage->SetData (evas_data);
-  eimage->DataUpdateAdd (0, 0, image->w,image->h);
+  eimage->DataUpdateAdd (0, 0, image->w, image->h);
   eimage->Show ();
   
   return eimage;
