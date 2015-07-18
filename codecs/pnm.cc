@@ -219,6 +219,7 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     {
       for (int y = 0; y < image.h; ++y)
 	{
+	  it = it.at(0, y);
 	  for (int x = 0; x < image.w; ++x, ++it)
 	    {
 	      if (x != 0)
