@@ -563,11 +563,11 @@ void colorspace_grayX_to_gray8 (Image& image)
 void colorspace_grayX_to_rgb8 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  unsigned old_stride = image.stride();
   
   const int bps = image.bps;
-  image.bps = 8;
   image.spp = 3;
+  image.bps = 8; image.rowstride = 0;
   image.setRawDataWithoutDelete ((uint8_t*)malloc(image.h * image.stride()));
   uint8_t* output = image.getRawData();
   
@@ -610,7 +610,7 @@ void colorspace_grayX_to_rgb8 (Image& image)
 void colorspace_gray1_to_gray2 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  unsigned old_stride = image.stride();
   
   image.bps = 2;
   image.rowstride = 0;
@@ -651,9 +651,9 @@ void colorspace_gray1_to_gray2 (Image& image)
 void colorspace_gray1_to_gray4 (Image& image)
 {
   uint8_t* old_data = image.getRawData();
-  int old_stride = image.stride();
+  unsigned old_stride = image.stride();
   
-  image.bps = 4;
+  image.bps = 4; image.rowstride = 0;
   image.setRawDataWithoutDelete ((uint8_t*)malloc(image.h * image.stride()));
   uint8_t* output = image.getRawData();
   
