@@ -121,7 +121,14 @@ void Image::setRawDataWithoutDelete (uint8_t* _data) {
 bool Image::resize (int _w, int _h, unsigned _stride) {
   std::swap(w, _w);
   std::swap(h, _h);
+  if (_stride) { // sanity check new _stride
+    unsigned tmp = 0; std::swap(rowstride, tmp);
+    if (_stride < stride())
+      std::cerr << "Image::resize: stride < native: " << _stride << " " << stride() << std::endl;
+    std::swap(tmp, rowstride);
+  }
   std::swap(rowstride, _stride);
+  
   uint8_t* ptr = (uint8_t*)::realloc(data, stride() * h);
   if (ptr) {
     setRawDataWithoutDelete(ptr);
