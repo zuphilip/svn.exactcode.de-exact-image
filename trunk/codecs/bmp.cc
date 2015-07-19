@@ -329,13 +329,15 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     stream->read((char*)&info_hdr.iClrImportant, 4);
     n_clr_elems = 4;
     
-    if (iSize >= BIH_V2SIZE || info_hdr.iCompression == BMPC_BITFIELDS) {
+    if (iSize >= BIH_V2SIZE ||
+	info_hdr.iCompression == BMPC_BITFIELDS ||
+	info_hdr.iCompression == BMPC_ALPHABITFIELDS) {
       stream->read((char*)&info_hdr.iRedMask, 4);
       stream->read((char*)&info_hdr.iGreenMask, 4);
       stream->read((char*)&info_hdr.iBlueMask, 4);
-      if (iSize >= BIH_V3SIZE)
+      if (iSize >= BIH_V3SIZE || info_hdr.iCompression == BMPC_ALPHABITFIELDS)
 	stream->read((char*)&info_hdr.iAlphaMask, 4);
-
+      
       /*std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
 		  << ", green mask: " << info_hdr.iGreenMask
 		  << ", blue mask: " << info_hdr.iBlueMask
@@ -420,7 +422,9 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       image.spp = 3;
       image.bps = 8;
       
-      if (iSize >= BIH_V2SIZE && info_hdr.iCompression == BMPC_BITFIELDS && info_hdr.iAlphaMask != 0)
+      if (info_hdr.iCompression == BMPC_ALPHABITFIELDS)
+	image.spp = 4;
+      else if (iSize >= BIH_V2SIZE && info_hdr.iCompression == BMPC_BITFIELDS && info_hdr.iAlphaMask != 0)
 	image.spp = 4; // TODO: does gray + alpha exist?
       else if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 32)
 	image.spp = 4;
@@ -452,6 +456,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   // Read uncompressed image data.
   switch (info_hdr.iCompression) {
   case BMPC_BITFIELDS:
+  case BMPC_ALPHABITFIELDS:
     image.bps = 8; // we unpack bitfields to plain RGB
     stride = image.stride();
     
@@ -461,7 +466,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       
       /*std::cerr << "bitcount: " << info_hdr.iBitCount << ", stride: " << stride
                 << ", file stride: " << file_stride << std::endl;
-      if (info_hdr.iCompression == BMPC_BITFIELDS)
+      if (info_hdr.iCompression == BMPC_BITFIELDS || info_hdr.iCompression == BMPC_ALPHABITFIELDS)
 	std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
 		  << ", green mask: " << info_hdr.iGreenMask
 		  << ", blue mask: " << info_hdr.iBlueMask
@@ -501,7 +506,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  std::cerr << "bmp read error: scanline " << row << "\n";
 	} else {
 	  // convert to RGB
-	  if (info_hdr.iCompression == BMPC_BITFIELDS)
+	  if (info_hdr.iCompression == BMPC_BITFIELDS || info_hdr.iCompression == BMPC_ALPHABITFIELDS)
 	  {
 	    const int spp = image.spp;
 	    int beg = 0, end = image.w; int8_t inc = 1;
@@ -638,6 +643,10 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       image.bps = 8;
     }
     break;
+    
+  default:
+    std::cerr << "BMPCodec: unsuppored compression: " << info_hdr.iCompression << std::endl;
+  
   }
   
   // convert to RGB color-space - we do not handle palette images internally
