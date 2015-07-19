@@ -43,14 +43,6 @@
 using Exact::EndianessConverter;
 using Exact::LittleEndianTraits;
 
-enum BMPType
-  {
-    BMPT_WIN4,      /* BMP used in Windows 3.0/NT 3.51/95 */
-    BMPT_WIN5,      /* BMP used in Windows NT 4.0/98/Me/2000/XP */
-    BMPT_OS21,      /* BMP used in OS/2 PM 1.x */
-    BMPT_OS22,      /* BMP used in OS/2 PM 2.x */
-  };
-
 /*
  * Bitmap file consists of a BMPFileHeader structure followed by a
  * BMPInfoHeader structure. An array of BMPColorEntry structures (also called
@@ -139,6 +131,7 @@ __attribute__((packed))
 
 struct BMPInfoHeader
 {
+  // Fields used for bitmaps, compatible with Windows NT 3.51 and earlier.
   EndianessConverter<uint32_t,LittleEndianTraits> iSize; /* Size of BMPInfoHeader structure in bytes.
 				 * Should be used to determine start of the
 				 * colour table */
@@ -163,12 +156,9 @@ struct BMPInfoHeader
 				 * unsigned for proper shifting. */
   EndianessConverter<int32_t,LittleEndianTraits> iClrImportant;  /* Number of important colours. If 0, all
 			 * colours are required */
-
-  /*
-   * Fields above should be used for bitmaps, compatible with Windows NT 3.51
-   * and earlier. Windows 98/Me, Windows 2000/XP introduces additional fields:
-   */
-
+  // 40 bytes
+  
+  // Windows 98/Me, Windows 2000/XP introduces additional fields:
   EndianessConverter<uint32_t,LittleEndianTraits> iRedMask;       /* Colour mask that specifies the red component
 			 * of each pixel, valid only if iCompression
 			 * is set to BI_BITFIELDS. */
@@ -176,6 +166,8 @@ struct BMPInfoHeader
   EndianessConverter<uint32_t,LittleEndianTraits> iBlueMask;      /* The same for blue component */
   EndianessConverter<uint32_t,LittleEndianTraits> iAlphaMask;     /* Colour mask that specifies the alpha
 			 * component of each pixel. */
+  // 56 bytes
+  
   EndianessConverter<uint32_t,LittleEndianTraits> iCSType;        /* Colour space of the DIB. */
   BMPCIEXYZTriple sEndpoints; /* This member is ignored unless the iCSType
 			       * member specifies BMPLT_CALIBRATED_RGB. */
@@ -186,6 +178,7 @@ struct BMPInfoHeader
 			 * in 16^16 format. */
   EndianessConverter<int32_t,LittleEndianTraits> iGammaGreen;    /* Toned response curve for green. */
   EndianessConverter<int32_t,LittleEndianTraits> iGammaBlue;     /* Toned response curve for blue. */
+  // 108 bytes
 }
 #ifdef __GNUC__
 __attribute__((packed))
@@ -193,12 +186,13 @@ __attribute__((packed))
 ;
 
 // Info header size in bytes:
-static const unsigned int BIH_OS21SIZE = 12; /* for BMPT_OS21 */
-static const unsigned int BIH_OS22SIZE = 64; /* for BMPT_OS22 */
-static const unsigned int BIH_WIN4SIZE = 40; /* for BMPT_WIN4 */
-static const unsigned int BIH_WIN5SIZE = 56; /* for BMPT_WIN5 */
-static const unsigned int BIH_V4 = 108;
-static const unsigned int BIH_V5 = 124;
+static const unsigned BIH_OS21SIZE = 12;
+static const unsigned BIH_OS22SIZE = 64;
+static const unsigned BIH_V1SIZE = 40;
+static const unsigned BIH_V2SIZE = 52;
+static const unsigned BIH_V3SIZE = 56;
+static const unsigned BIH_V4SIZE = 108;
+static const unsigned BIH_V5SIZE = 124;
 
 // We will use plain byte array instead of this structure, for reference:
 struct BMPColorEntry
@@ -260,7 +254,7 @@ static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 
 int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
-  BMPFileHeader file_hdr;
+  BMPFileHeader file_hdr = {};
   
   stream->read ((char*)&file_hdr.bType, 2);
   if (file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
@@ -285,9 +279,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   BMPFileHeader* file_hdr = _file_hdr;
   BMPFileHeader file_header; // only used if no file_hdr is supplied
   BMPInfoHeader info_hdr = {};
-  enum BMPType bmp_type;
   int offset = file_hdr ? sizeof(*file_hdr) : 0;
-
+  
   uint32_t clr_tbl_size = 0, n_clr_elems = 3;
   uint8_t* clr_tbl = 0;
   
@@ -295,57 +288,34 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   stream->seekg (offset);
   stream->read ((char*)&info_hdr.iSize, 4);
   
-   if (!_file_hdr) {
+  if (!_file_hdr) {
     offset = 0;
     file_hdr = &file_header;
     stream->seekg (0, std::ios::end);
     file_hdr->iSize = stream->tellg ();
     file_hdr->iOffBits = info_hdr.iSize; // assumed to follow after info header
-
+    
     stream->seekg (offset + 4);
   }
   
-  if (info_hdr.iSize == BIH_WIN4SIZE)
-    bmp_type = BMPT_WIN4;
-  else if (info_hdr.iSize == BIH_WIN5SIZE)
-    bmp_type = BMPT_WIN5;
-  else if (info_hdr.iSize == BIH_OS21SIZE)
-    bmp_type = BMPT_OS21;
-  else if (info_hdr.iSize == BIH_OS22SIZE || info_hdr.iSize == 16)
-    bmp_type = BMPT_OS22;
-  else {
-    bmp_type = BMPT_WIN5;
+  unsigned iSize = info_hdr.iSize;
+  switch (iSize) {
+  case 16:
+    iSize = BIH_OS22SIZE; break;
+  case BIH_OS21SIZE:
+  case BIH_OS22SIZE:
+  case BIH_V1SIZE:
+  case BIH_V2SIZE:
+  case BIH_V3SIZE:
+  case BIH_V4SIZE:
+  case BIH_V5SIZE:
+    break;
+  default:
     std::cerr << "Unknown header size: " << info_hdr.iSize << std::endl;
-  }
-
-  if (bmp_type == BMPT_WIN4 || bmp_type == BMPT_WIN5 ||
-      bmp_type == BMPT_OS22) {
-    stream->read((char*)&info_hdr.iWidth, 4);
-    stream->read((char*)&info_hdr.iHeight, 4);
-    stream->read((char*)&info_hdr.iPlanes, 2);
-    stream->read((char*)&info_hdr.iBitCount, 2);
-    stream->read((char*)&info_hdr.iCompression, 4);
-    stream->read((char*)&info_hdr.iSizeImage, 4);
-    stream->read((char*)&info_hdr.iXPelsPerMeter, 4);
-    stream->read((char*)&info_hdr.iYPelsPerMeter, 4);
-    stream->read((char*)&info_hdr.iClrUsed, 4);
-    stream->read((char*)&info_hdr.iClrImportant, 4);
-    stream->read((char*)&info_hdr.iRedMask, 4);
-    stream->read((char*)&info_hdr.iGreenMask, 4);
-    stream->read((char*)&info_hdr.iBlueMask, 4);
-    stream->read((char*)&info_hdr.iAlphaMask, 4);
-    
-    n_clr_elems = 4;
-    image.setResolution((2.54 * info_hdr.iXPelsPerMeter) / 100 + .5,
-                        (2.54 * info_hdr.iYPelsPerMeter) / 100 + .5);
+    return false;
   }
   
-  if (bmp_type == BMPT_OS22) {
-    //FIXME: different info in different documents regarding this!
-    n_clr_elems = 3;
-  }
-
-  if (bmp_type == BMPT_OS21) {
+  if (iSize == BIH_OS21SIZE) {
     int16_t  iShort;
     stream->read ((char*)&iShort, 2);
     info_hdr.iWidth = iShort;
@@ -358,6 +328,42 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     info_hdr.iCompression = BMPC_RGB;
     n_clr_elems = 3;
   }
+  else{
+    stream->read((char*)&info_hdr.iWidth, 4);
+    stream->read((char*)&info_hdr.iHeight, 4);
+    stream->read((char*)&info_hdr.iPlanes, 2);
+    stream->read((char*)&info_hdr.iBitCount, 2);
+    stream->read((char*)&info_hdr.iCompression, 4);
+    stream->read((char*)&info_hdr.iSizeImage, 4);
+    stream->read((char*)&info_hdr.iXPelsPerMeter, 4);
+    stream->read((char*)&info_hdr.iYPelsPerMeter, 4);
+    stream->read((char*)&info_hdr.iClrUsed, 4);
+    stream->read((char*)&info_hdr.iClrImportant, 4);
+    n_clr_elems = 4;
+    
+    if (iSize >= BIH_V1SIZE) {
+      stream->read((char*)&info_hdr.iRedMask, 4);
+      stream->read((char*)&info_hdr.iGreenMask, 4);
+      stream->read((char*)&info_hdr.iBlueMask, 4);
+      stream->read((char*)&info_hdr.iAlphaMask, 4);
+
+      /*std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
+		  << ", green mask: " << info_hdr.iGreenMask
+		  << ", blue mask: " << info_hdr.iBlueMask
+		  << ", alpha mask: " << info_hdr.iAlphaMask << std::dec << std::endl;
+      */
+    }
+  }
+  
+  //std::cerr << "size: " << iSize << ", bits: " << info_hdr.iBitCount << ", compr: " << info_hdr.iCompression << std::endl;
+  
+  if (iSize == BIH_OS22SIZE) {
+    //FIXME: different info in different documents regarding this!
+    n_clr_elems = 3;
+  }
+
+  image.setResolution((2.54 * info_hdr.iXPelsPerMeter) / 100 + .5,
+		      (2.54 * info_hdr.iYPelsPerMeter) / 100 + .5);
   
   switch (info_hdr.iBitCount) {
   case 1:
@@ -438,11 +444,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     default:
       break;
     }
-  
-  uint32_t stride = image.stride();
-  /*printf ("w: %d, h: %d, spp: %d, bps: %d, colorspace: %d\n",
-   *w, *h, *spp, *bps, info_hdr.iCompression); */
-  
+
   // detect old style bitmask images
   if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 16)
     {
@@ -451,7 +453,14 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       info_hdr.iBlueMask = 0x1f;
       info_hdr.iGreenMask = 0x1f << 5;
       info_hdr.iRedMask = 0x1f << 10;
+      info_hdr.iAlphaMask = 0;
     }
+  
+  if (iSize >= BIH_V2SIZE && info_hdr.iAlphaMask != 0) {
+    ++image.spp; // TODO: test gray + alpha?
+  }
+  
+  uint32_t stride = image.stride();
   
   // Read uncompressed image data.
   switch (info_hdr.iCompression) {
@@ -469,7 +478,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
 		  << ", green mask: " << info_hdr.iGreenMask
 		  << ", blue mask: " << info_hdr.iBlueMask
-		  << ", alpha mask: " << info_hdr.iBlueMask << std::dec << std::endl;
+		  << ", alpha mask: " << info_hdr.iAlphaMask << std::dec << std::endl;
       */
       if (file_stride > stride)
 	stride = file_stride; // use the BMP's native stride
@@ -478,14 +487,15 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       const int r_bits = Exact::popcountf(info_hdr.iRedMask);
       const int r_shift = Exact::ms_bit_set(info_hdr.iRedMask) + 1 - r_bits;
       const int g_bits = Exact::popcountf(info_hdr.iGreenMask);
-      const int g_shift = Exact::ms_bit_set(info_hdr.iGreenMask) + 1 - g_bits;;
+      const int g_shift = Exact::ms_bit_set(info_hdr.iGreenMask) + 1 - g_bits;
       const int b_bits = Exact::popcountf(info_hdr.iBlueMask);
-      const int b_shift = Exact::ms_bit_set(info_hdr.iBlueMask) + 1 - b_bits;;
+      const int b_shift = Exact::ms_bit_set(info_hdr.iBlueMask) + 1 - b_bits;
       const int a_bits = Exact::popcountf(info_hdr.iAlphaMask);
-      const int a_shift = Exact::ms_bit_set(info_hdr.iAlphaMask) + 1 - a_bits;;
+      const int a_shift = Exact::ms_bit_set(info_hdr.iAlphaMask) + 1 - a_bits;
 
-      //std::cerr << r_bits << " " << r_shift << " " << g_bits << " " << g_shift << " "
-      //	<< b_bits << " " << b_shift << " " << a_bits << " " << a_shift;
+      /*std::cerr << r_bits << " " << r_shift << " " << g_bits << " " << g_shift << " "
+		<< b_bits << " " << b_shift << " " << a_bits << " " << a_shift << std::endl;
+      */
       uint8_t* data = image.getRawData();
       for (uint32_t row = 0; row < (uint32_t)image.h; ++row)
       {
@@ -506,7 +516,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  // convert to RGB
 	  if (info_hdr.iCompression == BMPC_BITFIELDS)
 	  {
-	    const int spp = 3; // image.spp
+	    const int spp = image.spp;
 	    int beg = 0, end = image.w; int8_t inc = 1;
 	    if (image.spp * image.bps > info_hdr.iBitCount) {
 	      // reverse, not to clobber in-line data
@@ -530,8 +540,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 		row_ptr[i*spp + 2] =
 		  ((val & info_hdr.iBlueMask) >> b_shift) * 0xff / ((1 << b_bits) - 1);
 		if (spp > 3)
-		  row_ptr[i*spp + 3] =
-		    ((val & info_hdr.iAlphaMask) >> a_shift) / (1 << a_bits - 1);
+		  row_ptr[i*spp + 3] = 
+		    ((val & info_hdr.iAlphaMask) >> a_shift) * 0xff / ((1 << a_bits) - 1);
 	      }
 	  } else {
 	    rearrangePixels (row_ptr, image.w, info_hdr.iBitCount);
@@ -682,7 +692,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			   const std::string& compress)
 {
-  const int hdr_size = image.spp == 4 ? BIH_WIN5SIZE : BIH_WIN4SIZE;
+  const int hdr_size = image.spp == 4 ? BIH_V3SIZE : BIH_V1SIZE;
   const unsigned stride = image.stride();
   const int n_clr_elems = 4; // we write "modern" formats, not the vintage OS/2 flavour
   
