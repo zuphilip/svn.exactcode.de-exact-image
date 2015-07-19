@@ -17,11 +17,9 @@
  *
  * Lossy based on (in the past more so, but more and more parts got
  * rewritten):
- *
  * Project:  libtiff tools
  * Purpose:  Convert Windows BMP files in TIFF.
  * Author:   Andrey Kiselev, dron@remotesensing.org
- *
  */
 
 #include <iostream>
@@ -36,15 +34,7 @@
 
 #include <Endianess.hh>
 #include <inttypes.h>
-
-static int last_bit_set (int v) {
-  unsigned int i;
-  for (i = sizeof (int) * 8 - 1; i > 0; --i) {
-    if (v & (1L << i))
-      return i;
-  }
-  return 0;
-}
+#include <Bits.hh>
 
 #ifndef O_BINARY
 # define O_BINARY 0
@@ -179,12 +169,12 @@ struct BMPInfoHeader
    * and earlier. Windows 98/Me, Windows 2000/XP introduces additional fields:
    */
 
-  EndianessConverter<int32_t,LittleEndianTraits> iRedMask;       /* Colour mask that specifies the red component
+  EndianessConverter<uint32_t,LittleEndianTraits> iRedMask;       /* Colour mask that specifies the red component
 			 * of each pixel, valid only if iCompression
 			 * is set to BI_BITFIELDS. */
-  EndianessConverter<int32_t,LittleEndianTraits> iGreenMask;     /* The same for green component */
-  EndianessConverter<int32_t,LittleEndianTraits> iBlueMask;      /* The same for blue component */
-  EndianessConverter<int32_t,LittleEndianTraits> iAlphaMask;     /* Colour mask that specifies the alpha
+  EndianessConverter<uint32_t,LittleEndianTraits> iGreenMask;     /* The same for green component */
+  EndianessConverter<uint32_t,LittleEndianTraits> iBlueMask;      /* The same for blue component */
+  EndianessConverter<uint32_t,LittleEndianTraits> iAlphaMask;     /* Colour mask that specifies the alpha
 			 * component of each pixel. */
   EndianessConverter<uint32_t,LittleEndianTraits> iCSType;        /* Colour space of the DIB. */
   BMPCIEXYZTriple sEndpoints; /* This member is ignored unless the iCSType
@@ -479,17 +469,23 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
 		  << ", green mask: " << info_hdr.iGreenMask
 		  << ", blue mask: " << info_hdr.iBlueMask
-		  << ", alpha mask: " << info_hdr.iBlueMask << std::dec << std::endl; */
-      
+		  << ", alpha mask: " << info_hdr.iBlueMask << std::dec << std::endl;
+      */
       if (file_stride > stride)
 	stride = file_stride; // use the BMP's native stride
       image.resize(image.w, image.h, stride);
       
-      const int r_shift = last_bit_set (info_hdr.iRedMask) - 7;
-      const int g_shift = last_bit_set (info_hdr.iGreenMask) - 7;
-      const int b_shift = last_bit_set (info_hdr.iBlueMask) - 7;
-      const int a_shift = last_bit_set (info_hdr.iAlphaMask) - 7;
-      
+      const int r_bits = Exact::popcountf(info_hdr.iRedMask);
+      const int r_shift = Exact::ms_bit_set(info_hdr.iRedMask) + 1 - r_bits;
+      const int g_bits = Exact::popcountf(info_hdr.iGreenMask);
+      const int g_shift = Exact::ms_bit_set(info_hdr.iGreenMask) + 1 - g_bits;;
+      const int b_bits = Exact::popcountf(info_hdr.iBlueMask);
+      const int b_shift = Exact::ms_bit_set(info_hdr.iBlueMask) + 1 - b_bits;;
+      const int a_bits = Exact::popcountf(info_hdr.iAlphaMask);
+      const int a_shift = Exact::ms_bit_set(info_hdr.iAlphaMask) + 1 - a_bits;;
+
+      //std::cerr << r_bits << " " << r_shift << " " << g_bits << " " << g_shift << " "
+      //	<< b_bits << " " << b_shift << " " << a_bits << " " << a_shift;
       uint8_t* data = image.getRawData();
       for (uint32_t row = 0; row < (uint32_t)image.h; ++row)
       {
@@ -523,26 +519,19 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	    for (int i = beg; i != end; i += inc)
 	      {
 		uint8_t* bf_ptr = row_ptr + i * info_hdr.iBitCount / 8;
-		int val = *bf_ptr++; // 1st 8 bits
+		int32_t val = *bf_ptr++; // 1st 8 bits
 		for (int bits = 8; bits < info_hdr.iBitCount; bits += 8)
 		  val |= (*bf_ptr++) << bits;
 		    
-		if (r_shift > 0)
-		  row_ptr[i*spp + 0] = (val & info_hdr.iRedMask) >> r_shift;
-		else
-		  row_ptr[i*spp + 0] = (val & info_hdr.iRedMask) << -r_shift;
-		if (g_shift > 0)
-		  row_ptr[i*spp + 1] = (val & info_hdr.iGreenMask) >> g_shift;
-		else
-		  row_ptr[i*spp + 1] = (val & info_hdr.iGreenMask) << -g_shift;
-		if (b_shift > 0)
-		  row_ptr[i*spp + 2] = (val & info_hdr.iBlueMask) >> b_shift;
-		else
-		  row_ptr[i*spp + 2] = (val & info_hdr.iBlueMask) << -b_shift;
-		/*if (a_shift > 0)
-		  row_ptr[i*spp + 3] = (val & info_hdr.iAlphaMask) >> a_shift;
-		else
-		  row_ptr[i*spp + 3] = (val & info_hdr.iAlphaMask) << -a_shift;*/
+		row_ptr[i*spp + 0] =
+		  ((val & info_hdr.iRedMask) >> r_shift) * 0xff / ((1 << r_bits) - 1);
+		row_ptr[i*spp + 1] =
+		  ((val & info_hdr.iGreenMask) >> g_shift) * 0xff / ((1 << g_bits) - 1);
+		row_ptr[i*spp + 2] =
+		  ((val & info_hdr.iBlueMask) >> b_shift) * 0xff / ((1 << b_bits) - 1);
+		if (spp > 3)
+		  row_ptr[i*spp + 3] =
+		    ((val & info_hdr.iAlphaMask) >> a_shift) / (1 << a_bits - 1);
 	      }
 	  } else {
 	    rearrangePixels (row_ptr, image.w, info_hdr.iBitCount);
