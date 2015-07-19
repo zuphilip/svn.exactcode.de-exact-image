@@ -200,7 +200,7 @@ struct BMPColorEntry
   char       bBlue;
   char       bGreen;
   char       bRed;
-  char       bReserved;      /* Must be 0 */
+  char       bReserved; // Must be 0
 };
 
 #ifdef _MSC_VER
@@ -211,7 +211,7 @@ struct BMPColorEntry
 static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 {
   switch (bit_count) {
-  case 16:    /* FIXME: need a sample file */
+  case 16:    // FIXME: need a sample file
     break;
     
   case 24:
@@ -565,16 +565,16 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       
       uint32_t	i, j, k, runlength, x;
       i = j = x = 0;
-      while( j < uncompr_size && i < compr_size ) {
-	if ( comprbuf[i] ) {
+      while (j < uncompr_size && i < compr_size) {
+	if (comprbuf[i]) {
 	  runlength = comprbuf[i++];
-	  for ( k = 0;
-		runlength > 0 && j < uncompr_size && i < compr_size && x < (uint32_t)image.w;
-		++k, ++x) {
+	  for (k = 0;
+	       runlength > 0 && j < uncompr_size && i < compr_size && x < (uint32_t)image.w;
+	       ++k, ++x) {
 	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
 	    else {
-	      if ( k & 0x01 )
+	      if (k & 0x01)
 		uncomprbuf[j++] = comprbuf[i] & 0x0F;
 	      else
 		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
@@ -584,37 +584,37 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
 	  i++;
 	} else {
 	  i++;
-	  if ( comprbuf[i] == 0 ) {         /* Next scanline */
+	  if (comprbuf[i] == 0) { // Next scanline
 	    i++;
 	    x = 0;
 	  }
-	  else if ( comprbuf[i] == 1 )    /* End of image */
+	  else if (comprbuf[i] == 1) // End of image
 	    break;
-	  else if ( comprbuf[i] == 2 ) {  /* Move to... */
+	  else if (comprbuf[i] == 2) { // Move to...
 	    i++;
-	    if ( i < compr_size - 1 ) {
+	    if (i < compr_size - 1) {
 	      j += comprbuf[i] + comprbuf[i+1] * image.w;
 	      i += 2;
 	    }
 	    else
 	      break;
-	  } else {                         /* Absolute mode */
+	  } else { // Absolute mode
 	    runlength = comprbuf[i++];
-	    for ( k = 0; k < runlength && j < uncompr_size && i < compr_size; k++, x++)
+	    for (k = 0; k < runlength && j < uncompr_size && i < compr_size; k++, x++)
 	      {
 		if (info_hdr.iBitCount == 8)
 		  uncomprbuf[j++] = comprbuf[i++];
 		else {
-		  if ( k & 0x01 )
+		  if (k & 0x01)
 		    uncomprbuf[j++] = comprbuf[i++] & 0x0F;
 		  else
 		    uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
 		}
 	      }
-	    /* word boundary alignment */
+	    // word boundary alignment
 	    if (info_hdr.iBitCount == 4)
 	      k /= 2;
-	    if ( k & 0x01 )
+	    if (k & 0x01)
 	      i++;
 	  }
 	}
@@ -728,7 +728,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (info_hdr.iClrUsed) {
     int n = info_hdr.iClrUsed;
 #ifdef _MSC_VER
-    std::vector<uint8_t> _clrtbl(n_clr_elems*n);
+    std::vector<uint8_t> _clrtbl(n_clr_elems * n);
     uint8_t* clrtbl = &_clrtbl[0];
 #else
     uint8_t clrtbl [n_clr_elems*n];
