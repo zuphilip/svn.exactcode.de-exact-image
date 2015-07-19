@@ -186,13 +186,13 @@ __attribute__((packed))
 ;
 
 // Info header size in bytes:
-static const unsigned BIH_OS21SIZE = 12;
+static const unsigned BIH_OS21SIZE = 12; // OS/2, Windows 2
 static const unsigned BIH_OS22SIZE = 64;
-static const unsigned BIH_V1SIZE = 40;
+static const unsigned BIH_V1SIZE = 40; // Win NT, 3.1
 static const unsigned BIH_V2SIZE = 52;
 static const unsigned BIH_V3SIZE = 56;
-static const unsigned BIH_V4SIZE = 108;
-static const unsigned BIH_V5SIZE = 124;
+static const unsigned BIH_V4SIZE = 108; // Win NT 4.0, 95
+static const unsigned BIH_V5SIZE = 124; // Win NT 5.0, 98
 
 // We will use plain byte array instead of this structure, for reference:
 struct BMPColorEntry
@@ -210,39 +210,27 @@ struct BMPColorEntry
 // Image data in BMP file stored in BGR (or ABGR) format:
 static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 {
-  uint16_t tmp;
-  uint16_t* buf16 = (uint16_t*)buf;
-  
   switch (bit_count) {
-    
   case 16:    /* FIXME: need a sample file */
     break;
     
   case 24:
-    for (uint32_t i = 0; i < width; i++, buf += 3) {
-      tmp = *buf;
-      *buf = *(buf + 2);
-      *(buf + 2) = tmp;
-    }
+    for (uint32_t i = 0; i < width; i++, buf += 3)
+      std::swap(buf[0], buf[2]);
     break;
 
   case 48:
-    for (uint32_t i = 0; i < width; i++, buf16 += 3) {
-      tmp = *buf16;
-      *buf16 = *(buf16 + 2);
-      *(buf16 + 2) = tmp;
+    {
+      uint16_t* buf16 = (uint16_t*)buf;
+      for (uint32_t i = 0; i < width; i++, buf16 += 3)
+	std::swap(buf16[0], buf16[2]);
     }
     break;
 
   case 32:
     {
-      uint8_t* buf1 = buf;
-      for (uint32_t i = 0; i < width; i++, buf += 4) {
-	tmp = *buf;
-	*buf1++ = *(buf + 2);
-	*buf1++ = *(buf + 1);
-	*buf1++ = tmp;
-      }
+      for (uint32_t i = 0; i < width; i++, buf += 4)
+	std::swap(buf[0], buf[2]);
     }
     break;
     
@@ -341,11 +329,12 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     stream->read((char*)&info_hdr.iClrImportant, 4);
     n_clr_elems = 4;
     
-    if (iSize >= BIH_V1SIZE) {
+    if (iSize >= BIH_V2SIZE || info_hdr.iCompression == BMPC_BITFIELDS) {
       stream->read((char*)&info_hdr.iRedMask, 4);
       stream->read((char*)&info_hdr.iGreenMask, 4);
       stream->read((char*)&info_hdr.iBlueMask, 4);
-      stream->read((char*)&info_hdr.iAlphaMask, 4);
+      if (iSize >= BIH_V3SIZE)
+	stream->read((char*)&info_hdr.iAlphaMask, 4);
 
       /*std::cerr << std::hex << "red mask: " << info_hdr.iRedMask
 		  << ", green mask: " << info_hdr.iGreenMask
@@ -427,15 +416,17 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     
     case 16:
     case 24:
-      image.spp = 3;
-      image.bps = info_hdr.iBitCount / image.spp;
-      break;
-    
     case 32:
       image.spp = 3;
       image.bps = 8;
+      
+      if (iSize >= BIH_V2SIZE && info_hdr.iCompression == BMPC_BITFIELDS && info_hdr.iAlphaMask != 0)
+	image.spp = 4; // TODO: does gray + alpha exist?
+      else if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 32)
+	image.spp = 4;
+      
       break;
-
+    
     case 48:
       image.spp = 3;
       image.bps = 16;
@@ -444,7 +435,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     default:
       break;
     }
-
+  
   // detect old style bitmask images
   if (info_hdr.iCompression == BMPC_RGB && info_hdr.iBitCount == 16)
     {
@@ -455,10 +446,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       info_hdr.iRedMask = 0x1f << 10;
       info_hdr.iAlphaMask = 0;
     }
-  
-  if (iSize >= BIH_V2SIZE && info_hdr.iAlphaMask != 0) {
-    ++image.spp; // TODO: test gray + alpha?
-  }
   
   uint32_t stride = image.stride();
   
@@ -697,8 +684,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   const int n_clr_elems = 4; // we write "modern" formats, not the vintage OS/2 flavour
   
   if (image.bps > 16 || image.spp > 4) {
-    std::cerr << "BMPCodec: " << image.bps << " bits and "
-	      << image.spp << " samples not supported." << std::endl;
+    std::cerr << "BMPCodec: " << image.bps << " bits and " << image.spp << " samples not supported." << std::endl;
     return false;
   }
   
@@ -718,7 +704,7 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   info_hdr.iPlanes = 1;
   info_hdr.iBitCount = image.spp * image.bps;
   info_hdr.iCompression = BMPC_RGB;
-  info_hdr.iSizeImage  = image.stride()*image.h; // TODO: compressed size
+  info_hdr.iSizeImage  = image.stride() * image.h; // TODO: compressed size
   info_hdr.iXPelsPerMeter = (int32_t) (100. * image.resolutionX() / 2.54 + .5);
   info_hdr.iYPelsPerMeter = (int32_t) (100. * image.resolutionY() / 2.54 + .5);
   info_hdr.iClrUsed = image.spp == 1 ? 1 << image.bps : 0;
