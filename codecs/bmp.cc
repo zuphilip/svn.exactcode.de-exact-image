@@ -408,11 +408,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       stream->read ((char*)clr_tbl, n_clr_elems * clr_tbl_size);
       
       /*for(clr = 0; clr < clr_tbl_size; ++clr) {
-	printf ("%d: r: %d g: %d b: %d\n",
-		clr,
-		clr_tbl[clr*n_clr_elems+2],
-		clr_tbl[clr*n_clr_elems+1],
-		clr_tbl[clr*n_clr_elems]);
+	printf ("%d: r: %d g: %d b: %d\n", clr,
+		clr_tbl[clr*n_clr_elems+2], clr_tbl[clr*n_clr_elems+1], clr_tbl[clr*n_clr_elems]);
       }*/
       break;
     
@@ -547,85 +544,79 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   case BMPC_RLE4:
   case BMPC_RLE8:
     {
-      uint32_t compr_size = file_hdr->iSize - file_hdr->iOffBits;
-      uint32_t uncompr_size = image.w * image.h;
+      const unsigned compr_size = file_hdr->iSize - file_hdr->iOffBits;
+      const unsigned uncompr_size = image.w * image.h;
+      
+      image.bps = 8;
+      image.resize(image.w, image.h);
+      uint8_t* uncomprbuf = image.getRawData();
+      memset(uncomprbuf, 0, uncompr_size); // for skipped pixels, ...
       
       uint8_t comprbuf[compr_size];
-      uint8_t uncomprbuf[uncompr_size] = {};
+      stream->seekg(*file_hdr->iOffBits);
+      stream->read((char*)comprbuf, compr_size);
       
-      stream->seekg (*file_hdr->iOffBits);
-      stream->read ((char*)comprbuf, compr_size);
-      
-      for (uint32_t i = 0, j = 0, x = 0; j < uncompr_size && i < compr_size;) {
+      int y = image.h - 1;
+      uint8_t* rowptr = uncomprbuf + y * image.w;
+      for (unsigned i = 0, x = 0; y >= 0 && i < compr_size;) {
 	if (comprbuf[i]) {
 	  uint8_t runlength = comprbuf[i++];
 	  for (unsigned k = 0;
-	       runlength > 0 && j < uncompr_size && i < compr_size && x < (uint32_t)image.w;
-	       ++k, ++x) {
+	       runlength > 0 && i < compr_size && x < (uint32_t)image.w;
+	       ++k) {
 	    if (info_hdr.iBitCount == 8)
-	      uncomprbuf[j++] = comprbuf[i];
+	      rowptr[x++] = comprbuf[i];
 	    else {
 	      if (k & 1)
-		uncomprbuf[j++] = comprbuf[i] & 0x0F;
+		rowptr[x++] = comprbuf[i] & 0x0F;
 	      else
-		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+		rowptr[x++] = (comprbuf[i] & 0xF0) >> 4;
 	    }
 	    runlength--;
 	  }
 	  ++i;
 	} else {
 	  ++i;
-	  if (comprbuf[i] == 0) { // Next scanline
+	  uint8_t v = comprbuf[i];
+	  if (v == 0) { // Next scanline
 	    ++i;
-	    x = 0;
+	    x = 0; --y;
+	    rowptr = uncomprbuf + y * image.w;
 	  }
-	  else if (comprbuf[i] == 1) // End of image
+	  else if (v == 1) // End of image
 	    break;
-	  else if (comprbuf[i] == 2) { // Move to...
+	  else if (v == 2) { // Move to...
 	    ++i;
 	    if (i < compr_size - 1) {
-	      j += comprbuf[i] + comprbuf[i+1] * image.w;
+	      x += comprbuf[i];
+	      y -= comprbuf[i+1];
+	      rowptr = uncomprbuf + y * image.w;
 	      i += 2;
 	    }
 	    else
 	      break;
 	  } else { // uncompressed mode
-	    uint16_t runlength = comprbuf[i++];
-	    uint8_t v; // rle4 load
-	    for (uint32_t k = 0; k < runlength && j < uncompr_size && i < compr_size; ++k, ++x)
+	    uint8_t runlength = comprbuf[i++];
+	    for (unsigned k = 0; k < runlength && x < image.w && i < compr_size; ++k)
 	      {
 		if (info_hdr.iBitCount == 8)
-		  uncomprbuf[j++] = comprbuf[i++];
+		  rowptr[x++] = comprbuf[i++];
 		else {
 		  if (k & 1)
-		    uncomprbuf[j++] = v & 0x0F;
+		    rowptr[x++] = v & 0x0F;
 		  else {
-		    v = comprbuf[i++];
-		    uncomprbuf[j++] = (v & 0xF0) >> 4;
+		    v = comprbuf[i++]; // store for next nibble
+		    rowptr[x++] = (v & 0xF0) >> 4;
 		  }
 		}
 	      }
 	    
 	    // word boundary alignment
  	    if (i & 1)
-	      i++;
+	      ++i;
 	  }
 	}
       }
-      
-      uint8_t* data = (uint8_t*)malloc(uncompr_size);
-      if (!data) {
-	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
-	goto bad1;
-      }
-      
-      // TODO: suboptimal, later improve the above to yield the corrent orientation natively
-      for (uint32_t row = 0; row < (uint32_t)image.h; ++row) {
-	memcpy (data + row * image.w, uncomprbuf + (image.h - 1 - row) * image.w, image.w);
-      }
-      
-      image.setRawData(data);
-      image.bps = 8;
     }
     break;
     
@@ -664,13 +655,6 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   }
   
   return true;
-  
- bad1:
-  if (clr_tbl)
-    free(clr_tbl);
-  clr_tbl = NULL;
-  
-  return false;
 }
 
 bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
