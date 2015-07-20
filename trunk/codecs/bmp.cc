@@ -242,7 +242,7 @@ static void rearrangePixels(uint8_t* buf, uint32_t width, uint32_t bit_count)
 
 int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
 {
-  BMPFileHeader file_hdr = {};
+  BMPFileHeader file_hdr;
   
   stream->read ((char*)&file_hdr.bType, 2);
   if (file_hdr.bType[0] != 'B' || file_hdr.bType[1] != 'M') {
@@ -256,7 +256,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
   
   // fix the iSize, in early BMP file this is pure garbage
   stream->seekg (0, std::ios::end);
-  file_hdr.iSize = stream->tellg (); // TODO: minus the header?
+  file_hdr.iSize = stream->tellg(); // TODO: minus the header?
 
   int i = readImageWithoutFileHeader(stream, image, decompres, &file_hdr);
   return i;
@@ -265,7 +265,7 @@ int BMPCodec::readImage (std::istream* stream, Image& image, const std::string& 
 int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, const std::string& decompres, BMPFileHeader* _file_hdr)
 {
   BMPFileHeader* file_hdr = _file_hdr;
-  BMPFileHeader file_header; // only used if no file_hdr is supplied
+  BMPFileHeader file_header = {}; // only used if no file_hdr is supplied
   BMPInfoHeader info_hdr = {};
   int offset = file_hdr ? sizeof(*file_hdr) : 0;
   
@@ -280,7 +280,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
     offset = 0;
     file_hdr = &file_header;
     stream->seekg (0, std::ios::end);
-    file_hdr->iSize = stream->tellg ();
+    file_hdr->iSize = stream->tellg();
     file_hdr->iOffBits = info_hdr.iSize; // assumed to follow after info header
     
     stream->seekg (offset + 4);
@@ -552,9 +552,13 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       uint8_t* uncomprbuf = image.getRawData();
       memset(uncomprbuf, 0, uncompr_size); // for skipped pixels, ...
       
+#ifdef _MSC_VER
+      std::vector<uint8_t> comprbuf(compr_size);
+#else
       uint8_t comprbuf[compr_size];
+#endif
       stream->seekg(*file_hdr->iOffBits);
-      stream->read((char*)comprbuf, compr_size);
+      stream->read((char*)&comprbuf[0], compr_size);
       
       int y = image.h - 1;
       uint8_t* rowptr = uncomprbuf + y * image.w;
@@ -673,19 +677,18 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   BMPInfoHeader info_hdr = {};
 
   // BMPFileHeader
-
   file_hdr.bType[0] = 'B';
   file_hdr.bType[1] = 'M';
   
   // BMPInfoHeader
-  
   info_hdr.iSize = hdr_size;
   info_hdr.iWidth = image.w;
   info_hdr.iHeight = image.h;
   info_hdr.iPlanes = 1;
   info_hdr.iBitCount = image.spp * image.bps;
   info_hdr.iCompression = BMPC_RGB;
-  info_hdr.iSizeImage  = image.stride() * image.h; // TODO: compressed size
+  const int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4; // BMP 4byte aligned
+  info_hdr.iSizeImage  = file_stride * image.h; // TODO: compressed size
   info_hdr.iXPelsPerMeter = (int32_t) (100. * image.resolutionX() / 2.54 + .5);
   info_hdr.iYPelsPerMeter = (int32_t) (100. * image.resolutionY() / 2.54 + .5);
   info_hdr.iClrUsed = image.spp == 1 ? 1 << image.bps : 0;
@@ -695,8 +698,6 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   info_hdr.iBlueMask = 0;
   info_hdr.iAlphaMask = 0;
   
-  // BMP image payload needs to be 4 byte aligned :-(
-  int file_stride = ((image.w * info_hdr.iBitCount + 7) / 8 + 3) / 4 * 4;
   
   file_hdr.iOffBits = sizeof(file_hdr) + hdr_size + info_hdr.iClrUsed * n_clr_elems;
   file_hdr.iSize =  file_hdr.iOffBits + file_stride * image.h;
@@ -728,17 +729,16 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
   case BMPC_RGB:
     {
 #ifdef _MSC_VER
-      std::vector<uint8_t> _payload(file_stride);
-      uint8_t* payload = &_payload[0];
+      std::vector<uint8_t> payload(file_stride);
 #else
       uint8_t payload [file_stride];
 #endif
-      for (int row = image.h-1; row >=0; --row)
+      for (int row = image.h-1; row >= 0; --row)
 	{
-	  memcpy (payload, image.getRawData() + stride*row, stride);
-	  rearrangePixels (payload, image.w, info_hdr.iBitCount);
+	  memcpy(&payload[0], image.getRawData() + stride * row, stride);
+	  rearrangePixels(&payload[0], image.w, info_hdr.iBitCount);
 	  
-	  if (!stream->write ((char*)payload, file_stride)) {
+	  if (!stream->write((char*)&payload[0], file_stride)) {
 	    std::cerr << "scanline " << row << " write error" << std::endl;
 	    return false;
 	  }
