@@ -547,85 +547,72 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
   case BMPC_RLE4:
   case BMPC_RLE8:
     {
-      //std::cerr << "RLE" << (info_hdr.iCompression == BMPC_RLE4 ? "4" : "8")
-      //	<< " compressed\n";
-      
       uint32_t compr_size = file_hdr->iSize - file_hdr->iOffBits;
       uint32_t uncompr_size = image.w * image.h;
       
-      uint8_t* comprbuf = (uint8_t*)malloc(compr_size);
-      if (!comprbuf) {
-	std::cerr << "Can't allocate space for compressed scanline buffer\n";
-	goto bad1;
-      }
-      uint8_t* uncomprbuf = (uint8_t*)malloc(uncompr_size);
-      if (!uncomprbuf) {
-	std::cerr << "Can't allocate space for uncompressed scanline buffer\n";
-	free(comprbuf);
-	goto bad1;
-      }
+      uint8_t comprbuf[compr_size];
+      uint8_t uncomprbuf[uncompr_size] = {};
       
       stream->seekg (*file_hdr->iOffBits);
       stream->read ((char*)comprbuf, compr_size);
       
-      uint32_t	i, j, k, runlength, x;
-      i = j = x = 0;
-      while (j < uncompr_size && i < compr_size) {
+      for (uint32_t i = 0, j = 0, x = 0; j < uncompr_size && i < compr_size;) {
 	if (comprbuf[i]) {
-	  runlength = comprbuf[i++];
-	  for (k = 0;
+	  uint8_t runlength = comprbuf[i++];
+	  for (unsigned k = 0;
 	       runlength > 0 && j < uncompr_size && i < compr_size && x < (uint32_t)image.w;
 	       ++k, ++x) {
 	    if (info_hdr.iBitCount == 8)
 	      uncomprbuf[j++] = comprbuf[i];
 	    else {
-	      if (k & 0x01)
+	      if (k & 1)
 		uncomprbuf[j++] = comprbuf[i] & 0x0F;
 	      else
 		uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
 	    }
 	    runlength--;
 	  }
-	  i++;
+	  ++i;
 	} else {
-	  i++;
+	  ++i;
 	  if (comprbuf[i] == 0) { // Next scanline
-	    i++;
+	    ++i;
 	    x = 0;
 	  }
 	  else if (comprbuf[i] == 1) // End of image
 	    break;
 	  else if (comprbuf[i] == 2) { // Move to...
-	    i++;
+	    ++i;
 	    if (i < compr_size - 1) {
 	      j += comprbuf[i] + comprbuf[i+1] * image.w;
 	      i += 2;
 	    }
 	    else
 	      break;
-	  } else { // Absolute mode
-	    runlength = comprbuf[i++];
-	    for (k = 0; k < runlength && j < uncompr_size && i < compr_size; k++, x++)
+	  } else { // uncompressed mode
+	    uint16_t runlength = comprbuf[i++];
+	    uint8_t v; // rle4 load
+	    for (uint32_t k = 0; k < runlength && j < uncompr_size && i < compr_size; ++k, ++x)
 	      {
 		if (info_hdr.iBitCount == 8)
 		  uncomprbuf[j++] = comprbuf[i++];
 		else {
-		  if (k & 0x01)
-		    uncomprbuf[j++] = comprbuf[i++] & 0x0F;
-		  else
-		    uncomprbuf[j++] = (comprbuf[i] & 0xF0) >> 4;
+		  if (k & 1)
+		    uncomprbuf[j++] = v & 0x0F;
+		  else {
+		    v = comprbuf[i++];
+		    uncomprbuf[j++] = (v & 0xF0) >> 4;
+		  }
 		}
 	      }
+	    
 	    // word boundary alignment
-	    if (info_hdr.iBitCount == 4)
-	      k /= 2;
-	    if (k & 0x01)
+ 	    if (i & 1)
 	      i++;
 	  }
 	}
       }
       
-      free(comprbuf);
       uint8_t* data = (uint8_t*)malloc(uncompr_size);
       if (!data) {
 	std::cerr << "Can't allocate space for final uncompressed scanline buffer\n";
@@ -635,10 +622,8 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       // TODO: suboptimal, later improve the above to yield the corrent orientation natively
       for (uint32_t row = 0; row < (uint32_t)image.h; ++row) {
 	memcpy (data + row * image.w, uncomprbuf + (image.h - 1 - row) * image.w, image.w);
-	rearrangePixels(data + row * image.w, image.w, info_hdr.iBitCount);
       }
       
-      free(uncomprbuf);
       image.setRawData(data);
       image.bps = 8;
     }
@@ -674,6 +659,9 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       free(clr_tbl);
       clr_tbl = NULL;
     }
+  else if (image.spp == 4 && (iSize < BIH_V2SIZE && info_hdr.iCompression == BMPC_RGB)) {
+    colorspace_rgba8_to_rgb8(image);
+  }
   
   return true;
   
