@@ -21,7 +21,8 @@
  *
  * While historically we only supported packed, byte-aligned scanlines,
  * since 2015 we also support abritrary strides. However, most algorithms
- * resizing the data usually compact the image to byte-aligned scanlines.
+ * resizing the data usually compact the image to byte-aligned scanlines
+ * without padding. Special care is needed not to iterate past a scanline.
  *
  * On load a codec might be attached. The codec might be querried
  * to decode the image data later on (decode on access) to allow
@@ -209,7 +210,11 @@ public:
   int height () const { return h; }
   
   unsigned stride () const {
-    return rowstride ? rowstride : (w * spp * bps + 7) / 8;
+    return rowstride ? rowstride : stridefill();
+  }
+  
+  unsigned stridefill () const {
+    return (w * spp * bps + 7) / 8;
   }
   
   int bitsPerSample () const { return bps; }
