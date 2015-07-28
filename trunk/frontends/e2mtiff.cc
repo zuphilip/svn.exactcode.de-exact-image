@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's any to multi-page TIFF converted
- * Copyright (C) 2008 - 2010 René Rebe
+ * Copyright (C) 2008 - 2010 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include "ArgumentList.hh"
 #include "Codecs.hh"
+#include "config.h"
 
 using namespace Utility;
 
@@ -30,8 +31,8 @@ ArgumentList arglist(true); // enable residual gathering
 
 bool usage(const Argument<bool>& arg)
 {
-  std::cerr << "any to multi-page TIFF convert" << std::endl
-            <<  "    - Copyright 2008-2010 by René Rebe, ExactCODE" << std::endl
+  std::cerr << "any to multi-page TIFF convert, version " << VERSION << std::endl
+            << "Copyright (C) 2008 - 2015 René Rebe, ExactCODE GmbH" << std::endl
             << "Usage:" << std::endl;
       
   arglist.Usage(std::cerr);

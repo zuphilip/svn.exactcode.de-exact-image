@@ -75,8 +75,8 @@ int main (int argc, char* argv[])
   if (arg_help.Get() == true || arglist.Residuals().empty())
     {
       std::cerr << "ExactImage identification (edentify), version " VERSION << std::endl
-                << "Copyright (C) 2006 - 2015 René Rebe, ExactCODE" << std::endl
-                << "Copyright (C) 2006 Archivista" << std::endl
+                << "Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH" << std::endl
+                << "Copyright (C) 2006 Archivista GmbH" << std::endl
 
                 << "Usage:" << std::endl;
       

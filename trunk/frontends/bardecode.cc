@@ -30,6 +30,8 @@
 #include "Tokenizer.hh"
 #include "Scanner.hh"
 
+#include "config.h"
+
 using namespace Utility;
 
 //#define BARDECODE_DEBUG
@@ -103,9 +105,9 @@ int main (int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "barcode recognition module of the exact-image library" << std::endl
-                <<  "    - Copyright 2007-2015 by René Rebe, ExactCODE" << std::endl
-                <<  "    - Copyright 2007 by Lars Kuhtz, ExactCODE" << std::endl
+      std::cerr << "ExactImage barcode recognition module, version " VERSION << std::endl
+                << "Copyright (C) 2007 - 2015 René Rebe, ExactCODE GmbH" << std::endl
+                << "Copyright (C) 2007 Lars Kuhtz, ExactCODE GmbH" << std::endl
                 << "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);

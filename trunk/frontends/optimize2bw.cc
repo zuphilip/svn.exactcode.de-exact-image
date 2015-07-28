@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2010 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH
  *           (C) 2005, 2006 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,9 @@
 #include "Colorspace.hh"
 #include "Matrix.hh"
 #include "scale.hh"
-
 #include "optimize2bw.hh"
+
+#include "config.h"
 
 using namespace Utility;
 
@@ -39,8 +40,8 @@ ArgumentList arglist;
 
 bool usage(const Argument<bool>& arg)
 {
-  std::cerr << "Color, gray image to bi-level optimizer"
-            <<  " - Copyright 2005 - 2010 by René Rebe" << std::endl
+  std::cerr << "ExactImage Color, gray image to bi-level optimizer, version " VERSION << std::endl
+            << "Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH" << std::endl
             << "Usage:" << std::endl;
   
   arglist.Usage (std::cerr);

@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2015 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -792,7 +792,7 @@ int main (int argc, char** argv)
   ArgumentList arglist (true); // enable residual gathering
   
   // setup the argument list
-  Argument<bool> arg_help ("", "help",
+  Argument<bool> arg_help ("h", "help",
                            "display this help text and exit");
   arglist.Add (&arg_help);
 #if EVASGL == 1
@@ -804,8 +804,8 @@ int main (int argc, char** argv)
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
     {
-      cerr << "ExactImage viewer (edisplay), version " VERSION << std::endl
-	   << "Copyright (C) 2006 - 2015 by René Rebe" << std::endl
+      cerr << "ExactImage viewer - edisplay, version " VERSION << std::endl
+	   << "Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
