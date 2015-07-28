@@ -105,22 +105,24 @@ void fastAutoCrop (Image& image)
     return;
   
   const int stride = image.stride();
-  
+  const int stridefill = image.stridefill();
+ 
   int h = image.h - 1;
   uint8_t* data = image.getRawData() + stride * h;
   uint8_t* ref = data; // ref value to compare against
   
+  // decrement at begining, to compare one line earlier with reference
   for (--h, data -= stride; h >= 0; --h, data -= stride) {
     // data row
     int i = 0;
-    for (; i < stride; ++i)
+    for (; i < stridefill; ++i)
       {
 	if (data[i] != ref[i]) {
 	  break; // pixel differs, break out
 	}
       }
     
-    if (i != stride)
+    if (i != stridefill)
       break; // non-solid line, break out
   }
   ++h; // we are at the line that differs

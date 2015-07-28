@@ -1,6 +1,6 @@
 /*
  * Agg to ExactImage bridge.
- * Copyright (C) 2007 - 2014 René Rebe, ExactCODE GmbH, Germany
+ * Copyright (C) 2007 - 2015 René Rebe, ExactCODE GmbH, Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,10 +132,12 @@ public:
   //--------------------------------------------------------------------
   void clear(const color_type& c)
   {
-    for (Image::iterator it = m_img->begin(), it_end = m_img->end();
-	 it != it_end; ++it) {
-      it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
-      it.set(it);
+    Image::iterator it = m_img->begin();
+    it.setRGB ((uint16_t)c.r, (uint16_t)c.g, (uint16_t)c.b);
+    for (int y = 0; y < m_img->h; ++y) {
+      it.at(0, y);
+      for (int x = 0; x < m_img->w; ++x, ++it)
+	it.set(it);
     }
   }
   

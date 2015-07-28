@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2013 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -132,30 +132,33 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     std::cerr << "a: " << (float) a / 256
 	      << " b: " << (float) b / 256 << std::endl;
 
-    uint8_t* it = image.getRawData();
-    uint8_t* end = image.getRawDataEnd();
-    uint8_t* it2 = it;
-    
-    while (it != end) {
-      int _r = *it++;
-      int _g = *it++;
-      int _b = *it++;
+    uint8_t* data = image.getRawData();
+    uint8_t* it2 = data;
+    unsigned stride = image.stride();
+    for (int y = 0; y < image.h; ++y) {
+      uint8_t* it = data + y * stride;
+      for (int x = 0; x < image.w; ++x) {
+	int _r = *it++;
+	int _g = *it++;
+	int _b = *it++;
+	
+	_r = (_r * a + b) / 256;
+	_g = (_g * a + b) / 256;
+	_b = (_b * a + b) / 256;
+	
+	// clip
+	_r = std::max (std::min (_r, 255), 0);
+	_g = std::max (std::min (_g, 255), 0);
+	_b = std::max (std::min (_b, 255), 0);
+	
+	// on-the-fly convert to gray with associated weighting
+	*it2++ = (_r*28 + _g*59 + _b*11) / 100;
+      }
       
-      _r = (_r * a + b) / 256;
-      _g = (_g * a + b) / 256;
-      _b = (_b * a + b) / 256;
-      
-      // clip
-      _r = std::max (std::min (_r, 255), 0);
-      _g = std::max (std::min (_g, 255), 0);
-      _b = std::max (std::min (_b, 255), 0);
-      
-      // on-the-fly convert to gray with associated weighting
-      *it2++ = (_r*28 + _g*59 + _b*11) / 100;
+      image.spp = 1; // converted data RGB8->GRAY8
+      image.rowstride = 0;
+      image.setRawData();
     }
-    
-    image.spp = 1; // converted data RGB8->GRAY8
-    image.setRawData();
   }
 
   // Convolution Matrix (unsharp mask a-like)
