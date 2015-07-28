@@ -214,6 +214,7 @@ struct box_scale_template
 	
 	for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
 	  //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
+	  src.at(0, sy);
 	  for (int sx = 0; sx < image.w; ++sx) {
 	    //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
 	    const int dx = bindex[sx];

@@ -60,6 +60,7 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
   }
   
   const int stride = image->stride();
+  const int stridefill = image->stridefill();
   
   // count pixels by table lookup
   int pixels = 0;
@@ -67,7 +68,7 @@ bool detect_empty_page (Image& im, double percent, int marginH, int marginV,
   for (int row = marginV; row < image->h - marginV; ++row)
   {
     uint8_t* rowptr = data + stride * row;
-    for (int x = marginH/8; x < stride - marginH/8; ++x) {
+    for (int x = marginH/8; x < stridefill - marginH/8; ++x) {
       int b = Exact::popcount[rowptr[x]];
       // it is a bitsset table - and we want the zeros ...
       pixels += 8-b;

@@ -23,11 +23,34 @@
 
 #include "Image.hh"
 #include "ImageIterator2.hh"
-
 #include "Codecs.hh"
 #include "Colorspace.hh"
 
 #include "Endianess.hh"
+
+#include "string.h"
+
+void realignImage(Image& image, const uint32_t newstride)
+{
+  const int stride = image.stride();
+  if (stride == newstride) return;
+  
+  image.getRawData(); // make sure data is already decoded
+  
+  if (newstride > stride)
+    image.resize(image.w, image.h, newstride);
+  
+  uint8_t* data = image.getRawData();
+  if (newstride < stride) {
+    for (unsigned y = 0; y < image.h; ++y)
+      memmove(data + y * newstride, data + y * stride, newstride);
+    image.resize(image.w, image.h, newstride);
+  } else { // newstride > stride
+    for (int y = image.h - 1; y >= 0; --y)
+      memmove(data + y * newstride, data + y * stride, stride);
+  }
+  image.setRawData();
+}
 
 template <typename T>
 struct histogram_template
@@ -36,31 +59,32 @@ struct histogram_template
   {
     std::vector<std::vector<unsigned int> > hist;
     hist.resize(image.spp);
-
+    
     typename T::accu a;
     
-      for (int i = 0; i < image.spp; ++i)
-	  hist[i].resize(bins, 0);
-      
-      typename T::accu one = T::accu::one();
-
-      T it (image);
-      for (int y = 0; y < image.h; ++y) {
-	for (int x = 0; x < image.w; ++x, ++it)
-	  {
-	    a = *it;
-            for (int i = 0; i < image.spp; ++i) {
-		typename T::accu::vtype v = a.v[i];
-    		int j = (int)(v * (bins-1) / one.v[i]);
-		if (j < 0) j = 0;
-		else if (j >= bins) j = bins - 1;
-		hist[i][j]++;
-	    }
+    for (int i = 0; i < image.spp; ++i)
+      hist[i].resize(bins, 0);
+    
+    typename T::accu one = T::accu::one();
+    
+    T it (image);
+    for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
+      for (int x = 0; x < image.w; ++x)
+	{
+	  a = *it; ++it;
+	  for (int i = 0; i < image.spp; ++i) {
+	    typename T::accu::vtype v = a.v[i];
+	    int j = (int)(v * (bins-1) / one.v[i]);
+	    if (j < 0) j = 0;
+	    else if (j >= bins) j = bins - 1;
+	    hist[i][j]++;
 	  }
-      }
-
-      return hist;
+	}
     }
+    
+    return hist;
+  }
 };
 
 std::vector<std::vector<unsigned int> > histogram(Image& image, int bins)
@@ -270,19 +294,24 @@ void colorspace_rgb16_to_gray16 (Image& image, const int wR = 30, const int wG =
 
 void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
 {
-  image.setRawDataWithoutDelete ((uint8_t*)realloc(image.getRawData(),
-						   image.w * 4 * image.h));
+  unsigned stride = image.stride();
+  unsigned newstride = 4 * stride / 3;
+  unsigned width = image.w;
+
+  uint8_t* data = (uint8_t*)realloc(image.getRawData(), newstride * image.h);
+  image.setRawDataWithoutDelete(data);
   image.setSamplesPerPixel(4);
   
   // reverse copy with alpha fill inside the buffer
-  uint8_t* it_src = image.getRawData() + image.w * 3 * image.h - 1;
-  for (uint8_t* it_dst = image.getRawDataEnd() - 1; it_dst > image.getRawData();)
-    {
+  for (int y = image.h-1; y >= 0; --y) {
+    uint8_t* it_src = data + y * stride + width * 3 - 1;
+    for (uint8_t* it_dst = data + y * newstride + width * 4 - 1; it_dst > data + y * stride;) {
       *it_dst-- = alpha;
       *it_dst-- = *it_src--;
       *it_dst-- = *it_src--;
       *it_dst-- = *it_src--;
     }
+  }
 }
 
 void colorspace_gray8_threshold (Image& image, uint8_t threshold)
@@ -1003,13 +1032,13 @@ static inline double convert (double val,
 			      double contrast,
 			      double gamma)
 {
-    /* apply brightness */
+    // apply brightness
     if (brightness < 0.0)
         val = val * (1.0 + brightness);
     else if (brightness > 0.0)
         val = val + ((1.0 - val) * brightness);
 
-    /* apply contrast */
+    // apply contrast
     if (contrast != 0.0) {
       double nvalue = (val > 0.5) ? 1.0 - val : val;
       if (nvalue < 0.0)
@@ -1019,7 +1048,7 @@ static inline double convert (double val,
       val = (val > 0.5) ? 1.0 - nvalue : nvalue;
     }
     
-    /* apply gamma */
+    // apply gamma
     if (gamma != 1.0) {
       val = pow (val, getExponentGamma (gamma));
     }
@@ -1037,8 +1066,9 @@ struct brightness_contrast_gamma_template
     typename T::accu::vtype _r, _g, _b;
     double r, g, b;
     
-    for (int i = 0; i < image.h * image.w; ++i)
-      {
+    for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
+      for (int x = 0; x < image.w; ++x) {
 	a = *it;
 	
 	a.getRGB (_r, _g, _b);
@@ -1058,6 +1088,7 @@ struct brightness_contrast_gamma_template
 	it.set(a);
 	++it;
       }
+    }
     image.setRawData();
   }
 };
@@ -1084,8 +1115,9 @@ struct hue_saturation_lightness_template {
     const typename T::accu::vtype
       hue = ONE * _hue / 360;
 
-    for (int i = 0; i < image.h * image.w; ++i)
-      {
+    for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
+      for (int x = 0; x < image.w; ++x) {
 	typename T::accu a = *it;	
 	typename T::accu::vtype r, g, b;
 	a.getRGB (r, g, b);
@@ -1177,6 +1209,7 @@ struct hue_saturation_lightness_template {
 	it.set(a);
 	++it;
       }
+    }
     image.setRawData();
   }
 };

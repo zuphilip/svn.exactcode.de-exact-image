@@ -36,6 +36,7 @@ void flipX (Image& image)
 
   uint8_t* data = image.getRawData();
   const int stride = image.stride();
+  const int stridefill = image.stridefill();
   switch (image.spp * image.bps)
     {
     case 1:
@@ -59,15 +60,15 @@ void flipX (Image& image)
 	
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    uint8_t* row = &data [y*stride];
-	    for (int x = 0; x < stride/2; ++x) {
+	    uint8_t* row = data + y * stride;
+	    for (int x = 0; x < stridefill / 2; ++x) {
 	      uint8_t v = row [x];
-	      row[x] = reversed_bits [row[stride - 1 - x]];
+	      row[x] = reversed_bits[row[stridefill - 1 - x]];
 	      row[stride - 1 - x] = reversed_bits[v];
 	    }
 	    // TODO: this still needs to be fixed for stride < 1 byte!
-            if (stride & 1) // uneven? center-byte:
-	      row[stride/2] = reversed_bits[row[stride/2]];
+            if (stridefill & 1) // uneven? center-byte:
+	      row[stridefill / 2] = reversed_bits[row[stridefill / 2]];
 	  }
       }
       break;
@@ -80,14 +81,12 @@ void flipX (Image& image)
 	const unsigned int bytes = image.spp * image.bps / 8;
 	for (int y = 0; y < image.h; ++y)
 	  {
-	    uint8_t* ptr1 = &data[y * stride];
-	    uint8_t* ptr2 = ptr1 + stride - bytes;
+	    uint8_t* ptr1 = data + y * stride;
+	    uint8_t* ptr2 = ptr1 + stridefill - bytes;
 	    
 	    for (; ptr1 < ptr2; ptr2 -= 2 * bytes) {
 	      for (unsigned b = 0; b < bytes; b++) {
-		uint8_t v = *ptr1;
-		*ptr1++ = *ptr2;
-		*ptr2++ = v;
+		std::swap(*ptr1++, *ptr2++);
 	      }
 	    }
 	  }
