@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
  */
 
 #include "Codecs.hh"
+#include "Colorspace.hh"
 
 #include <ctype.h> // tolower
 
@@ -87,9 +88,10 @@ int ImageCodec::Read (std::istream* stream, Image& image,
 	  // use primary entry to only try each codec once
 	  if (it->primary_entry && !it->via_codec_only) {
 	    int res = it->loader->readImage (stream, image, decompress, index);
-            if (res > 0)
+	    if (res > 0)
 	    {
 	      image.setDecoderID (it->loader->getID ());
+	      //realignImage(image, image.stride() + 3);
 	      return res;
 	    }
 	    // TODO: remove once the codecs are clean

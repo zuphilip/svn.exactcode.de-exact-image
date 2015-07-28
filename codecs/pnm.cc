@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2015 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ int PNMCodec::readImage (std::istream* stream, Image& image, const std::string& 
     }
   else // binary data
     {
-      const int stride = image.stride ();
+      const int stride = image.stride();
       const int bps = image.bps;
       
       for (int y = 0; y < image.h; ++y)
@@ -244,16 +244,17 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   else
     {
-      const int stride = image.stride();
       const int bps = image.bps;
+      const int stride = image.stride();
+      const int stridefill = image.stridefill();
 #ifndef _MSC_VER
-      uint8_t ptr[stride];
+      uint8_t ptr[stridefill];
 #else
-      std::vector<uint8_t> ptr(stride);
+      std::vector<uint8_t> ptr(stridefill);
 #endif
       for (int y = 0; y < image.h; ++y)
 	{
-	  memcpy (&ptr[0], image.getRawData() + y * stride, stride);
+	  memcpy (&ptr[0], image.getRawData() + y * stride, stridefill);
 	  
 	  // is this publically defined somewhere???
 	  if (bps == 1) {
@@ -264,15 +265,13 @@ bool PNMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	  
 	  if (bps == 16) {
 	    uint16_t* swap_ptr = (uint16_t*)&ptr[0];
-	    for (int x = 0; x < stride/2; ++x, ++swap_ptr)
+	    for (int x = 0; x < stridefill / 2; ++x, ++swap_ptr)
 	      *swap_ptr = ByteSwap<BigEndianTraits, NativeEndianTraits, uint16_t>::Swap (*swap_ptr);
 	  }
 	  
-	  stream->write ((char*)&ptr[0], stride);
+	  stream->write((char*)&ptr[0], stridefill);
 	}
     }
-  
-  stream->flush ();
   
   return true;
 }
