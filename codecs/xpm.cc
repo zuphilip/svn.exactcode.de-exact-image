@@ -107,10 +107,15 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
   std::cerr << "XPM: " << image.w << "x" << image.h
 	    << ", colors: " << colors << ", chars per pix: "
 	    << cpp << std::endl;
-  
+#ifndef _MSC_VER
   uint16_t rmap[colors];
   uint16_t gmap[colors];
   uint16_t bmap[colors];
+#else
+  std::vector<uint16_t> rmap(colors);
+  std::vector<uint16_t> gmap(colors);
+  std::vector<uint16_t> bmap(colors);
+#endif
   std::vector<std::string> cmap;
   
   skip_comments (stream);
@@ -196,7 +201,7 @@ int XPMCodec::readImage (std::istream* stream, Image& image, const std::string& 
       std::getline (*stream, line);
     }
   
-  colorspace_de_palette (image, colors, rmap, gmap, bmap);
+  colorspace_de_palette (image, colors, &rmap[0], &gmap[0], &bmap[0]);
 
   return true;
 }
