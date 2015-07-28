@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2013 René Rebe
+ * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,9 @@
 #include "Codecs.hh"
 
 #include "ArgumentList.hh"
-
 #include "empty-page.hh"
+
+#include "config.h"
 
 using namespace Utility;
 
@@ -31,8 +32,8 @@ ArgumentList arglist;
 
 bool usage(const Argument<bool>& arg)
 {
-  std::cerr << "Empty page detector"
-            <<  " - Copyright 2005-2010 by René Rebe" << std::endl
+  std::cerr << "ExactImage Empty page detector, version " VERSION << std::endl
+            << "Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH" << std::endl
             << "Usage:" << std::endl;
   
   arglist.Usage(std::cerr);

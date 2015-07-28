@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's hOCR to PDF command line frontend
- * Copyright (C) 2008 - 2014 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2015 René Rebe, ExactCODE GmbH Germany
  * Copyright (C) 2008 Archivista
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,6 @@
 #include <iomanip>
 #include <cmath>
 #include <cctype>
-
 #include <vector>
 
 #include "ArgumentList.hh"
@@ -33,7 +32,6 @@
 
 #include "Codecs.hh"
 #include "pdf.hh"
-
 #include "hocr.hh"
 
 using namespace Utility;
@@ -93,8 +91,8 @@ int main(int argc, char* argv[])
   // parse the specified argument list - and maybe output the Usage
   if (!arglist.Read(argc, argv) || arg_help.Get() == true)
     {
-      std::cerr << "hOCR to PDF converter, version " VERSION << std::endl
-		<< "Copyright (C) 2008-2014 René Rebe, ExactCODE" << std::endl
+      std::cerr << "ExactImage hOCR to PDF converter, version " VERSION << std::endl
+		<< "Copyright (C) 2008 - 2015 René Rebe, ExactCODE GmbH" << std::endl
 		<< "Copyright (C) 2008 Archivista" << std::endl
 		<< "Usage:" << std::endl;
       

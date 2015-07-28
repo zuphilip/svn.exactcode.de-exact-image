@@ -1057,8 +1057,8 @@ int main (int argc, char* argv[])
   if (argc == 1 || arg_help.Get() == true)
     {
       std::cerr << "ExactImage converter, version " VERSION << std::endl
-		<< "Copyright (C) 2005 - 2015 René Rebe, ExactCODE" << std::endl
-		<< "Copyright (C) 2005, 2008 Archivista" << std::endl
+		<< "Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH" << std::endl
+		<< "Copyright (C) 2005, 2008 Archivista GmbH" << std::endl
 		<< "Usage:" << std::endl;
       
       arglist.Usage (std::cerr);
