@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2009 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -280,15 +280,14 @@ bool PNGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 
   png_write_info (png_ptr, info_ptr);
   
-  int stride = png_get_rowbytes (png_ptr, info_ptr);
-
   /* swap bytes of 16 bit data as PNG stores in network-byte-order */
   if (!Exact::NativeEndianTraits::IsBigendian)
     png_set_swap(png_ptr);
   
-  png_bytep row_pointers[1]; 
   /* The other way to write images */
   int number_passes = 1;
+  const int stride = image.stride();
+  png_bytep row_pointers[1]; 
   for (int pass = 0; pass < number_passes; ++pass)
     for (int y = 0; y < image.h; ++y) {
       row_pointers[0] = image.getRawData() + y * stride;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 - 2015 René Rebe
+ * Copyright (C) 2007 - 2015 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -256,9 +256,10 @@ bool XPMCodec::writeImage (std::ostream* stream, Image& image, int quality,
     }
   
   // write pixels
-  Image::iterator it = image.begin ();
+  Image::iterator it = image.begin();
   for (int y = 0; y < image.h; ++y)
     {
+      it = it.at(0, y);
       *stream << "\"";
       for (int x = 0; x < image.w; ++x)
 	{
@@ -266,10 +267,8 @@ bool XPMCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	  *stream << symbol (it.getL() >> (8 - image.bps) );
 	  ++it;
 	}
-      
       *stream << "\"" << (y < image.h-1 ? ",\n" : "};\n");
     }
-
   return true;
 }
 
