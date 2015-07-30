@@ -32,7 +32,7 @@
 
 void realignImage(Image& image, const uint32_t newstride)
 {
-  const int stride = image.stride();
+  const unsigned stride = image.stride();
   if (stride == newstride) return;
   
   image.getRawData(); // make sure data is already decoded
@@ -42,7 +42,7 @@ void realignImage(Image& image, const uint32_t newstride)
   
   uint8_t* data = image.getRawData();
   if (newstride < stride) {
-    for (unsigned y = 0; y < image.h; ++y)
+    for (int y = 0; y < image.h; ++y)
       memmove(data + y * newstride, data + y * stride, newstride);
     image.resize(image.w, image.h, newstride);
   } else { // newstride > stride
@@ -338,7 +338,7 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   struct compare_and_set
   {
     const Image& image;
-    const int stride;
+    const unsigned stride;
     
     compare_and_set (const Image& _image)
       : image(_image), stride (image.stride())
@@ -525,8 +525,8 @@ void colorspace_gray8_to_gray2 (Image& image)
 
 void colorspace_gray8_to_rgb8 (Image& image)
 {
-  const int stride = image.stride();
-  const int nstride = image.w * 3;
+  const unsigned stride = image.stride();
+  const unsigned nstride = image.w * 3;
   image.setRawDataWithoutDelete((uint8_t*)realloc(image.getRawData(),
 						  std::max(stride, nstride) * image.h));
   uint8_t* data = image.getRawData();
@@ -728,7 +728,7 @@ void colorspace_16_to_8 (Image& image)
   for (int y = 0; y < image.h; ++y)
     {
       uint16_t* it = (uint16_t*)(image.getRawData() + y * ostride);
-      for (int x = 0; x < image.stride(); ++x)
+      for (unsigned x = 0; x < image.stride(); ++x)
 	{
 	  *output++ = it[x] >> 8;
 	}
