@@ -316,11 +316,11 @@ void colorspace_rgb8_to_rgb8a (Image& image, uint8_t alpha)
 
 void colorspace_gray8_threshold (Image& image, uint8_t threshold)
 {
-   for (int y = 0; y < image.h; ++y)
+  uint8_t* it = image.getRawData();
+  for (int y = 0; y < image.h; ++y, it += image.stride())
   {
-    uint8_t* it = image.getRawData() + y * image.stride();
     for (int x = 0; x < image.w; ++x)
-     *it = *it > threshold ? 0xFF : 0x00;
+     it[x] = it[x] > threshold ? 0xFF : 0x00;
   }
 
   image.setRawData();
@@ -331,17 +331,17 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   if (image.bps != 8 || image.spp != 1)
     return;
   
-  unsigned stride = image.stride();
+  signed stride = image.stride();
   uint8_t* data = image.getRawData();
   uint8_t* ndata = (uint8_t*)malloc(stride * image.h);
   
   struct compare_and_set
   {
     const Image& image;
-    const unsigned stride;
+    const signed stride;
     
     compare_and_set (const Image& _image)
-      : image(_image), stride (image.stride())
+      : image(_image), stride(stride)
     {
     }
     
