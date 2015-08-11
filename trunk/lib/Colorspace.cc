@@ -331,17 +331,17 @@ void colorspace_gray8_denoise_neighbours (Image &image, bool gross)
   if (image.bps != 8 || image.spp != 1)
     return;
   
-  signed stride = image.stride();
+  unsigned stride = image.stride();
   uint8_t* data = image.getRawData();
   uint8_t* ndata = (uint8_t*)malloc(stride * image.h);
   
   struct compare_and_set
   {
     const Image& image;
-    const signed stride;
+    const signed stride; // negative - indexing
     
     compare_and_set (const Image& _image)
-      : image(_image), stride(stride)
+      : image(_image), stride(_image.stride())
     {
     }
     
