@@ -143,8 +143,8 @@ public:
     ptr = ptr_begin;
   }
     
-  rgb_iterator& at (int x, int y) {
-    ptr = ptr_begin + y * stride + x * 3;
+  rgb_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride + x * 3;
     return *this;
   }
     
@@ -303,8 +303,8 @@ public:
     ptr = ptr_begin;
   }
     
-  rgba_iterator& at (int x, int y) {
-    ptr = ptr_begin + y * stride + x * 4;
+  rgba_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride + x * 4;
     return *this;
   }
     
@@ -458,8 +458,8 @@ public:
     ptr = ptr_begin;
   }
   
-  rgb16_iterator& at (int x, int y) {
-    ptr = ptr_begin + y * stride / 2 + x * 3;
+  rgb16_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride / 2 + x * 3;
     return *this;
   }
     
@@ -591,8 +591,8 @@ public:
     ptr = ptr_begin;
   }
     
-  gray_iterator& at (int x, int y) {
-    ptr = ptr_begin + y * stride + x;
+  gray_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride + x;
     return *this;
   }
     
@@ -722,8 +722,8 @@ public:
     ptr = ptr_begin;
   }
     
-  gray16_iterator& at (int x, int y) {
-    ptr = ptr_begin + y * stride/2 + x;
+  gray16_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride/2 + x;
     return *this;
   }
     
@@ -770,9 +770,11 @@ public:
     ptr = ptr_begin;
   }
     
-  bit_iterator& at (int x, int y) {
-    _x = x;
-    ptr = ptr_begin + y * stride + x / (8 / bitdepth);
+  bit_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride;
+    if (rel) ptr -= _x / (8 / bitdepth); // for rel, remove prev. x-offset
+    _x = rel ? _x + x : x;
+    ptr += _x / (8 / bitdepth); // final new x-offset
     bitpos = 7 - (x % (8 / bitdepth)) * bitdepth;
     return *this;
   }
