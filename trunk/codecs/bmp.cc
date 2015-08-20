@@ -448,7 +448,7 @@ int BMPCodec::readImageWithoutFileHeader (std::istream* stream, Image& image, co
       info_hdr.iAlphaMask = 0;
     }
   
-  uint32_t stride = image.stride();
+  unsigned stride = image.stride();
   
   // Read uncompressed image data.
   switch (info_hdr.iCompression) {

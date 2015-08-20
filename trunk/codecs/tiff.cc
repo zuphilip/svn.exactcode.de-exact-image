@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2011 René Rebe, ExactCODE GmbH, Berlin
+ * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH, Germany
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -419,8 +419,8 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
     _yres = 0;
   image.setResolution(_xres, _yres);
   
-  int stride = image.stride();
   image.resize (image.w, image.h);
+  const unsigned stride = image.stride();
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
   if (photometric == PHOTOMETRIC_PALETTE)
