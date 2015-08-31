@@ -33,40 +33,34 @@ struct convolution_matrix_template
   {
     Image orig_image;
     orig_image.copyTransferOwnership (image);
-    image.resize (image.w, image.h);
+    image.resize(image.w, image.h);
     
-    T dst_it (image);
-    T src_it (orig_image);
+    T dst_it(image);
+    T src_it(orig_image);
     
     const int xr = xw / 2;
     const int yr = yw / 2;
     
-    // top & bottom
-    for (int y = 0; y < image.h; ++y)
-      {
-	for (int x = 0; x < image.w;)
-	  {
-	    dst_it.at (x, y);
-	  
-	    typename T::accu a;
-	  
+    // mirrored border pixels, top, left, bottom, right
+    for (int y = 0; y < image.h; ++y) {
+	for (int x = 0; x < image.w;) {
 	    const matrix_type* _matrix = matrix;
-	  
-	    for (int ym = 0; ym < yw; ++ym) {
+	    typename T::accu a;
+	    dst_it.at(x, y);
 	    
-	      int image_y = y-yr+ym;
+	    for (int ym = 0; ym < yw; ++ym) {
+	      int image_y = y - yr + ym;
 	      if (image_y < 0)
-		image_y = 0 - image_y;
+		image_y = -image_y;
 	      else if (image_y >= image.h)
-		image_y = image.h - (image_y - image.h) - 1;
+		image_y = image.h - 1 - (image_y - image.h + 1);
 	    
 	      for (int xm = 0; xm < xw; ++xm) {
-	      
-		int image_x = x-xr+xm;
+		int image_x = x - xr + xm;
 		if (image_x < 0)
 		  image_x = 0 - image_x;
 		else if (image_x >= image.w)
-		  image_x = image.w - (image_x - image.w) - 1;
+		  image_x = image.w - 1 - (image_x - image.w + 1);
 	      
 		a += *(src_it.at(image_x, image_y)) * *_matrix;
 		++src_it;
@@ -74,25 +68,24 @@ struct convolution_matrix_template
 	      }
 	    }
 	    a /= divisor;
-	    a.saturate ();
-	  
-	    dst_it.set (a);
+	    a.saturate();
+	    dst_it.set(a);
+	    
 	    ++dst_it;
-	  
 	    ++x;
+	    
+	    // skip center region with no border conditions
 	    if (x == xr && y >= yr && y < image.h - yr)
 	      x = image.w - xr;
 	  }
       }
     
-    //image area without border
-    for (int y = yr; y < image.h - yr; ++y)
-      {
+    // image area without border
+    for (int y = yr; y < image.h - yr; ++y) {
 	dst_it.at (xr, y);
-	for (int x = xr; x < image.w - xr; ++x)
-	  {
-	    typename T::accu a;
+	for (int x = xr; x < image.w - xr; ++x) {
 	    const matrix_type* _matrix = matrix;
+	    typename T::accu a;
 	    
 	    for (int ym = 0; ym < yw; ++ym) {
 	      src_it.at (x - xr, y - yr + ym);
@@ -105,7 +98,7 @@ struct convolution_matrix_template
 	    a /= divisor;
 	    a.saturate();
 	    
-	    dst_it.set (a);
+	    dst_it.set(a);
 	    ++dst_it;
 	  }
       }
