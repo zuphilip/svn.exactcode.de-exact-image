@@ -380,7 +380,33 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   jpeg_set_defaults(&cinfo);
   jpeg_compress_set_density (&cinfo, image);
   jpeg_set_quality(&cinfo, quality, (boolean)FALSE); // do not limit to baseline-JPEG values
-
+  
+  // sub-sampling
+  if (cinfo.in_color_space == JCS_RGB) {
+    if (compress == "4:4:4") {
+      cinfo.comp_info[0].h_samp_factor =
+	cinfo.comp_info[0].v_samp_factor =
+	cinfo.comp_info[1].h_samp_factor =
+	cinfo.comp_info[1].v_samp_factor =
+	cinfo.comp_info[2].h_samp_factor =
+	cinfo.comp_info[2].v_samp_factor = 1;
+    } else if (compress == "4:2:2") {
+      cinfo.comp_info[0].h_samp_factor = 2;
+      cinfo.comp_info[0].v_samp_factor =
+	cinfo.comp_info[1].h_samp_factor =
+	cinfo.comp_info[1].v_samp_factor =
+	cinfo.comp_info[2].h_samp_factor =
+	cinfo.comp_info[2].v_samp_factor = 1;
+    } else if (compress == "4:1:1") {
+      cinfo.comp_info[0].h_samp_factor =
+	cinfo.comp_info[0].v_samp_factor = 2;
+      cinfo.comp_info[1].h_samp_factor =
+	cinfo.comp_info[1].v_samp_factor =
+	cinfo.comp_info[2].h_samp_factor =
+	cinfo.comp_info[2].v_samp_factor = 1;
+    } 
+  }
+  
   // Start compressor
   jpeg_start_compress(&cinfo, (boolean)TRUE);
 
