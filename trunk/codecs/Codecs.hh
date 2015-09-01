@@ -37,6 +37,8 @@
 #include <stdio.h>
 
 #include <list>
+#include <set>
+
 #include <algorithm>
 #include <iosfwd>
 
@@ -122,5 +124,66 @@ protected:
   // freestanding instance, attached to an image
   const Image* _image;
 };
+
+class Args
+{
+public:
+  Args(const std::string& _args, bool ignoreCase = true)
+  {
+    for (size_t it1 = 0; it1 < _args.size();) {
+      size_t it2 = _args.find_first_of(",;|", it1);
+      
+      if (it2 == std::string::npos)
+	it2 = _args.size();
+      
+      std::string s = _args.substr(it1, it2 - it1);
+      if (ignoreCase)
+	std::transform(s.begin(), s.end(), s.begin(), tolower);
+      args.insert(s);
+      
+      it1 = it2 + 1;
+    }
+  }
+  
+  bool contains(const std::string& arg)
+  {
+    if (args.find(arg) != args.end())
+      return true;
+    else
+      return false;
+  }
+  
+  void remove(const std::string& arg)
+  {
+    args.erase(arg);
+  }
+  
+  bool containsAndRemove(const std::string& arg)
+  {
+    if (contains(arg)) {
+      remove(arg);
+      return true;
+    }
+    return false;
+  }
+  
+  std::string str()
+  {
+    std::string ret;
+    std::set<std::string>::iterator it = args.begin();
+    if (it != args.end())
+      ret = *it++;
+    
+    for (; it != args.end(); ++it) {
+      ret += ",";
+      ret += *it;
+    }
+    return ret;
+  }
+  
+protected:
+  std::set<std::string> args;
+};
+
 
 #endif

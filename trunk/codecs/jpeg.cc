@@ -322,12 +322,11 @@ int JPEGCodec::readImage (std::istream* stream, Image& image, const std::string&
 bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			    const std::string& compress)
 {
-  std::string c (compress);
-  std::transform (c.begin(), c.end(), c.begin(), tolower);
-
+  Args args(compress);
+  
   // if the instance is freestanding it can only be called by the mux
   // if the cache is valid
-  if (_image && c != "recompress") {
+  if (_image && !args.containsAndRemove("recompress")) {
     // if meta information was modified re-encode the stream
     if (image.isMetaModified()) {
       std::cerr << "Re-encoding DCT coefficients (due meta changes)." << std::endl;
@@ -383,21 +382,21 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   
   // sub-sampling
   if (cinfo.in_color_space == JCS_RGB) {
-    if (compress == "4:4:4") {
+    if (args.containsAndRemove("4:4:4")) {
       cinfo.comp_info[0].h_samp_factor =
 	cinfo.comp_info[0].v_samp_factor =
 	cinfo.comp_info[1].h_samp_factor =
 	cinfo.comp_info[1].v_samp_factor =
 	cinfo.comp_info[2].h_samp_factor =
 	cinfo.comp_info[2].v_samp_factor = 1;
-    } else if (compress == "4:2:2") {
+    } else if (args.containsAndRemove("4:2:2")) {
       cinfo.comp_info[0].h_samp_factor = 2;
       cinfo.comp_info[0].v_samp_factor =
 	cinfo.comp_info[1].h_samp_factor =
 	cinfo.comp_info[1].v_samp_factor =
 	cinfo.comp_info[2].h_samp_factor =
 	cinfo.comp_info[2].v_samp_factor = 1;
-    } else if (compress == "4:1:1") {
+    } else if (args.containsAndRemove("4:1:1")) {
       cinfo.comp_info[0].h_samp_factor =
 	cinfo.comp_info[0].v_samp_factor = 2;
       cinfo.comp_info[1].h_samp_factor =
@@ -406,6 +405,10 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 	cinfo.comp_info[2].v_samp_factor = 1;
     } 
   }
+
+  if (!args.str().empty())
+    std::cerr << "JPEGCodec: Unrecognized encoding option '"
+	      << args.str() << "'" << std::endl;
   
   // Start compressor
   jpeg_start_compress(&cinfo, (boolean)TRUE);
