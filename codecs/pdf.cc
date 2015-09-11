@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2007 - 2009 Susanne Klaus <susanne@exactcode.de>
- * Copyright (c) 2008 - 2011 René Rebe <rene@exactcode.de>
+ * Copyright (c) 2008 - 2015 René Rebe <rene@exactcode.de>
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -312,64 +312,6 @@ struct PDFFont : public PDFObject
   uint32_t fontID;
 };
 
-class Args
-{
-public:
-  Args(const std::string& _args)
-  {
-    size_t it1 = 0;
-    while (it1 < _args.size())
-      {
-	size_t it2 = _args.find_first_of(",;|:", it1);
-	args.insert (_args.substr(it1, it2 - it1));
-	
-	if (it2 != std::string::npos)
-	  it1 = it2 + 1;
-	else
-	  it1 = _args.size();
-      }
-  }
-  
-  bool contains(const std::string& arg)
-  {
-    if (args.find(arg) != args.end())
-      return true;
-    else
-      return false;
-  }
-  
-  void remove(const std::string& arg)
-  {
-    args.erase(arg);
-  }
-  
-  bool containsAndRemove(const std::string& arg)
-  {
-    if (contains(arg)) {
-      remove(arg);
-      return true;
-    }
-    return false;
-  }
-  
-  std::string str()
-  {
-    std::string ret;
-    std::set<std::string>::iterator it = args.begin();
-    if (it != args.end())
-      ret = *it++;
-    
-    for (; it != args.end(); ++it) {
-      ret += ",";
-      ret += *it;
-    }
-    return ret;
-  }
-  
-protected:
-  std::set<std::string> args;
-};
-
 // so far always an image
 struct PDFXObject : public PDFStream
 {
@@ -396,10 +338,7 @@ struct PDFXObject : public PDFStream
     if (image.bps < 8) encoding = "/FlateDecode";
     else encoding = "/DCTDecode";
     
-    // TODO: move transform to Args class
-    std::string c(compress);
-    std::transform(c.begin(), c.end(), c.begin(), tolower);
-    Args args(c);
+    Args args(compress);
     
     if (args.containsAndRemove("ascii85"))
       encoding = "/ASCII85Decode";
