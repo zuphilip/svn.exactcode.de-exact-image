@@ -129,7 +129,7 @@ struct normalize_template
       for (typename histogram_type::iterator i = histogram.begin();
 	   i != histogram.end(); ++i, ++ii) {
 	count += *i;
-	if (count >= black_point) {
+	if (count > black_point) {
 	  black = ii;
 	  break;
 	}
@@ -138,7 +138,7 @@ struct normalize_template
       for (typename histogram_type::reverse_iterator i = histogram.rbegin();
 	   i != histogram.rend(); ++i, --ii) {
 	count += *i;
-	if (count >= white_point) {
+	if (count > white_point) {
 	  white = ii;
 	  break;
 	}
@@ -163,9 +163,9 @@ struct normalize_template
 	  a = *it;
 	  a += fb;
 	  a *= fa;
-	  a /= 256;
+	  a /= 255;
 	  a.saturate();
-	  it.set (a);
+	  it.set(a);
 	  ++it;
 	}
     }
