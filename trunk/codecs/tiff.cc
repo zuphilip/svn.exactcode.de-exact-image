@@ -388,15 +388,14 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
   
   uint32 _w = 0;
   TIFFGetField(in, TIFFTAG_IMAGEWIDTH, &_w);
-  
   uint32 _h = 0;
   TIFFGetField(in, TIFFTAG_IMAGELENGTH, &_h);
-  
   uint16 _spp = 0;
   TIFFGetField(in, TIFFTAG_SAMPLESPERPIXEL, &_spp);
-  
   uint16 _bps = 0;
   TIFFGetField(in, TIFFTAG_BITSPERSAMPLE, &_bps);
+  uint16 config;
+  TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
   
   if (!_w || !_h || !_spp || !_bps) {
     TIFFClose(in);
@@ -404,11 +403,6 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
     return false;
   }
   
-  //uint16 config;
-  //TIFFGetField(in, TIFFTAG_PLANARCONFIG, &config);
-  
-  image.w = _w;
-  image.h = _h;
   image.spp = _spp;
   image.bps = _bps;
   
@@ -419,38 +413,56 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
     _yres = 0;
   image.setResolution(_xres, _yres);
   
-  image.resize (image.w, image.h);
-  const unsigned stride = image.stride();
   
   uint16 *rmap = 0, *gmap = 0, *bmap = 0;
-  if (photometric == PHOTOMETRIC_PALETTE)
-    {
-      if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
-	std::cerr << "TIFCodec: Error reading colormap." << std::endl;
-    }
-
-  uint8_t* data2 = image.getRawData();
-  for (int row = 0; row < image.h; row++)
-    {
-      if (TIFFReadScanline(in, data2, row, 0) < 0)
+  if (photometric == PHOTOMETRIC_PALETTE) {
+    if (!TIFFGetField (in, TIFFTAG_COLORMAP, &rmap, &gmap, &bmap))
+      std::cerr << "TIFCodec: Error reading colormap." << std::endl;
+  }
+  
+  // we fill planar off-by-one-line to avoid extra copy for color pack
+  if (config == PLANARCONFIG_SEPARATE)
+    image.resize(_w, _h + 1);
+  else
+    image.resize(_w, _h);
+  const unsigned stride = image.stride();
+  
+  // load all scanlines, for all planes if any
+  for (int sample = 0;
+       sample < (config == PLANARCONFIG_SEPARATE ? _spp : 1);
+       ++sample) {
+    uint8_t* data = image.getRawData();
+    
+    if (config == PLANARCONFIG_SEPARATE)
+      data += stride + sample * (image.stride() / _spp);
+    
+    for (int row = 0; row < _h; ++row) {
+      if (TIFFReadScanline(in, data, row, sample) < 0)
 	break;
+      
+      // color pack in-place for higher cache efficiency
+      if (config == PLANARCONFIG_SEPARATE && sample == _spp - 1)
+	colorspace_pack_line(image, row, row + 1);
       
       if (photometric == PHOTOMETRIC_MINISWHITE && image.bps == 1)
 	for (int i = 0; i < stride; ++i)
-	  data2[i] = data2[i] ^ 0xFF;
+	  data[i] ^= 0xFF;
       
-      data2 += stride;
+      data += stride;
     }
+  }
+
+  if (config == PLANARCONFIG_SEPARATE)
+    image.resize(_w, _h); // correct off-by-one scratch buffer
   
-  /* some post load fixup */
+  // some post load fixup
   
-  /* invert if saved "inverted", we already invert 1bps on-the-fly */
+  // invert if saved "inverted", we already invert 1bps on-the-fly
   if (photometric == PHOTOMETRIC_MINISWHITE && image.bps != 1)
     invert (image);
   
-  /* strange 16bit gray images ??? or GRAYA? */
-  if (image.spp == 2)
-    {
+  // strange 16bit gray images ??? or GRAYA?
+  if (image.spp == 2) {
       for (uint8_t* it = image.getRawData();
 	   it < image.getRawDataEnd(); it += 2) {
 	char x = it[0];

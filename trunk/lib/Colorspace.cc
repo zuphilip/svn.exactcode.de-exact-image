@@ -1225,8 +1225,8 @@ struct invert_template
   void operator() (Image& image)
   {
     T it (image);
-    
     for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
       for (int x = 0; x < image.w; ++x) {
 	
 	typename T::accu a = *it;
@@ -1242,4 +1242,34 @@ struct invert_template
 void invert (Image& image)
 {
   codegen<invert_template> (image);
+}
+
+template <typename T>
+struct colorspace_pack_line_template
+{
+  void operator() (Image& image, int dstline, int srcline)
+  {
+    const unsigned stride = image.stridefill();
+    
+    T dst(image);
+    T src(image);
+    dst.at(0, dstline);
+    src.at(0, srcline);
+
+    typename T::type* scratch = src.ptr;
+    
+    for (int x = 0; x < image.w; ++x) {
+      typename T::accu a;
+      for (int s = 0; s < a.samples; ++s)
+	a.v[s] = scratch[s * image.w + x];
+      
+      dst.set(a);
+      ++dst;
+    }
+  }
+};
+
+void colorspace_pack_line (Image& image, int dst, int src)
+{
+  codegen<colorspace_pack_line_template> (image, dst, src);
 }

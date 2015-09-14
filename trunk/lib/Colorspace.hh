@@ -71,4 +71,6 @@ void invert (Image& image);
 void colorspace_de_palette (Image& image, int table_entries,
 			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap, uint16_t* amap = 0);
 
+void colorspace_pack_line(Image& image, int dstline, int srcline);
+
 #endif
