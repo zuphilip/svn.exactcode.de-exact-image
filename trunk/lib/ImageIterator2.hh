@@ -25,8 +25,9 @@
 class rgb_iterator
 {
 public:
-  uint8_t* ptr;
-  uint8_t* ptr_begin;
+  typedef uint8_t type;
+  type* ptr;
+  type* ptr_begin;
   const Image& image;
   const int stride;
   
@@ -99,6 +100,13 @@ public:
       v[0] += other.v[0];
       v[1] += other.v[1];
       v[2] += other.v[2];
+      return *this;
+    }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
+      v[1] *= other.v[1];
+      v[2] *= other.v[2];
       return *this;
     }
     
@@ -177,8 +185,9 @@ public:
 class rgba_iterator
 {
 public:
-  uint8_t* ptr;
-  uint8_t* ptr_begin;
+  typedef uint8_t type;
+  type* ptr;
+  type* ptr_begin;
   const Image& image;
   const int stride;
   
@@ -257,6 +266,14 @@ public:
       v[1] += other.v[1];
       v[2] += other.v[2];
       v[3] += other.v[3];
+      return *this;
+    }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
+      v[1] *= other.v[1];
+      v[2] *= other.v[2];
+      v[3] *= other.v[3];
       return *this;
     }
     
@@ -339,8 +356,9 @@ public:
 class rgb16_iterator
 {
 public:
-  uint16_t* ptr;
-  uint16_t* ptr_begin;
+  typedef uint16_t type;
+  type* ptr;
+  type* ptr_begin;
   const Image& image;
   const int stride;
 
@@ -414,6 +432,13 @@ public:
       v[0] += other.v[0];
       v[1] += other.v[1];
       v[2] += other.v[2];
+      return *this;
+    }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
+      v[1] *= other.v[1];
+      v[2] *= other.v[2];
       return *this;
     }
     
@@ -492,8 +517,9 @@ public:
 class gray_iterator
 {
 public:
-  uint8_t* ptr;
-  uint8_t* ptr_begin;
+  typedef uint8_t type;
+  type* ptr;
+  type* ptr_begin;
   const Image& image;
   const int stride;
     
@@ -554,6 +580,11 @@ public:
     
     accu& operator+= (const accu& other) {
       v[0] += other.v[0];
+      return *this;
+    }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
       return *this;
     }
 
@@ -621,8 +652,9 @@ public:
 class gray16_iterator
 {
 public:
-  uint16_t* ptr;
-  uint16_t* ptr_begin;
+  typedef uint16_t type;
+  type* ptr;
+  type* ptr_begin;
   const Image& image;
   const int stride;
   
@@ -685,6 +717,11 @@ public:
       v[0] += other.v[0];
       return *this;
     }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
+      return *this;
+    }
     
     accu operator+ (const accu& other) const {
       accu a = *this;
@@ -736,7 +773,7 @@ public:
     ptr -= 1;
     return *this;
   }
-    
+  
   accu operator* () {
     accu a;
     a.v[0] = ptr[0];
@@ -753,8 +790,9 @@ template <unsigned int bitdepth>
 class bit_iterator
 {
 public:
-  uint8_t* ptr;
-  uint8_t* ptr_begin;
+  typedef uint8_t type;
+  type* ptr;
+  type* ptr_begin;
   int _x;
   const Image& image;
   const int width, stride;

@@ -55,17 +55,16 @@ void realignImage(Image& image, const uint32_t newstride)
 template <typename T>
 struct histogram_template
 {
-  std::vector<std::vector<unsigned int> > operator() (Image& image, int bins = 256)
+  std::vector<std::vector<unsigned> > operator() (Image& image, int bins = 256)
   {
-    std::vector<std::vector<unsigned int> > hist;
+    std::vector<std::vector<unsigned> > hist;
     hist.resize(image.spp);
     
     typename T::accu a;
+    typename T::accu one = T::accu::one();
     
     for (int i = 0; i < image.spp; ++i)
       hist[i].resize(bins, 0);
-    
-    typename T::accu one = T::accu::one();
     
     T it (image);
     for (int y = 0; y < image.h; ++y) {
@@ -87,9 +86,9 @@ struct histogram_template
   }
 };
 
-std::vector<std::vector<unsigned int> > histogram(Image& image, int bins)
+std::vector<std::vector<unsigned> > histogram(Image& image, int bins)
 {
-    return codegen_return<std::vector<std::vector<unsigned int> >,
+    return codegen_return<std::vector<std::vector<unsigned> >,
 	histogram_template> (image, bins);
 }
 
@@ -105,39 +104,33 @@ struct normalize_template
     const int white_point = image.w * image.h / 100;
     const int black_point = white_point / 2;
     
-    {
-      // TODO: fall back to map for HDR types
-      typedef std::vector<typename T::accu::vtype> histogram_type;
-      typename T::accu::vtype hsize;
-      T::accu::one().getL(hsize);
-      histogram_type histogram(hsize + 1);
-      
-      T it (image);
-      typename T::accu::vtype l;
-      for (int y = 0; y < image.h; ++y) {
-	for (int x = 0; x < image.w; ++x)
-	  {
-	    a = *it;
-	    a.getL(l); // TODO: create discrete interval for floats etc.
-	    histogram[l]++;
-	    ++it;
-	  }
-      }
+    std::vector<std::vector<unsigned> > hist = histogram(image);
 
-      // find suitable black and white points
+    // find suitable black and white points
+    {
+      typedef std::vector<unsigned> histogram_type;
+      
       int count = 0, ii = 0;
-      for (typename histogram_type::iterator i = histogram.begin();
-	   i != histogram.end(); ++i, ++ii) {
-	count += *i;
+      for (typename histogram_type::iterator i = hist[0].begin();
+	   i != hist[0].end(); ++i, ++ii) {
+	int c = 0;
+	for (int j = 0; j < a.samples; ++j)
+	  c += hist[j][ii];
+	count += c / a.samples; // unweighted average
+	
 	if (count > black_point) {
 	  black = ii;
 	  break;
 	}
       }
       count = 0; ii = 255;
-      for (typename histogram_type::reverse_iterator i = histogram.rbegin();
-	   i != histogram.rend(); ++i, --ii) {
-	count += *i;
+      for (typename histogram_type::reverse_iterator i = hist[0].rbegin();
+	   i != hist[0].rend(); ++i, --ii) {
+	int c = 0;
+	for (int j = 0; j < a.samples; ++j)
+	  c += hist[j][ii];
+	count += c / a.samples; // unweighted average
+	
 	if (count > white_point) {
 	  white = ii;
 	  break;
@@ -151,10 +144,10 @@ struct normalize_template
     if (h)
       white = h;
     
-    typename T::accu::vtype fa, fb = -black;
-    T::accu::one().getL(fa);
+    typename T::accu::vtype fa = T::accu::one().v[0],
+      fb = -T::accu::one().v[0] * black / 255;
     fa *= 256; // shift for interger multiplication
-    fa /= (white - black);
+    fa /= T::accu::one().v[0] * (white - black) / 255;
     
     T it (image);
     for (int y = 0; y < image.h; ++y) {
@@ -176,6 +169,79 @@ struct normalize_template
 void normalize (Image& image, uint8_t l, uint8_t h)
 {
   codegen<normalize_template> (image, l, h);
+}
+
+template <typename T>
+struct equalize_template
+{
+  void operator() (Image& image, uint8_t l, uint8_t h)
+  {
+    // darkest 1%, lightest .5%
+    const int white_point = image.w * image.h / 100;
+    const int black_point = white_point / 2;
+
+    std::vector<std::vector<unsigned> > hist = histogram(image);
+    
+    typename T::accu a;
+    typename T::accu::vtype blacks[a.samples] = {}, whites[a.samples] = {};
+    
+    // find suitable black and white points
+    for (int sample = 0; sample < a.samples; ++sample) {
+      typedef std::vector<unsigned> histogram_type;
+      
+      int count = 0, ii = 0;
+      for (typename histogram_type::iterator i = hist[sample].begin();
+	   i != hist[sample].end(); ++i, ++ii) {
+	count += *i;
+	if (count > black_point) {
+	  blacks[sample] = ii;
+	  break;
+	}
+      }
+      count = 0; ii = hist[sample].size() - 1;
+      for (typename histogram_type::reverse_iterator i = hist[sample].rbegin();
+	   i != hist[sample].rend(); ++i, --ii) {
+	count += *i;
+	if (count > white_point) {
+	  whites[sample] = ii;
+	  break;
+	}
+      }
+      
+      // TODO: scale to type range
+      if (l)
+	blacks[sample] = l;
+      if (h)
+	whites[sample] = h;
+    }
+    
+    typename T::accu fa = T::accu::one(), fb;
+    for (int sample = 0; sample < a.samples; ++sample) {
+      fb.v[sample] = -T::accu::one().v[sample] * blacks[sample] / 255;
+      fa.v[sample] *= 256; // int fixed point scale
+      fa.v[sample] /= T::accu::one().v[sample] * (whites[sample] - blacks[sample]) / 255;
+    }
+    
+    T it(image);
+    for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
+      for (int x = 0; x < image.w; ++x) {
+	a = *it;
+	a += fb;
+	a *= fa;
+	a /= 255; //T::accu::one().v[0];
+	a.saturate();
+	it.set(a);
+	++it;
+      }
+    }
+    image.setRawData();
+  }
+};
+
+void equalize (Image& image, uint8_t l, uint8_t h)
+{
+  codegen<equalize_template> (image, l, h);
 }
 
 void colorspace_rgba8_to_rgb8 (Image& image)
