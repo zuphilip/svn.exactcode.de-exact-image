@@ -1315,8 +1315,6 @@ struct colorspace_pack_line_template
 {
   void operator() (Image& image, int dstline, int srcline)
   {
-    const unsigned stride = image.stridefill();
-    
     T dst(image);
     T src(image);
     dst.at(0, dstline);
