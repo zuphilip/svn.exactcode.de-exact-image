@@ -452,6 +452,18 @@ bool convert_edge (const Argument<bool>& arg)
   return true;
 }
 
+bool convert_pop (const Argument<bool>& arg)
+{
+  if (!images.empty()) {
+    delete(images.back());
+    images.pop_back();
+    return true;
+  } else {
+    std::cerr << "no image on stack to pop" << std::endl;
+    return false;
+  }
+}
+ 
 bool convert_resolution (const Argument<std::string>& arg)
 {
   int xres, yres, n;
@@ -980,6 +992,14 @@ int main (int argc, char* argv[])
 			   0, 0, true, true);
   arg_edge.Bind (convert_edge);
   arglist.Add (&arg_edge);
+
+
+  Argument<bool> arg_pop ("", "pop",
+                           "pop image from stack",
+                           0, 0, true, true);
+  arg_pop.Bind (convert_pop);
+  arglist.Add (&arg_pop);
+
   
   Argument<std::string> arg_resolution ("", "resolution",
 					"set meta data resolution in dpi to x[xy] e.g. 200 or 200x400",
