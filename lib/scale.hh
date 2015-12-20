@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2014 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH Germany.
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -20,17 +20,17 @@
 #define SCALE_HH
 
 // pick the best
-void scale (Image& image, double xscale, double yscale);
+void scale (Image& image, double xscale, double yscale, bool fixed = false);
 
 // explicit versions
-void nearest_scale (Image& image, double xscale, double yscale);
-void box_scale (Image& image, double xscale, double yscale);
+void nearest_scale (Image& image, double xscale, double yscale, bool fixed = false);
+void box_scale (Image& image, double xscale, double yscale, bool fixed = false);
 
 void bilinear_scale (Image& image, double xscale, double yscale, bool fixed = false);
-void bicubic_scale (Image& image, double xscale, double yscale);
+void bicubic_scale (Image& image, double xscale, double yscale, bool fixed = false);
 
-void ddt_scale (Image& image, double xscale, double yscale, bool extended = true);
+void ddt_scale (Image& image, double xscale, double yscale, bool fixed = false, bool extended = true);
 
-void thumbnail_scale (Image& image, double xscale, double yscale);
+void thumbnail_scale (Image& image, double xscale, double yscale, bool fixed = false);
 
 #endif

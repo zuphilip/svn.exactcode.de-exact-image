@@ -34,46 +34,58 @@
 #include <vector>
 #endif
 
-void scale (Image& image, double scalex, double scaley)
+void scale (Image& image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
   
   // thru the codec?
   if (!image.isModified() && image.getCodec())
-    if (image.getCodec()->scale(image, scalex, scaley))
+    if (image.getCodec()->scale(image, scalex, scaley, fixed))
       return;
   
-  if (scalex <= 0.5)
-    box_scale (image, scalex, scaley);
+  if (scalex <= 0.5 && !fixed)
+    box_scale (image, scalex, scaley, fixed);
   else
-    bilinear_scale (image, scalex, scaley);
+    bilinear_scale (image, scalex, scaley, fixed);
 }
 
 template <typename T>
 struct nearest_scale_template
 {
-  void operator() (Image& new_image, double scalex, double scaley)
+  void operator() (Image& new_image, double scalex, double scaley, bool fixed)
   {
-    
+   if (!fixed) {
+      scalex = (int)(scalex * new_image.w);
+      scaley = (int)(scaley * new_image.h);
+    }
+      
     Image image;
     image.copyTransferOwnership (new_image);
+
+    new_image.resize (scalex, scaley);
+    new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			     new_image.h * image.resolutionY() / image.h);
+
+    // cache x offsets, 2x speedup
+#ifndef _MSC_VER
+    int sxmap[new_image.w];
+#else
+    std::vector<int> sxmap(new_image.w);
+#endif
+    for (int x = 0; x < new_image.w; ++x) {
+      sxmap[x] = (int)(((float)x * (image.w - 1) / (new_image.w - 1)) + .5);
+    }
     
-    new_image.resize ((int)(scalex * (double) image.w),
-		      (int)(scaley * (double) image.h));
-    new_image.setResolution (scalex * image.resolutionX(),
-			     scaley * image.resolutionY());
-    
-    #pragma omp parallel for schedule (dynamic, 16)
-    for (int y = 0; y < new_image.h; ++y)
-    {
+#pragma omp parallel for schedule (dynamic, 16)
+    for (int y = 0; y < new_image.h; ++y) {
+      const int by = (int)((float)y * (image.h - 1) / (new_image.h - 1) + .5);
+      
+      T src (image);
       T dst (new_image);
       dst.at(0, y);
-
-      T src (image);
       for (int x = 0; x < new_image.w; ++x) {
-	const int bx = (int) (((double) x) / scalex);
-	const int by = (int) (((double) y) / scaley);
+	const int bx = sxmap[x];
 	
 	typename T::accu a;
 	a  = *src.at (bx, by);
@@ -84,11 +96,11 @@ struct nearest_scale_template
   }
 };
 
-void nearest_scale (Image& image, double scalex, double scaley)
+void nearest_scale (Image& image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
-  codegen<nearest_scale_template> (image, scalex, scaley);
+  codegen<nearest_scale_template> (image, scalex, scaley, fixed);
 }
 
 
@@ -101,7 +113,7 @@ struct bilinear_scale_template
       scalex = (int)(scalex * new_image.w);
       scaley = (int)(scaley * new_image.h);
     }
-      
+
     Image image;
     image.copyTransferOwnership (new_image);
 
@@ -120,7 +132,7 @@ struct bilinear_scale_template
     std::vector<int> sxxmap(new_image.w);
 #endif
     for (int x = 0; x < new_image.w; ++x) {
-      bxmap[x] = (float)x / (new_image.w - 1) * (image.w - 1);
+      bxmap[x] = (float)x * (image.w - 1) / (new_image.w - 1);
       sxmap[x] = (int)floor(bxmap[x]);
       sxxmap[x] = sxmap[x] == (image.w - 1) ? sxmap[x] : sxmap[x] + 1;
     }
@@ -131,7 +143,7 @@ struct bilinear_scale_template
       T dst (new_image);
       dst.at(0, y);
 
-      const float by = (float)y / (new_image.h - 1) * (image.h - 1);
+      const float by = (float)y * (image.h - 1) / (new_image.h - 1) ;
       
       const int sy = (int)floor(by);
       const int ydist = (int) ((by - sy) * 256);
@@ -140,9 +152,9 @@ struct bilinear_scale_template
       T src (image);
       for (int x = 0; x < new_image.w; ++x) {
 	const float bx = bxmap[x];
-	const int sx = sxmap[x];;
+	const int sx = sxmap[x];
 	const int xdist = (int) ((bx - sx) * 256);
-	const int sxx = sxxmap[x];;
+	const int sxx = sxxmap[x];
 
 	typename T::accu a1, a2;
 	a1  = (*src.at (sx,  sy )) * ((256-xdist));
@@ -165,7 +177,7 @@ struct bilinear_scale_template
 
 void bilinear_scale (Image& image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
   codegen<bilinear_scale_template> (image, scalex, scaley, fixed);
 }
@@ -173,15 +185,19 @@ void bilinear_scale (Image& image, double scalex, double scaley, bool fixed)
 template <typename T>
 struct box_scale_template
 {
-  void operator() (Image& new_image, double scalex, double scaley)
+  void operator() (Image& new_image, double scalex, double scaley, bool fixed)
   {
+   if (!fixed) {
+      scalex = (int)(scalex * new_image.w);
+      scaley = (int)(scaley * new_image.h);
+    }
+
     Image image;
     image.copyTransferOwnership (new_image);
-    
-    new_image.resize ((int)(scalex * (double) image.w),
-		      (int)(scaley * (double) image.h));
-    new_image.setResolution (scalex * image.resolutionX(),
-			     scaley * image.resolutionY());
+
+    new_image.resize (scalex, scaley);
+    new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			     new_image.h * image.resolutionY() / image.h);
     
     T src (image);
     T dst (new_image);
@@ -200,9 +216,10 @@ struct box_scale_template
     int count [new_image.w];
     int bindex [image.w]; // pre-computed box indexes
 #endif
-    for (int sx = 0; sx < image.w; ++sx)
-      bindex[sx] = std::min ((int)(scalex * sx), new_image.w - 1);
-    
+    for (int sx = 0; sx < image.w; ++sx) {
+      bindex[sx] = sx * new_image.w / image.w;
+      //std::cerr << sx << " -> " << bindex[sx] << std::endl;
+    } 
     int dy = 0;
     for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
       {
@@ -212,11 +229,13 @@ struct box_scale_template
 	  count[x] = 0;
 	}
 	
-	for (; sy < image.h && scaley * sy < dy + 1; ++sy) {
-	  //      std::cout << "sy: " << sy << " from " << image.h << std::endl;
+	for (; sy < image.h &&
+	       sy * new_image.h / image.h < dy + 1;
+	     ++sy) {
+	  //std::cout << "sy: " << sy << " -> " << dy << std::endl;
 	  src.at(0, sy);
 	  for (int sx = 0; sx < image.w; ++sx) {
-	    //	std::cout << "sx: " << sx << " -> " << dx << std::endl;
+	    //std::cout << "sx: " << sx << " -> " << dx << std::endl;
 	    const int dx = bindex[sx];
 	    boxes[dx] += *src; ++src;
 	    ++count[dx];
@@ -224,10 +243,10 @@ struct box_scale_template
 	}
 	
 	// set box
-	//    std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
+	//std::cout << "dy: " << dy << " from " << new_image.h << std::endl;
 	for (int dx = 0; dx < new_image.w; ++dx) {
-	  //      std::cout << "setting: dx: " << dx << ", from: " << new_image.w
-	  //       		<< ", count: " << count[dx] << std::endl;      
+	  //std::cout << "setting: dx: " << dx << ", from: " << new_image.w
+	  //    << ", count: " << count[dx] << std::endl;      
 	  boxes[dx] /= count[dx];
 	  dst.set (boxes[dx]);
 	  ++dst;
@@ -236,11 +255,11 @@ struct box_scale_template
   }
 };
 
-void box_scale (Image& image, double scalex, double scaley)
+void box_scale (Image& image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
-  codegen<box_scale_template> (image, scalex, scaley);
+  codegen<box_scale_template> (image, scalex, scaley, fixed);
 }
 
 inline Image::iterator CubicConvolution (int distance,
@@ -262,18 +281,22 @@ inline Image::iterator CubicConvolution (int distance,
    0 0 -13.5 6
    0 0 6.1 -2.45 */
 
-void bicubic_scale (Image& new_image, double scalex, double scaley)
+void bicubic_scale (Image& new_image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
-
+  
+  if (!fixed) {
+    scalex = (int)(scalex * new_image.w);
+    scaley = (int)(scaley * new_image.h);
+  }
+  
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.resize ((int)(scalex * (double) image.w),
-		    (int)(scaley * (double) image.h));
-  new_image.setResolution (scalex * image.resolutionX(),
-			   scaley * image.resolutionY());
+  new_image.resize (scalex, scaley);
+  new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			   new_image.h * image.resolutionY() / image.h);
   
   Image::iterator dst = new_image.begin();
   Image::iterator src = image.begin();
@@ -284,7 +307,7 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
   Image::iterator r3 = image.begin();
 
   for (int y = 0; y < new_image.h; ++y) {
-    double by = .5+y / scaley;
+    const double by = (double)y * image.h / new_image.h;
     const int sy = std::min((int)by, image.h-1);
     const int ydist = (int) ((by - sy) * 256);
     
@@ -293,8 +316,7 @@ void bicubic_scale (Image& new_image, double scalex, double scaley)
     const int sy3 = std::min(sy+2, image.h-1);
     
     for (int x = 0; x < new_image.w; ++x) {
-      
-      const double bx = .5+x / scalex;
+      const double bx = (double)x * image.w / new_image.w;
       const int sx = std::min((int)bx, image.w - 1);
       const int xdist = (int) ((bx - sx) * 256);
       
@@ -343,15 +365,19 @@ T interp(float x, float y, const T&a,  const T& b, const T& c, const T& d)
 template <typename T>
 struct ddt_scale_template
 {
-  void operator() (Image& new_image, double scalex, double scaley, bool extended)
+  void operator() (Image& new_image, double scalex, double scaley, bool fixed, bool extended)
   {
+    if (!fixed) {
+      scalex = (int)(scalex * new_image.w);
+      scaley = (int)(scaley * new_image.h);
+    }
+    
     Image image;
     image.copyTransferOwnership (new_image);
     
-    new_image.resize((int)(scalex * (double) image.w),
-		     (int)(scaley * (double) image.h));
-    new_image.setResolution (scalex * image.resolutionX(),
-			     scaley * image.resolutionY());
+    new_image.resize (scalex, scaley);
+    new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			     new_image.h * image.resolutionY() / image.h);
     
     // first scan the source image and build a direction map
     // TODO: we could do the check on-the-fly, ...
@@ -438,16 +464,32 @@ struct ddt_scale_template
 	std::cout << "NE-SW: " << n << std::endl;
       }
     
+    // cache x offsets, 2x speedup
+#ifndef _MSC_VER
+    float bxmap[new_image.w];
+    int sxmap[new_image.w];
+    int sxxmap[new_image.w];
+#else
+    std::vector<float> bxmap(new_image.w);
+    std::vector<int> sxmap(new_image.w);
+    std::vector<int> sxxmap(new_image.w);
+#endif
+    for (int x = 0; x < new_image.w; ++x) {
+      bxmap[x] = (float)x * (image.w - 1) / (new_image.w - 1);
+      sxmap[x] = std::min((int)floor(bxmap[x]), image.w - 2);
+    }
+    
     T dst(new_image);
     T src(image);
+    
     for (int y = 0; y < new_image.h; ++y) {
-      const float by = (float)y / (new_image.h - 1) * (image.h - 1);
+      const float by = (float)y * (image.h - 1) / (new_image.h - 1);
       const int sy = std::min((int)floor(by), image.h - 2);
       const float ydist = by - sy;
       
       for (int x = 0; x < new_image.w; ++x) {
-	const float bx = (float)x / (new_image.w - 1) * (image.w - 1);
-	const int sx = std::min((int)floor(bx), image.w - 2);
+	const float bx = bxmap[x];
+	const int sx = sxmap[x];
 	const float xdist = bx - sx;
 	
 	if (false)
@@ -497,28 +539,32 @@ struct ddt_scale_template
   }
 };
   
-void ddt_scale (Image& image, double scalex, double scaley, bool extended)
+void ddt_scale (Image& image, double scalex, double scaley,bool fixed,  bool extended)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
-  codegen<ddt_scale_template> (image, scalex, scaley, extended);
+  codegen<ddt_scale_template> (image, scalex, scaley, fixed, extended);
 }
 
 #endif
 
-void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
+void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley, bool fixed)
 {
-  if (scalex == 1.0 && scaley == 1.0)
+  if (scalex == 1.0 && scaley == 1.0 && !fixed)
     return;
+  
+  if (!fixed) {
+    scalex = (int)(scalex * new_image.w);
+    scaley = (int)(scaley * new_image.h);
+  }
   
   Image image;
   image.copyTransferOwnership (new_image);
   
-  new_image.bps = 8; // always output 8bit gray
-  new_image.resize((int)(scalex * (double) image.w),
-		   (int)(scaley * (double) image.h));
-  new_image.setResolution (scalex * image.resolutionX(),
-			   scaley * image.resolutionY());
+  new_image.resize (scalex, scaley);
+  new_image.setResolution (new_image.w * image.resolutionX() / image.w,
+			   new_image.h * image.resolutionY() / image.h);
+  
   uint8_t* src = image.getRawData();
   uint8_t* dst = new_image.getRawData();
   
@@ -553,8 +599,8 @@ void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
   for (int sy = 0; dy < new_image.h && sy < image.h; ++dy)
     {
       // clear for accumulation
-      memset (&boxes[0], 0, sizeof(boxes[0]) * new_image.w);
-      memset (&count[0], 0, sizeof(count[0]) * new_image.w);
+      memset (&boxes[0], 0, sizeof(boxes));
+      memset (&count[0], 0, sizeof(count));
       
       for (; sy < image.h && sy * scaley < dy + 1; ++sy)
 	{
@@ -584,20 +630,20 @@ void box_scale_grayX_to_gray8 (Image& new_image, double scalex, double scaley)
     }
 }
 
-void thumbnail_scale (Image& image, double scalex, double scaley)
+void thumbnail_scale (Image& image, double scalex, double scaley, bool fixed)
 {
   // only optimize the regular thumbnail down-scaling
-  if (scalex > 1 || scaley > 1)
-    return scale(image, scalex, scaley);
+  if (scalex > 1 || scaley > 1 && !fixed)
+    return scale(image, scalex, scaley, fixed);
   
   // thru the codec?
   if (!image.isModified() && image.getCodec())
-    if (image.getCodec()->scale(image, scalex, scaley))
+    if (image.getCodec()->scale(image, scalex, scaley, fixed))
       return;
   
   // quick sub byte scaling
   if (image.bps <= 8 && image.spp == 1) {
-    box_scale_grayX_to_gray8(image, scalex, scaley);
+    box_scale_grayX_to_gray8(image, scalex, scaley, fixed);
   }
   else {
     if (image.spp == 1 && image.bps > 8)
@@ -605,6 +651,6 @@ void thumbnail_scale (Image& image, double scalex, double scaley)
     else if (image.spp > 3 || image.bps > 8)
       colorspace_by_name(image, "rgb");
     
-    box_scale(image, scalex, scaley);
+    box_scale(image, scalex, scaley, fixed);
   }
 }
