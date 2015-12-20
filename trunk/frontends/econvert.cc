@@ -326,17 +326,39 @@ bool convert_blur (const Argument<double>& arg)
   return true;
 }
 
-bool convert_scale (const Argument<double>& arg)
+bool parse_scale(const Argument<std::string>& arg, double& sx, double& sy, bool& fixed)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(scale, f, f);
+  // TODO: pretty C++ parser
+  int n;
+  if ((n = sscanf(arg.Get().c_str(), "%lfx%lf", &sx, &sy))) {
+    fixed = true;
+    if (n < 2) {
+       sy = sx;
+       fixed = false;
+    }
+    return true;
+  }
+  return false;
+}
+
+bool convert_scale (const Argument<std::string>& arg)
+{
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    return false;
+  }
+  FOR_ALL_IMAGES(scale,  sx, sy, fixed);
   return true;
 }
 
-bool convert_thumbnail_scale (const Argument<double>& arg)
+bool convert_thumbnail_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(thumbnail_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(thumbnail_scale,  sx, sy, fixed);
   return true;
 }
 
@@ -361,38 +383,58 @@ bool convert_lightness (const Argument<double>& arg)
   return true;
 }
 
-bool convert_nearest_scale (const Argument<double>& arg)
+bool convert_nearest_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(nearest_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(nearest_scale, sx, sy, fixed);
   return true;
 }
 
-bool convert_bilinear_scale (const Argument<double>& arg)
+bool convert_bilinear_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(bilinear_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(bilinear_scale, sx, sy, fixed);
   return true;
 }
 
-bool convert_bicubic_scale (const Argument<double>& arg)
+bool convert_bicubic_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(bicubic_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(bicubic_scale, sx, sy, fixed);
   return true;
 }
 
-bool convert_box_scale (const Argument<double>& arg)
+bool convert_box_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(box_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(box_scale, sx, sy, fixed);
   return true;
 }
 
-bool convert_ddt_scale (const Argument<double>& arg)
+bool convert_ddt_scale (const Argument<std::string>& arg)
 {
-  double f = arg.Get();
-  FOR_ALL_IMAGES(ddt_scale, f, f);
+  bool fixed; double sx, sy;
+  if (!parse_scale(arg, sx, sy, fixed)) {
+    std::cerr << "scale '" << arg.Get() << "' could not be parsed." << std::endl;
+    return false;
+  }
+  FOR_ALL_IMAGES(ddt_scale, sx, sy, fixed);
   return true;
 }
 
@@ -908,45 +950,45 @@ int main (int argc, char* argv[])
   arglist.Add (&arg_blur);
 
   
-  Argument<double> arg_scale ("", "scale",
+  Argument<std::string> arg_scale ("", "scale",
 			      "scale image data using a method suitable for specified factor",
-			      0.0, 0, 1, true, true);
+			      0, 1, true, true);
   arg_scale.Bind (convert_scale);
   arglist.Add (&arg_scale);
   
-  Argument<double> arg_nearest_scale ("", "nearest-scale",
+  Argument<std::string> arg_nearest_scale ("", "nearest-scale",
 				   "scale image data to nearest neighbour",
-				   0.0, 0, 1, true, true);
+				   0, 1, true, true);
   arg_nearest_scale.Bind (convert_nearest_scale);
   arglist.Add (&arg_nearest_scale);
 
-  Argument<double> arg_bilinear_scale ("", "bilinear-scale",
+  Argument<std::string> arg_bilinear_scale ("", "bilinear-scale",
 				       "scale image data with bi-linear filter",
-				       0.0, 0, 1, true, true);
+				       0, 1, true, true);
   arg_bilinear_scale.Bind (convert_bilinear_scale);
   arglist.Add (&arg_bilinear_scale);
 
-  Argument<double> arg_bicubic_scale ("", "bicubic-scale",
+  Argument<std::string> arg_bicubic_scale ("", "bicubic-scale",
 				      "scale image data with bi-cubic filter",
-				      0.0, 0, 1, true, true);
+				      0, 1, true, true);
   arg_bicubic_scale.Bind (convert_bicubic_scale);
   arglist.Add (&arg_bicubic_scale);
 
-  Argument<double> arg_ddt_scale ("", "ddt-scale",
+  Argument<std::string> arg_ddt_scale ("", "ddt-scale",
 				      "scale image data with data dependent triangulation",
-				      0.0, 0, 1, true, true);
+				     0, 1, true, true);
   arg_ddt_scale.Bind (convert_ddt_scale);
   arglist.Add (&arg_ddt_scale);
   
-  Argument<double> arg_box_scale ("", "box-scale",
+  Argument<std::string> arg_box_scale ("", "box-scale",
 				   "(down)scale image data with box filter",
-				  0.0, 0, 1, true, true);
+				  0, 1, true, true);
   arg_box_scale.Bind (convert_box_scale);
   arglist.Add (&arg_box_scale);
 
-  Argument<double> arg_thumbnail_scale ("", "thumbnail",
+  Argument<std::string> arg_thumbnail_scale ("", "thumbnail",
 					"quick and dirty down-scale for a thumbnail",
-					0.0, 0, 1, true, true);
+					0, 1, true, true);
   arg_thumbnail_scale.Bind (convert_thumbnail_scale);
   arglist.Add (&arg_thumbnail_scale);
 
