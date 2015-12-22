@@ -316,7 +316,7 @@ bool ImageCodec::toGray (Image& image)
   return false;
 }
 
-bool ImageCodec::scale (Image& image, double xscale, double yscale)
+bool ImageCodec::scale (Image& image, double xscale, double yscale, bool fixed)
 {
   return false;
 }

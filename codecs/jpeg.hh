@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2008 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -52,7 +52,7 @@ public:
   virtual bool rotate (Image& image, double angle);
   virtual bool crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
   virtual bool toGray (Image& image);
-  virtual bool scale (Image& image, double xscale, double yscale);
+  virtual bool scale (Image& image, double xscale, double yscale, bool fixed);
   
 private:
 
