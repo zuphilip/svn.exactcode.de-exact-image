@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2010 René Rebe
+ * Copyright (C) 2006 - 2015 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ public:
   virtual bool rotate (Image& image, double angle);
   virtual bool crop (Image& image, unsigned int x, unsigned int y, unsigned int w, unsigned int h);
   virtual bool toGray (Image& image);
-  virtual bool scale (Image& image, double xscale, double yscale);
+  virtual bool scale (Image& image, double xscale, double yscale, bool fixed);
   
 protected:
   

@@ -735,10 +735,10 @@ bool JPEGCodec::toGray (Image& image)
   return doTransform (JXFORM_NONE, image, 0 /* stream */, true /* to gray */);
 }
 
-bool JPEGCodec::scale (Image& image, double xscale, double yscale)
+bool JPEGCodec::scale (Image& image, double xscale, double yscale, bool fixed)
 {
   // we only support fast downscaling
-  if (xscale > 1.0 || yscale > 1.0)
+  if (xscale > 1.0 || yscale > 1.0 || fixed)
     return false; // let the generic scaler handle this
   
   int w_final = (int)(xscale * image.w);
