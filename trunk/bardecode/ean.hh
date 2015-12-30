@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2007 - 2008 Lars Kuhtz, ExactCODE GmbH Germany.
- * Copyright (C) 2010 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2010 - 2015 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -262,7 +262,7 @@ namespace BarDecode
             sum += (code[i]-48)*f;
             f = ((f==1) ? 3 : 1);
         }
-        if (10-(sum % 10) != check) return scanner_result_t();
+        if ((10 - (sum % 10) % 10) != check) return scanner_result_t();
 
         // scan modules according to code_type
         return scanner_result_t(type,code,x,y);
