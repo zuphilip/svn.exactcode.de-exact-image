@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH, Germany
+ * Copyright (C) 2005 - 2016 René Rebe, ExactCODE GmbH, Germany
  *           (C) 2005 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -556,11 +556,11 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_COMPRESSION, compression);
   if (image.spp == 1 && image.bps == 1)
     // internally we actually have MINISBLACK, but some programs,
-    // including the Apple Preview.app appear to ignore this bit
+    // including older Apple Preview.app appear to ignore this bit
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISWHITE);
   else if (image.spp == 1)
     TIFFSetField (out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_MINISBLACK);
-  else if (false) { /* just saved for reference */
+  else if (false) { // just saved for reference
     uint16 rmap[256], gmap[256], bmap[256];
     for (int i = 0;i < 256; ++i) {
       rmap[i] = gmap[i] = bmap[i] = i * 0xffff / 255;
@@ -589,29 +589,27 @@ bool TIFCodec::writeImageImpl (TIFF* out, const Image& image, const std::string&
   TIFFSetField (out, TIFFTAG_ROWSPERSTRIP, rowsperstrip);
   
   const int stride = image.stride();
-  /* Note: we on-the-fly invert 1-bit data to please some historic apps */
   
+  // Note: we on-the-fly invert 1-bit data, e.g. to please some historic apps
   uint8_t* src = image.getRawData();
-  uint8_t* scanline = 0;
+  std::vector<uint8_t> scanline;
   if (image.bps == 1)
-    scanline = (uint8_t*) malloc (stride);
+    scanline.resize(stride);
   
   for (int row = 0; row < image.h; ++row, src += stride) {
     int err = 0;
     if (image.bps == 1) {
       for (int i = 0; i < stride; ++i)
-        scanline [i] = src [i] ^ 0xFF;
-      err = TIFFWriteScanline (out, scanline, row, 0);
+	scanline[i] = src[i] ^ 0xFF;
+      err = TIFFWriteScanline (out, &scanline[0], row, 0);
     }
     else
       err = TIFFWriteScanline (out, src, row, 0);
     
     if (err < 0) {
-      if (scanline) free (scanline);
       return false;
     }
   }
-  if (scanline) free (scanline);  
   
   return TIFFWriteDirectory(out);
 }
