@@ -344,6 +344,11 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     return false;
   }
   
+  JPEGCodec* cache =
+    args.containsAndRemove("cache") ? new JPEGCodec(&image) : 0;
+  if (cache)
+    image.setCodec(cache);
+  
   // really encode
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
@@ -351,7 +356,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   // Initialize the JPEG compression object with default error handling.
   cinfo.err = jpeg_std_error(&jerr);
   jpeg_create_compress(&cinfo);
-  cpp_stream_dest (&cinfo, stream);
+  cpp_stream_dest(&cinfo, cache ? &cache->private_copy : stream);
   
   cinfo.in_color_space = JCS_UNKNOWN;
   if (image.bps == 8 && image.spp == 3)
@@ -407,8 +412,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   }
 
   if (!args.str().empty())
-    std::cerr << "JPEGCodec: Unrecognized encoding option '"
-	      << args.str() << "'" << std::endl;
+    std::cerr << "JPEGCodec: Unrecognized encoding options '" << args.str() << "'" << std::endl;
   
   // Start compressor
   jpeg_start_compress(&cinfo, (boolean)TRUE);
@@ -432,6 +436,11 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
   if (jerr.num_warnings)
     std::cerr << jerr.num_warnings << " Warnings." << std::endl;
 
+  // if we cached a copy, write it to the actual stream, too
+  if (cache && stream) {
+    *stream << cache->private_copy.str();
+  }
+  
   return true;
 }
 
