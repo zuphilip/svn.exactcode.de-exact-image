@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2011 René Rebe
+ * Copyright (C) 2006 - 2016 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ int RAWCodec::readImage(std::istream* stream, Image& image, const std::string& d
   
   if (h > 0)
     {
-      if (y != h) {
+      if (y <= h) {
 	std::cerr << "RAWCodec: Error reading line: " << y << std::endl;
 	return false;
       }
@@ -60,7 +60,7 @@ int RAWCodec::readImage(std::istream* stream, Image& image, const std::string& d
 	std::cerr << "RAWCodec: Error reading a line of image with undefined height at all (stride: " << image.stride() << ")" << std::endl;
 	return false;
       }
-      image.resize (image.w, y - 1); // final size of scanlines fully read
+      image.resize (image.w, y); // final size of scanlines fully read
       return true;
     }
 }
