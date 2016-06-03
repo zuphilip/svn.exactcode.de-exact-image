@@ -1,6 +1,6 @@
 /*
  * C++ BMP library.
- * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -731,8 +731,10 @@ bool BMPCodec::writeImage (std::ostream* stream, Image& image, int quality,
 #ifdef _MSC_VER
       std::vector<uint8_t> payload(file_stride);
 #else
-      uint8_t payload [file_stride];
+      uint8_t payload[file_stride];
 #endif
+      for (int i = stride; i < file_stride; ++i)
+	payload[i] = 0; // zero initialize padding
       for (int row = image.h-1; row >= 0; --row)
 	{
 	  memcpy(&payload[0], image.getRawData() + stride * row, stride);
