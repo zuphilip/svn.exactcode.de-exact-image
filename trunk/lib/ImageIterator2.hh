@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 - 2015 René Rebe, ExactCODE GmbH Germany.
+ * Copyright (C) 2008 - 2016 René Rebe, ExactCODE GmbH Germany.
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -146,7 +146,7 @@ public:
     }
   };
     
-  rgb_iterator (Image& _image)
+  rgb_iterator (const Image& _image)
     : ptr_begin(_image.getRawData()), image (_image), stride(_image.stride()) {
     ptr = ptr_begin;
   }
@@ -315,7 +315,7 @@ public:
     }
   };
   
-  rgba_iterator (Image& _image)
+  rgba_iterator (const Image& _image)
     : ptr_begin(_image.getRawData()), image (_image), stride(_image.stride()) {
     ptr = ptr_begin;
   }
@@ -477,7 +477,7 @@ public:
     }
   };
   
-  rgb16_iterator (Image& _image)
+  rgb16_iterator (const Image& _image)
     : ptr_begin((uint16_t*)_image.getRawData()), image (_image),
       stride(_image.stride()) {
     ptr = ptr_begin;
@@ -617,7 +617,7 @@ public:
     }
   };
     
-  gray_iterator (Image& _image)
+  gray_iterator (const Image& _image)
     : ptr_begin(_image.getRawData()), image (_image), stride(_image.stride()) {
     ptr = ptr_begin;
   }
@@ -753,7 +753,7 @@ public:
     
   };
      
-  gray16_iterator (Image& _image)
+  gray16_iterator (const Image& _image)
     : ptr_begin((uint16_t*)_image.getRawData()), image (_image),
       stride(_image.stride()) {
     ptr = ptr_begin;
@@ -801,7 +801,7 @@ public:
 
   typedef gray_iterator::accu accu; // reuse
     
-  bit_iterator (Image& _image)
+  bit_iterator (const Image& _image)
     : ptr_begin(_image.getRawData()), _x(0), image (_image),
       width(_image.width()), stride(_image.stride()),
       bitpos(7), mask ((1 << bitdepth) - 1) {
