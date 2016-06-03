@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2015 René Rebe
+ * Copyright (C) 2006 - 2016 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public:
   
   virtual ~Viewer() {
     if (evas_data) {
-      delete (evas_data); evas_data = 0;
+      free (evas_data); evas_data = 0;
     }
     delete (image); image = 0;
   }
