@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2011 René Rebe
+ * Copyright (C) 2005 - 2016 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,8 +40,7 @@ public:
   
 private:
   
-  static bool writeImageImpl (TIFF* out, const Image& image, const std::string& conpress, int page = 0);
+  static bool writeImageImpl (TIFF* out, const Image& image, const std::string& compress, int page = 0);
 
-private:
   TIFF* tiffCtx;
 };
