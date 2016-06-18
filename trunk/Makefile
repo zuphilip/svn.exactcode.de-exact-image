@@ -54,7 +54,7 @@ ifeq "$(STATIC)" "1"
 X_EXEFLAGS += -static
 endif
 
-MODULES = lib codecs bardecode frontends ContourMatching
+MODULES = image codecs bardecode frontends ContourMatching
 include $(addsuffix /Makefile,$(MODULES))
 
 ifeq "$(WITHX11)" "1"
