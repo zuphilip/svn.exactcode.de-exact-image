@@ -1,6 +1,6 @@
 /*
  * The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2015 René Rebe
+ * Copyright (C) 2005 - 2016 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@
  *
  * The operator= create a complete clone of the image, the image
  * buffers are not shared (anymore, formerly ownership was passed and
- * we had a seperate Clone() method). The attached codec is not
+ * we had a separate Clone() method). The attached codec is not
  * copied.
  */
 
