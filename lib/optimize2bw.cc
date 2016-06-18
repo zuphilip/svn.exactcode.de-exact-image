@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005 - 2015 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2005 - 2016 René Rebe, ExactCODE GmbH
  *           (C) 2005 - 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -55,7 +55,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 		  int sloppy_threshold,
 		  int radius, double standard_deviation)
 {
-  // do nothing if already at s/w, ...
+  // do nothing if already at b/w, ...
   if (image.spp == 1 && image.bps == 1)
     return;
   
@@ -69,7 +69,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
   {
     std::vector<std::vector<unsigned int> > hist = histogram(image);
     
-    colorspace_by_name (image, "rgb8");
+    colorspace_by_name(image, "rgb8");
     
     int lowest = 255, highest = 0, bg_r = 0, bg_g = 0, bg_b = 0;
     for (int i = 0; i <= 255; i++)
@@ -105,7 +105,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	}
 
       }
-    highest = (int) (.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
+    highest = (int)(.21267 * bg_r + .71516 * bg_g + .07217 * bg_b);
     
     if (false)
     std::cerr << "lowest: " << lowest << ", highest: " << highest
@@ -113,8 +113,8 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 	      << std::endl;
     
     const int min_delta = 128;
-    lowest = std::max (std::min (lowest, highest - min_delta), 0);
-    highest = std::min (std::max (highest, lowest + min_delta), 255);
+    lowest = std::max(std::min(lowest, highest - min_delta), 0);
+    highest = std::min(std::max(highest, lowest + min_delta), 255);
     
     if (low)
       lowest = low;
@@ -134,7 +134,7 @@ void optimize2bw (Image& image, int low, int high, int threshold,
 
     uint8_t* data = image.getRawData();
     uint8_t* it2 = data;
-    unsigned stride = image.stride();
+    const unsigned stride = image.stride();
     for (int y = 0; y < image.h; ++y) {
       uint8_t* it = data + y * stride;
       for (int x = 0; x < image.w; ++x) {
@@ -186,12 +186,12 @@ void optimize2bw (Image& image, int low, int high, int threshold,
     }
 
     // normalize (will not work with integer matrix type !)
-    divisor=1.0/divisor;
-    for (int i=0; i<=radius; i++) {
-      matrix[i]*=divisor;
-      matrix_2[i]=-matrix[i];
+    divisor=1.0 / divisor;
+    for (int i = 0; i <= radius; i++) {
+      matrix[i] *= divisor;
+      matrix_2[i] = -matrix[i];
     }
     
-    decomposable_sym_convolution_matrix (image, &matrix[0], &matrix_2[0], radius, radius, 2.0);
+    decomposable_sym_convolution_matrix(image, &matrix[0], &matrix_2[0], radius, radius, 2.0);
   }
 }
