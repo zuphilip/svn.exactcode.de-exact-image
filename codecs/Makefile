@@ -56,7 +56,7 @@ ifeq "$(TGA)" "0"
 NOT_SRCS += tga.cc
 endif 
 
-BINARY = lib
+BINARY = codecs
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
 

@@ -1,6 +1,6 @@
 include build/top.make
 
-BINARY = lib
+BINARY = image
 BINARY_EXT = $(X_LIBEXT)
 DEPS =
 
