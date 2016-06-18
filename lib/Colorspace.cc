@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2015 René Rebe, ExactCOD GmbH Germany
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCOD GmbH Germany
  * Copyright (C) 2007 Susanne Klaus, ExactCODE
  *
  * This program is free software; you can redistribute it and/or modify
@@ -315,16 +315,15 @@ void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, cons
   image.spp = 1; image.rowstride = 0;
   
   const int sum = wR + wG + wB;
+  uint8_t* data = image.getRawData();
   for (int y = 0; y < image.h; ++y)
   {
-    uint8_t* output = image.getRawData() + y * image.stride();
-    uint8_t* it = image.getRawData() + y * ostride;
+    uint8_t* output = data + y * image.stride();
+    uint8_t* it = data + y * ostride;
     for (int x = 0; x < image.w; ++x, it += bytes)
     {
       // R G B order and associated weighting
-      int c  = (int)it[0] * wR;
-      c += (int)it[1] * wG;
-      c += (int)it[2] * wB;
+      int c  = wR * it[0] + wG * it[1] + wB * it[2];
       *output++ = (uint8_t)(c / sum);
     }
   }
