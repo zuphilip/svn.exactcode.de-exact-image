@@ -10,7 +10,7 @@ endif
 BINARY = $(basename $(filter-out $(NOT_SRCS), $(notdir $(wildcard $(X_MODULE)/*.cc $(X_MODULE)/*.c))) $(SRCS))
 
 BINARY_EXT = $(X_EXEEXT)
-DEPS = $(lib_BINARY) $(codecs_BINARY) $(bardecode_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(X_OUTARCH)/utility/File$(X_OBJEXT)
+DEPS = $(image_BINARY) $(codecs_BINARY) $(bardecode_BINARY) $(X_OUTARCH)/utility/ArgumentList$(X_OBJEXT) $(X_OUTARCH)/utility/File$(X_OBJEXT)
 
 CPPFLAGS += -I utility
 #LDFLAGS += -lGL -lGLU -lglut -L/usr/X11/lib64

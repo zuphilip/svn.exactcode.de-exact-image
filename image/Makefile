@@ -17,6 +17,6 @@ CPPFLAGS += $(FREETYPEINCS)
 LDFLAGS += $(FREETYPELIBS) 
 endif
 
-CPPFLAGS += -I lib -I utility
+CPPFLAGS += -I image -I utility
 
 include build/bottom.make
