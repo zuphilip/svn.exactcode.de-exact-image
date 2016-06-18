@@ -1,6 +1,6 @@
 /*
  * The Plain Old Data encapsulation of pixel, raster data.
- * Copyright (C) 2005 - 2015 René Rebe
+ * Copyright (C) 2005 - 2016 René Rebe
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -182,7 +182,7 @@ ImageCodec* Image::getCodec() {
 }
 
 void Image::setCodec (ImageCodec* _codec) {
-  // do not reset, nor free when the same codec is re-sety
+  // do not reset, nor free when the same codec is re-set
   if (codec == _codec)
     return;
   
