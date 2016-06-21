@@ -79,7 +79,7 @@
 #ifndef IMAGE_HH
 #define IMAGE_HH
 
-#include <inttypes.h>
+#include <stdint.h>
 #include <string>
 #include <math.h> // for floor
 

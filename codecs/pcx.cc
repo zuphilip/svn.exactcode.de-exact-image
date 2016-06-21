@@ -1,6 +1,6 @@
 /*
  * C++ PCX library.
- * Copyright (C) 2008 - 2014 René Rebe, ExactCODE GmbH Germany
+ * Copyright (C) 2008 - 2016 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 
 #include "Colorspace.hh"
 #include "Endianess.hh"
-#include "inttypes.h"
+#include "stdint.h"
 
 using Exact::EndianessConverter;
 using Exact::LittleEndianTraits;

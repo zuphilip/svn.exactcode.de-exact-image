@@ -33,7 +33,7 @@
 #include <vector>
 
 #include <Endianess.hh>
-#include <inttypes.h>
+#include <stdint.h>
 #include <Bits.hh>
 
 #ifndef O_BINARY

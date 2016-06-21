@@ -1,6 +1,6 @@
 /*
- * C++ PCX library.
- * Copyright (C) 2008 - 2009 René Rebe, ExactCODE GmbH Germany
+ * C++ TGA library.
+ * Copyright (C) 2008 - 2016 René Rebe, ExactCODE GmbH Germany
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 #include <ctype.h>
 
 #include <Endianess.hh>
-#include <inttypes.h>
+#include <stdint.h>
 
 using Exact::EndianessConverter;
 using Exact::LittleEndianTraits;
