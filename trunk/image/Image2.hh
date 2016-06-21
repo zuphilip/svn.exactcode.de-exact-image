@@ -1,7 +1,25 @@
+/*
+ * The Plain Old Data encapsulation of pixel, raster data.
+ * Copyright (C) 2005 - 2016 Ren\xc3\xa9 Rebe
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; version 2. A copy of the GNU General
+ * Public License can be found in the file LICENSE.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANT-
+ * ABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+ * Public License for more details.
+ *
+ * Alternatively, commercial licensing options are available from the
+ * copyright holder ExactCODE GmbH Germany.
+ */
+
 #ifndef IMAGE2_HH
 #define IMAGE2_HH
 
-#include <inttypes.h>
+#include <stdint.h>
 
 // the more optimizing next-gen Image::iterator DRAFT
 
