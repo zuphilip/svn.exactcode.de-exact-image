@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2015 René Rebe
+ * Copyright (C) 2006 - 2016 René Rebe
  *           (C) 2006, 2007 Archivista GmbH, CH-8042 Zuerich
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <string>
+#include <vector>
 #include <iostream>
 #include <fstream>
 
@@ -279,39 +280,131 @@ JPEGCodec::JPEGCodec (Image* _image)
 {
 }
 
-int JPEGCodec::readImage (std::istream* stream, Image& image, const std::string& decompres)
+int JPEGCodec::readImage (std::istream* stream, Image& image, const std::string& decompress)
 {
-  if (stream->peek () != 0xFF)
+  Args args(decompress);
+
+  if (stream->peek() != 0xFF)
     return false;
-  stream->get (); // consume silently
-  if (stream->peek () != 0xD8)
+  stream->get(); // consume silently
+  if (stream->peek() != 0xD8)
     return false;
   
   if (0) { // TODO: differentiate JFIF vs. Exif?
     // quick magic check
     char buf [10];
-    stream->read (buf, sizeof (buf));
-    stream->seekg (0);
+    stream->read(buf, sizeof(buf));
+    stream->seekg(0);
     
     if (buf[6] != 'J' || buf[7] != 'F' || buf[8] != 'I' || buf[9] != 'F')
       return false;
   }
   
-  if (!readMeta (stream, image))
-    return false;
+  uint16_t height = 0;
+  {
+    std::string arg = args.containsPrefixedAndRemove("height=");
+    if (!arg.empty()) {
+      std::stringstream s(arg);
+      // TODO: parsing error handling, sigh!
+      s >> height;
+    }
+  }
   
-  // on-demand compression
-  image.setRawData (0);
+  JPEGCodec* codec = 0;
+  image.setRawData(0); // on-demand compression
   
-  // freestanding instance
-  JPEGCodec* codec = new JPEGCodec(&image);
-  image.setCodec(codec);
-  
-  // private copy for deferred decoding
-  //private_copy.str().resize(stream->tellg());
-  stream->clear ();
-  stream->seekg (0);
-  *stream >> codec->private_copy.rdbuf();
+  if (height == 0) {
+    if (!readMeta(stream, image)) {
+      return false;
+    }
+    codec = new JPEGCodec(&image); // freestanding instance
+    image.setCodec(codec);
+    
+    stream->clear(); // private copy for deferred decoding
+    stream->seekg(0);
+    *stream >> codec->private_copy.rdbuf();
+  } else {
+    codec = new JPEGCodec(&image); // freestanding instance
+    
+    // scan thru segments and potentially update height, sigh!
+    {
+      std::vector<uint8_t> buffer;
+      stream->seekg(0);
+      bool found = false;
+      while (stream->good() && !found) {
+	buffer.resize(2);
+	stream->read((char*)&buffer[0], 2);
+	if (buffer[0] != 0xff) {
+	  std::cerr << "not a tag" << std:: endl;
+	  stream->seekg(0);
+	  return false;
+	}
+	
+	switch (buffer[1]) {
+	  // types wo/ data
+	case 0xd9: // EOI
+	  found = true; // cheating
+	  std::cerr << "EOI wo/ SOF segment?" << std::endl;
+	  
+	case 0xd8: // SOI
+	case 0xd0: case 0xd1: case 0xd2: case 0xd3: // RSTn
+	case 0xd4: case 0xd5: case 0xd6: case 0xd7:
+	  break;
+	
+	  // type w/ variable length
+	case 0xc0: // SOF0
+	case 0xc2: // SOF2
+	  found = true;
+	case 0xe0: case 0xe1:	case 0xe2: case 0xe3: // APPn
+	case 0xe4: case 0xe5:	case 0xe6: case 0xe7:
+	case 0xe8: case 0xe9:	case 0xea: case 0xeb:
+	case 0xec: case 0xed:	case 0xee: case 0xef:
+
+	
+	case 0xc4: // DHT
+	case 0xdb: // DQt
+	case 0xda: // SOS
+	case 0xfe: // COM
+	case 0xdd: // DRI
+	  {
+	    buffer.resize(4, 0);
+	    stream->read((char*)&(buffer[2]), 2);
+	    uint16_t len = buffer[2] << 8 | buffer[3];
+	    //std::cerr << "len: " << len << std::endl,
+	    buffer.resize(2 + len);
+	    stream->read((char*)&(buffer[4]), len - 2);
+	    
+	    if (found) {
+	      len = buffer[5] << 8 | buffer[6];
+	      if (len == 0xffff || len != height) {
+		std::cerr << "Updating JPEG height to: " << height << " (was: " << len << ")" << std::endl;
+		buffer[5] = height >> 8;
+		buffer[6] = height & 0xff;
+	      }
+	    }
+	  }
+	  break;
+	  
+	default:
+	  std::cerr << "Unsupported segment type: " << std::hex << (unsigned)buffer[1] << std::dec
+		    << " not setting Height!" << std:: endl;
+	  found = true; // cheating to end loop
+	  break; // try decoding without altered height
+	}
+	codec->private_copy.write((char*)&buffer[0], buffer.size());
+      }
+      
+      // copy the rest
+      *stream >> codec->private_copy.rdbuf();
+    }
+
+    if (!readMeta(&codec->private_copy, image)) {
+      delete codec;
+      return false;
+    }
+    
+    image.setCodec(codec);
+  }
   
   // parse Exif data, might contain non-identifiy orientation transform
   codec->parseExif(image);
