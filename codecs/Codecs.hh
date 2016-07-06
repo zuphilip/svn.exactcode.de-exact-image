@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,6 +166,22 @@ public:
     }
     return false;
   }
+
+  std::string containsPrefixedAndRemove(const std::string& arg)
+  {
+    for (std::set<std::string>::iterator it = args.begin(); it != args.end(); ++it) {
+      const std::string& str = *it;
+      if (str.length() < arg.length())
+	continue; // we shall not compare out of bounds itterators, ...
+      
+      int ret = str.compare(0, arg.length(), arg);
+      if (ret == 0) {
+	remove(str);
+	return str.substr(arg.length());
+      }
+    }
+    return "";
+  }
   
   std::string str()
   {
@@ -184,6 +200,5 @@ public:
 protected:
   std::set<std::string> args;
 };
-
 
 #endif
