@@ -1,6 +1,6 @@
 /*
  * The ExactImage library's displayy compatible command line frontend.
- * Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,10 @@ void Viewer::Zoom (double f)
   
   Evas_Coord w = (Evas_Coord) (zoom * image->w / 100);
   Evas_Coord h = (Evas_Coord) (zoom * image->h / 100);
-  
+  {
+    if (image->resolutionX() > 0 && image->resolutionY() > 0)
+      h = h * image->resolutionX() / image->resolutionY();
+  }  
   evas_bgr_image->Resize (w, h);
   
   // recenter view
@@ -805,7 +808,7 @@ int main (int argc, char** argv)
   if (!arglist.Read (argc, argv) || arg_help.Get() == true || arglist.Residuals().empty())
     {
       cerr << "ExactImage viewer - edisplay, version " VERSION << std::endl
-	   << "Copyright (C) 2006 - 2015 René Rebe, ExactCODE GmbH" << std::endl
+	   << "Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH" << std::endl
 	   << "Usage:" << endl;
       
       arglist.Usage (cerr);
