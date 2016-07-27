@@ -1,7 +1,7 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2016 René Rebe, ExactCOD GmbH Germany
- * Copyright (C) 2007 Susanne Klaus, ExactCODE
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCOD GmbH, Germany.
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH, Germany.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -822,6 +822,37 @@ void colorspace_8_to_16 (Image& image)
   
   image.rowstride = stride * 2;
   image.bps = 16; // converted 16bit data
+}
+
+void colorspace_de_ieee (Image& image)
+{
+  typedef uint8_t value_t;
+  value_t* data = (value_t*)image.getRawData();
+  
+  switch (image.bps) {
+  case 32:
+    {
+      float* fp32 = (float*)data;
+      for (int i = 0; i < image.w * image.h * image.spp; ++i)
+	data[i] = (value_t)std::max(std::min(fp32[i], (float)255), (float)0);
+      image.bps = sizeof(value_t) * 8;
+      image.setRawData();
+    }
+    break;
+    
+  case 64:
+    {
+      double* fp64 = (double*)data;
+      for (int i = 0; i < image.w * image.h * image.spp; ++i)
+	data[i] = (value_t)std::max(std::min(fp64[i], (double)255), (double)0);
+      image.bps = sizeof(value_t) * 8;
+      image.setRawData();
+    }
+    break;
+    
+  default:
+    std::cerr << "colorspace_de_ieee: unsupported bps: " << image.bps << std::endl;
+  }
 }
 
 void colorspace_de_palette (Image& image, int table_entries,

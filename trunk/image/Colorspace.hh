@@ -1,7 +1,7 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2015 René Rebe, ExactCOD GmbH Germany
- * Copyright (C) 2007 Susanne Klaus, ExactCODE
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH, Germany.
+ * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH, Germany.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -68,6 +68,8 @@ void hue_saturation_lightness (Image& image, double h, double s, double v);
 void invert (Image& image);
 
 // "internal" helper (for image loading)
+
+void colorspace_de_ieee (Image& image);
 
 void colorspace_de_palette (Image& image, int table_entries,
 			    uint16_t* rmap, uint16_t* gmap, uint16_t* bmap, uint16_t* amap = 0);
