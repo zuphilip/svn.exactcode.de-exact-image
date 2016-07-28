@@ -36,10 +36,6 @@
 #include <stdint.h>
 #include <Bits.hh>
 
-#ifndef O_BINARY
-# define O_BINARY 0
-#endif
-
 using Exact::EndianessConverter;
 using Exact::LittleEndianTraits;
 
