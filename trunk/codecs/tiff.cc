@@ -484,9 +484,9 @@ int TIFCodec::readImage (std::istream* stream, Image& image, const std::string& 
 }
 
 // for multi-page writing
-ImageCodec* TIFCodec::instanciateForWrite (std::ostream* stream)
+ImageCodec* TIFCodec::instanciateForWrite (std::ostream* stream, const std::string& compress)
 {
-  TIFF* out = TIFFStreamOpen ("", stream);
+  TIFF* out = TIFFStreamOpen("", stream);
   if (out == NULL)
     return 0;
 

@@ -68,7 +68,7 @@ public:
 		     int quality = 75, const std::string& compress = "");
 
   static ImageCodec* MultiWrite (std::ostream* stream,
-				 std::string codec, std::string ext = "");
+				 std::string codec, std::string ext = "", const std::string& compress = "");
   
   // OLD API, only left for compatibility.
   // Not const string& because the filename is parsed and the copy is changed intern.
@@ -88,8 +88,8 @@ public:
 
   virtual bool writeImage (std::ostream* stream, Image& image,
 			   int quality, const std::string& compress) = 0;
-  virtual ImageCodec* instanciateForWrite (std::ostream* stream);
-  // slightly named differently to match the public factory name
+  virtual ImageCodec* instanciateForWrite (std::ostream* stream, const std::string& compress = "");
+  // named slightly differently to match the public factory name
   virtual bool Write (Image& image,
 		      int quality = 75, const std::string& compress = "", int index = 0);
   
