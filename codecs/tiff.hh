@@ -34,7 +34,7 @@ public:
 			   int quality, const std::string& compress);
 
   // for multi-page writing
-  virtual ImageCodec* instanciateForWrite (std::ostream* stream);
+  virtual ImageCodec* instanciateForWrite (std::ostream* stream, const std::string& compress);
   virtual bool Write (Image& image,
 		      int quality, const std::string& compress, int index);
   

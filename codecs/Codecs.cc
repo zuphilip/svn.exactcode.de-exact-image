@@ -50,7 +50,7 @@ std::string ImageCodec::getExtension (const std::string& filename)
     return filename.substr (idx_ext + 1);
   else
     return "";
-} 
+}
 
 std::string ImageCodec::getCodec (std::string& filename)
 {
@@ -69,7 +69,7 @@ std::string ImageCodec::getCodec (std::string& filename)
   }
   else
     return "";
-} 
+}
 
 // NEW API
 
@@ -147,7 +147,7 @@ bool ImageCodec::Write (std::ostream* stream, Image& image,
 }
 
 ImageCodec* ImageCodec::MultiWrite (std::ostream* stream,
-				    std::string codec, std::string ext)
+				    std::string codec, std::string ext, const std::string& compress)
 {
   std::transform (codec.begin(), codec.end(), codec.begin(), tolower);
   std::transform (ext.begin(), ext.end(), ext.begin(), tolower);
@@ -174,7 +174,7 @@ ImageCodec* ImageCodec::MultiWrite (std::ostream* stream,
   
  do_write:
   // TODO: reuse attached codec (if any and the image is unmodified)
-  return it->loader->instanciateForWrite(stream);
+  return it->loader->instanciateForWrite(stream, compress);
 }
 
 // OLD API
@@ -274,7 +274,7 @@ int ImageCodec::readImage (std::istream* stream, Image& image,
     return 0;
 }
 
-ImageCodec* ImageCodec::instanciateForWrite (std::ostream* stream)
+ImageCodec* ImageCodec::instanciateForWrite (std::ostream* stream, const std::string& compress)
 {
   return 0;
 }
