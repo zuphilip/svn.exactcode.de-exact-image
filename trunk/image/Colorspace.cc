@@ -931,31 +931,37 @@ void colorspace_de_palette (Image& image, int table_entries,
   
   // TODO: allow 16bit output if the palette contains that much dynamic
   
-  const unsigned int bitshift = 8 - image.bps;
+  const unsigned bps = image.bps;
+  const unsigned bitshift = bps < 8 ? 8 - bps : 0;
   for (int y = 0; y < image.h; ++y) {
     uint8_t* src = orig_data + y * orig_stride;
-
     uint8_t z = 0;
-    unsigned int bits = 0;
+    uint16_t v;
+    unsigned bits = 0;
     
-    for (int x = 0; x < image.w; ++x)
-    {
-      if (bits == 0) {
-        z = *src++;
-        bits = 8;
+    for (int x = 0; x < image.w; ++x){
+      if (bps > 8) {
+	v = *(uint16_t*)src;
+	src += 2;
       }
-
+      else {
+	if (bits == 0) {
+	  z = *src++;
+	  bits = 8;
+	}
+	v = z >> bitshift;
+	z <<= bps;
+	bits -= bps;
+      }
+      
       if (is_gray) {
-	*dst++ = rmap[z >> bitshift] >> 8;
+	*dst++ = rmap[v] >> 8;
       } else {
-	*dst++ = rmap[z >> bitshift] >> 8;
-	*dst++ = gmap[z >> bitshift] >> 8;
-	*dst++ = bmap[z >> bitshift] >> 8;
-	if (amap) *dst++ = amap[z >> bitshift] >> 8;
+	*dst++ = rmap[v] >> 8;
+	*dst++ = gmap[v] >> 8;
+	*dst++ = bmap[v] >> 8;
+	if (amap) *dst++ = amap[v >> 8];
       }
-
-      z <<= image.bps;
-      bits -= image.bps;
     }
   }
 
