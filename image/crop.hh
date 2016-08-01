@@ -16,5 +16,10 @@
  * copyright holder ExactCODE GmbH Germany.
  */
 
+#ifndef __CROP_HH
+#define __CROP_HH
+
 void crop (Image& image, int x, int y, unsigned int w, unsigned int h);
 void fastAutoCrop (Image& image);
+
+#endif
