@@ -172,12 +172,13 @@ public:
     for (std::set<std::string>::iterator it = args.begin(); it != args.end(); ++it) {
       const std::string& str = *it;
       if (str.length() < arg.length())
-	continue; // we shall not compare out of bounds itterators, ...
+	continue; // we shall not compare out of bounds iterators, ...
       
       int ret = str.compare(0, arg.length(), arg);
       if (ret == 0) {
+	std::string ret = str.substr(arg.length());
 	remove(str);
-	return str.substr(arg.length());
+	return ret;
       }
     }
     return "";
