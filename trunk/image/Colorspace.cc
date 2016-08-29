@@ -1,6 +1,6 @@
 /*
  * Colorspace conversions.
- * Copyright (C) 2006 - 2016 René Rebe, ExactCOD GmbH, Germany.
+ * Copyright (C) 2006 - 2016 René Rebe, ExactCODE GmbH, Germany.
  * Copyright (C) 2007 Susanne Klaus, ExactCODE GmbH, Germany.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@ struct histogram_template
     hist.resize(image.spp);
     
     typename T::accu a;
-    typename T::accu one = T::accu::one();
+    const typename T::accu one = T::accu::one();
     
     for (int i = 0; i < image.spp; ++i)
       hist[i].resize(bins, 0);
@@ -287,26 +287,49 @@ void colorspace_argb8_to_rgb8 (Image& image)
   image.resize(image.w, image.h); // realloc
 }
 
-void colorspace_cmyk_to_rgb8 (Image& image)
+template<typename T, typename T2>
+struct colorspace_cmyk_to_rgb_template
 {
-  uint8_t* data = image.getRawData();
-  unsigned ostride = image.stride();
-  
-  image.spp = 3; image.rowstride = 0;
-  for (int y = 0; y < image.h; ++y)
+  void operator() (Image& image)
   {
-    uint8_t* output = data + y * image.stride();
-    uint8_t* it = data + y * ostride;
-    for (int x = 0; x < image.w; ++x, it += 4, output += 3)
-    {
-      uint8_t c = it[0], m = it[1], y = it[2], k = it[3]; 
-      output[0] = 0xff - std::min(c+k, 0xff); // ((0xff-c)*(0xff-k)) >> 8;
-      output[1] = 0xff - std::min(m+k, 0xff); // ((0xff-m)*(0xff-k)) >> 8;
-      output[2] = 0xff - std::min(y+k, 0xff); // ((0xff-y)*(0xff-k)) >> 8;
+    T it(image);
+    image.spp = 3; // update early, for out stride
+    image.rowstride = 0;
+    T2 ot(image);
+    
+    const typename T::accu one = T::accu::one();
+    for (int y = 0; y < image.h; ++y) {
+      it.at(0, y);
+      ot.at(0, y);
+      for (int x = 0; x < image.w; ++x) {
+	const typename T::accu a = *it; ++it;
+	const typename T::accu::vtype
+	  c = a.v[0], m = a.v[1], y = a.v[2], k = a.v[3]; 
+    	
+	typename T2::accu o;
+    	o.v[0] = one.v[0] - std::min(c+k, one.v[0]); // ((0xff-c)*(0xff-k)) >> 8;
+	o.v[1] = one.v[1] - std::min(m+k, one.v[1]); // ((0xff-m)*(0xff-k)) >> 8;
+	o.v[2] = one.v[2] - std::min(y+k, one.v[2]); // ((0xff-y)*(0xff-k)) >> 8;
+	ot.set(o); ++ot;
+      }
     }
+    
+    image.resize(image.w, image.h); // realloc
   }
+};
 
-  image.resize(image.w, image.h); // realloc
+void colorspace_cmyk_to_rgb(Image& image)
+{
+  // manual codegen for the only colorspaces we care about
+  // we misuse the rgba iterators for now, ...
+  // codegen<colorspace_cmyk_to_rgb_template> (image);
+  if (image.bps == 16) {
+    colorspace_cmyk_to_rgb_template<rgba16_iterator, rgb16_iterator> a;
+    a (image);
+  } else {
+    colorspace_cmyk_to_rgb_template<rgba_iterator, rgb_iterator> a;
+    a (image);
+  }
 }
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes, const int wR, const int wG, const int wB)

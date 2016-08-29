@@ -32,7 +32,7 @@ std::vector<std::vector<unsigned int> > histogram(Image& image, int bins = 256);
 
 void colorspace_rgba8_to_rgb8 (Image& image);
 void colorspace_argb8_to_rgb8 (Image& image);
-void colorspace_cmyk_to_rgb8 (Image& image);
+void colorspace_cmyk_to_rgb (Image& image);
 
 void colorspace_rgb8_to_gray8 (Image& image, const int bytes = 3,
 			       const int wR = 30, const int wG = 59, const int wB = 11);

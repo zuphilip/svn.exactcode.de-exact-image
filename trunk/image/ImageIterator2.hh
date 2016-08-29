@@ -514,6 +514,177 @@ public:
   }
 };
 
+class rgba16_iterator
+{
+public:
+  typedef uint16_t type;
+  type* ptr;
+  type* ptr_begin;
+  const Image& image;
+  const int stride;
+  
+  class accu
+  {
+  public:
+    typedef int32_t vtype;
+    static const int samples = 4;
+    vtype v[samples];
+    
+    accu () { v[0] = v[1] = v[2] = v[3] = 0; }
+    
+    static accu one () {
+      accu a;
+      a.v[0] = a.v[1] = a.v[2] = a.v[3] = 0xffff;
+      return a;
+    }
+    
+    accu& abs() {
+      v[0] = std::abs(v[0]);
+      v[1] = std::abs(v[1]);
+      v[2] = std::abs(v[2]);
+      v[3] = std::abs(v[3]);
+      return *this;
+    }
+
+    void saturate () {
+      v[0] = std::min (std::max (v[0], (vtype)0), (vtype)0xffff);
+      v[1] = std::min (std::max (v[1], (vtype)0), (vtype)0xffff);
+      v[2] = std::min (std::max (v[2], (vtype)0), (vtype)0xffff);
+      v[3] = std::min (std::max (v[3], (vtype)0), (vtype)0xffff);
+    }
+    
+    accu& operator*= (vtype f) {
+      v[0] *= f;
+      v[1] *= f;
+      v[2] *= f;
+      v[3] *= f;
+      return *this;
+    }
+
+    accu operator* (vtype f) const {
+      accu a = *this;
+      return a *= f;
+    }
+    
+    accu& operator+= (vtype f) {
+      v[0] += f;
+      v[1] += f;
+      v[2] += f;
+      v[3] += f;
+      return *this;
+    }
+    
+    accu operator+ (vtype f) const {
+      accu a = *this;
+      return a += f;
+    }
+      
+    accu& operator/= (vtype f) {
+      v[0] /= f;
+      v[1] /= f;
+      v[2] /= f;
+      v[3] /= f;
+      return *this;
+    }
+    
+    accu operator/ (vtype f) const {
+      accu a = *this;
+      a /= f;
+      return a;
+    }
+    
+    accu& operator+= (const accu& other) {
+      v[0] += other.v[0];
+      v[1] += other.v[1];
+      v[2] += other.v[2];
+      v[3] += other.v[3];
+      return *this;
+    }
+
+    accu& operator*= (const accu& other) {
+      v[0] *= other.v[0];
+      v[1] *= other.v[1];
+      v[2] *= other.v[2];
+      v[3] *= other.v[3];
+      return *this;
+    }
+    
+    accu operator+ (const accu& other) const {
+      accu a = *this;
+      a += other;
+      return a;
+    }
+
+    accu& operator-= (const accu& other) {
+      v[0] -= other.v[0];
+      v[1] -= other.v[1];
+      v[2] -= other.v[2];
+      v[3] -= other.v[3];
+      return *this;
+    }
+    
+    accu& operator= (const Image::iterator& background)
+    {
+      double r = 0, g = 0, b = 0, a = 0;
+      background.getRGBA(r, g, b, a);
+      v[0] = (vtype)(r * 0xffff);
+      v[1] = (vtype)(g * 0xffff);
+      v[2] = (vtype)(b * 0xffff);
+      v[3] = (vtype)(a * 0xffff);
+      return *this;
+    }
+    
+    void getRGB (vtype& r, vtype& g, vtype& b) {
+      r = v[0]; g = v[1]; b = v[2];
+    }
+    
+    void getL (vtype& l) {
+      l = (11 * v[0] + 16 * v[1] + 5 * v[2]) / 32;
+    }
+    
+    void setRGB (vtype r, vtype g, vtype b) {
+      v[0] = r; v[1] = g; v[2] = b; v[2] = 0xffff;
+    }
+  };
+  
+  rgba16_iterator (const Image& _image)
+    : ptr_begin((uint16_t*)_image.getRawData()), image (_image), stride(_image.stride()) {
+    ptr = ptr_begin;
+  }
+    
+  rgba16_iterator& at (int x, int y, bool rel = false) {
+    ptr = (rel ? ptr : ptr_begin) + y * stride / 2 + x * 4;
+    return *this;
+  }
+    
+  rgba16_iterator& operator++ () {
+    ptr += 4;
+    return *this;
+  }
+
+  rgba16_iterator& operator-- () {
+    ptr -= 4;
+    return *this;
+  }
+  
+  accu operator* () {
+    accu a;
+    a.v[0] = ptr[0];
+    a.v[1] = ptr[1];
+    a.v[2] = ptr[2];
+    a.v[3] = ptr[3];
+    return a;
+  }
+    
+  rgba16_iterator& set (const accu& a) {
+    ptr[0] = a.v[0];
+    ptr[1] = a.v[1];
+    ptr[2] = a.v[2];
+    ptr[3] = a.v[3];
+    return *this;
+  }
+};
+
 class gray_iterator
 {
 public:
@@ -760,7 +931,7 @@ public:
   }
     
   gray16_iterator& at (int x, int y, bool rel = false) {
-    ptr = (rel ? ptr : ptr_begin) + y * stride/2 + x;
+    ptr = (rel ? ptr : ptr_begin) + y * stride / 2 + x;
     return *this;
   }
     
