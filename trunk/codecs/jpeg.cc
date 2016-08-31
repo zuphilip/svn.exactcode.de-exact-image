@@ -416,16 +416,19 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
 			    const std::string& compress)
 {
   Args args(compress);
+  const bool debug = args.containsAndRemove("debug");
   
   // if the instance is freestanding it can only be called by the mux
   // if the cache is valid
   if (_image && !args.containsAndRemove("recompress")) {
     // if meta information was modified re-encode the stream
     if (image.isMetaModified()) {
-      std::cerr << "Re-encoding DCT coefficients (due meta changes)." << std::endl;
+      if (debug)
+	std::cerr << "Re-encoding DCT coefficients (due meta changes)." << std::endl;
       doTransform (JXFORM_NONE, image, stream);
     } else {
-      std::cerr << "Writing unmodified DCT buffer." << std::endl;
+      if (debug)
+	std::cerr << "Writing unmodified DCT buffer." << std::endl;
       *stream << private_copy.str();
     }
     
@@ -695,9 +698,9 @@ void JPEGCodec::parseExif (Image& image)
       image.setResolution(xres, yres);
     } else {
       if (image.resolutionX() != xres || image.resolutionY() != yres)
-	std::cerr << "Exif resolution differs from codec: "
-		  << xres << "x" << yres << " vs. "
-		  << image.resolutionX() << "x" << image.resolutionY() << std::endl;
+	std::cerr << "Exif resolution (" << xres << "x" << yres
+		  << ") differs from codec ("
+		  << image.resolutionX() << "x" << image.resolutionY() << ")" << std::endl;
     }
   }
   
