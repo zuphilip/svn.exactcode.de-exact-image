@@ -276,7 +276,7 @@ void cpp_stream_dest (j_compress_ptr cinfo, std::ostream* stream)
 /* *** back on-topic *** */
 
 JPEGCodec::JPEGCodec (Image* _image)
-  : ImageCodec (_image)
+  : ImageCodec (_image), colorspace(JCS_UNKNOWN)
 {
 }
 
@@ -406,6 +406,11 @@ int JPEGCodec::readImage (std::istream* stream, Image& image, const std::string&
     image.setCodec(codec);
   }
   
+  if (args.containsAndRemove("ycck"))
+    codec->colorspace = JCS_YCCK;
+  else if (args.containsAndRemove("rgb"))
+    codec->colorspace = JCS_RGB;
+  
   // parse Exif data, might contain non-identifiy orientation transform
   codec->parseExif(image);
   
@@ -461,7 +466,7 @@ bool JPEGCodec::writeImage (std::ostream* stream, Image& image, int quality,
     cinfo.in_color_space = JCS_GRAYSCALE;
   else if (image.bps == 8 && image.spp == 4)
     cinfo.in_color_space = JCS_CMYK;
-
+  
   if (cinfo.in_color_space == JCS_UNKNOWN) {
     if (image.bps < 8)
       std::cerr << "JPEGCodec: JPEG can not hold less than 8 bit-per-channel." << std::endl;
@@ -754,6 +759,9 @@ void JPEGCodec::parseExif (Image& image)
     cinfo->scale_denom = factor;
     cinfo->dct_method = JDCT_IFAST;
   }
+  
+  if (colorspace)
+    cinfo->jpeg_color_space = (J_COLOR_SPACE)colorspace;
   
   // Step 5: Start decompressor
   jpeg_start_decompress (cinfo);

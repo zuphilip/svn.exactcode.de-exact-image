@@ -65,5 +65,6 @@ private:
 		    std::ostream* stream = 0, bool to_gray = false, bool crop = false,
 		    unsigned int x = 0, unsigned int y = 0, unsigned int w = 0, unsigned int h = 0);
   
+  int colorspace; // maybe just store the decompress string?
   std::stringstream private_copy;
 };
